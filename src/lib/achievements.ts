@@ -1,0 +1,175 @@
+import { Achievement } from './types'
+
+export const ACHIEVEMENTS: Achievement[] = [
+  {
+    id: 'first-steps',
+    title: 'First Steps',
+    description: 'Complete your first course',
+    tier: 'bronze',
+    category: 'course',
+    icon: 'GraduationCap',
+    requirement: 1,
+  },
+  {
+    id: 'learning-enthusiast',
+    title: 'Learning Enthusiast',
+    description: 'Complete 5 courses',
+    tier: 'silver',
+    category: 'course',
+    icon: 'BookOpen',
+    requirement: 5,
+  },
+  {
+    id: 'knowledge-seeker',
+    title: 'Knowledge Seeker',
+    description: 'Complete 10 courses',
+    tier: 'gold',
+    category: 'course',
+    icon: 'BookBookmark',
+    requirement: 10,
+  },
+  {
+    id: 'master-learner',
+    title: 'Master Learner',
+    description: 'Complete 25 courses',
+    tier: 'platinum',
+    category: 'course',
+    icon: 'Trophy',
+    requirement: 25,
+  },
+  {
+    id: 'quick-study',
+    title: 'Quick Study',
+    description: 'Complete 10 modules in a single session',
+    tier: 'silver',
+    category: 'speed',
+    icon: 'Lightning',
+    requirement: 10,
+  },
+  {
+    id: 'perfect-score',
+    title: 'Perfect Score',
+    description: 'Achieve 100% on an assessment',
+    tier: 'gold',
+    category: 'assessment',
+    icon: 'Star',
+    requirement: 1,
+  },
+  {
+    id: 'ace-student',
+    title: 'Ace Student',
+    description: 'Pass 10 assessments with 90% or higher',
+    tier: 'platinum',
+    category: 'assessment',
+    icon: 'Medal',
+    requirement: 10,
+  },
+  {
+    id: 'week-warrior',
+    title: 'Week Warrior',
+    description: 'Study for 7 days in a row',
+    tier: 'silver',
+    category: 'streak',
+    icon: 'Fire',
+    requirement: 7,
+  },
+  {
+    id: 'dedication',
+    title: 'Dedication',
+    description: 'Study for 30 days in a row',
+    tier: 'gold',
+    category: 'streak',
+    icon: 'Flame',
+    requirement: 30,
+  },
+  {
+    id: 'unstoppable',
+    title: 'Unstoppable',
+    description: 'Study for 100 days in a row',
+    tier: 'platinum',
+    category: 'streak',
+    icon: 'FireSimple',
+    requirement: 100,
+  },
+  {
+    id: 'module-master',
+    title: 'Module Master',
+    description: 'Complete 50 learning modules',
+    tier: 'silver',
+    category: 'milestone',
+    icon: 'CheckCircle',
+    requirement: 50,
+  },
+  {
+    id: 'century-club',
+    title: 'Century Club',
+    description: 'Complete 100 learning modules',
+    tier: 'gold',
+    category: 'milestone',
+    icon: 'Target',
+    requirement: 100,
+  },
+  {
+    id: 'overachiever',
+    title: 'Overachiever',
+    description: 'Complete 250 learning modules',
+    tier: 'platinum',
+    category: 'milestone',
+    icon: 'Rocket',
+    requirement: 250,
+  },
+  {
+    id: 'first-try',
+    title: 'First Try Success',
+    description: 'Pass an assessment on the first attempt',
+    tier: 'bronze',
+    category: 'assessment',
+    icon: 'Lightbulb',
+    requirement: 1,
+  },
+  {
+    id: 'speed-runner',
+    title: 'Speed Runner',
+    description: 'Complete a course in under 1 hour',
+    tier: 'gold',
+    category: 'speed',
+    icon: 'Timer',
+    requirement: 1,
+    hidden: true,
+  },
+]
+
+export const TIER_COLORS = {
+  bronze: {
+    bg: 'bg-amber-700',
+    text: 'text-amber-700',
+    border: 'border-amber-700',
+    gradient: 'from-amber-600 to-amber-800',
+  },
+  silver: {
+    bg: 'bg-slate-400',
+    text: 'text-slate-600',
+    border: 'border-slate-400',
+    gradient: 'from-slate-300 to-slate-500',
+  },
+  gold: {
+    bg: 'bg-yellow-500',
+    text: 'text-yellow-600',
+    border: 'border-yellow-500',
+    gradient: 'from-yellow-400 to-yellow-600',
+  },
+  platinum: {
+    bg: 'bg-cyan-400',
+    text: 'text-cyan-500',
+    border: 'border-cyan-400',
+    gradient: 'from-cyan-300 to-cyan-500',
+  },
+}
+
+export function getAchievementById(id: string): Achievement | undefined {
+  return ACHIEVEMENTS.find((a) => a.id === id)
+}
+
+export function getTierLabel(tier: Achievement['tier']): string {
+  return tier.charAt(0).toUpperCase() + tier.slice(1)
+}

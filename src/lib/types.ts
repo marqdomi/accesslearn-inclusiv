@@ -63,3 +63,33 @@ export interface User {
   role: 'employee' | 'admin'
   assignedCourses: string[]
 }
+
+export type AchievementTier = 'bronze' | 'silver' | 'gold' | 'platinum'
+
+export interface Achievement {
+  id: string
+  title: string
+  description: string
+  tier: AchievementTier
+  category: 'course' | 'assessment' | 'streak' | 'speed' | 'milestone'
+  icon: string
+  requirement: number
+  hidden?: boolean
+}
+
+export interface UserAchievement {
+  achievementId: string
+  unlockedAt: number
+  progress?: number
+}
+
+export interface UserStats {
+  totalCoursesCompleted: number
+  totalModulesCompleted: number
+  totalAssessmentsPassed: number
+  averageScore: number
+  currentStreak: number
+  longestStreak: number
+  lastActivityDate: number
+  achievementsUnlocked: UserAchievement[]
+}

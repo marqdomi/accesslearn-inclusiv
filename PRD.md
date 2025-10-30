@@ -47,6 +47,13 @@ This platform serves a focused purpose with thoughtfully constrained features - 
 - **Progression**: Select "Add Course" → Upload files → Add accessibility data → Set course details → Assign to groups → Publish → Monitor completion
 - **Success criteria**: Upload accepts common formats, prompts for required accessibility data, shows validation errors clearly, and completion reports export to CSV
 
+### 6. Achievements & Gamification System
+- **Functionality**: PlayStation-style trophy system with bronze, silver, gold, and platinum achievements for completing courses, maintaining streaks, scoring perfectly on assessments, and reaching milestones. Users can view unlocked achievements, track progress toward locked achievements, and share their accomplishments.
+- **Purpose**: Motivate learners through recognition and social sharing, making learning feel rewarding and encouraging consistent engagement
+- **Trigger**: Achievements unlock automatically when requirements are met; users can navigate to achievements page to view all trophies
+- **Progression**: Complete action (course/module/assessment) → Achievement check triggers → Toast notification appears → Achievement unlocked and saved → View in achievements dashboard → Share progress with colleagues
+- **Success criteria**: Achievement notifications are celebratory but not disruptive, progress bars accurately reflect advancement toward locked achievements, sharing functionality works cross-platform, and all achievement logic is accessible via keyboard and screen readers
+
 ## Edge Case Handling
 
 - **Network Interruptions**: Auto-save progress every 30 seconds; display clear offline indicator; resume exactly where user left off when reconnected

@@ -1,5 +1,6 @@
 import { useKV } from '@github/spark/hooks'
 import { UserProgress } from '@/lib/types'
+import { useAchievements } from './use-achievements'
 
 export function useCourseProgress(courseId: string) {
   const [progress, setProgress] = useKV<UserProgress>(
@@ -12,6 +13,8 @@ export function useCourseProgress(courseId: string) {
       assessmentAttempts: 0,
     }
   )
+
+  const { updateModuleCompletion, updateCourseCompletion, updateAssessmentCompletion, updateStreak } = useAchievements()
 
   const markModuleComplete = (moduleId: string) => {
     setProgress((current) => {
@@ -26,6 +29,8 @@ export function useCourseProgress(courseId: string) {
       const completedModules = [...current.completedModules]
       if (!completedModules.includes(moduleId)) {
         completedModules.push(moduleId)
+        updateModuleCompletion()
+        updateStreak()
       }
       return {
         ...current,
@@ -52,21 +57,29 @@ export function useCourseProgress(courseId: string) {
   }
 
   const completeCourse = (assessmentScore?: number) => {
-    setProgress((current) => ({
-      ...(current || {
-        courseId,
-        status: 'not-started' as const,
-        completedModules: [],
-        assessmentAttempts: 0,
+    setProgress((current) => {
+      const isFirstCompletion = current?.status !== 'completed'
+      if (isFirstCompletion) {
+        updateCourseCompletion()
+        updateStreak()
+      }
+      
+      return {
+        ...(current || {
+          courseId,
+          status: 'not-started' as const,
+          completedModules: [],
+          assessmentAttempts: 0,
+          lastAccessed: Date.now(),
+        }),
+        status: 'completed' as const,
+        assessmentScore,
         lastAccessed: Date.now(),
-      }),
-      status: 'completed' as const,
-      assessmentScore,
-      lastAccessed: Date.now(),
-    }))
+      }
+    })
   }
 
-  const recordAssessmentAttempt = () => {
+  const recordAssessmentAttempt = (score?: number) => {
     setProgress((current) => {
       const base = current || {
         courseId,
@@ -75,9 +88,17 @@ export function useCourseProgress(courseId: string) {
         lastAccessed: Date.now(),
         assessmentAttempts: 0,
       }
+      
+      const isFirstAttempt = base.assessmentAttempts === 0
+      const newAttempts = base.assessmentAttempts + 1
+      
+      if (score !== undefined) {
+        updateAssessmentCompletion(score, isFirstAttempt)
+      }
+      
       return {
         ...base,
-        assessmentAttempts: base.assessmentAttempts + 1,
+        assessmentAttempts: newAttempts,
       }
     })
   }

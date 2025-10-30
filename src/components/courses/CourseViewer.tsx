@@ -15,7 +15,7 @@ interface CourseViewerProps {
 }
 
 export function CourseViewer({ course, onExit }: CourseViewerProps) {
-  const { progress, markModuleComplete, setCurrentModule, completeCourse } = useCourseProgress(course.id)
+  const { progress, markModuleComplete, setCurrentModule, completeCourse, recordAssessmentAttempt } = useCourseProgress(course.id)
   const [showAssessment, setShowAssessment] = useState(false)
   const [showModuleList, setShowModuleList] = useState(false)
 
@@ -70,6 +70,7 @@ export function CourseViewer({ course, onExit }: CourseViewerProps) {
   }
 
   const handleAssessmentComplete = (score: number) => {
+    recordAssessmentAttempt(score)
     completeCourse(score)
     toast.success('Assessment completed!', {
       description: `You scored ${score}%`,
