@@ -1,15 +1,19 @@
 import { useState, useEffect } from 'react'
+import { useKV } from '@github/spark/hooks'
 import { Course } from '@/lib/types'
+import { LessonModule } from '@/lib/lesson-types'
 import { useCourseProgress } from '@/hooks/use-course-progress'
 import { useXP, XP_REWARDS } from '@/hooks/use-xp'
 import { useAchievements } from '@/hooks/use-achievements'
 import { ContentViewer } from './ContentViewer'
 import { AssessmentModule } from './AssessmentModule'
+import { LessonViewer } from './LessonViewer'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
-import { ArrowLeft, Check, ListBullets } from '@phosphor-icons/react'
+import { ArrowLeft, Check, ListBullets, GraduationCap } from '@phosphor-icons/react'
 import { toast } from 'sonner'
+import { motion } from 'framer-motion'
 
 interface CourseViewerProps {
   course: Course
@@ -22,6 +26,12 @@ export function CourseViewer({ course, onExit }: CourseViewerProps) {
   const { updateModuleCompletion, updateCourseCompletion, updateAssessmentCompletion } = useAchievements()
   const [showAssessment, setShowAssessment] = useState(false)
   const [showModuleList, setShowModuleList] = useState(false)
+  const [lessonModules] = useKV<Record<string, LessonModule>>('lesson-modules', {})
+  const [currentLessonIndex, setCurrentLessonIndex] = useState(0)
+  const [viewMode, setViewMode] = useState<'intro' | 'lessons' | 'modules'>('intro')
+
+  const lessonModule = lessonModules?.[course.id]
+  const hasLessons = !!lessonModule && lessonModule.lessons.length > 0
 
   const currentModuleIndex = progress?.currentModule
     ? course.modules.findIndex((m) => m.id === progress.currentModule)
@@ -122,6 +132,33 @@ export function CourseViewer({ course, onExit }: CourseViewerProps) {
     ? Math.round((progress.completedModules.length / course.modules.length) * 100)
     : 0
 
+  const handleLessonComplete = () => {
+    if (hasLessons && lessonModule && currentLessonIndex < lessonModule.lessons.length - 1) {
+      setCurrentLessonIndex(prev => prev + 1)
+    } else {
+      setViewMode('intro')
+      toast.success('All lessons completed!', {
+        description: 'Continue with the course modules or take the assessment.',
+      })
+    }
+  }
+
+  const handleStartLessons = () => {
+    setViewMode('lessons')
+    setCurrentLessonIndex(0)
+  }
+
+  if (viewMode === 'lessons' && hasLessons && lessonModule) {
+    const currentLesson = lessonModule.lessons[currentLessonIndex]
+    return (
+      <LessonViewer
+        lesson={currentLesson}
+        onComplete={handleLessonComplete}
+        onExit={() => setViewMode('intro')}
+      />
+    )
+  }
+
   if (showAssessment && course.assessment) {
     return (
       <div className="mx-auto max-w-3xl">
@@ -135,6 +172,110 @@ export function CourseViewer({ course, onExit }: CourseViewerProps) {
         </Button>
 
         <AssessmentModule assessments={course.assessment} onComplete={handleAssessmentComplete} />
+      </div>
+    )
+  }
+
+  if (viewMode === 'intro' && hasLessons) {
+    return (
+      <div className="mx-auto max-w-4xl space-y-6">
+        <div className="flex items-center gap-4">
+          <Button onClick={onExit} variant="ghost" className="gap-2">
+            <ArrowLeft size={20} aria-hidden="true" />
+            Back to Courses
+          </Button>
+        </div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+        >
+          <Card className="overflow-hidden border-2 border-primary/30 bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10 p-8">
+            <div className="mb-6 flex items-center gap-4">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-primary to-secondary text-4xl">
+                {course.coverImage}
+              </div>
+              <div className="flex-1">
+                <h1 className="mb-2 text-4xl font-bold">{course.title}</h1>
+                <p className="text-lg text-muted-foreground">
+                  {course.description}
+                </p>
+              </div>
+            </div>
+
+            <div className="mb-6 space-y-3">
+              <div className="flex items-center justify-between text-sm">
+                <span className="font-semibold">Overall Progress</span>
+                <span className="text-muted-foreground">{progressPercentage}%</span>
+              </div>
+              <Progress 
+                value={progressPercentage} 
+                className="h-3"
+                aria-label={`Course progress: ${progressPercentage}%`}
+              />
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <Card className="p-6">
+                <div className="mb-3 flex items-center gap-3">
+                  <GraduationCap size={32} weight="fill" className="text-primary" aria-hidden="true" />
+                  <h2 className="text-xl font-bold">Interactive Lessons</h2>
+                </div>
+                <p className="mb-4 text-muted-foreground">
+                  {lessonModule.lessons.length} engaging lessons with challenges and activities
+                </p>
+                <Button 
+                  onClick={handleStartLessons} 
+                  className="w-full gap-2"
+                  size="lg"
+                >
+                  Start Learning
+                  <Check size={20} aria-hidden="true" />
+                </Button>
+              </Card>
+
+              <Card className="p-6">
+                <div className="mb-3 flex items-center gap-3">
+                  <ListBullets size={32} weight="fill" className="text-secondary" aria-hidden="true" />
+                  <h2 className="text-xl font-bold">Course Modules</h2>
+                </div>
+                <p className="mb-4 text-muted-foreground">
+                  {course.modules.length} detailed modules covering all topics
+                </p>
+                <Button 
+                  onClick={() => setViewMode('modules')} 
+                  variant="outline"
+                  className="w-full gap-2"
+                  size="lg"
+                >
+                  View Modules
+                  <ArrowLeft size={20} className="rotate-180" aria-hidden="true" />
+                </Button>
+              </Card>
+            </div>
+
+            {course.assessment && course.assessment.length > 0 && (
+              <Card className="mt-4 border-2 border-accent/30 bg-accent/5 p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-bold">Final Assessment</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Test your knowledge with {course.assessment.length} questions
+                    </p>
+                  </div>
+                  <Button
+                    onClick={() => setShowAssessment(true)}
+                    variant="default"
+                    className="gap-2"
+                  >
+                    Take Assessment
+                  </Button>
+                </div>
+              </Card>
+            )}
+          </Card>
+        </motion.div>
       </div>
     )
   }

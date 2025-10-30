@@ -1,6 +1,8 @@
 import { useEffect } from 'react'
 import { useKV } from '@github/spark/hooks'
 import { Course } from '@/lib/types'
+import { LessonModule } from '@/lib/lesson-types'
+import { htmlFundamentalsModule } from '@/lib/sample-lessons'
 
 const SAMPLE_COURSES: Course[] = [
   {
@@ -259,10 +261,19 @@ const SAMPLE_COURSES: Course[] = [
 
 export function SampleDataInitializer() {
   const [courses, setCourses] = useKV<Course[]>('courses', [])
+  const [lessonModules, setLessonModules] = useKV<Record<string, LessonModule>>('lesson-modules', {})
 
   useEffect(() => {
     if (!courses || courses.length === 0) {
       setCourses(SAMPLE_COURSES)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!lessonModules || Object.keys(lessonModules).length === 0) {
+      setLessonModules({
+        'web-dev-quest': htmlFundamentalsModule,
+      })
     }
   }, [])
 

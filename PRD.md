@@ -19,63 +19,70 @@ A focused platform combining educational content delivery with video game-inspir
 - **Progression**: Dashboard view → Filter/search courses → Select course card → View course details → Begin learning
 - **Success criteria**: Users can navigate and select courses using keyboard only, screen readers announce all course metadata clearly, and visual customization persists across sessions
 
-### 2. Multi-Format Content Viewer
+### 2. Interactive Lesson System
+- **Functionality**: Gamified lesson viewer with multiple content types (welcome messages, text/image, audio, code examples, interactive challenges) that presents educational content in an engaging, game-like format with animations, character guides, and instant feedback
+- **Purpose**: Transform passive learning into active engagement through interactive challenges, immediate rewards, and narrative framing that makes training feel like playing a game
+- **Trigger**: User selects "Start Learning" from a course intro screen for courses with interactive lessons
+- **Progression**: Course intro → Start Learning → Welcome block with animated character → Text/image/audio content blocks → Interactive challenge → Immediate feedback (correct: XP + celebration, incorrect: hint + try again) → Complete lesson → Lesson completion celebration → Next lesson or return to course
+- **Success criteria**: All content blocks are keyboard navigable, screen reader compatible, animations respect reduced motion preferences, challenge feedback is clear and encouraging, XP awards are instant and satisfying, character messages have full captions/transcripts
+
+### 3. Multi-Format Content Viewer
 - **Functionality**: Unified viewer supporting video (with captions/transcripts), audio (with transcripts), images (with alt text), and text content with playback controls, speed adjustment, and pause/resume
 - **Purpose**: Deliver training materials in formats suited to different learning preferences and accessibility needs
-- **Trigger**: User selects "Start" or "Continue" on a course module
+- **Trigger**: User selects "View Modules" from course intro or clicks on a traditional content module
 - **Progression**: Content loads → Accessibility preferences auto-apply → User consumes content at their pace → Marks complete when ready → Auto-saves progress
 - **Success criteria**: Video captions are readable and synchronized, audio transcripts are available, playback speed adjusts from 0.5x to 2x, and keyboard controls work flawlessly
 
-### 3. Progress Tracking System
+### 4. Progress Tracking System
 - **Functionality**: Visual and textual progress indicators showing completion percentage, checkpoints achieved, and remaining modules with clear status labels
 - **Purpose**: Provide orientation and motivation while reducing anxiety about training requirements
 - **Trigger**: Automatically updates as user completes content modules
 - **Progression**: Content completion → Progress auto-saves → Visual indicator updates → Confirmation message displays → Returns to course overview
 - **Success criteria**: Progress persists across sessions, percentages are accurate, screen readers announce updates, and visual indicators use color plus iconography
 
-### 4. Simple Assessment Module
+### 5. Simple Assessment Module
 - **Functionality**: Accessible quizzes with large touch targets, extended time options, multiple attempts, and immediate constructive feedback
 - **Purpose**: Verify understanding without creating barriers or inducing test anxiety
 - **Trigger**: User completes learning modules and selects "Take Assessment"
 - **Progression**: Instructions with time details → Question display (one at a time) → Answer selection → Immediate feedback → Results summary with next steps
 - **Success criteria**: Questions use simple language, touch targets exceed 44px minimum, keyboard navigation is logical, and users can review incorrect answers with explanations
 
-### 5. Admin Content Management
+### 6. Admin Content Management
 - **Functionality**: Upload training materials (video/audio/text/images), add accessibility metadata (captions, transcripts, alt text), assign courses to employee groups, and view completion reports
 - **Purpose**: Enable HR/training teams to efficiently create accessible learning experiences
 - **Trigger**: Admin user logs in and navigates to "Manage Content"
 - **Progression**: Select "Add Course" → Upload files → Add accessibility data → Set course details → Assign to groups → Publish → Monitor completion
 - **Success criteria**: Upload accepts common formats, prompts for required accessibility data, shows validation errors clearly, and completion reports export to CSV
 
-### 6. Achievements & Trophy System
+### 7. Achievements & Trophy System
 - **Functionality**: PlayStation-style trophy system with bronze, silver, gold, and platinum achievements for completing courses, maintaining streaks, scoring perfectly on assessments, and reaching milestones. Users can view unlocked achievements, track progress toward locked achievements, and share their accomplishments.
 - **Purpose**: Motivate learners through recognition and social sharing, making learning feel rewarding and encouraging consistent engagement
 - **Trigger**: Achievements unlock automatically when requirements are met; users can navigate to achievements page to view all trophies
 - **Progression**: Complete action (course/module/assessment) → Achievement check triggers → Toast notification appears → Achievement unlocked and saved → View in achievements dashboard → Share progress with colleagues
 - **Success criteria**: Achievement notifications are celebratory but not disruptive, progress bars accurately reflect advancement toward locked achievements, sharing functionality works cross-platform, and all achievement logic is accessible via keyboard and screen readers
 
-### 7. Experience Points (XP) & Leveling System
+### 8. Experience Points (XP) & Leveling System
 - **Functionality**: Award XP for every learning action - completing modules (+50 XP), finishing courses (+200 XP), passing assessments (+100 XP), daily login streaks (+10 XP). XP accumulates to unlock levels with visual rank badges and celebratory level-up animations.
 - **Purpose**: Create constant positive reinforcement and visible progression that makes every small action feel meaningful and rewarding
 - **Trigger**: Automatically awards XP after any learning activity; level-up triggers when XP threshold reached
 - **Progression**: Complete activity → XP awarded with animated counter → Progress bar fills toward next level → Level-up celebration when threshold met → New rank badge displayed → Continue learning
 - **Success criteria**: XP awards are instant and satisfying, level thresholds are balanced for regular progression, rank badges are visually distinct and motivating, all XP notifications include ARIA announcements for screen readers
 
-### 8. Learning Quests & Missions
+### 9. Learning Quests & Missions
 - **Functionality**: Frame course assignments and learning paths as "Quests" or "Missions" with quest cards showing objectives, rewards (XP + achievements), and progress. Quests can be daily challenges, weekly goals, or long-term learning paths.
 - **Purpose**: Transform mandatory training into exciting challenges that feel purposeful and game-like, increasing motivation through narrative framing
 - **Trigger**: Quests appear on dashboard; users can accept/track active quests; complete objectives to earn rewards
 - **Progression**: View available quests → Accept quest → Track objectives in quest log → Complete objectives → Claim rewards (XP, achievements, badges) → Quest marked complete
 - **Success criteria**: Quest objectives are crystal clear, progress tracking is accurate, quest cards are visually engaging with high contrast, rewards feel generous and motivating, quest system is fully keyboard navigable
 
-### 9. Progress Visualization Dashboard
+### 10. Progress Visualization Dashboard
 - **Functionality**: Game-like stats dashboard showing total XP, current level, rank badge, achievement completion %, course completion stats, current streak, and visual progress rings/bars for each metric
 - **Purpose**: Provide at-a-glance gamified overview of all progress to build pride and motivation
 - **Trigger**: Always visible on main dashboard; updates in real-time as progress occurs
 - **Progression**: Dashboard loads → All stats displayed with animated counters → Visual rings/bars show percentages → Click any stat to drill into details → Celebrate milestones with badges
 - **Success criteria**: All metrics update instantly, visualizations use color + patterns for accessibility, stats are announced by screen readers, dashboard is responsive and clear on mobile
 
-### 10. Team Leaderboards (Optional)
+### 11. Team Leaderboards (Optional)
 - **Functionality**: Simple, encouraging leaderboard showing XP rankings within a team/department. Emphasis on personal improvement with "You've climbed 3 ranks this week!" rather than harsh competition. Can be toggled off by users who prefer private learning.
 - **Purpose**: Add optional social motivation for competitive learners while keeping focus on personal growth
 - **Trigger**: Opt-in from settings; view team leaderboard page to see rankings
