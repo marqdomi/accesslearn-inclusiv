@@ -89,6 +89,55 @@ A focused platform combining educational content delivery with video game-inspir
 - **Progression**: Enable leaderboard → View current ranking → See XP comparison → Celebrate rank improvements → Option to disable anytime
 - **Success criteria**: Leaderboard is opt-in only, messaging is always encouraging never shaming, personal progress highlighted over peer comparison, fully accessible with screen reader support
 
+### 12. Admin Dashboard & Analytics
+- **Functionality**: Clean analytics dashboard showing user progress, course completion rates, assessment scores, and active users. Quick access tiles for common tasks (Create Course, Manage Users, View Reports). Simple charts with clear legends and data tables.
+- **Purpose**: Empower HR/training staff to monitor learning effectiveness and manage content efficiently without technical expertise
+- **Trigger**: Admin users log in or click "Admin Panel" in navigation
+- **Progression**: Dashboard loads → View key metrics → Click quick access tiles → Navigate to detailed reports → Export data if needed
+- **Success criteria**: Charts are accessible with screen readers, data exports to CSV, quick actions are one-click away, dashboard loads quickly even with large datasets
+
+### 13. Visual Course Builder
+- **Functionality**: Drag-and-drop interface for building course structure (Course → Modules → Lessons). Visual hierarchy tree showing nested structure. Easy reordering by dragging. Add/edit/delete at any level. Preview mode to see student view.
+- **Purpose**: Make course creation intuitive for non-technical users through visual, direct manipulation
+- **Trigger**: Admin clicks "Create New Course" or "Edit Course"
+- **Progression**: Create course → Add details → Build structure (drag modules/lessons) → Reorder content → Preview → Save draft → Publish when ready
+- **Success criteria**: Drag-and-drop works smoothly, keyboard alternatives available, changes save automatically, preview accurately reflects student experience, structure is collapsible/expandable
+
+### 14. Accessible Content Editor (WYSIWYG)
+- **Functionality**: Rich text editor with standard formatting (bold, lists, headings). Media upload with mandatory accessibility fields (alt text for images, captions for video, transcripts for audio). Warning system prevents publishing without accessibility data. Preview mode shows how content appears to different users.
+- **Purpose**: Guide admins to create accessible content by default through built-in guardrails and helpful prompts
+- **Trigger**: Admin creates or edits a lesson within course builder
+- **Progression**: Open editor → Add text/formatting → Upload media → System prompts for accessibility data → Add alt text/captions/transcript → Preview → Save lesson
+- **Success criteria**: Required accessibility fields block publishing until filled, helpful tooltips guide admins, media uploads support common formats, preview mode includes screen reader simulation
+
+### 15. Quiz & Assessment Builder
+- **Functionality**: Create accessible quizzes with multiple choice, true/false, and matching questions. Custom feedback fields for correct/incorrect answers with gamified messaging. Set XP rewards per quiz. Preview mode to test question flow.
+- **Purpose**: Enable admins to create engaging, accessible assessments that feel rewarding rather than stressful
+- **Trigger**: Admin adds assessment to course or module
+- **Progression**: Click "Add Quiz" → Choose question type → Enter question text → Add answer options → Mark correct answer → Write custom feedback ("Great job! +20 XP!") → Set XP value → Add more questions → Preview quiz → Save
+- **Success criteria**: All question types meet accessibility standards, feedback is encouraging and gamified, XP values are suggested based on difficulty, preview shows exactly what students see
+
+### 16. Gamification Configuration Hub
+- **Functionality**: Central interface for managing XP values, creating badges (upload icon + metadata), defining achievements, and assigning rewards to course milestones. Visual preview of how badges appear to students.
+- **Purpose**: Simplify gamification setup so admins can easily motivate learners without complex configuration
+- **Trigger**: Admin navigates to "Gamification" settings or configures rewards within course builder
+- **Progression**: View current XP settings → Adjust values → Create new badge (upload image, set name/description) → Assign badge to course/module completion → Preview badge display → Save
+- **Success criteria**: Badge creator is simple with clear image requirements, XP values have suggested defaults, badge assignments are straightforward dropdown selections, preview shows student view
+
+### 17. User & Group Management
+- **Functionality**: Add users individually or via CSV upload. Create groups (New Hires, Sales Team, etc.). Assign courses to users or entire groups. View user progress and history. Export user reports.
+- **Purpose**: Streamline user administration and course assignment for HR teams managing large employee bases
+- **Trigger**: Admin clicks "Manage Users" or "Manage Groups"
+- **Progression**: Add user (manual or CSV) → Create groups → Assign users to groups → Assign courses to users/groups → View progress → Export reports
+- **Success criteria**: CSV upload provides clear error feedback, bulk operations work efficiently, course assignments propagate instantly, reports include completion status and scores
+
+### 18. Reporting & Analytics
+- **Functionality**: Detailed reports showing who started/completed courses, quiz results per user, time spent learning, achievement unlock rates, and engagement trends. Filterable by user, group, course, or date range. Export to CSV for external analysis.
+- **Purpose**: Provide actionable insights to measure training effectiveness and identify struggling learners
+- **Trigger**: Admin navigates to "Reports" section
+- **Progression**: Select report type → Set filters (user/group/course/dates) → View visualizations and data tables → Drill into details → Export to CSV
+- **Success criteria**: Reports load quickly, filters work intuitively, charts are accessible, CSV exports include all relevant data, trends are easy to identify visually
+
 ## Edge Case Handling
 
 - **Network Interruptions**: Auto-save progress every 30 seconds; display clear offline indicator; resume exactly where user left off when reconnected

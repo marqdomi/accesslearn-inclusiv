@@ -1,0 +1,215 @@
+import { useKV } from '@github/spark/hooks'
+import { CourseStructure, User, UserProgress, UserStats } from '@/lib/types'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Users, BookOpen, TrendUp, Trophy, Plus, FileText } from '@phosphor-icons/react'
+import { motion } from 'framer-motion'
+
+interface AdminDashboardProps {
+  onNavigate: (section: 'courses' | 'users' | 'reports' | 'gamification') => void
+}
+
+export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
+  const [courses] = useKV<CourseStructure[]>('admin-courses', [])
+  const [users] = useKV<User[]>('users', [])
+  const [allProgress] = useKV<Record<string, UserProgress[]>>('all-user-progress', {})
+  const [allStats] = useKV<Record<string, UserStats>>('all-user-stats', {})
+
+  const totalCourses = courses?.length || 0
+  const totalUsers = users?.length || 0
+  const publishedCourses = courses?.filter(c => c.published).length || 0
+
+  const completionRate = (() => {
+    if (!allProgress || Object.keys(allProgress).length === 0) return 0
+    
+    let totalCompleted = 0
+    let totalAssignments = 0
+    
+    Object.values(allProgress).forEach(userProgressList => {
+      userProgressList.forEach(progress => {
+        totalAssignments++
+        if (progress.status === 'completed') totalCompleted++
+      })
+    })
+    
+    return totalAssignments > 0 ? Math.round((totalCompleted / totalAssignments) * 100) : 0
+  })()
+
+  const totalXPAwarded = (() => {
+    if (!allStats) return 0
+    return Object.values(allStats).reduce((sum, stats) => sum + (stats?.totalXP || 0), 0)
+  })()
+
+  const quickActions = [
+    {
+      label: 'Create New Course',
+      icon: Plus,
+      action: () => onNavigate('courses'),
+      variant: 'default' as const,
+      description: 'Build a new training course'
+    },
+    {
+      label: 'Manage Users',
+      icon: Users,
+      action: () => onNavigate('users'),
+      variant: 'outline' as const,
+      description: 'Add and organize learners'
+    },
+    {
+      label: 'View Reports',
+      icon: FileText,
+      action: () => onNavigate('reports'),
+      variant: 'outline' as const,
+      description: 'Analyze learning progress'
+    },
+    {
+      label: 'Configure Gamification',
+      icon: Trophy,
+      action: () => onNavigate('gamification'),
+      variant: 'outline' as const,
+      description: 'Set up XP and badges'
+    }
+  ]
+
+  const stats = [
+    {
+      title: 'Total Courses',
+      value: totalCourses,
+      subtitle: `${publishedCourses} published`,
+      icon: BookOpen,
+      color: 'text-primary'
+    },
+    {
+      title: 'Active Learners',
+      value: totalUsers,
+      subtitle: 'Registered users',
+      icon: Users,
+      color: 'text-secondary'
+    },
+    {
+      title: 'Completion Rate',
+      value: `${completionRate}%`,
+      subtitle: 'Courses completed',
+      icon: TrendUp,
+      color: 'text-accent'
+    },
+    {
+      title: 'XP Awarded',
+      value: totalXPAwarded.toLocaleString(),
+      subtitle: 'Total experience points',
+      icon: Trophy,
+      color: 'text-xp'
+    }
+  ]
+
+  return (
+    <div className="space-y-8">
+      <div>
+        <h2 className="text-3xl font-bold tracking-tight">Admin Dashboard</h2>
+        <p className="text-muted-foreground mt-1">
+          Manage courses, users, and track learning progress
+        </p>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {stats.map((stat, index) => (
+          <motion.div
+            key={stat.title}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.1 }}
+          >
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
+                <stat.icon className={`h-5 w-5 ${stat.color}`} weight="duotone" aria-hidden="true" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stat.value}</div>
+                <p className="text-xs text-muted-foreground mt-1">{stat.subtitle}</p>
+              </CardContent>
+            </Card>
+          </motion.div>
+        ))}
+      </div>
+
+      <div>
+        <h3 className="text-xl font-semibold mb-4">Quick Actions</h3>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {quickActions.map((action, index) => (
+            <motion.div
+              key={action.label}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 + index * 0.1 }}
+            >
+              <Card className="hover:shadow-md transition-shadow cursor-pointer group" onClick={action.action}>
+                <CardHeader>
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                      <action.icon className="h-6 w-6 text-primary" weight="duotone" aria-hidden="true" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-base">{action.label}</CardTitle>
+                      <CardDescription className="text-xs mt-1">
+                        {action.description}
+                      </CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+              </Card>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Getting Started</CardTitle>
+          <CardDescription>
+            Build engaging, accessible training in three simple steps
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-start gap-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-bold">
+              1
+            </div>
+            <div>
+              <p className="font-medium">Create a Course</p>
+              <p className="text-sm text-muted-foreground">
+                Use the visual course builder to structure your training content
+              </p>
+            </div>
+          </div>
+          <div className="flex items-start gap-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-secondary text-secondary-foreground text-sm font-bold">
+              2
+            </div>
+            <div>
+              <p className="font-medium">Add Accessible Content</p>
+              <p className="text-sm text-muted-foreground">
+                Upload media with required alt text, captions, and transcripts
+              </p>
+            </div>
+          </div>
+          <div className="flex items-start gap-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-accent text-accent-foreground text-sm font-bold">
+              3
+            </div>
+            <div>
+              <p className="font-medium">Assign & Track</p>
+              <p className="text-sm text-muted-foreground">
+                Assign courses to users or groups and monitor their progress
+              </p>
+            </div>
+          </div>
+          <Button onClick={() => onNavigate('courses')} className="w-full mt-4" size="lg">
+            <Plus className="mr-2" size={20} />
+            Create Your First Course
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
