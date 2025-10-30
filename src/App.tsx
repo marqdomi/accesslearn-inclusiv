@@ -4,33 +4,34 @@ import { Course } from '@/lib/types'
 import { SkipLink } from '@/components/accessibility/SkipLink'
 import { AccessibilityPanel } from '@/components/accessibility/AccessibilityPanel'
 import { SampleDataInitializer } from '@/components/SampleDataInitializer'
-import { CourseDashboard } from '@/components/courses/CourseDashboard'
+import { UserDashboard } from '@/components/dashboard/UserDashboard'
 import { CourseViewer } from '@/components/courses/CourseViewer'
 import { AchievementsDashboard } from '@/components/achievements/AchievementsDashboard'
-import { XPWidget } from '@/components/gamification/XPWidget'
 import { AdminPanel } from '@/components/admin/AdminPanel'
 import { Button } from '@/components/ui/button'
 import { Trophy, GraduationCap, Lightning, ShieldCheck } from '@phosphor-icons/react'
 import { Toaster } from '@/components/ui/sonner'
 import { motion } from 'framer-motion'
 
-type View = 'courses' | 'achievements' | 'admin'
+type View = 'dashboard' | 'achievements' | 'admin'
 
 function App() {
   const [courses] = useKV<Course[]>('courses', [])
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null)
-  const [currentView, setCurrentView] = useState<View>('courses')
+  const [currentView, setCurrentView] = useState<View>('dashboard')
 
   const handleViewChange = (view: View) => {
     setCurrentView(view)
     setSelectedCourse(null)
   }
 
+  const isAdminView = currentView === 'admin'
+
   return (
     <>
       <SampleDataInitializer />
       <SkipLink />
-      {currentView === 'admin' ? (
+      {isAdminView ? (
         <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background">
           <header className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-50 shadow-sm">
             <div className="mx-auto max-w-7xl px-6 py-4">
@@ -50,7 +51,7 @@ function App() {
                     <p className="text-xs text-muted-foreground">Content Management</p>
                   </div>
                 </motion.div>
-                <Button variant="outline" onClick={() => handleViewChange('courses')}>
+                <Button variant="outline" onClick={() => handleViewChange('dashboard')}>
                   <GraduationCap size={20} className="mr-2" />
                   Exit Admin Mode
                 </Button>
@@ -83,13 +84,13 @@ function App() {
                 </motion.div>
                 <nav className="flex gap-2" aria-label="Main navigation">
                   <Button
-                    variant={currentView === 'courses' && !selectedCourse ? 'default' : 'outline'}
-                    onClick={() => handleViewChange('courses')}
+                    variant={currentView === 'dashboard' && !selectedCourse ? 'default' : 'outline'}
+                    onClick={() => handleViewChange('dashboard')}
                     className="gap-2"
                   >
                     <GraduationCap size={20} aria-hidden="true" />
-                    <span className="hidden sm:inline">My Courses</span>
-                    <span className="sm:hidden">Courses</span>
+                    <span className="hidden sm:inline">Dashboard</span>
+                    <span className="sm:hidden">Home</span>
                   </Button>
                   <Button
                     variant={currentView === 'achievements' ? 'default' : 'outline'}
@@ -101,8 +102,8 @@ function App() {
                     <span className="sm:hidden">Trophies</span>
                   </Button>
                   <Button
-                    variant={currentView === 'admin' ? 'default' : 'outline'}
-                    onClick={() => handleViewChange('admin')}
+                    variant={isAdminView ? 'default' : 'outline'}
+                    onClick={() => handleViewChange('admin' as View)}
                     className="gap-2"
                   >
                     <ShieldCheck size={20} aria-hidden="true" />
@@ -114,25 +115,14 @@ function App() {
           </header>
 
           <main id="main-content" className="mx-auto max-w-7xl px-6 py-8" role="main">
-            {!selectedCourse && currentView === 'courses' && (
-              <motion.div
-                className="mb-8"
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-              >
-                <XPWidget compact />
-              </motion.div>
-            )}
-
             {selectedCourse ? (
               <CourseViewer course={selectedCourse} onExit={() => setSelectedCourse(null)} />
             ) : currentView === 'achievements' ? (
               <AchievementsDashboard />
             ) : (
-              <CourseDashboard 
+              <UserDashboard 
                 courses={courses || []} 
                 onSelectCourse={setSelectedCourse}
-                onViewAchievements={() => handleViewChange('achievements')}
               />
             )}
           </main>

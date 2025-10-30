@@ -12,7 +12,14 @@ A focused platform combining educational content delivery with video game-inspir
 
 ## Essential Features
 
-### 1. Accessible Course Browser
+### 1. User Dashboard (Operations Base)
+- **Functionality**: Centralized command center showing player identity (avatar, level, XP bar), main mission (most urgent/recent course), progress goals (achievements, learning streak), side missions (course catalog), and quick accessibility settings. Prioritizes "what to do now" with clear visual hierarchy.
+- **Purpose**: Provide at-a-glance game status and immediate actionable next steps while ensuring accessibility controls are always prominent
+- **Trigger**: User logs in or navigates to dashboard from header
+- **Progression**: Dashboard loads → Player identity displays at top → Main mission card shows current/next course → Side missions list other courses → Progress goals show streak and recent achievements → Accessibility settings always visible → Select any course to begin
+- **Success criteria**: Tab order follows visual priority (Identity → Main Mission → Side Missions → Progress Goals → Accessibility), screen reader heading hierarchy matches visual importance, keyboard navigation works flawlessly, all sections clearly separated with borders/backgrounds
+
+### 2. Accessible Course Browser
 - **Functionality**: Browse and filter training courses with multiple viewing modes (grid/list), adjustable text sizes, and high-contrast themes
 - **Purpose**: Ensure all employees can independently discover and access their assigned training regardless of visual, motor, or cognitive abilities
 - **Trigger**: User logs in or navigates to "My Courses" section
