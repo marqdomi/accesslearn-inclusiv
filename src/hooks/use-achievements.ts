@@ -12,6 +12,8 @@ const DEFAULT_USER_STATS: UserStats = {
   longestStreak: 0,
   lastActivityDate: 0,
   achievementsUnlocked: [],
+  totalXP: 0,
+  level: 1,
 }
 
 export function useAchievements() {

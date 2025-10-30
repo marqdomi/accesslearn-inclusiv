@@ -92,4 +92,38 @@ export interface UserStats {
   longestStreak: number
   lastActivityDate: number
   achievementsUnlocked: UserAchievement[]
+  totalXP: number
+  level: number
+}
+
+export interface XPEvent {
+  type: 'module' | 'course' | 'assessment' | 'login' | 'streak' | 'perfect-score'
+  amount: number
+  timestamp: number
+  label: string
+}
+
+export interface Quest {
+  id: string
+  title: string
+  description: string
+  type: 'daily' | 'weekly' | 'story'
+  objectives: QuestObjective[]
+  rewards: QuestReward
+  expiresAt?: number
+  completedAt?: number
+}
+
+export interface QuestObjective {
+  id: string
+  description: string
+  type: 'complete-modules' | 'complete-courses' | 'pass-assessments' | 'earn-xp' | 'maintain-streak'
+  target: number
+  current: number
+}
+
+export interface QuestReward {
+  xp: number
+  achievementId?: string
+  badge?: string
 }

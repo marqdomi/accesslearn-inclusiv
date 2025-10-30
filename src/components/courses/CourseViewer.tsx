@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { Course } from '@/lib/types'
 import { useCourseProgress } from '@/hooks/use-course-progress'
+import { useXP, XP_REWARDS } from '@/hooks/use-xp'
+import { useAchievements } from '@/hooks/use-achievements'
 import { ContentViewer } from './ContentViewer'
 import { AssessmentModule } from './AssessmentModule'
 import { Button } from '@/components/ui/button'
@@ -16,6 +18,8 @@ interface CourseViewerProps {
 
 export function CourseViewer({ course, onExit }: CourseViewerProps) {
   const { progress, markModuleComplete, setCurrentModule, completeCourse, recordAssessmentAttempt } = useCourseProgress(course.id)
+  const { awardXP } = useXP()
+  const { updateModuleCompletion, updateCourseCompletion, updateAssessmentCompletion } = useAchievements()
   const [showAssessment, setShowAssessment] = useState(false)
   const [showModuleList, setShowModuleList] = useState(false)
 
@@ -34,7 +38,10 @@ export function CourseViewer({ course, onExit }: CourseViewerProps) {
 
   const handleModuleComplete = () => {
     markModuleComplete(currentModule.id)
-    toast.success('Module completed!', {
+    updateModuleCompletion()
+    awardXP(XP_REWARDS.MODULE_COMPLETE, `Completed module: ${currentModule.title}`)
+    
+    toast.success('🎉 Module completed!', {
       description: `You've completed "${currentModule.title}"`,
     })
 
@@ -44,7 +51,9 @@ export function CourseViewer({ course, onExit }: CourseViewerProps) {
       setShowAssessment(true)
     } else {
       completeCourse()
-      toast.success('Course completed!', {
+      updateCourseCompletion()
+      awardXP(XP_REWARDS.COURSE_COMPLETE, `Completed course: ${course.title}`)
+      toast.success('🏆 Course completed!', {
         description: `Congratulations on completing "${course.title}"`,
       })
     }
@@ -70,10 +79,42 @@ export function CourseViewer({ course, onExit }: CourseViewerProps) {
   }
 
   const handleAssessmentComplete = (score: number) => {
+    const isFirstAttempt = !progress?.assessmentAttempts || progress.assessmentAttempts === 0
     recordAssessmentAttempt(score)
     completeCourse(score)
-    toast.success('Assessment completed!', {
-      description: `You scored ${score}%`,
+    updateAssessmentCompletion(score, isFirstAttempt)
+    updateCourseCompletion()
+    
+    const xpAmount = score === 100 
+      ? XP_REWARDS.ASSESSMENT_PERFECT 
+      : score >= 70 
+        ? XP_REWARDS.ASSESSMENT_PASS 
+        : 0
+    
+    if (xpAmount > 0) {
+      const xpReason = score === 100 
+        ? `Perfect score on ${course.title}!` 
+        : `Passed assessment: ${course.title}`
+      awardXP(xpAmount, xpReason)
+      
+      if (isFirstAttempt && score >= 70) {
+        awardXP(XP_REWARDS.FIRST_TRY_BONUS, 'First try bonus!')
+      }
+    }
+    
+    awardXP(XP_REWARDS.COURSE_COMPLETE, `Completed course: ${course.title}`)
+    
+    const emoji = score === 100 ? '🌟' : score >= 90 ? '🎉' : score >= 70 ? '✅' : '💪'
+    const message = score === 100 
+      ? 'Perfect Score!' 
+      : score >= 90 
+        ? 'Excellent Work!' 
+        : score >= 70 
+          ? 'Assessment Passed!' 
+          : 'Keep Learning!'
+    
+    toast.success(`${emoji} ${message}`, {
+      description: `You scored ${score}% on "${course.title}"`,
     })
   }
 

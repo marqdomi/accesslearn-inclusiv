@@ -1,14 +1,14 @@
 # Planning Guide
 
-An inclusive corporate learning management system that empowers employees with diverse disabilities to access training materials with dignity, independence, and confidence.
+A gamified corporate learning platform that makes training feel like playing a video game - fun, rewarding, and motivating - while guaranteeing 100% accessibility compliance for employees with diverse disabilities.
 
 **Experience Qualities**:
-1. **Empowering** - Every interaction reinforces user autonomy and capability, with features designed to adapt to individual needs rather than forcing users to adapt to the system.
-2. **Clarity** - Information hierarchy is immediately apparent, navigation paths are predictable, and cognitive load is minimized through thoughtful simplification.
-3. **Reassuring** - Progress is always visible, actions are reversible, and success states are celebrated in ways that build confidence without condescension.
+1. **Playful & Engaging** - Every interaction feels like playing a game rather than studying, with colorful visuals, satisfying animations, and instant rewards that make learning addictive and fun.
+2. **Empowering & Clear** - Simple, intuitive game mechanics with high contrast visuals ensure all users can independently navigate and succeed regardless of ability.
+3. **Rewarding & Motivating** - Constant positive feedback through XP gains, achievement unlocks, progress bars, and celebratory effects that build momentum and encourage consistent engagement.
 
-**Complexity Level**: Light Application (multiple features with basic state)
-This platform serves a focused purpose with thoughtfully constrained features - content delivery, progress tracking, and administrative oversight - without overwhelming complexity that could create barriers to access.
+**Complexity Level**: Light Application (gamified features with persistent state)
+A focused platform combining educational content delivery with video game-inspired progression systems - XP, levels, achievements, quests, and leaderboards - all designed with accessibility-first principles to ensure universal playability.
 
 ## Essential Features
 
@@ -47,12 +47,40 @@ This platform serves a focused purpose with thoughtfully constrained features - 
 - **Progression**: Select "Add Course" → Upload files → Add accessibility data → Set course details → Assign to groups → Publish → Monitor completion
 - **Success criteria**: Upload accepts common formats, prompts for required accessibility data, shows validation errors clearly, and completion reports export to CSV
 
-### 6. Achievements & Gamification System
+### 6. Achievements & Trophy System
 - **Functionality**: PlayStation-style trophy system with bronze, silver, gold, and platinum achievements for completing courses, maintaining streaks, scoring perfectly on assessments, and reaching milestones. Users can view unlocked achievements, track progress toward locked achievements, and share their accomplishments.
 - **Purpose**: Motivate learners through recognition and social sharing, making learning feel rewarding and encouraging consistent engagement
 - **Trigger**: Achievements unlock automatically when requirements are met; users can navigate to achievements page to view all trophies
 - **Progression**: Complete action (course/module/assessment) → Achievement check triggers → Toast notification appears → Achievement unlocked and saved → View in achievements dashboard → Share progress with colleagues
 - **Success criteria**: Achievement notifications are celebratory but not disruptive, progress bars accurately reflect advancement toward locked achievements, sharing functionality works cross-platform, and all achievement logic is accessible via keyboard and screen readers
+
+### 7. Experience Points (XP) & Leveling System
+- **Functionality**: Award XP for every learning action - completing modules (+50 XP), finishing courses (+200 XP), passing assessments (+100 XP), daily login streaks (+10 XP). XP accumulates to unlock levels with visual rank badges and celebratory level-up animations.
+- **Purpose**: Create constant positive reinforcement and visible progression that makes every small action feel meaningful and rewarding
+- **Trigger**: Automatically awards XP after any learning activity; level-up triggers when XP threshold reached
+- **Progression**: Complete activity → XP awarded with animated counter → Progress bar fills toward next level → Level-up celebration when threshold met → New rank badge displayed → Continue learning
+- **Success criteria**: XP awards are instant and satisfying, level thresholds are balanced for regular progression, rank badges are visually distinct and motivating, all XP notifications include ARIA announcements for screen readers
+
+### 8. Learning Quests & Missions
+- **Functionality**: Frame course assignments and learning paths as "Quests" or "Missions" with quest cards showing objectives, rewards (XP + achievements), and progress. Quests can be daily challenges, weekly goals, or long-term learning paths.
+- **Purpose**: Transform mandatory training into exciting challenges that feel purposeful and game-like, increasing motivation through narrative framing
+- **Trigger**: Quests appear on dashboard; users can accept/track active quests; complete objectives to earn rewards
+- **Progression**: View available quests → Accept quest → Track objectives in quest log → Complete objectives → Claim rewards (XP, achievements, badges) → Quest marked complete
+- **Success criteria**: Quest objectives are crystal clear, progress tracking is accurate, quest cards are visually engaging with high contrast, rewards feel generous and motivating, quest system is fully keyboard navigable
+
+### 9. Progress Visualization Dashboard
+- **Functionality**: Game-like stats dashboard showing total XP, current level, rank badge, achievement completion %, course completion stats, current streak, and visual progress rings/bars for each metric
+- **Purpose**: Provide at-a-glance gamified overview of all progress to build pride and motivation
+- **Trigger**: Always visible on main dashboard; updates in real-time as progress occurs
+- **Progression**: Dashboard loads → All stats displayed with animated counters → Visual rings/bars show percentages → Click any stat to drill into details → Celebrate milestones with badges
+- **Success criteria**: All metrics update instantly, visualizations use color + patterns for accessibility, stats are announced by screen readers, dashboard is responsive and clear on mobile
+
+### 10. Team Leaderboards (Optional)
+- **Functionality**: Simple, encouraging leaderboard showing XP rankings within a team/department. Emphasis on personal improvement with "You've climbed 3 ranks this week!" rather than harsh competition. Can be toggled off by users who prefer private learning.
+- **Purpose**: Add optional social motivation for competitive learners while keeping focus on personal growth
+- **Trigger**: Opt-in from settings; view team leaderboard page to see rankings
+- **Progression**: Enable leaderboard → View current ranking → See XP comparison → Celebrate rank improvements → Option to disable anytime
+- **Success criteria**: Leaderboard is opt-in only, messaging is always encouraging never shaming, personal progress highlighted over peer comparison, fully accessible with screen reader support
 
 ## Edge Case Handling
 
@@ -64,41 +92,53 @@ This platform serves a focused purpose with thoughtfully constrained features - 
 
 ## Design Direction
 
-The design should evoke calmness, competence, and trust - professional yet warm, modern yet timeless. It must feel like a supportive workspace, not a clinical tool or playful consumer app. The interface should recede to let content shine, with sufficient white space to reduce cognitive load and purposeful use of color to guide without overwhelming. A minimal interface better serves the core purpose - when learning content is the star, the interface should be an invisible facilitator.
+The design should evoke the excitement and visual richness of modern video games - colorful, dynamic, and fun - while maintaining crystal-clear readability and high contrast for accessibility. Think casual gaming aesthetics (like Duolingo, Kahoot, or modern mobile games) where every interaction feels rewarding and progression is tangibly visible. The interface should be vibrant and motivating, using smooth animations, particle effects for celebrations, and game-like UI elements (health bars for progress, glowing buttons, achievement pop-ups) that make training feel like an adventure rather than a chore. Balance is key: rich enough to feel playful, simple enough to never overwhelm.
 
 ## Color Selection
 
-**Complementary color scheme** - Using blue and warm orange as opposites on the color wheel to create clear visual distinction between primary actions and important highlights, with careful attention to ensuring all combinations meet WCAG AAA contrast ratios.
+**Vibrant Triadic color scheme** - Using three equally spaced colors (purple, cyan, coral) on the color wheel to create an energetic, playful game-like palette that maintains WCAG AAA contrast for accessibility while feeling fun and motivating.
 
-- **Primary Color**: Deep Blue (oklch(0.45 0.12 250)) - Communicates trust, stability, and professionalism while being distinguishable for most color vision types
-- **Secondary Colors**: Soft Slate (oklch(0.65 0.02 250)) for supporting UI elements and Cool Gray (oklch(0.85 0.01 250)) for backgrounds - creates calm visual hierarchy without competing for attention
-- **Accent Color**: Warm Orange (oklch(0.65 0.15 45)) - Attention-grabbing for CTAs, completion states, and success messages; high visibility against blue primary
+- **Primary Color**: Vibrant Purple (oklch(0.55 0.20 290)) - Energetic and playful, commonly associated with gaming and achievement, creates excitement and engagement
+- **Secondary Colors**: Electric Cyan (oklch(0.65 0.15 195)) for supporting actions and progress indicators, Warm Coral (oklch(0.70 0.18 30)) for achievements and celebrations - creates dynamic visual variety
+- **Accent Color**: Bright Lime Green (oklch(0.75 0.20 130)) - High-energy color for XP gains, level-ups, and success states; unmissable and exciting
+- **Game UI Elements**: Deep Indigo backgrounds (oklch(0.25 0.08 280)) with glowing neon accents create video game atmosphere while maintaining readability
 - **Foreground/Background Pairings**:
-  - Background (White oklch(0.98 0 0)): Foreground Dark Gray (oklch(0.25 0 0)) - Ratio 14.8:1 ✓ AAA
-  - Card (Light Gray oklch(0.96 0 0)): Foreground Dark Gray (oklch(0.25 0 0)) - Ratio 13.2:1 ✓ AAA
-  - Primary (Deep Blue oklch(0.45 0.12 250)): White (oklch(0.98 0 0)) - Ratio 8.5:1 ✓ AAA
-  - Secondary (Soft Slate oklch(0.65 0.02 250)): Dark Gray (oklch(0.25 0 0)) - Ratio 5.2:1 ✓ AA
-  - Accent (Warm Orange oklch(0.65 0.15 45)): Dark Gray (oklch(0.25 0 0)) - Ratio 5.4:1 ✓ AA
-  - Muted (Cool Gray oklch(0.85 0.01 250)): Dark Gray (oklch(0.25 0 0)) - Ratio 9.8:1 ✓ AAA
+  - Background (Soft White oklch(0.98 0 0)): Foreground Deep Purple (oklch(0.25 0.08 280)) - Ratio 13.2:1 ✓ AAA
+  - Card (Light Gray oklch(0.95 0 0)): Foreground Deep Purple (oklch(0.25 0.08 280)) - Ratio 12.1:1 ✓ AAA
+  - Primary (Vibrant Purple oklch(0.55 0.20 290)): White Text (oklch(0.98 0 0)) - Ratio 6.8:1 ✓ AA
+  - Secondary (Electric Cyan oklch(0.65 0.15 195)): Deep Purple (oklch(0.25 0.08 280)) - Ratio 5.1:1 ✓ AA
+  - Accent (Bright Lime oklch(0.75 0.20 130)): Deep Purple (oklch(0.25 0.08 280)) - Ratio 7.2:1 ✓ AA
+  - Success (Lime Green oklch(0.75 0.20 130)): White Text (oklch(0.98 0 0)) - Ratio 4.9:1 ✓ AA
 
 ## Font Selection
 
-Typography should prioritize maximum legibility and readability across all abilities - clear letterforms with generous spacing, appropriate weight variations for hierarchy, and system fonts that render consistently across platforms. Using **Inter** for its exceptional clarity at all sizes, humanist proportions, and optimized spacing for screen reading, paired with **Georgia** for extended body text in content areas where serif readability aids comprehension.
+Typography should feel modern, dynamic, and energetic while maintaining perfect legibility. Using **Poppins** - a geometric sans-serif that feels playful and contemporary, commonly used in gaming UIs for its friendly, approachable character while remaining highly readable at all sizes.
 
 - **Typographic Hierarchy**:
-  - H1 (Page Titles): Inter Bold/32px/tight letter spacing (-0.02em)/line height 1.2 - Maximum clarity for primary navigation waypoints
-  - H2 (Section Headers): Inter Semibold/24px/normal letter spacing/line height 1.3 - Clear delineation of content sections
-  - H3 (Module Titles): Inter Medium/20px/normal letter spacing/line height 1.4 - Subsection identification
-  - Body (Content): Georgia Regular/18px/normal letter spacing/line height 1.6 - Extended reading comfort
-  - UI Labels: Inter Medium/16px/slight letter spacing (0.01em)/line height 1.5 - Interface clarity
-  - Captions/Metadata: Inter Regular/14px/normal letter spacing/line height 1.5 - Supporting information
+  - H1 (Page Titles): Poppins Bold/36px/tight letter spacing (-0.01em)/line height 1.2 - Bold, impactful headers that command attention
+  - H2 (Section Headers): Poppins SemiBold/28px/normal letter spacing/line height 1.3 - Clear section breaks with energy
+  - H3 (Module Titles): Poppins Medium/22px/normal letter spacing/line height 1.4 - Playful subsection headers
+  - Body (Content): Poppins Regular/18px/normal letter spacing/line height 1.6 - Clean, readable content
+  - UI Labels: Poppins Medium/16px/slight letter spacing (0.01em)/line height 1.5 - Clear interface text
+  - Game Stats/Numbers: Poppins Bold/20-32px/tight spacing - Make XP, scores, and stats pop visually
+  - Captions: Poppins Regular/14px/normal letter spacing/line height 1.5 - Supporting information
 
 ## Animations
 
-Animations must serve functional purposes only - never decorative or distracting. Motion should be minimal, predictable, and always respects user preferences for reduced motion. The balance tips heavily toward subtle functionality: state changes are communicated through gentle fades, focus indicators transition smoothly, and progress updates feel connected without calling attention to themselves.
+Animations are critical to creating the video game feel - they should be smooth, satisfying, and celebratory. Motion communicates success, progression, and excitement while always respecting reduced-motion preferences. The balance tips toward engaging and rewarding: level-ups trigger particle effects, achievements slide in with bounce, XP bars fill with satisfying easing, and buttons respond with scale transforms. All animations must have accessible alternatives (instant state changes) for users with motion sensitivity.
 
-- **Purposeful Meaning**: Smooth transitions (200ms) communicate state changes; progress bar fills communicate advancement; gentle fades (150ms) for modal appearances reduce jarring context switches
-- **Hierarchy of Movement**: Progress indicators > Focus states > Content transitions > Background elements (which remain static)
+- **Purposeful Meaning**: 
+  - Celebration animations (300-500ms) with particle effects for achievements, level-ups, and course completions
+  - Smooth progress bar fills (400ms) with anticipation easing to make advancement feel earned
+  - Button interactions (150ms) with scale transforms for tactile feedback
+  - XP gain animations (250ms) with number count-ups and glow effects
+  - Toast notifications slide in with spring physics (300ms) for satisfying micro-interactions
+  
+- **Hierarchy of Movement**: 
+  - Achievement unlocks & level-ups (highest priority, full-screen celebrations)
+  - XP gains & progress updates (medium priority, localized effects)
+  - Button states & micro-interactions (low priority, subtle responses)
+  - Background elements remain stable for orientation
 
 ## Component Selection
 
