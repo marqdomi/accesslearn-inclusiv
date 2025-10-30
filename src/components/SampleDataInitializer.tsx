@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { useKV } from '@github/spark/hooks'
-import { Course } from '@/lib/types'
+import { Course, EmployeeCredentials } from '@/lib/types'
 import { LessonModule } from '@/lib/lesson-types'
 import { htmlFundamentalsModule } from '@/lib/sample-lessons'
 
@@ -259,9 +259,53 @@ const SAMPLE_COURSES: Course[] = [
   },
 ]
 
+const SAMPLE_CREDENTIALS: EmployeeCredentials[] = [
+  {
+    id: 'admin-001',
+    email: 'admin@gamelearn.test',
+    temporaryPassword: 'Admin2024!',
+    firstName: 'Admin',
+    lastName: 'User',
+    department: 'IT',
+    status: 'activated',
+    createdAt: Date.now(),
+  },
+  {
+    id: 'user-001',
+    email: 'sarah.johnson@gamelearn.test',
+    temporaryPassword: 'Welcome123!',
+    firstName: 'Sarah',
+    lastName: 'Johnson',
+    department: 'Sales',
+    status: 'activated',
+    createdAt: Date.now(),
+  },
+  {
+    id: 'user-002',
+    email: 'mike.chen@gamelearn.test',
+    temporaryPassword: 'Welcome123!',
+    firstName: 'Mike',
+    lastName: 'Chen',
+    department: 'Engineering',
+    status: 'activated',
+    createdAt: Date.now(),
+  },
+  {
+    id: 'user-003',
+    email: 'emma.rodriguez@gamelearn.test',
+    temporaryPassword: 'Welcome123!',
+    firstName: 'Emma',
+    lastName: 'Rodriguez',
+    department: 'Marketing',
+    status: 'activated',
+    createdAt: Date.now(),
+  },
+]
+
 export function SampleDataInitializer() {
   const [courses, setCourses] = useKV<Course[]>('courses', [])
   const [lessonModules, setLessonModules] = useKV<Record<string, LessonModule>>('lesson-modules', {})
+  const [credentials, setCredentials] = useKV<EmployeeCredentials[]>('employee-credentials', [])
 
   useEffect(() => {
     if (!courses || courses.length === 0) {
@@ -274,6 +318,12 @@ export function SampleDataInitializer() {
       setLessonModules({
         'web-dev-quest': htmlFundamentalsModule,
       })
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!credentials || credentials.length === 0) {
+      setCredentials(SAMPLE_CREDENTIALS)
     }
   }, [])
 

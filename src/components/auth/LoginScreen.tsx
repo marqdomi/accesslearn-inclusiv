@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Eye, EyeSlash, Lightning, Warning } from '@phosphor-icons/react'
+import { Eye, EyeSlash, Lightning, Warning, Info } from '@phosphor-icons/react'
 import { motion } from 'framer-motion'
 import { isValidEmail } from '@/lib/auth-utils'
 
@@ -18,6 +18,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+  const [showTestHint, setShowTestHint] = useState(true)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -76,6 +77,32 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
+              {showTestHint && (
+                <Alert className="bg-muted/50 border-primary/20">
+                  <Info size={18} className="mt-0.5 text-primary" aria-hidden="true" />
+                  <div className="flex items-start justify-between gap-2">
+                    <AlertDescription className="flex-1 text-sm">
+                      <strong className="font-semibold">Test Credentials:</strong>
+                      <br />
+                      <span className="text-xs">
+                        Admin: admin@gamelearn.test / Admin2024!
+                        <br />
+                        User: sarah.johnson@gamelearn.test / Welcome123!
+                      </span>
+                    </AlertDescription>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 px-2 text-xs"
+                      onClick={() => setShowTestHint(false)}
+                    >
+                      Dismiss
+                    </Button>
+                  </div>
+                </Alert>
+              )}
+              
               {error && (
                 <Alert variant="destructive" className="animate-in slide-in-from-top-2">
                   <Warning size={18} className="mt-0.5" aria-hidden="true" />

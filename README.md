@@ -40,6 +40,18 @@ Look for the ⚙️ icon in the bottom-right corner to access accessibility sett
 
 ## 🚀 Getting Started
 
+### Quick Test Login
+
+**Admin Account:**
+- Email: `admin@gamelearn.test`
+- Password: `Admin2024!`
+
+**User Account:**
+- Email: `sarah.johnson@gamelearn.test`
+- Password: `Welcome123!`
+
+See [TEST_CREDENTIALS.md](./TEST_CREDENTIALS.md) for complete test account details.
+
 ### For Users
 1. Navigate to the Dashboard
 2. Click the ⚙️ icon (bottom-right) to adjust accessibility settings
