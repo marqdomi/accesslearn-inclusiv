@@ -39,9 +39,11 @@ export function useAchievements() {
           shouldUnlock = stats.totalModulesCompleted >= achievement.requirement
           break
         case 'assessment':
-          if (achievement.id === 'ace-student') {
+          if (achievement.id.startsWith('assessment-specialist')) {
             shouldUnlock = stats.totalAssessmentsPassed >= achievement.requirement
           } else if (achievement.id === 'first-try') {
+            shouldUnlock = stats.totalAssessmentsPassed >= 1
+          } else if (achievement.id === 'perfect-score') {
             shouldUnlock = stats.totalAssessmentsPassed >= 1
           }
           break

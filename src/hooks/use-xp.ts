@@ -2,54 +2,72 @@ import { useKV } from '@github/spark/hooks'
 import { toast } from 'sonner'
 
 export const XP_REWARDS = {
-  MODULE_COMPLETE: 50,
-  COURSE_COMPLETE: 200,
-  ASSESSMENT_PASS: 100,
-  ASSESSMENT_PERFECT: 150,
   DAILY_LOGIN: 10,
-  STREAK_BONUS: 25,
-  FIRST_TRY_BONUS: 50,
+  LESSON_BLOCK_COMPLETE: 15,
+  INTERACTIVE_CHALLENGE_COMPLETE: 30,
+  LESSON_COMPLETE: 50,
+  MODULE_COMPLETE: 100,
+  QUIZ_PASS: 150,
+  QUIZ_PERFECT: 250,
+  COURSE_COMPLETE: 500,
+  ASSESSMENT_FINAL_PASS: 500,
+  ASSESSMENT_FINAL_PERFECT: 750,
+  STREAK_3_DAYS: 25,
+  STREAK_7_DAYS: 75,
+  STREAK_30_DAYS: 300,
+  FIRST_TRY_BONUS: 100,
+  SPEED_BONUS: 50,
+  RETURN_AFTER_FAILURE: 25,
+  COMPLETE_WITH_ACCESSIBILITY: 20,
 } as const
 
-export const LEVEL_THRESHOLDS = [
-  0, 100, 250, 450, 700, 1000, 1400, 1850, 2350, 2900, 3500, 4200, 5000, 5900, 6900, 8000, 9200,
-  10500, 12000, 13600, 15400, 17300, 19400, 21700, 24200, 27000, 30000, 33300, 36900, 40800,
-]
+function generateInfiniteLevelThresholds(level: number): number {
+  if (level <= 1) return 0
+  if (level <= 5) {
+    return Math.floor(100 * Math.pow(1.5, level - 1))
+  }
+  if (level <= 20) {
+    const baseXP = 100 * Math.pow(1.5, 4)
+    return Math.floor(baseXP + (level - 5) * 200)
+  }
+  const baseXP = 100 * Math.pow(1.5, 4) + (15 * 200)
+  return Math.floor(baseXP + (level - 20) * 500)
+}
+
+export function getLevelFromXP(xp: number): number {
+  let level = 1
+  while (generateInfiniteLevelThresholds(level + 1) <= xp) {
+    level++
+    if (level > 10000) break
+  }
+  return level
+}
+
+export function getXPForNextLevel(currentLevel: number): number {
+  return generateInfiniteLevelThresholds(currentLevel + 1)
+}
+
+export function getXPForCurrentLevel(currentLevel: number): number {
+  return generateInfiniteLevelThresholds(currentLevel)
+}
 
 export const RANK_NAMES = [
   'Novice',
   'Learner',
   'Student',
   'Scholar',
+  'Specialist',
   'Expert',
+  'Professional',
   'Master',
   'Grandmaster',
   'Legend',
+  'Champion',
+  'Hero',
 ]
 
-export function getLevelFromXP(xp: number): number {
-  for (let i = LEVEL_THRESHOLDS.length - 1; i >= 0; i--) {
-    if (xp >= LEVEL_THRESHOLDS[i]) {
-      return i + 1
-    }
-  }
-  return 1
-}
-
-export function getXPForNextLevel(currentLevel: number): number {
-  if (currentLevel >= LEVEL_THRESHOLDS.length) {
-    return LEVEL_THRESHOLDS[LEVEL_THRESHOLDS.length - 1] + (currentLevel - LEVEL_THRESHOLDS.length + 1) * 3000
-  }
-  return LEVEL_THRESHOLDS[currentLevel]
-}
-
-export function getXPForCurrentLevel(currentLevel: number): number {
-  if (currentLevel <= 1) return 0
-  return LEVEL_THRESHOLDS[currentLevel - 2]
-}
-
 export function getRankName(level: number): string {
-  const rankIndex = Math.min(Math.floor((level - 1) / 4), RANK_NAMES.length - 1)
+  const rankIndex = Math.min(Math.floor((level - 1) / 5), RANK_NAMES.length - 1)
   return RANK_NAMES[rankIndex]
 }
 
@@ -98,7 +116,7 @@ export function useXP() {
     return {
       current: xpInCurrentLevel,
       required: xpNeededForNextLevel,
-      percentage: (xpInCurrentLevel / xpNeededForNextLevel) * 100,
+      percentage: Math.min(100, (xpInCurrentLevel / xpNeededForNextLevel) * 100),
     }
   }
 

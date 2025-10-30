@@ -96,9 +96,9 @@ export function CourseViewer({ course, onExit }: CourseViewerProps) {
     updateCourseCompletion()
     
     const xpAmount = score === 100 
-      ? XP_REWARDS.ASSESSMENT_PERFECT 
+      ? XP_REWARDS.ASSESSMENT_FINAL_PERFECT 
       : score >= 70 
-        ? XP_REWARDS.ASSESSMENT_PASS 
+        ? XP_REWARDS.ASSESSMENT_FINAL_PASS 
         : 0
     
     if (xpAmount > 0) {

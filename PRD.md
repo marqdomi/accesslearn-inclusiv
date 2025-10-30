@@ -10,6 +10,132 @@ A gamified corporate learning platform that makes training feel like playing a v
 **Complexity Level**: Light Application (gamified features with persistent state)
 A focused platform combining educational content delivery with video game-inspired progression systems - XP, levels, achievements, quests, and leaderboards - all designed with accessibility-first principles to ensure universal playability.
 
+## Adaptive Gamification & Personalization System
+
+### Scalable Progression System (The Infinite Game)
+
+**XP Rewards Structure** (Prioritized by Value):
+- Daily Login: +10 XP (habit formation)
+- Lesson Block Complete: +15 XP (micro-progress)
+- Interactive Challenge Complete: +30 XP (active engagement)
+- Lesson Complete: +50 XP (checkpoint milestone)
+- Module Complete: +100 XP (major milestone)
+- Quiz Pass (70%+): +150 XP (knowledge validation)
+- Quiz Perfect (100%): +250 XP (mastery bonus)
+- Course Complete: +500 XP (achievement unlock)
+- Final Assessment Pass: +500 XP (certification level)
+- Final Assessment Perfect: +750 XP (excellence reward)
+- First Try Bonus: +100 XP (efficiency incentive)
+- 3-Day Streak: +25 XP (consistency bonus)
+- 7-Day Streak: +75 XP (habit reinforcement)
+- 30-Day Streak: +300 XP (dedication reward)
+- Speed Bonus: +50 XP (performance incentive)
+- Return After Failure: +25 XP (resilience reward)
+- Complete with Accessibility Features: +20 XP (inclusive bonus)
+
+**Infinite Level Scaling**:
+- Levels 1-5: Fast progression (100 XP × 1.5^level) for early motivation
+- Levels 6-20: Moderate scaling (+200 XP per level) for sustained engagement
+- Levels 21+: Linear scaling (+500 XP per level) ensuring infinite scalability
+- New content automatically feeds into existing XP economy
+- No level cap - system supports unlimited growth
+
+**Rank Progression** (Every 5 Levels):
+Novice → Learner → Student → Scholar → Specialist → Expert → Professional → Master → Grandmaster → Legend → Champion → Hero
+
+### Achievement Strategy (Tiered & Scalable)
+
+**Course Completion Tiers**:
+- First Steps (1 course) - Bronze
+- Learning Specialist I (5 courses) - Silver
+- Learning Specialist II (10 courses) - Gold
+- Learning Specialist III (15 courses) - Platinum
+- Learning Master (25 courses) - Platinum
+- Learning Legend (50 courses) - Platinum
+
+**Assessment Excellence Tiers** (90%+ scores):
+- Assessment Specialist I (5 assessments) - Silver
+- Assessment Specialist II (10 assessments) - Gold
+- Assessment Specialist III (25 assessments) - Platinum
+
+**Streak Achievements** (Evergreen Cycling):
+- 7-Day Study Streak - Silver
+- 30-Day Study Streak - Gold
+- Streak Specialist I (60 days) - Platinum
+- Streak Specialist II (90 days) - Platinum
+- Unstoppable (180 days) - Platinum
+
+**Module Milestones** (Scales with Content):
+- Module Specialist I (25 modules) - Bronze
+- Module Specialist II (50 modules) - Silver
+- Module Specialist III (100 modules) - Gold
+- Module Master (250 modules) - Platinum
+- Module Legend (500 modules) - Platinum
+
+**Special Achievements**:
+- Perfect Score (100% on any assessment) - Gold
+- First Try Success (pass on first attempt) - Bronze
+- Quick Study (10 modules in one session) - Silver
+- Speed Runner (course in under 1 hour) - Gold (Hidden)
+- Quarterly Engagement Badge (10 activities per quarter) - Silver (Hidden)
+
+### Adaptive Feedback & Remediation
+
+**Constructive Failure Messaging**:
+- 100%: "Perfect! You aced it on your first try! Outstanding work!" 🎉
+- 90-99%: "Excellent work! You've mastered this material!" 🌟
+- 70-89%: "Great job! You passed! Keep up the good work!" ✅
+- 50-69%: "Mission incomplete, but you're close! Review and try again!" 💪
+- <50%: "Don't worry! Focus on these specific areas and you'll ace it!" 🎯
+
+**Intelligent Remediation**:
+- System analyzes failed questions to identify specific missed concepts
+- Offers targeted micro-resources (30-second video clips, specific paragraphs)
+- No full module repetition - only review what's needed
+- Remediation suggestions prioritized by frequency of errors
+- Types: Video Segment (with timestamp), Text Section, Interactive Challenge
+
+**Progress Retention (Auto-Save)**:
+- Saves at start of every lesson block
+- Saves after every question answered
+- Saves every 30 seconds during active session
+- Saves on browser close/tab switch
+- Saves current position, answered questions, video timestamps, time spent
+- Visual indicator shows last save time
+- Resume exactly where user left off after any interruption
+
+### Smart Personalization & Accessibility Integration
+
+**Automatic Accessibility Profile Application**:
+- All preferences recalled from onboarding automatically
+- High Contrast mode applies instantly across all new content
+- Reduced Motion preference respected in all animations
+- Text Size preference scales all content dynamically
+- Font family preference (if set) applied globally
+- Settings persist forever, never require re-entry
+
+**Adaptive Media Delivery Requirements**:
+- Video content flagged "incomplete" until captions added (required for all)
+- Audio description track required before publishing if user has visual impairment flag
+- Alternative text required for all images before publishing
+- Transcript required for all audio/video content
+- Admin publishing blocked until all accessibility data complete
+- Real-time validation with specific error messages
+
+**Pacing & Time Extensions**:
+- Timed assessments automatically grant 200% time for users with accessibility needs
+- Custom time multiplier supported per user profile
+- All timers show extended time without stigma or special indication
+- No time limits are mandatory - all assessments can be untimed
+- Extended time applies to: quizzes, final assessments, challenges
+
+**Accessibility Validation on Upload**:
+- Admin sees checklist of required accessibility data
+- Visual indicators show missing vs complete requirements
+- Publishing button disabled until all required fields filled
+- Warnings for recommended improvements (audio description)
+- Suggestions for enhancement (longer alt text descriptions)
+
 ## Essential Features
 
 ### 1. Corporate Login & Authentication System
