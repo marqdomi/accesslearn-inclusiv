@@ -12,7 +12,56 @@ A focused platform combining educational content delivery with video game-inspir
 
 ## Essential Features
 
-### 1. User Dashboard (Operations Base)
+### 1. Corporate Login & Authentication System
+- **Functionality**: Secure, accessible login screen with email/password fields, password visibility toggle, forgot password link, and clear error messaging. Supports both temporary (first-time) and permanent (returning user) passwords.
+- **Purpose**: Provide secure, WCAG-compliant access control while maintaining ease of use for all employees including those with disabilities
+- **Trigger**: User navigates to platform URL or session expires
+- **Progression**: Login screen loads → User enters email/password → System validates credentials → First-time users proceed to password change → Returning users access dashboard
+- **Success criteria**: All form fields have visible labels, password toggle works with keyboard, error messages are announced by screen readers, login persists for 2 hours, accessibility standards met (4.5:1 contrast, 44px touch targets)
+
+### 2. First-Time Password Change Flow
+- **Functionality**: Mandatory password change screen for first-time login with current/new/confirm password fields, real-time password strength indicator, requirement checklist (8+ chars, uppercase, lowercase, number, special char), and clear visual feedback
+- **Purpose**: Ensure account security while guiding users to create strong passwords through educational UI
+- **Trigger**: Successful first login with temporary credentials
+- **Progression**: Enter temporary password → Create new password → View strength meter and requirements → Confirm new password → Validate all requirements → Password updated → Proceed to onboarding
+- **Success criteria**: Password strength visualized accessibly (color + text), requirements checklist uses checkmarks + text labels, all fields keyboard navigable, validation errors are descriptive and actionable
+
+### 3. Employee Onboarding & Accessibility Check-In
+- **Functionality**: Two-step onboarding wizard: (1) Create player identity (display name, avatar selection from 8 emoji options, preview card), (2) Set accessibility preferences (high contrast mode, text size selection, reduce motion toggle, disable sound effects toggle) with clear descriptions and instant previews
+- **Purpose**: Personalize the user experience and capture accessibility needs before showing main content, ensuring optimal UX from first interaction
+- **Trigger**: After successful password change on first login
+- **Progression**: Welcome message → Step 1: Choose display name and avatar → Preview identity card → Step 2: Configure accessibility (high contrast, text size, motion, sound) → Review preferences → Complete setup → Dashboard appears with applied preferences
+- **Success criteria**: All preferences persist across sessions, avatar selection is keyboard accessible, text size changes preview in real-time, reduce motion is respected immediately, preferences can be changed later from accessibility panel
+
+### 4. Corporate Admin Bulk Employee Enrollment
+- **Functionality**: CSV upload interface for bulk employee creation with template download, file validation, automatic secure temporary password generation (readable format like "SwiftEagle4782!"), success/failure reporting with detailed errors, and credential download (CSV with email, name, dept, temp password, instructions)
+- **Purpose**: Enable HR/training teams to efficiently onboard entire cohorts without manual account creation
+- **Trigger**: Admin navigates to "Bulk Enrollment" section
+- **Progression**: Download CSV template → Fill with employee data (email, firstName, lastName, department) → Upload file → System validates and processes → View success/failure summary → Download credentials CSV → Distribute to employees
+- **Success criteria**: CSV parser handles common formatting variations, duplicate email detection prevents conflicts, generated passwords are strong yet readable, credentials download includes clear instructions for employees, failed rows display actionable error messages
+
+### 5. Employee Group Management
+- **Functionality**: Create and manage groups (e.g., "New Hires", "Sales Team") with name, description, and member selection via checkbox list. View all groups in table with member count, assigned courses, and creation date. Delete groups with confirmation.
+- **Purpose**: Organize employees for batch course assignment and simplified administration
+- **Trigger**: Admin navigates to "Create Groups" section
+- **Progression**: Click create group → Enter name and description → Select members from employee list via checkboxes → Preview selected count → Save group → Group appears in overview table
+- **Success criteria**: Groups are searchable/filterable, member selection works with keyboard, groups display member count badge, deletion requires confirmation, empty state guides users to create first group
+
+### 6. Course Assignment Manager
+- **Functionality**: Assign courses to groups or individual employees via dropdown selectors. Toggle between group/individual assignment modes. View all assignments in separate tables (group assignments show member count, individual assignments list by employee). Real-time assignment creation with toast confirmations.
+- **Purpose**: Simplify the process of assigning training (missions/quests) to the right employees
+- **Trigger**: Admin navigates to "Assign Courses" section
+- **Progression**: Select assignment type (group/individual) → Choose course from dropdown → Choose target group/employee → Assign → View confirmation → Assignment appears in relevant table
+- **Success criteria**: Assignments are instant, dropdowns are keyboard accessible, tables show clear status (Active/Complete), assignments persist across sessions, duplicate prevention avoids redundant assignments
+
+### 7. Corporate Reporting & Analytics Dashboard
+- **Functionality**: Two-tab reporting interface: (1) Course Completion - shows completion rates, in-progress, not-started counts per course with visual/table toggle, (2) Engagement Metrics - displays average daily XP, courses in progress/completed, learning streaks per user. Includes overall metrics cards (total users, courses, completion %, avg XP). Export to CSV functionality for both report types.
+- **Purpose**: Provide HR/training teams with actionable insights on training effectiveness and employee engagement
+- **Trigger**: Admin navigates to "Analytics Dashboard" section
+- **Progression**: View overview metrics → Select tab (Completion/Engagement) → Toggle between visual/table view → Filter/sort data → Export to CSV for further analysis
+- **Success criteria**: All charts have table view alternative for screen readers, CSV exports include all data with headers, metrics update in real-time, visual progress bars use color + percentage text, high contrast mode is respected
+
+### 8. User Dashboard (Operations Base)
 - **Functionality**: Centralized command center showing player identity (avatar, level, XP bar), main mission (most urgent/recent course), progress goals (achievements, learning streak), side missions (course catalog), and quick accessibility settings. Prioritizes "what to do now" with clear visual hierarchy.
 - **Purpose**: Provide at-a-glance game status and immediate actionable next steps while ensuring accessibility controls are always prominent
 - **Trigger**: User logs in or navigates to dashboard from header

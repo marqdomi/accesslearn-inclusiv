@@ -1,22 +1,25 @@
 import { useKV } from '@github/spark/hooks'
-import { CourseStructure, User, UserProgress, UserStats } from '@/lib/types'
+import { CourseStructure, User, UserProgress, UserStats, EmployeeCredentials } from '@/lib/types'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Users, BookOpen, TrendUp, Trophy, Plus, FileText } from '@phosphor-icons/react'
+import { Users, BookOpen, TrendUp, Trophy, Plus, FileText, UserPlus, Target, UsersThree, ChartBar } from '@phosphor-icons/react'
 import { motion } from 'framer-motion'
 
 interface AdminDashboardProps {
-  onNavigate: (section: 'courses' | 'users' | 'reports' | 'gamification') => void
+  onNavigate: (section: 'courses' | 'users' | 'reports' | 'gamification' | 'enrollment' | 'corporate-reports' | 'assignments' | 'groups') => void
 }
 
 export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
   const [courses] = useKV<CourseStructure[]>('admin-courses', [])
   const [users] = useKV<User[]>('users', [])
+  const [employees] = useKV<EmployeeCredentials[]>('employee-credentials', [])
   const [allProgress] = useKV<Record<string, UserProgress[]>>('all-user-progress', {})
   const [allStats] = useKV<Record<string, UserStats>>('all-user-stats', {})
 
   const totalCourses = courses?.length || 0
   const totalUsers = users?.length || 0
+  const totalEmployees = employees?.length || 0
+  const pendingEmployees = employees?.filter(e => e.status === 'pending').length || 0
   const publishedCourses = courses?.filter(c => c.published).length || 0
 
   const completionRate = (() => {
@@ -42,63 +45,91 @@ export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
 
   const quickActions = [
     {
-      label: 'Create New Course',
+      label: 'Bulk Enrollment',
+      icon: UserPlus,
+      action: () => onNavigate('enrollment'),
+      variant: 'default' as const,
+      description: 'Upload employee CSV file'
+    },
+    {
+      label: 'Create Groups',
+      icon: UsersThree,
+      action: () => onNavigate('groups'),
+      variant: 'outline' as const,
+      description: 'Organize employees into teams'
+    },
+    {
+      label: 'Assign Courses',
+      icon: Target,
+      action: () => onNavigate('assignments'),
+      variant: 'outline' as const,
+      description: 'Assign training to groups/users'
+    },
+    {
+      label: 'Analytics Dashboard',
+      icon: ChartBar,
+      action: () => onNavigate('corporate-reports'),
+      variant: 'outline' as const,
+      description: 'View progress & engagement'
+    },
+    {
+      label: 'Create Course',
       icon: Plus,
       action: () => onNavigate('courses'),
-      variant: 'default' as const,
-      description: 'Build a new training course'
+      variant: 'outline' as const,
+      description: 'Build new training content'
     },
     {
       label: 'Manage Users',
       icon: Users,
       action: () => onNavigate('users'),
       variant: 'outline' as const,
-      description: 'Add and organize learners'
+      description: 'Individual user management'
     },
     {
       label: 'View Reports',
       icon: FileText,
       action: () => onNavigate('reports'),
       variant: 'outline' as const,
-      description: 'Analyze learning progress'
+      description: 'Detailed analytics reports'
     },
     {
-      label: 'Configure Gamification',
+      label: 'Gamification',
       icon: Trophy,
       action: () => onNavigate('gamification'),
       variant: 'outline' as const,
-      description: 'Set up XP and badges'
+      description: 'Configure XP and badges'
     }
   ]
 
   const stats = [
     {
+      title: 'Total Employees',
+      value: totalEmployees,
+      subtitle: `${pendingEmployees} pending activation`,
+      icon: Users,
+      color: 'text-primary'
+    },
+    {
       title: 'Total Courses',
       value: totalCourses,
       subtitle: `${publishedCourses} published`,
       icon: BookOpen,
-      color: 'text-primary'
-    },
-    {
-      title: 'Active Learners',
-      value: totalUsers,
-      subtitle: 'Registered users',
-      icon: Users,
       color: 'text-secondary'
     },
     {
       title: 'Completion Rate',
       value: `${completionRate}%`,
-      subtitle: 'Courses completed',
+      subtitle: 'Overall progress',
       icon: TrendUp,
-      color: 'text-accent'
+      color: 'text-success'
     },
     {
       title: 'XP Awarded',
       value: totalXPAwarded.toLocaleString(),
-      subtitle: 'Total experience points',
+      subtitle: 'Total experience earned',
       icon: Trophy,
-      color: 'text-xp'
+      color: 'text-accent'
     }
   ]
 
@@ -141,16 +172,16 @@ export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
               key={action.label}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 + index * 0.1 }}
+              transition={{ delay: 0.4 + index * 0.05 }}
             >
-              <Card className="hover:shadow-md transition-shadow cursor-pointer group" onClick={action.action}>
+              <Card className="hover:shadow-md transition-shadow cursor-pointer group h-full" onClick={action.action}>
                 <CardHeader>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-start gap-3">
                     <div className="p-2 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                      <action.icon className="h-6 w-6 text-primary" weight="duotone" aria-hidden="true" />
+                      <action.icon className="h-5 w-5 text-primary" weight="duotone" aria-hidden="true" />
                     </div>
-                    <div>
-                      <CardTitle className="text-base">{action.label}</CardTitle>
+                    <div className="flex-1">
+                      <CardTitle className="text-sm leading-tight">{action.label}</CardTitle>
                       <CardDescription className="text-xs mt-1">
                         {action.description}
                       </CardDescription>
@@ -165,9 +196,9 @@ export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
 
       <Card>
         <CardHeader>
-          <CardTitle>Getting Started</CardTitle>
+          <CardTitle>Corporate Admin Workflow</CardTitle>
           <CardDescription>
-            Build engaging, accessible training in three simple steps
+            Set up your learning platform in four simple steps
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -176,9 +207,9 @@ export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
               1
             </div>
             <div>
-              <p className="font-medium">Create a Course</p>
+              <p className="font-medium">Bulk Enroll Employees</p>
               <p className="text-sm text-muted-foreground">
-                Use the visual course builder to structure your training content
+                Upload a CSV file to create employee accounts with secure temporary passwords
               </p>
             </div>
           </div>
@@ -187,9 +218,9 @@ export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
               2
             </div>
             <div>
-              <p className="font-medium">Add Accessible Content</p>
+              <p className="font-medium">Create Groups</p>
               <p className="text-sm text-muted-foreground">
-                Upload media with required alt text, captions, and transcripts
+                Organize employees by department, role, or onboarding cohort
               </p>
             </div>
           </div>
@@ -198,16 +229,33 @@ export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
               3
             </div>
             <div>
-              <p className="font-medium">Assign & Track</p>
+              <p className="font-medium">Assign Training Courses</p>
               <p className="text-sm text-muted-foreground">
-                Assign courses to users or groups and monitor their progress
+                Assign courses (missions/quests) to entire groups or individual employees
               </p>
             </div>
           </div>
-          <Button onClick={() => onNavigate('courses')} className="w-full mt-4" size="lg">
-            <Plus className="mr-2" size={20} />
-            Create Your First Course
-          </Button>
+          <div className="flex items-start gap-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-success text-success-foreground text-sm font-bold">
+              4
+            </div>
+            <div>
+              <p className="font-medium">Monitor Progress & Engagement</p>
+              <p className="text-sm text-muted-foreground">
+                Track completion rates, engagement metrics, and export reports
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-3 mt-6">
+            <Button onClick={() => onNavigate('enrollment')} className="flex-1" size="lg">
+              <UserPlus className="mr-2" size={20} />
+              Upload Employees
+            </Button>
+            <Button onClick={() => onNavigate('corporate-reports')} variant="outline" className="flex-1" size="lg">
+              <ChartBar className="mr-2" size={20} />
+              View Analytics
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>

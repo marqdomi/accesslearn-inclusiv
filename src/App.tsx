@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useKV } from '@github/spark/hooks'
+import { useAuth } from '@/hooks/use-auth'
 import { Course } from '@/lib/types'
 import { SkipLink } from '@/components/accessibility/SkipLink'
 import { AccessibilityPanel } from '@/components/accessibility/AccessibilityPanel'
@@ -8,17 +9,48 @@ import { UserDashboard } from '@/components/dashboard/UserDashboard'
 import { CourseViewer } from '@/components/courses/CourseViewer'
 import { AchievementsDashboard } from '@/components/achievements/AchievementsDashboard'
 import { AdminPanel } from '@/components/admin/AdminPanel'
+import { LoginScreen } from '@/components/auth/LoginScreen'
+import { PasswordChangeScreen } from '@/components/auth/PasswordChangeScreen'
+import { OnboardingScreen } from '@/components/auth/OnboardingScreen'
 import { Button } from '@/components/ui/button'
-import { Trophy, GraduationCap, Lightning, ShieldCheck } from '@phosphor-icons/react'
+import { Trophy, GraduationCap, Lightning, ShieldCheck, SignOut } from '@phosphor-icons/react'
 import { Toaster } from '@/components/ui/sonner'
 import { motion } from 'framer-motion'
 
 type View = 'dashboard' | 'achievements' | 'admin'
 
 function App() {
+  const { session, login, changePassword, completeOnboarding, logout, isAuthenticated } = useAuth()
   const [courses] = useKV<Course[]>('courses', [])
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null)
   const [currentView, setCurrentView] = useState<View>('dashboard')
+
+  if (!isAuthenticated || !session) {
+    return (
+      <>
+        <LoginScreen onLogin={login} />
+        <Toaster richColors position="top-center" />
+      </>
+    )
+  }
+
+  if (session.requiresPasswordChange) {
+    return (
+      <>
+        <PasswordChangeScreen onPasswordChange={changePassword} />
+        <Toaster richColors position="top-center" />
+      </>
+    )
+  }
+
+  if (session.requiresOnboarding) {
+    return (
+      <>
+        <OnboardingScreen userEmail={session.email} onComplete={completeOnboarding} />
+        <Toaster richColors position="top-center" />
+      </>
+    )
+  }
 
   const handleViewChange = (view: View) => {
     setCurrentView(view)
@@ -108,6 +140,15 @@ function App() {
                   >
                     <ShieldCheck size={20} aria-hidden="true" />
                     <span className="hidden sm:inline">Admin</span>
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    onClick={logout}
+                    className="gap-2"
+                    title="Sign out"
+                  >
+                    <SignOut size={20} aria-hidden="true" />
+                    <span className="hidden sm:inline">Sign Out</span>
                   </Button>
                 </nav>
               </div>

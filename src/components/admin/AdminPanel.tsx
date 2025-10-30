@@ -4,8 +4,12 @@ import { CourseManagement } from './CourseManagement'
 import { UserManagement } from './UserManagement'
 import { GamificationHub } from './GamificationHub'
 import { ReportsView } from './ReportsView'
+import { BulkEmployeeUpload } from './BulkEmployeeUpload'
+import { CorporateReportingDashboard } from './CorporateReportingDashboard'
+import { CourseAssignmentManager } from './CourseAssignmentManager'
+import { GroupManagement } from './GroupManagement'
 
-type AdminSection = 'dashboard' | 'courses' | 'users' | 'gamification' | 'reports'
+type AdminSection = 'dashboard' | 'courses' | 'users' | 'gamification' | 'reports' | 'enrollment' | 'corporate-reports' | 'assignments' | 'groups'
 
 export function AdminPanel() {
   const [currentSection, setCurrentSection] = useState<AdminSection>('dashboard')
@@ -26,6 +30,46 @@ export function AdminPanel() {
       )}
       {currentSection === 'reports' && (
         <ReportsView onBack={() => setCurrentSection('dashboard')} />
+      )}
+      {currentSection === 'enrollment' && (
+        <div className="space-y-6">
+          <div className="flex items-center gap-4">
+            <button onClick={() => setCurrentSection('dashboard')} className="text-sm text-muted-foreground hover:text-foreground">
+              ← Back to Dashboard
+            </button>
+          </div>
+          <BulkEmployeeUpload />
+        </div>
+      )}
+      {currentSection === 'corporate-reports' && (
+        <div className="space-y-6">
+          <div className="flex items-center gap-4">
+            <button onClick={() => setCurrentSection('dashboard')} className="text-sm text-muted-foreground hover:text-foreground">
+              ← Back to Dashboard
+            </button>
+          </div>
+          <CorporateReportingDashboard />
+        </div>
+      )}
+      {currentSection === 'assignments' && (
+        <div className="space-y-6">
+          <div className="flex items-center gap-4">
+            <button onClick={() => setCurrentSection('dashboard')} className="text-sm text-muted-foreground hover:text-foreground">
+              ← Back to Dashboard
+            </button>
+          </div>
+          <CourseAssignmentManager />
+        </div>
+      )}
+      {currentSection === 'groups' && (
+        <div className="space-y-6">
+          <div className="flex items-center gap-4">
+            <button onClick={() => setCurrentSection('dashboard')} className="text-sm text-muted-foreground hover:text-foreground">
+              ← Back to Dashboard
+            </button>
+          </div>
+          <GroupManagement />
+        </div>
       )}
     </div>
   )

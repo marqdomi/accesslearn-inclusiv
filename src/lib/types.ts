@@ -237,3 +237,100 @@ export interface ValidationError {
   message: string
   severity: 'error' | 'warning'
 }
+
+export interface EmployeeCredentials {
+  id: string
+  email: string
+  temporaryPassword: string
+  firstName: string
+  lastName: string
+  department?: string
+  status: 'pending' | 'activated' | 'disabled'
+  createdAt: number
+  expiresAt?: number
+}
+
+export interface BulkUploadResult {
+  successful: EmployeeCredentials[]
+  failed: Array<{
+    row: number
+    email: string
+    errors: string[]
+  }>
+  totalProcessed: number
+}
+
+export interface AuthSession {
+  userId: string
+  email: string
+  role: 'employee' | 'admin'
+  isFirstLogin: boolean
+  requiresPasswordChange: boolean
+  requiresOnboarding: boolean
+  createdAt: number
+  lastActivity: number
+}
+
+export interface PasswordChangeRequest {
+  currentPassword: string
+  newPassword: string
+  confirmPassword: string
+}
+
+export interface OnboardingPreferences {
+  highContrast: boolean
+  textSize: 'normal' | 'large' | 'x-large'
+  reduceMotion: boolean
+  disableSoundEffects: boolean
+  avatar?: string
+  displayName?: string
+}
+
+export interface UserProfile {
+  id: string
+  email: string
+  firstName: string
+  lastName: string
+  displayName?: string
+  avatar?: string
+  department?: string
+  role: 'employee' | 'admin'
+  createdAt: number
+  lastLoginAt?: number
+  preferences: OnboardingPreferences
+}
+
+export interface EngagementMetrics {
+  userId: string
+  userName: string
+  averageDailyXP: number
+  totalTimeSpent: number
+  lastActiveDate: number
+  coursesInProgress: number
+  coursesCompleted: number
+  currentStreak: number
+}
+
+export interface CompletionReport {
+  courseId: string
+  courseName: string
+  totalAssigned: number
+  completed: number
+  inProgress: number
+  notStarted: number
+  completionRate: number
+  averageScore?: number
+}
+
+export interface GroupReport {
+  groupId: string
+  groupName: string
+  totalUsers: number
+  courses: CompletionReport[]
+  overallCompletion: number
+  topPerformers: Array<{
+    userId: string
+    userName: string
+    completionRate: number
+  }>
+}
