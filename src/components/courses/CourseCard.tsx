@@ -1,0 +1,90 @@
+import { Card } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Progress } from '@/components/ui/progress'
+import { Course, UserProgress } from '@/lib/types'
+import { Check, Circle, Clock } from '@phosphor-icons/react'
+
+interface CourseCardProps {
+  course: Course
+  progress?: UserProgress
+  onSelect: () => void
+}
+
+export function CourseCard({ course, progress, onSelect }: CourseCardProps) {
+  const getStatusBadge = () => {
+    if (!progress || progress.status === 'not-started') {
+      return (
+        <Badge variant="secondary" className="gap-1.5">
+          <Circle size={12} weight="fill" aria-hidden="true" />
+          Not Started
+        </Badge>
+      )
+    }
+    if (progress.status === 'completed') {
+      return (
+        <Badge className="gap-1.5 bg-success text-success-foreground">
+          <Check size={12} weight="bold" aria-hidden="true" />
+          Completed
+        </Badge>
+      )
+    }
+    return (
+      <Badge variant="outline" className="gap-1.5">
+        <Clock size={12} weight="fill" aria-hidden="true" />
+        In Progress
+      </Badge>
+    )
+  }
+
+  const progressPercentage = progress
+    ? Math.round((progress.completedModules.length / course.modules.length) * 100)
+    : 0
+
+  return (
+    <Card
+      className="group flex h-full flex-col overflow-hidden transition-all hover:shadow-md focus-within:ring-2 focus-within:ring-ring"
+      tabIndex={0}
+      role="article"
+      aria-labelledby={`course-title-${course.id}`}
+    >
+      <div className="flex flex-1 flex-col gap-4 p-6">
+        <div className="flex items-start justify-between gap-3">
+          <h3 id={`course-title-${course.id}`} className="text-xl font-semibold">
+            {course.title}
+          </h3>
+          {getStatusBadge()}
+        </div>
+
+        <p className="flex-1 text-base text-muted-foreground">{course.description}</p>
+
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Clock size={16} aria-hidden="true" />
+            <span>{course.estimatedTime} minutes</span>
+            <span aria-hidden="true">•</span>
+            <span>{course.modules.length} modules</span>
+          </div>
+
+          {progress && progress.status !== 'not-started' && (
+            <div className="space-y-1.5">
+              <div className="flex justify-between text-sm">
+                <span className="font-medium">Progress</span>
+                <span className="text-muted-foreground">{progressPercentage}%</span>
+              </div>
+              <Progress value={progressPercentage} aria-label={`Course progress: ${progressPercentage}%`} />
+            </div>
+          )}
+        </div>
+
+        <Button
+          onClick={onSelect}
+          className="mt-2 w-full"
+          size="lg"
+        >
+          {!progress || progress.status === 'not-started' ? 'Start Course' : 'Continue Learning'}
+        </Button>
+      </div>
+    </Card>
+  )
+}
