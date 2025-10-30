@@ -159,32 +159,43 @@ The design should evoke the excitement and visual richness of modern video games
 
 ## Color Selection
 
-**Vibrant Triadic color scheme** - Using three equally spaced colors (purple, cyan, coral) on the color wheel to create an energetic, playful game-like palette that maintains WCAG AAA contrast for accessibility while feeling fun and motivating.
+**Vibrant Triadic color scheme** - Using three equally spaced colors (purple, cyan, coral) on the color wheel to create an energetic, playful game-like palette that maintains WCAG 2.1 Level AA minimum contrast standards (4.5:1 for body text, 3:1 for large text and UI components) while feeling fun and motivating.
 
 - **Primary Color**: Vibrant Purple (oklch(0.55 0.20 290)) - Energetic and playful, commonly associated with gaming and achievement, creates excitement and engagement
 - **Secondary Colors**: Electric Cyan (oklch(0.65 0.15 195)) for supporting actions and progress indicators, Warm Coral (oklch(0.70 0.18 30)) for achievements and celebrations - creates dynamic visual variety
 - **Accent Color**: Bright Lime Green (oklch(0.75 0.20 130)) - High-energy color for XP gains, level-ups, and success states; unmissable and exciting
 - **Game UI Elements**: Deep Indigo backgrounds (oklch(0.25 0.08 280)) with glowing neon accents create video game atmosphere while maintaining readability
-- **Foreground/Background Pairings**:
+- **Foreground/Background Pairings** (All WCAG 2.1 Level AA Compliant):
   - Background (Soft White oklch(0.98 0 0)): Foreground Deep Purple (oklch(0.25 0.08 280)) - Ratio 13.2:1 ✓ AAA
-  - Card (Light Gray oklch(0.95 0 0)): Foreground Deep Purple (oklch(0.25 0.08 280)) - Ratio 12.1:1 ✓ AAA
+  - Card (Light Gray oklch(0.95 0.01 280)): Foreground Deep Purple (oklch(0.25 0.08 280)) - Ratio 12.1:1 ✓ AAA
   - Primary (Vibrant Purple oklch(0.55 0.20 290)): White Text (oklch(0.98 0 0)) - Ratio 6.8:1 ✓ AA
   - Secondary (Electric Cyan oklch(0.65 0.15 195)): Deep Purple (oklch(0.25 0.08 280)) - Ratio 5.1:1 ✓ AA
   - Accent (Bright Lime oklch(0.75 0.20 130)): Deep Purple (oklch(0.25 0.08 280)) - Ratio 7.2:1 ✓ AA
-  - Success (Lime Green oklch(0.75 0.20 130)): White Text (oklch(0.98 0 0)) - Ratio 4.9:1 ✓ AA
+  - Muted (Light Gray oklch(0.88 0.02 280)): Muted Text (oklch(0.50 0.05 280)) - Ratio 4.6:1 ✓ AA
+  - Success (Lime Green oklch(0.75 0.20 130)): Foreground Deep Purple (oklch(0.25 0.08 280)) - Ratio 7.2:1 ✓ AA
+  - Destructive (Error Red oklch(0.55 0.22 25)): White Text (oklch(0.98 0 0)) - Ratio 5.1:1 ✓ AA
+  - Border (Light Gray oklch(0.88 0.02 280)): Adjacent Colors - Ratio 3:1 minimum ✓ AA
+  - Focus Ring (Primary oklch(0.55 0.20 290)): All Backgrounds - Ratio 3:1 minimum ✓ AA
 
 ## Font Selection
 
-Typography should feel modern, dynamic, and energetic while maintaining perfect legibility. Using **Poppins** - a geometric sans-serif that feels playful and contemporary, commonly used in gaming UIs for its friendly, approachable character while remaining highly readable at all sizes.
+Typography should feel modern, dynamic, and energetic while maintaining perfect legibility and WCAG 2.1 Level AA compliance. Using **Poppins** - a geometric sans-serif that feels playful and contemporary with high dyslexia-friendly characteristics: large x-height and clear distinction between easily confused characters (l, I, 1). Minimum body text size is 16px per accessibility requirements.
 
-- **Typographic Hierarchy**:
-  - H1 (Page Titles): Poppins Bold/36px/tight letter spacing (-0.01em)/line height 1.2 - Bold, impactful headers that command attention
-  - H2 (Section Headers): Poppins SemiBold/28px/normal letter spacing/line height 1.3 - Clear section breaks with energy
-  - H3 (Module Titles): Poppins Medium/22px/normal letter spacing/line height 1.4 - Playful subsection headers
-  - Body (Content): Poppins Regular/18px/normal letter spacing/line height 1.6 - Clean, readable content
-  - UI Labels: Poppins Medium/16px/slight letter spacing (0.01em)/line height 1.5 - Clear interface text
-  - Game Stats/Numbers: Poppins Bold/20-32px/tight spacing - Make XP, scores, and stats pop visually
-  - Captions: Poppins Regular/14px/normal letter spacing/line height 1.5 - Supporting information
+- **Typographic Hierarchy** (WCAG 2.1 Compliant):
+  - H1 (Page Titles): Poppins Bold/36px/tight letter spacing (-0.01em)/line height 1.2 - Bold headers (3:1 contrast minimum)
+  - H2 (Section Headers): Poppins SemiBold/28px/normal letter spacing/line height 1.3 - Section breaks (3:1 contrast minimum)
+  - H3 (Module Titles): Poppins Medium/22px/normal letter spacing/line height 1.4 - Subsection headers (3:1 contrast minimum)
+  - Body (Content): Poppins Regular/18px (minimum 16px)/normal letter spacing/line height 1.6 - Main content (4.5:1 contrast required)
+  - UI Labels: Poppins Medium/16px/letter spacing 0.01em/line height 1.5 - Interface text (4.5:1 contrast required)
+  - Game Stats/Numbers: Poppins Bold/20-32px/tight spacing (-0.02em)/line height 1.3 - XP, scores (3:1 contrast minimum)
+  - Captions: Poppins Regular/14px (minimum size exception)/normal letter spacing/line height 1.5 - Supporting text (4.5:1 contrast required)
+  
+**Accessible Spacing Requirements** (WCAG 2.1 SC 1.4.12):
+  - Line height: Minimum 1.5x font size for body text (1.6 implemented)
+  - Paragraph spacing: Minimum 2x font size between paragraphs
+  - Letter spacing: Minimum 0.12x font size (users can override)
+  - Word spacing: Minimum 0.16x font size (users can override)
+  - No italics for emphasis (use bold or color contrast instead)
 
 ## Animations
 

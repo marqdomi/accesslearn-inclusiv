@@ -4,7 +4,7 @@ import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
 import { Slider } from '@/components/ui/slider'
 import { useAccessibilityPreferences } from '@/hooks/use-accessibility-preferences'
-import { Gear, TextAa, Gauge } from '@phosphor-icons/react'
+import { Gear, TextAa, Gauge, X } from '@phosphor-icons/react'
 import { useState, useEffect } from 'react'
 
 export function AccessibilityPanel() {
@@ -22,10 +22,11 @@ export function AccessibilityPanel() {
   useEffect(() => {
     const root = document.documentElement
     root.classList.toggle('high-contrast', preferences.highContrast)
+    root.classList.toggle('reduce-motion', preferences.reduceMotion)
     
     const fontSize = preferences.textSize === 'large' ? '110%' : preferences.textSize === 'x-large' ? '125%' : '100%'
     root.style.fontSize = fontSize
-  }, [preferences.highContrast, preferences.textSize])
+  }, [preferences.highContrast, preferences.textSize, preferences.reduceMotion])
 
   return (
     <>
@@ -33,61 +34,72 @@ export function AccessibilityPanel() {
         onClick={() => setIsOpen(!isOpen)}
         variant="outline"
         size="icon"
-        className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full shadow-lg"
-        aria-label="Toggle accessibility settings"
+        className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full shadow-lg bg-card hover:bg-card/90"
+        aria-label={isOpen ? "Close accessibility settings" : "Open accessibility settings"}
         aria-expanded={isOpen}
       >
-        <Gear size={24} aria-hidden="true" />
+        <Gear size={24} weight="fill" aria-hidden="true" />
       </Button>
 
       {isOpen && (
         <Card
-          className="fixed bottom-24 right-6 z-50 w-80 p-6 shadow-xl"
+          className="fixed bottom-24 right-6 z-50 w-80 p-6 shadow-xl border-2"
           role="dialog"
           aria-label="Accessibility settings"
         >
-          <h2 className="mb-4 text-lg font-semibold">Accessibility Settings</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold">Accessibility Settings</h2>
+            <Button
+              onClick={() => setIsOpen(false)}
+              variant="ghost"
+              size="icon"
+              className="h-10 w-10"
+              aria-label="Close accessibility settings"
+            >
+              <X size={20} aria-hidden="true" />
+            </Button>
+          </div>
 
           <div className="space-y-6">
             <div>
-              <Label htmlFor="text-size" className="mb-2 flex items-center gap-2 text-base font-medium">
+              <Label htmlFor="text-size-group" className="mb-3 flex items-center gap-2 text-base font-medium">
                 <TextAa size={20} aria-hidden="true" />
                 Text Size
               </Label>
-              <div className="flex gap-2">
+              <div className="flex gap-2" role="group" aria-labelledby="text-size-group">
                 <Button
                   variant={preferences.textSize === 'normal' ? 'default' : 'outline'}
-                  size="sm"
+                  size="default"
                   onClick={() => updatePreference('textSize', 'normal')}
                   aria-pressed={preferences.textSize === 'normal'}
-                  className="flex-1"
+                  className="flex-1 min-h-[44px]"
                 >
                   Normal
                 </Button>
                 <Button
                   variant={preferences.textSize === 'large' ? 'default' : 'outline'}
-                  size="sm"
+                  size="default"
                   onClick={() => updatePreference('textSize', 'large')}
                   aria-pressed={preferences.textSize === 'large'}
-                  className="flex-1"
+                  className="flex-1 min-h-[44px]"
                 >
                   Large
                 </Button>
                 <Button
                   variant={preferences.textSize === 'x-large' ? 'default' : 'outline'}
-                  size="sm"
+                  size="default"
                   onClick={() => updatePreference('textSize', 'x-large')}
                   aria-pressed={preferences.textSize === 'x-large'}
-                  className="flex-1"
+                  className="flex-1 min-h-[44px]"
                 >
                   X-Large
                 </Button>
               </div>
             </div>
 
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="high-contrast" className="text-base font-medium">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between gap-4 min-h-[44px]">
+                <Label htmlFor="high-contrast" className="text-base font-medium cursor-pointer">
                   High Contrast Mode
                 </Label>
                 <Switch
@@ -98,8 +110,8 @@ export function AccessibilityPanel() {
                 />
               </div>
 
-              <div className="flex items-center justify-between">
-                <Label htmlFor="captions" className="text-base font-medium">
+              <div className="flex items-center justify-between gap-4 min-h-[44px]">
+                <Label htmlFor="captions" className="text-base font-medium cursor-pointer">
                   Captions Enabled
                 </Label>
                 <Switch
@@ -110,8 +122,8 @@ export function AccessibilityPanel() {
                 />
               </div>
 
-              <div className="flex items-center justify-between">
-                <Label htmlFor="reduce-motion" className="text-base font-medium">
+              <div className="flex items-center justify-between gap-4 min-h-[44px]">
+                <Label htmlFor="reduce-motion" className="text-base font-medium cursor-pointer">
                   Reduce Motion
                 </Label>
                 <Switch
@@ -126,7 +138,7 @@ export function AccessibilityPanel() {
             <div>
               <Label htmlFor="playback-speed" className="mb-3 flex items-center gap-2 text-base font-medium">
                 <Gauge size={20} aria-hidden="true" />
-                Playback Speed: {preferences.playbackSpeed}x
+                Playback Speed: <span className="font-bold">{preferences.playbackSpeed}x</span>
               </Label>
               <Slider
                 id="playback-speed"
@@ -135,23 +147,20 @@ export function AccessibilityPanel() {
                 step={0.25}
                 value={[preferences.playbackSpeed]}
                 onValueChange={(value) => updatePreference('playbackSpeed', value[0])}
-                aria-label={`Playback speed: ${preferences.playbackSpeed}x`}
+                aria-label={`Playback speed: ${preferences.playbackSpeed} times normal speed`}
+                aria-valuemin={0.5}
+                aria-valuemax={2}
+                aria-valuenow={preferences.playbackSpeed}
+                className="mb-2"
               />
-              <div className="mt-2 flex justify-between text-xs text-muted-foreground">
+              <div className="flex justify-between text-sm text-muted-foreground">
                 <span>0.5x</span>
                 <span>1.0x</span>
+                <span>1.5x</span>
                 <span>2.0x</span>
               </div>
             </div>
           </div>
-
-          <Button
-            onClick={() => setIsOpen(false)}
-            variant="ghost"
-            className="mt-6 w-full"
-          >
-            Close
-          </Button>
         </Card>
       )}
     </>
