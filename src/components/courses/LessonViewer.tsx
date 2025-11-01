@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Lesson, LessonContentBlock } from '@/lib/lesson-types'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -8,6 +8,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useAccessibilityPreferences } from '@/hooks/use-accessibility-preferences'
 import { useXP } from '@/hooks/use-xp'
 import { toast } from 'sonner'
+import { useTranslation } from '@/lib/i18n'
+import { translateLesson } from '@/lib/translate-course'
 
 import { WelcomeBlock } from './lesson-blocks/WelcomeBlock'
 import { TextImageBlock } from './lesson-blocks/TextImageBlock'
@@ -22,15 +24,18 @@ interface LessonViewerProps {
 }
 
 export function LessonViewer({ lesson, onComplete, onExit }: LessonViewerProps) {
+  const { t } = useTranslation()
   const { preferences } = useAccessibilityPreferences()
   const shouldAnimate = !preferences?.reduceMotion
   const { awardXP } = useXP()
+  
+  const translatedLesson = useMemo(() => translateLesson(lesson, t), [lesson, t])
   
   const [currentBlockIndex, setCurrentBlockIndex] = useState(0)
   const [completedBlocks, setCompletedBlocks] = useState<Set<number>>(new Set())
   const [lessonCompleted, setLessonCompleted] = useState(false)
 
-  const sortedBlocks = [...lesson.contentBlocks].sort((a, b) => a.order - b.order)
+  const sortedBlocks = [...translatedLesson.contentBlocks].sort((a, b) => a.order - b.order)
   const currentBlock = sortedBlocks[currentBlockIndex]
   const progress = Math.round(((currentBlockIndex + 1) / sortedBlocks.length) * 100)
 
@@ -55,10 +60,10 @@ export function LessonViewer({ lesson, onComplete, onExit }: LessonViewerProps) 
 
   const handleLessonComplete = () => {
     setLessonCompleted(true)
-    awardXP(lesson.xpReward, `Completed lesson: ${lesson.title}`)
+    awardXP(translatedLesson.xpReward, `Completed lesson: ${translatedLesson.title}`)
     
     toast.success('🎉 Lesson Complete!', {
-      description: `You've earned ${lesson.xpReward} XP!`,
+      description: `You've earned ${translatedLesson.xpReward} XP!`,
       duration: 5000,
     })
   }
@@ -111,7 +116,7 @@ export function LessonViewer({ lesson, onComplete, onExit }: LessonViewerProps) 
                   Lesson Complete! 🎉
                 </h2>
                 <p className="text-2xl font-semibold text-foreground">
-                  {lesson.title}
+                  {translatedLesson.title}
                 </p>
               </div>
 
@@ -119,7 +124,7 @@ export function LessonViewer({ lesson, onComplete, onExit }: LessonViewerProps) 
                 <Card className="bg-card p-6">
                   <div className="flex items-center justify-between">
                     <span className="text-lg font-medium">XP Earned:</span>
-                    <span className="text-2xl font-bold text-xp">+{lesson.xpReward} XP</span>
+                    <span className="text-2xl font-bold text-xp">+{translatedLesson.xpReward} XP</span>
                   </div>
                 </Card>
 
@@ -163,7 +168,7 @@ export function LessonViewer({ lesson, onComplete, onExit }: LessonViewerProps) 
         </Button>
 
         <div className="text-sm text-muted-foreground">
-          Chapter {lesson.chapterNumber} • {lesson.estimatedTime} min
+          Chapter {translatedLesson.chapterNumber} • {translatedLesson.estimatedTime} min
         </div>
       </div>
 
@@ -171,7 +176,7 @@ export function LessonViewer({ lesson, onComplete, onExit }: LessonViewerProps) 
         <div className="space-y-4">
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1">
-              <h1 className="mb-2 text-3xl font-bold">{lesson.title}</h1>
+              <h1 className="mb-2 text-3xl font-bold">{translatedLesson.title}</h1>
               <p className="text-base text-muted-foreground">
                 Block {currentBlockIndex + 1} of {sortedBlocks.length}
               </p>

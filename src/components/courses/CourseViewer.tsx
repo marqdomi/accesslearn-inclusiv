@@ -1,10 +1,12 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useKV } from '@github/spark/hooks'
 import { Course } from '@/lib/types'
 import { LessonModule } from '@/lib/lesson-types'
 import { useCourseProgress } from '@/hooks/use-course-progress'
 import { useXP, XP_REWARDS } from '@/hooks/use-xp'
 import { useAchievements } from '@/hooks/use-achievements'
+import { useTranslation } from '@/lib/i18n'
+import { translateLessonModule } from '@/lib/translate-course'
 import { ContentViewer } from './ContentViewer'
 import { AssessmentModule } from './AssessmentModule'
 import { LessonViewer } from './LessonViewer'
@@ -21,6 +23,7 @@ interface CourseViewerProps {
 }
 
 export function CourseViewer({ course, onExit }: CourseViewerProps) {
+  const { t } = useTranslation()
   const { progress, markModuleComplete, setCurrentModule, completeCourse, recordAssessmentAttempt } = useCourseProgress(course.id)
   const { awardXP } = useXP()
   const { updateModuleCompletion, updateCourseCompletion, updateAssessmentCompletion } = useAchievements()
@@ -31,7 +34,10 @@ export function CourseViewer({ course, onExit }: CourseViewerProps) {
   const [viewMode, setViewMode] = useState<'intro' | 'lessons' | 'modules'>('intro')
 
   const lessonModule = lessonModules?.[course.id]
-  const hasLessons = !!lessonModule && lessonModule.lessons.length > 0
+  const translatedLessonModule = useMemo(() => {
+    return lessonModule ? translateLessonModule(lessonModule, t) : undefined
+  }, [lessonModule, t])
+  const hasLessons = !!translatedLessonModule && translatedLessonModule.lessons.length > 0
 
   const currentModuleIndex = progress?.currentModule
     ? course.modules.findIndex((m) => m.id === progress.currentModule)
@@ -133,7 +139,7 @@ export function CourseViewer({ course, onExit }: CourseViewerProps) {
     : 0
 
   const handleLessonComplete = () => {
-    if (hasLessons && lessonModule && currentLessonIndex < lessonModule.lessons.length - 1) {
+    if (hasLessons && translatedLessonModule && currentLessonIndex < translatedLessonModule.lessons.length - 1) {
       setCurrentLessonIndex(prev => prev + 1)
     } else {
       setViewMode('intro')
@@ -148,8 +154,8 @@ export function CourseViewer({ course, onExit }: CourseViewerProps) {
     setCurrentLessonIndex(0)
   }
 
-  if (viewMode === 'lessons' && hasLessons && lessonModule) {
-    const currentLesson = lessonModule.lessons[currentLessonIndex]
+  if (viewMode === 'lessons' && hasLessons && translatedLessonModule) {
+    const currentLesson = translatedLessonModule.lessons[currentLessonIndex]
     return (
       <LessonViewer
         lesson={currentLesson}
@@ -223,7 +229,7 @@ export function CourseViewer({ course, onExit }: CourseViewerProps) {
                   <h2 className="text-xl font-bold">Interactive Lessons</h2>
                 </div>
                 <p className="mb-4 text-muted-foreground">
-                  {lessonModule.lessons.length} engaging lessons with challenges and activities
+                  {translatedLessonModule?.lessons.length || 0} engaging lessons with challenges and activities
                 </p>
                 <Button 
                   onClick={handleStartLessons} 

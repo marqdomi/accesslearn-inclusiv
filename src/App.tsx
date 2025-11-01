@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useKV } from '@github/spark/hooks'
 import { useAuth } from '@/hooks/use-auth'
 import { Course } from '@/lib/types'
+import { translateCourse } from '@/lib/translate-course'
 import { SkipLink } from '@/components/accessibility/SkipLink'
 import { AccessibilityPanel } from '@/components/accessibility/AccessibilityPanel'
 import { SampleDataInitializer } from '@/components/SampleDataInitializer'
@@ -28,6 +29,10 @@ function App() {
   const [courses] = useKV<Course[]>('courses', [])
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null)
   const [currentView, setCurrentView] = useState<View>('dashboard')
+
+  const translatedCourses = useMemo(() => {
+    return (courses || []).map(course => translateCourse(course, t))
+  }, [courses, t])
 
   if (!isAuthenticated || !session) {
     return (
@@ -180,7 +185,7 @@ function App() {
               <CommunityDashboard currentUserId={session.userId} />
             ) : (
               <UserDashboard 
-                courses={courses || []} 
+                courses={translatedCourses} 
                 onSelectCourse={setSelectedCourse}
               />
             )}
