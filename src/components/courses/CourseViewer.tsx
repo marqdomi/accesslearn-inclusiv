@@ -25,7 +25,7 @@ interface CourseViewerProps {
 
 export function CourseViewer({ course, onExit, userId }: CourseViewerProps) {
   const { t } = useTranslation()
-  const { progress, markModuleComplete, setCurrentModule, completeCourse, recordAssessmentAttempt } = useCourseProgress(course.id, userId)
+  const { progress, markModuleComplete, setCurrentModule, completeCourse, recordAssessmentAttempt } = useCourseProgress(course.id, userId, course.title)
   const { awardXP } = useXP(userId)
   const { updateModuleCompletion, updateCourseCompletion, updateAssessmentCompletion } = useAchievements(userId)
   const [showAssessment, setShowAssessment] = useState(false)

@@ -9,6 +9,8 @@ import { Separator } from '@/components/ui/separator'
 import { Trophy, Star, Fire, HandsClapping, Sparkle, Lightbulb } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { formatDistanceToNow } from 'date-fns'
+import { es } from 'date-fns/locale'
+import { useTranslation } from '@/lib/i18n'
 
 interface ActivityFeedProps {
   currentUserId: string
@@ -16,11 +18,11 @@ interface ActivityFeedProps {
 }
 
 const REACTION_ICONS = {
-  congrats: { icon: HandsClapping, label: 'Congrats!' },
-  highfive: { icon: Sparkle, label: 'High Five!' },
-  fire: { icon: Fire, label: 'On Fire!' },
-  star: { icon: Star, label: 'Superstar!' },
-  trophy: { icon: Trophy, label: 'Champion!' },
+  congrats: { icon: HandsClapping, key: 'reaction.congrats' },
+  highfive: { icon: Sparkle, key: 'reaction.highfive' },
+  fire: { icon: Fire, key: 'reaction.fire' },
+  star: { icon: Star, key: 'reaction.star' },
+  trophy: { icon: Trophy, key: 'reaction.trophy' },
 }
 
 const ACTIVITY_ICONS = {
@@ -31,6 +33,7 @@ const ACTIVITY_ICONS = {
 }
 
 export function ActivityFeed({ currentUserId, maxItems = 20 }: ActivityFeedProps) {
+  const { t, language } = useTranslation()
   const [activities, setActivities] = useKV<ActivityFeedItem[]>('activity-feed', [])
   const [profiles] = useKV<UserProfile[]>('user-profiles', [])
   const [expandedActivity, setExpandedActivity] = useState<string | null>(null)
@@ -73,15 +76,15 @@ export function ActivityFeed({ currentUserId, maxItems = 20 }: ActivityFeedProps
   const getActivityMessage = (activity: ActivityFeedItem): string => {
     switch (activity.type) {
       case 'level-up':
-        return `reached Level ${activity.data.level}!`
+        return t('activityFeed.reachedLevel', { level: String(activity.data.level || '') })
       case 'badge-earned':
-        return `earned the ${activity.data.badgeName} Badge!`
+        return t('activityFeed.earnedBadge', { badgeName: activity.data.badgeName || '' })
       case 'course-completed':
-        return `completed ${activity.data.courseName}!`
+        return t('activityFeed.completedCourse', { courseName: activity.data.courseName || '' })
       case 'achievement-unlocked':
-        return `unlocked ${activity.data.achievementName}!`
+        return t('activityFeed.unlockedAchievement', { achievementName: activity.data.achievementName || '' })
       default:
-        return 'achieved something awesome!'
+        return t('activityFeed.achievedSomething')
     }
   }
 
@@ -102,10 +105,10 @@ export function ActivityFeed({ currentUserId, maxItems = 20 }: ActivityFeedProps
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Sparkle size={24} weight="fill" className="text-primary" aria-hidden="true" />
-          Activity Feed
+          {t('activityFeed.title')}
         </CardTitle>
         <CardDescription>
-          Celebrate achievements and milestones with your team
+          {t('activityFeed.subtitle')}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -114,7 +117,7 @@ export function ActivityFeed({ currentUserId, maxItems = 20 }: ActivityFeedProps
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <Sparkle size={48} className="text-muted-foreground mb-4" aria-hidden="true" />
               <p className="text-muted-foreground">
-                No activity yet. Complete a module or earn an achievement to appear here!
+                {t('activityFeed.noActivity')}
               </p>
             </div>
           ) : (
@@ -159,15 +162,19 @@ export function ActivityFeed({ currentUserId, maxItems = 20 }: ActivityFeedProps
                               </div>
 
                               <p className="text-xs text-muted-foreground mb-3">
-                                {formatDistanceToNow(activity.timestamp, { addSuffix: true })}
+                                {formatDistanceToNow(activity.timestamp, { 
+                                  addSuffix: true,
+                                  locale: language === 'es' ? es : undefined
+                                })}
                               </p>
 
                               <div className="flex flex-wrap gap-2 mb-2">
                                 {(Object.keys(REACTION_ICONS) as Array<keyof typeof REACTION_ICONS>).map(
                                   (reactionType) => {
-                                    const { icon: ReactionIcon, label } = REACTION_ICONS[reactionType]
+                                    const { icon: ReactionIcon, key } = REACTION_ICONS[reactionType]
                                     const count = reactionCounts[reactionType] || 0
                                     const userReacted = hasUserReacted(activity, reactionType)
+                                    const label = t(key)
 
                                     return (
                                       <Button
@@ -205,8 +212,9 @@ export function ActivityFeed({ currentUserId, maxItems = 20 }: ActivityFeedProps
                                     aria-expanded={isExpanded}
                                     aria-controls={`reactions-${activity.id}`}
                                   >
-                                    {isExpanded ? 'Hide' : 'Show'} reactions (
-                                    {activity.reactions.length})
+                                    {isExpanded 
+                                      ? t('activityFeed.hideReactions') 
+                                      : t('activityFeed.showReactions', { count: String(activity.reactions.length) })}
                                   </Button>
 
                                   {isExpanded && (
@@ -218,12 +226,13 @@ export function ActivityFeed({ currentUserId, maxItems = 20 }: ActivityFeedProps
                                       className="mt-2 pt-2 border-t"
                                     >
                                       <p className="text-xs font-medium mb-2 text-muted-foreground">
-                                        Reactions:
+                                        {t('activityFeed.reactionsLabel')}
                                       </p>
                                       <div className="space-y-1">
                                         {activity.reactions.map((reaction) => {
-                                          const { icon: ReactionIcon, label } =
+                                          const { icon: ReactionIcon, key } =
                                             REACTION_ICONS[reaction.type]
+                                          const label = t(key)
                                           return (
                                             <div
                                               key={reaction.id}

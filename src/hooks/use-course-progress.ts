@@ -1,9 +1,10 @@
 import { useKV } from '@github/spark/hooks'
 import { UserProgress } from '@/lib/types'
 import { useAchievements } from './use-achievements'
+import { useActivityFeed } from './use-activity-feed'
 import { useEffect } from 'react'
 
-export function useCourseProgress(courseId: string, userId?: string) {
+export function useCourseProgress(courseId: string, userId?: string, courseName?: string) {
   const userKey = userId || 'default-user'
   const [progress, setProgress] = useKV<UserProgress>(
     `course-progress-${courseId}-${userKey}`,
@@ -22,6 +23,7 @@ export function useCourseProgress(courseId: string, userId?: string) {
   )
 
   const { updateModuleCompletion, updateCourseCompletion, updateAssessmentCompletion, updateStreak } = useAchievements(userId)
+  const { postCourseCompleted } = useActivityFeed()
 
   useEffect(() => {
     if (progress) {
@@ -78,6 +80,10 @@ export function useCourseProgress(courseId: string, userId?: string) {
       if (isFirstCompletion) {
         updateCourseCompletion()
         updateStreak()
+        
+        if (userId && courseName) {
+          postCourseCompleted(userId, courseName)
+        }
       }
       
       return {

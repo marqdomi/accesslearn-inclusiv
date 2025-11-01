@@ -2,6 +2,8 @@ import { useKV } from '@github/spark/hooks'
 import { UserStats, UserAchievement } from '@/lib/types'
 import { ACHIEVEMENTS } from '@/lib/achievements'
 import { toast } from 'sonner'
+import { useActivityFeed } from './use-activity-feed'
+import { useTranslation } from '@/lib/i18n'
 
 const DEFAULT_USER_STATS: UserStats = {
   totalCoursesCompleted: 0,
@@ -17,8 +19,10 @@ const DEFAULT_USER_STATS: UserStats = {
 }
 
 export function useAchievements(userId?: string) {
+  const { t } = useTranslation()
   const userKey = userId || 'default-user'
   const [userStats, setUserStats] = useKV<UserStats>(`user-stats-${userKey}`, DEFAULT_USER_STATS)
+  const { postAchievementUnlocked } = useActivityFeed()
 
   const checkAndUnlockAchievements = (stats: UserStats, setStats: (updater: (current?: UserStats) => UserStats) => void) => {
     const newUnlocks: UserAchievement[] = []
@@ -59,10 +63,17 @@ export function useAchievements(userId?: string) {
           unlockedAt: Date.now(),
         })
 
-        toast.success('🏆 Achievement Unlocked!', {
-          description: `${achievement.title} - ${achievement.description}`,
+        const achievementTitle = achievement.titleKey ? t(achievement.titleKey) : achievement.title
+        const achievementDesc = achievement.descriptionKey ? t(achievement.descriptionKey) : achievement.description
+
+        toast.success(t('achievementCard.unlockedOn'), {
+          description: `${achievementTitle} - ${achievementDesc}`,
           duration: 5000,
         })
+
+        if (userId) {
+          postAchievementUnlocked(userId, achievementTitle, achievement.icon)
+        }
       }
     })
 
@@ -134,10 +145,17 @@ export function useAchievements(userId?: string) {
               unlockedAt: Date.now(),
             },
           ]
-          toast.success('🏆 Achievement Unlocked!', {
-            description: `${perfectAchievement.title} - ${perfectAchievement.description}`,
+          const achievementTitle = perfectAchievement.titleKey ? t(perfectAchievement.titleKey) : perfectAchievement.title
+          const achievementDesc = perfectAchievement.descriptionKey ? t(perfectAchievement.descriptionKey) : perfectAchievement.description
+          
+          toast.success(t('achievementCard.unlockedOn'), {
+            description: `${achievementTitle} - ${achievementDesc}`,
             duration: 5000,
           })
+          
+          if (userId) {
+            postAchievementUnlocked(userId, achievementTitle, perfectAchievement.icon)
+          }
         }
       }
 
@@ -151,10 +169,17 @@ export function useAchievements(userId?: string) {
               unlockedAt: Date.now(),
             },
           ]
-          toast.success('🏆 Achievement Unlocked!', {
-            description: `${firstTryAchievement.title} - ${firstTryAchievement.description}`,
+          const achievementTitle = firstTryAchievement.titleKey ? t(firstTryAchievement.titleKey) : firstTryAchievement.title
+          const achievementDesc = firstTryAchievement.descriptionKey ? t(firstTryAchievement.descriptionKey) : firstTryAchievement.description
+          
+          toast.success(t('achievementCard.unlockedOn'), {
+            description: `${achievementTitle} - ${achievementDesc}`,
             duration: 5000,
           })
+          
+          if (userId) {
+            postAchievementUnlocked(userId, achievementTitle, firstTryAchievement.icon)
+          }
         }
       }
 
