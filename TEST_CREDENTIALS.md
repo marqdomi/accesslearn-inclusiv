@@ -61,9 +61,9 @@ When logging in for the first time with any test account:
 
 After completing onboarding:
 - **Email**: Same as before
-- **Password**: Your user ID (automatically set after password change)
+- **Password**: Use the same temporary password (e.g., `Admin2024!` or `Welcome123!`)
 
-**Note**: The authentication system uses a simplified password mechanism for testing. After changing your password, the system uses your user ID as the password.
+**Note**: For testing convenience, the system continues to accept the temporary password even after the password change flow. This allows easy re-testing without remembering multiple passwords.
 
 ## Admin Panel Access
 
@@ -105,10 +105,12 @@ After completing onboarding:
 ## Password System Notes
 
 The current authentication system:
-- Uses temporary passwords for first login
-- Prompts for password change on first login
-- After password change, uses user ID as the actual password (simplified for testing)
+- Uses temporary passwords for authentication
+- Prompts for password change on first login (for security awareness)
+- Continues to accept the temporary password for all subsequent logins (simplified for testing)
 - Supports account status management (pending, activated, disabled)
+
+**Testing Note**: This simplified authentication is designed for easy testing and demonstration. Production systems should implement proper password hashing, storage, and rotation.
 
 ## Testing Different User States
 
@@ -131,8 +133,10 @@ During onboarding or via the ⚙️ icon in the bottom-right corner:
 ## Troubleshooting
 
 ### "Invalid email or password"
-- Double-check the email and temporary password
-- Ensure you're using the correct password (temporary on first login, user ID after password change)
+- **RESOLVED**: This issue has been fixed as of the latest update
+- Ensure you're using the exact credentials shown in the test credentials box
+- Email is case-insensitive, but password is case-sensitive
+- Use the temporary password for all logins (e.g., `Admin2024!` or `Welcome123!`)
 
 ### "This account has been disabled"
 - The account status is set to "disabled" in the system
@@ -161,4 +165,4 @@ During onboarding or via the ⚙️ icon in the bottom-right corner:
 | User 2 | mike.chen@gamelearn.test | Welcome123! | Employee access |
 | User 3 | emma.rodriguez@gamelearn.test | Welcome123! | Employee access |
 
-**Remember**: These are temporary passwords for first login. After completing password change and onboarding, the system uses the user ID as the password.
+**Remember**: Use these credentials for all logins. The system accepts the temporary password throughout the testing session for convenience.

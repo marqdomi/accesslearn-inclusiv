@@ -21,14 +21,8 @@ export function useAuth() {
     const profile = (profiles || []).find(p => p.email.toLowerCase() === email.toLowerCase())
     const isFirstLogin = !profile || credential.status === 'pending'
     
-    if (isFirstLogin) {
-      if (credential.temporaryPassword !== password) {
-        return { success: false, error: 'Invalid email or password' }
-      }
-    } else {
-      if (profile.id !== password) {
-        return { success: false, error: 'Invalid email or password' }
-      }
+    if (credential.temporaryPassword !== password) {
+      return { success: false, error: 'Invalid email or password' }
     }
 
     const newSession = createAuthSession(
