@@ -4,48 +4,49 @@ import { createAuthSession, isSessionValid } from '@/lib/auth-utils'
 
 export function useAuth() {
   const [session, setSession] = useKV<AuthSession | null>('auth-session', null)
-  const [credentials] = useKV<EmployeeCredentials[]>('employee-credentials', [])
-  const [profiles, setProfiles] = useKV<UserProfile[]>('user-profiles', [])
+  const [, setProfiles] = useKV<UserProfile[]>('user-profiles', [])
 
   const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     const trimmedEmail = email.trim()
     const trimmedPassword = password.trim()
     
-    console.log('useAuth.login called with:', { email: trimmedEmail, passwordLength: trimmedPassword.length })
-    console.log('useAuth - credentials available:', credentials?.length || 0)
-    console.log('useAuth - credentials:', credentials)
+    console.log('🔐 useAuth.login called with:', { email: trimmedEmail, passwordLength: trimmedPassword.length })
     
-    const credentialsList = credentials || []
+    const credentialsList = await window.spark.kv.get<EmployeeCredentials[]>('employee-credentials') || []
+    const profilesList = await window.spark.kv.get<UserProfile[]>('user-profiles') || []
+    
+    console.log('🔍 useAuth - credentials fetched from KV:', credentialsList.length)
+    console.log('📋 useAuth - all credentials:', credentialsList)
+    
     const credential = credentialsList.find(c => c.email.toLowerCase() === trimmedEmail.toLowerCase())
     
-    console.log('useAuth - found credential:', credential)
+    console.log('🎯 useAuth - found credential:', credential)
     
     if (!credential) {
-      console.log('useAuth - No credential found for email:', trimmedEmail)
+      console.log('❌ useAuth - No credential found for email:', trimmedEmail)
       return { success: false, error: 'Invalid email or password' }
     }
 
     if (credential.status === 'disabled') {
-      console.log('useAuth - Account is disabled')
+      console.log('⛔ useAuth - Account is disabled')
       return { success: false, error: 'This account has been disabled' }
     }
 
-    const profilesList = profiles || []
     const profile = profilesList.find(p => p.email.toLowerCase() === trimmedEmail.toLowerCase())
     const isFirstLogin = !profile || credential.status === 'pending'
     
-    console.log('useAuth - Password check:', { 
+    console.log('🔑 useAuth - Password check:', { 
       expected: credential.temporaryPassword, 
       received: trimmedPassword,
       match: credential.temporaryPassword === trimmedPassword 
     })
     
     if (credential.temporaryPassword !== trimmedPassword) {
-      console.log('useAuth - Password mismatch')
+      console.log('❌ useAuth - Password mismatch')
       return { success: false, error: 'Invalid email or password' }
     }
 
-    console.log('useAuth - Login successful, creating session')
+    console.log('✅ useAuth - Login successful, creating session')
     const userRole = credential.role || 'employee'
     const newSession = createAuthSession(
       credential.id,
@@ -63,7 +64,9 @@ export function useAuth() {
       return { success: false, error: 'No active session' }
     }
 
-    const credential = (credentials || []).find(c => c.id === session.userId)
+    const credentialsList = await window.spark.kv.get<EmployeeCredentials[]>('employee-credentials') || []
+    const credential = credentialsList.find(c => c.id === session.userId)
+    
     if (!credential) {
       return { success: false, error: 'User not found' }
     }
@@ -86,7 +89,9 @@ export function useAuth() {
   const completeOnboarding = async (preferences: OnboardingPreferences): Promise<void> => {
     if (!session) return
 
-    const credential = (credentials || []).find(c => c.id === session.userId)
+    const credentialsList = await window.spark.kv.get<EmployeeCredentials[]>('employee-credentials') || []
+    const credential = credentialsList.find(c => c.id === session.userId)
+    
     if (!credential) return
 
     const newProfile: UserProfile = {

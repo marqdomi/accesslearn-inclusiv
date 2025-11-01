@@ -415,56 +415,59 @@ export function SampleDataInitializer() {
   useEffect(() => {
     const initCourses = async () => {
       if (!courses || courses.length === 0) {
-        console.log('Initializing sample courses...')
+        console.log('🎓 Initializing sample courses...')
         setCourses(SAMPLE_COURSES)
       }
     }
     initCourses()
-  }, [courses, setCourses])
+  }, [])
 
   useEffect(() => {
     const initLessons = async () => {
       if (!lessonModules || Object.keys(lessonModules).length === 0) {
-        console.log('Initializing lesson modules...')
+        console.log('📚 Initializing lesson modules...')
         setLessonModules({
           'web-dev-quest': htmlFundamentalsModule,
         })
       }
     }
     initLessons()
-  }, [lessonModules, setLessonModules])
+  }, [])
 
   useEffect(() => {
     const initCredentials = async () => {
       if (!credentials || credentials.length === 0) {
-        console.log('Initializing sample credentials...', SAMPLE_CREDENTIALS)
+        console.log('🔧 Initializing sample credentials...', SAMPLE_CREDENTIALS)
         setCredentials(SAMPLE_CREDENTIALS)
+        console.log('✅ Sample credentials initialized successfully')
       } else {
-        console.log('Credentials already initialized:', credentials)
+        console.log('✅ Credentials already initialized:', credentials)
+        console.log('📊 Credential count:', credentials.length)
+        console.log('📧 Available emails:', credentials.map(c => c.email))
       }
     }
     initCredentials()
-  }, [credentials, setCredentials])
+  }, [])
 
   useEffect(() => {
     const initChallenges = async () => {
       if (!challenges || challenges.length === 0) {
-        console.log('Initializing team challenges...')
+        console.log('🏆 Initializing team challenges...')
         setChallenges(SAMPLE_TEAM_CHALLENGES)
       }
     }
     initChallenges()
-  }, [challenges, setChallenges])
+  }, [])
 
   useEffect(() => {
     const initActivities = async () => {
       if (!activities || activities.length === 0) {
-        console.log('Initializing activity feed...')
+        console.log('📰 Initializing activity feed...')
         setActivities(SAMPLE_ACTIVITIES)
       }
     }
     initActivities()
-  }, [activities, setActivities])
+  }, [])
 
   return null
 }
