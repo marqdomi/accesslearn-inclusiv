@@ -9,12 +9,15 @@ import { Eye, EyeSlash, Lightning, Warning, Info } from '@phosphor-icons/react'
 import { motion } from 'framer-motion'
 import { isValidEmail } from '@/lib/auth-utils'
 import { EmployeeCredentials } from '@/lib/types'
+import { useTranslation } from '@/lib/i18n'
+import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 
 interface LoginScreenProps {
   onLogin: (email: string, password: string) => Promise<{ success: boolean; error?: string }>
 }
 
 export function LoginScreen({ onLogin }: LoginScreenProps) {
+  const { t } = useTranslation()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -164,6 +167,10 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-primary/10 to-secondary/10 px-4">
+      <div className="absolute top-4 right-4">
+        <LanguageSwitcher />
+      </div>
+      
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -180,15 +187,15 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
             <Lightning size={32} weight="fill" className="text-white" aria-hidden="true" />
           </motion.div>
           <h1 className="text-4xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
-            GameLearn
+            {t('app.title')}
           </h1>
-          <p className="text-muted-foreground mt-2">Level Up Your Skills</p>
+          <p className="text-muted-foreground mt-2">{t('app.subtitle')}</p>
         </div>
 
         <Card className="shadow-2xl border-2">
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl">Welcome Back</CardTitle>
-            <CardDescription>Enter your credentials to access your learning dashboard</CardDescription>
+            <CardTitle className="text-2xl">{t('login.title')}</CardTitle>
+            <CardDescription>{t('login.subtitle')}</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -197,12 +204,12 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
                   <Info size={18} className="mt-0.5 text-primary" aria-hidden="true" />
                   <div className="flex items-start justify-between gap-2">
                     <AlertDescription className="flex-1 text-sm">
-                      <strong className="font-semibold">Test Credentials:</strong>
+                      <strong className="font-semibold">{t('login.testCredentials')}:</strong>
                       <br />
                       <span className="text-xs">
-                        Admin: admin@gamelearn.test / Admin2024!
+                        {t('login.adminAccount')}: admin@gamelearn.test / Admin2024!
                         <br />
-                        User: sarah.johnson@gamelearn.test / Welcome123!
+                        {t('login.userAccount')}: sarah.johnson@gamelearn.test / Welcome123!
                       </span>
                       <div className="mt-2">
                         <Button
@@ -281,7 +288,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
 
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-base font-medium">
-                  Email Address
+                  {t('login.email')}
                 </Label>
                 <Input
                   id="email"
@@ -299,13 +306,13 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
 
               <div className="space-y-2">
                 <Label htmlFor="password" className="text-base font-medium">
-                  Password
+                  {t('login.password')}
                 </Label>
                 <div className="relative">
                   <Input
                     id="password"
                     type={showPassword ? 'text' : 'password'}
-                    placeholder="Enter your password"
+                    placeholder={t('login.password')}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     disabled={isLoading}
@@ -319,7 +326,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
                     size="sm"
                     className="absolute right-1 top-1/2 -translate-y-1/2 h-10 w-10 p-0"
                     onClick={() => setShowPassword(!showPassword)}
-                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    aria-label={showPassword ? t('login.hidePassword') : t('login.showPassword')}
                   >
                     {showPassword ? (
                       <EyeSlash size={20} aria-hidden="true" />
@@ -337,7 +344,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
                   className="px-0 text-sm font-medium"
                   onClick={() => setError('Please contact your administrator to reset your password')}
                 >
-                  Forgot password?
+                  {t('login.forgotPassword')}
                 </Button>
               </div>
 
@@ -346,7 +353,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
                 className="w-full h-12 text-base font-semibold"
                 disabled={isLoading}
               >
-                {isLoading ? 'Signing in...' : 'Sign In'}
+                {isLoading ? `${t('common.loading')}` : t('login.signIn')}
               </Button>
             </form>
 

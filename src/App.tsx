@@ -17,10 +17,13 @@ import { Button } from '@/components/ui/button'
 import { Trophy, GraduationCap, Lightning, ShieldCheck, SignOut, Users } from '@phosphor-icons/react'
 import { Toaster } from '@/components/ui/sonner'
 import { motion } from 'framer-motion'
+import { useTranslation } from '@/lib/i18n'
+import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 
 type View = 'dashboard' | 'achievements' | 'community' | 'admin'
 
 function App() {
+  const { t } = useTranslation()
   const { session, login, changePassword, completeOnboarding, logout, isAuthenticated } = useAuth()
   const [courses] = useKV<Course[]>('courses', [])
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null)
@@ -79,15 +82,18 @@ function App() {
                   </div>
                   <div>
                     <h1 className="text-2xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
-                      GameLearn Admin
+                      {t('app.admin.title')}
                     </h1>
-                    <p className="text-xs text-muted-foreground">Content Management</p>
+                    <p className="text-xs text-muted-foreground">{t('app.admin.subtitle')}</p>
                   </div>
                 </motion.div>
-                <Button variant="outline" onClick={() => handleViewChange('dashboard')}>
-                  <GraduationCap size={20} className="mr-2" />
-                  Exit Admin Mode
-                </Button>
+                <div className="flex items-center gap-2">
+                  <LanguageSwitcher />
+                  <Button variant="outline" onClick={() => handleViewChange('dashboard')}>
+                    <GraduationCap size={20} className="mr-2" />
+                    {t('nav.exitAdminMode')}
+                  </Button>
+                </div>
               </div>
             </div>
           </header>
@@ -110,9 +116,9 @@ function App() {
                   </div>
                   <div>
                     <h1 className="text-2xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
-                      GameLearn
+                      {t('app.title')}
                     </h1>
-                    <p className="text-xs text-muted-foreground">Level Up Your Skills</p>
+                    <p className="text-xs text-muted-foreground">{t('app.subtitle')}</p>
                   </div>
                 </motion.div>
                 <nav className="flex gap-2" aria-label="Main navigation">
@@ -122,8 +128,8 @@ function App() {
                     className="gap-2"
                   >
                     <GraduationCap size={20} aria-hidden="true" />
-                    <span className="hidden sm:inline">Dashboard</span>
-                    <span className="sm:hidden">Home</span>
+                    <span className="hidden sm:inline">{t('nav.dashboard')}</span>
+                    <span className="sm:hidden">{t('nav.home')}</span>
                   </Button>
                   <Button
                     variant={currentView === 'community' ? 'default' : 'outline'}
@@ -131,7 +137,7 @@ function App() {
                     className="gap-2"
                   >
                     <Users size={20} aria-hidden="true" />
-                    <span className="hidden sm:inline">Community</span>
+                    <span className="hidden sm:inline">{t('nav.community')}</span>
                   </Button>
                   <Button
                     variant={currentView === 'achievements' ? 'default' : 'outline'}
@@ -139,8 +145,8 @@ function App() {
                     className="gap-2"
                   >
                     <Trophy size={20} aria-hidden="true" />
-                    <span className="hidden sm:inline">Achievements</span>
-                    <span className="sm:hidden">Trophies</span>
+                    <span className="hidden sm:inline">{t('nav.achievements')}</span>
+                    <span className="sm:hidden">{t('nav.trophies')}</span>
                   </Button>
                   <Button
                     variant={isAdminView ? 'default' : 'outline'}
@@ -148,16 +154,17 @@ function App() {
                     className="gap-2"
                   >
                     <ShieldCheck size={20} aria-hidden="true" />
-                    <span className="hidden sm:inline">Admin</span>
+                    <span className="hidden sm:inline">{t('nav.admin')}</span>
                   </Button>
+                  <LanguageSwitcher />
                   <Button
                     variant="ghost"
                     onClick={logout}
                     className="gap-2"
-                    title="Sign out"
+                    title={t('nav.signOut')}
                   >
                     <SignOut size={20} aria-hidden="true" />
-                    <span className="hidden sm:inline">Sign Out</span>
+                    <span className="hidden sm:inline">{t('nav.signOut')}</span>
                   </Button>
                 </nav>
               </div>

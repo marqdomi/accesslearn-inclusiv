@@ -6,8 +6,11 @@ import { Slider } from '@/components/ui/slider'
 import { useAccessibilityPreferences } from '@/hooks/use-accessibility-preferences'
 import { Gear, TextAa, Gauge, X } from '@phosphor-icons/react'
 import { useState, useEffect } from 'react'
+import { useTranslation } from '@/lib/i18n'
+import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 
 export function AccessibilityPanel() {
+  const { t } = useTranslation()
   const { preferences: rawPreferences, updatePreference } = useAccessibilityPreferences()
   const [isOpen, setIsOpen] = useState(false)
   
@@ -45,16 +48,16 @@ export function AccessibilityPanel() {
         <Card
           className="fixed bottom-24 right-6 z-50 w-80 p-6 shadow-xl border-2"
           role="dialog"
-          aria-label="Accessibility settings"
+          aria-label={t('accessibility.settings')}
         >
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold">Accessibility Settings</h2>
+            <h2 className="text-lg font-semibold">{t('accessibility.settings')}</h2>
             <Button
               onClick={() => setIsOpen(false)}
               variant="ghost"
               size="icon"
               className="h-10 w-10"
-              aria-label="Close accessibility settings"
+              aria-label={t('common.close')}
             >
               <X size={20} aria-hidden="true" />
             </Button>
@@ -62,9 +65,16 @@ export function AccessibilityPanel() {
 
           <div className="space-y-6">
             <div>
+              <Label className="mb-3 block text-sm font-medium">
+                Language / Idioma
+              </Label>
+              <LanguageSwitcher variant="outline" showLabel />
+            </div>
+
+            <div>
               <Label htmlFor="text-size-group" className="mb-3 flex items-center gap-2 text-base font-medium">
                 <TextAa size={20} aria-hidden="true" />
-                Text Size
+                {t('accessibility.textSize')}
               </Label>
               <div className="flex gap-2" role="group" aria-labelledby="text-size-group">
                 <Button
@@ -74,7 +84,7 @@ export function AccessibilityPanel() {
                   aria-pressed={preferences.textSize === 'normal'}
                   className="flex-1 min-h-[44px]"
                 >
-                  Normal
+                  {t('onboarding.step2.textSize.medium')}
                 </Button>
                 <Button
                   variant={preferences.textSize === 'large' ? 'default' : 'outline'}
@@ -83,7 +93,7 @@ export function AccessibilityPanel() {
                   aria-pressed={preferences.textSize === 'large'}
                   className="flex-1 min-h-[44px]"
                 >
-                  Large
+                  {t('onboarding.step2.textSize.large')}
                 </Button>
                 <Button
                   variant={preferences.textSize === 'x-large' ? 'default' : 'outline'}
@@ -92,7 +102,7 @@ export function AccessibilityPanel() {
                   aria-pressed={preferences.textSize === 'x-large'}
                   className="flex-1 min-h-[44px]"
                 >
-                  X-Large
+                  {t('onboarding.step2.textSize.xlarge')}
                 </Button>
               </div>
             </div>
@@ -100,13 +110,13 @@ export function AccessibilityPanel() {
             <div className="space-y-4">
               <div className="flex items-center justify-between gap-4 min-h-[44px]">
                 <Label htmlFor="high-contrast" className="text-base font-medium cursor-pointer">
-                  High Contrast Mode
+                  {t('accessibility.highContrast')}
                 </Label>
                 <Switch
                   id="high-contrast"
                   checked={preferences.highContrast}
                   onCheckedChange={(checked) => updatePreference('highContrast', checked)}
-                  aria-label="Toggle high contrast mode"
+                  aria-label={t('accessibility.highContrast')}
                 />
               </div>
 
@@ -124,13 +134,13 @@ export function AccessibilityPanel() {
 
               <div className="flex items-center justify-between gap-4 min-h-[44px]">
                 <Label htmlFor="reduce-motion" className="text-base font-medium cursor-pointer">
-                  Reduce Motion
+                  {t('accessibility.reduceMotion')}
                 </Label>
                 <Switch
                   id="reduce-motion"
                   checked={preferences.reduceMotion}
                   onCheckedChange={(checked) => updatePreference('reduceMotion', checked)}
-                  aria-label="Toggle reduced motion"
+                  aria-label={t('accessibility.reduceMotion')}
                 />
               </div>
             </div>
