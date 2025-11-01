@@ -308,24 +308,38 @@ export function SampleDataInitializer() {
   const [credentials, setCredentials] = useKV<EmployeeCredentials[]>('employee-credentials', [])
 
   useEffect(() => {
-    if (!courses || courses.length === 0) {
-      setCourses(SAMPLE_COURSES)
+    const initCourses = async () => {
+      if (!courses || courses.length === 0) {
+        console.log('Initializing sample courses...')
+        setCourses(SAMPLE_COURSES)
+      }
     }
-  }, [])
+    initCourses()
+  }, [courses, setCourses])
 
   useEffect(() => {
-    if (!lessonModules || Object.keys(lessonModules).length === 0) {
-      setLessonModules({
-        'web-dev-quest': htmlFundamentalsModule,
-      })
+    const initLessons = async () => {
+      if (!lessonModules || Object.keys(lessonModules).length === 0) {
+        console.log('Initializing lesson modules...')
+        setLessonModules({
+          'web-dev-quest': htmlFundamentalsModule,
+        })
+      }
     }
-  }, [])
+    initLessons()
+  }, [lessonModules, setLessonModules])
 
   useEffect(() => {
-    if (!credentials || credentials.length === 0) {
-      setCredentials(SAMPLE_CREDENTIALS)
+    const initCredentials = async () => {
+      if (!credentials || credentials.length === 0) {
+        console.log('Initializing sample credentials...', SAMPLE_CREDENTIALS)
+        setCredentials(SAMPLE_CREDENTIALS)
+      } else {
+        console.log('Credentials already initialized:', credentials)
+      }
     }
-  }, [])
+    initCredentials()
+  }, [credentials, setCredentials])
 
   return null
 }

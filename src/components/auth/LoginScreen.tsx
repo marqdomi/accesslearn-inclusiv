@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useKV } from '@github/spark/hooks'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -7,6 +8,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Eye, EyeSlash, Lightning, Warning, Info } from '@phosphor-icons/react'
 import { motion } from 'framer-motion'
 import { isValidEmail } from '@/lib/auth-utils'
+import { EmployeeCredentials } from '@/lib/types'
 
 interface LoginScreenProps {
   onLogin: (email: string, password: string) => Promise<{ success: boolean; error?: string }>
@@ -19,6 +21,39 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const [showTestHint, setShowTestHint] = useState(true)
+  const [credentials, setCredentials] = useKV<EmployeeCredentials[]>('employee-credentials', [])
+  const [debugMode, setDebugMode] = useState(false)
+
+  useEffect(() => {
+    console.log('Login Screen - Current credentials in KV:', credentials)
+  }, [credentials])
+
+  const resetCredentials = () => {
+    const sampleCreds: EmployeeCredentials[] = [
+      {
+        id: 'admin-001',
+        email: 'admin@gamelearn.test',
+        temporaryPassword: 'Admin2024!',
+        firstName: 'Admin',
+        lastName: 'User',
+        department: 'IT',
+        status: 'activated',
+        createdAt: Date.now(),
+      },
+      {
+        id: 'user-001',
+        email: 'sarah.johnson@gamelearn.test',
+        temporaryPassword: 'Welcome123!',
+        firstName: 'Sarah',
+        lastName: 'Johnson',
+        department: 'Sales',
+        status: 'activated',
+        createdAt: Date.now(),
+      },
+    ]
+    console.log('Manually resetting credentials to:', sampleCreds)
+    setCredentials(sampleCreds)
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -34,13 +69,17 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
       return
     }
 
+    console.log('Login attempt with:', { email, password, credentialsCount: credentials?.length })
+
     setIsLoading(true)
     try {
       const result = await onLogin(email, password)
+      console.log('Login result:', result)
       if (!result.success) {
         setError(result.error || 'Login failed. Please check your credentials.')
       }
     } catch (err) {
+      console.error('Login error:', err)
       setError('An unexpected error occurred. Please try again.')
     } finally {
       setIsLoading(false)
@@ -89,6 +128,17 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
                         <br />
                         User: sarah.johnson@gamelearn.test / Welcome123!
                       </span>
+                      <div className="mt-2">
+                        <Button
+                          type="button"
+                          variant="link"
+                          size="sm"
+                          className="h-auto p-0 text-xs"
+                          onClick={() => setDebugMode(!debugMode)}
+                        >
+                          {debugMode ? 'Hide' : 'Show'} Debug Info
+                        </Button>
+                      </div>
                     </AlertDescription>
                     <Button
                       type="button"
@@ -100,6 +150,40 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
                       Dismiss
                     </Button>
                   </div>
+                </Alert>
+              )}
+
+              {debugMode && (
+                <Alert className="bg-yellow-50 border-yellow-200 text-xs">
+                  <AlertDescription>
+                    <strong>Debug Info:</strong>
+                    <br />
+                    Credentials loaded: {credentials?.length || 0}
+                    <br />
+                    {credentials && credentials.length > 0 && (
+                      <div className="mt-2">
+                        <strong>Available accounts:</strong>
+                        {credentials.map((c) => (
+                          <div key={c.id} className="ml-2">
+                            • {c.email} / {c.temporaryPassword} (Status: {c.status})
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {(!credentials || credentials.length === 0) && (
+                      <div className="mt-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={resetCredentials}
+                          className="text-xs"
+                        >
+                          Reset Test Credentials
+                        </Button>
+                      </div>
+                    )}
+                  </AlertDescription>
                 </Alert>
               )}
               

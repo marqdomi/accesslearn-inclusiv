@@ -8,26 +8,47 @@ export function useAuth() {
   const [profiles, setProfiles] = useKV<UserProfile[]>('user-profiles', [])
 
   const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
-    const credential = (credentials || []).find(c => c.email.toLowerCase() === email.toLowerCase())
+    const trimmedEmail = email.trim()
+    const trimmedPassword = password.trim()
+    
+    console.log('useAuth.login called with:', { email: trimmedEmail, passwordLength: trimmedPassword.length })
+    console.log('useAuth - credentials available:', credentials?.length || 0)
+    console.log('useAuth - credentials:', credentials)
+    
+    const credentialsList = credentials || []
+    const credential = credentialsList.find(c => c.email.toLowerCase() === trimmedEmail.toLowerCase())
+    
+    console.log('useAuth - found credential:', credential)
     
     if (!credential) {
+      console.log('useAuth - No credential found for email:', trimmedEmail)
       return { success: false, error: 'Invalid email or password' }
     }
 
     if (credential.status === 'disabled') {
+      console.log('useAuth - Account is disabled')
       return { success: false, error: 'This account has been disabled' }
     }
 
-    const profile = (profiles || []).find(p => p.email.toLowerCase() === email.toLowerCase())
+    const profilesList = profiles || []
+    const profile = profilesList.find(p => p.email.toLowerCase() === trimmedEmail.toLowerCase())
     const isFirstLogin = !profile || credential.status === 'pending'
     
-    if (credential.temporaryPassword !== password) {
+    console.log('useAuth - Password check:', { 
+      expected: credential.temporaryPassword, 
+      received: trimmedPassword,
+      match: credential.temporaryPassword === trimmedPassword 
+    })
+    
+    if (credential.temporaryPassword !== trimmedPassword) {
+      console.log('useAuth - Password mismatch')
       return { success: false, error: 'Invalid email or password' }
     }
 
+    console.log('useAuth - Login successful, creating session')
     const newSession = createAuthSession(
       credential.id,
-      email,
+      trimmedEmail,
       'employee',
       isFirstLogin
     )
