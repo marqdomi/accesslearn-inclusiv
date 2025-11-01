@@ -1,5 +1,5 @@
 import { useKV } from '@github/spark/hooks'
-import { UserStats, UserAchievement } from '@/lib/types'
+import { UserStats, UserAchievement, MentorshipPairing } from '@/lib/types'
 import { ACHIEVEMENTS } from '@/lib/achievements'
 import { toast } from 'sonner'
 import { useActivityFeed } from './use-activity-feed'
@@ -22,6 +22,7 @@ export function useAchievements(userId?: string) {
   const { t } = useTranslation()
   const userKey = userId || 'default-user'
   const [userStats, setUserStats] = useKV<UserStats>(`user-stats-${userKey}`, DEFAULT_USER_STATS)
+  const [pairings] = useKV<MentorshipPairing[]>('mentorship-pairings', [])
   const { postAchievementUnlocked } = useActivityFeed()
 
   const checkAndUnlockAchievements = (stats: UserStats, setStats: (updater: (current?: UserStats) => UserStats) => void) => {
@@ -38,7 +39,14 @@ export function useAchievements(userId?: string) {
 
       switch (achievement.category) {
         case 'course':
-          shouldUnlock = stats.totalCoursesCompleted >= achievement.requirement
+          if (achievement.id === 'team-up') {
+            const hasMentor = userId ? (pairings || []).some(
+              p => p.menteeId === userId && p.status === 'active'
+            ) : false
+            shouldUnlock = hasMentor && stats.totalCoursesCompleted >= achievement.requirement
+          } else {
+            shouldUnlock = stats.totalCoursesCompleted >= achievement.requirement
+          }
           break
         case 'milestone':
           shouldUnlock = stats.totalModulesCompleted >= achievement.requirement

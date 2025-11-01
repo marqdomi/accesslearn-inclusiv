@@ -1,6 +1,7 @@
 import { useKV } from '@github/spark/hooks'
 import { toast } from 'sonner'
 import { useActivityFeed } from './use-activity-feed'
+import { useMentorXP } from './use-mentor-xp'
 import { useTranslation } from '@/lib/i18n'
 
 export const XP_REWARDS = {
@@ -79,6 +80,7 @@ export function useXP(userId?: string) {
   const [totalXP, setTotalXP] = useKV<number>(`user-total-xp-${userKey}`, 0)
   const [currentLevel, setCurrentLevel] = useKV<number>(`user-level-${userKey}`, 1)
   const { postLevelUp } = useActivityFeed()
+  const { awardMentorBonus } = useMentorXP()
 
   const awardXP = (amount: number, reason: string, showNotification = true) => {
     setTotalXP((currentXP) => {
@@ -93,6 +95,10 @@ export function useXP(userId?: string) {
           duration: 3000,
           className: 'bg-gradient-to-r from-lime-500 to-green-600 text-white',
         })
+      }
+
+      if (userId) {
+        awardMentorBonus(userId, amount)
       }
 
       if (newLevel > oldLevel) {

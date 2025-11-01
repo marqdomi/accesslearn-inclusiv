@@ -6,6 +6,9 @@ import { MainMission } from './MainMission'
 import { ProgressGoals } from './ProgressGoals'
 import { SideMissions } from './SideMissions'
 import { QuickAccessibilitySettings } from './QuickAccessibilitySettings'
+import { MentorDashboard } from './MentorDashboard'
+import { MyMentorWidget } from './MyMentorWidget'
+import { useMentorship } from '@/hooks/use-mentorship'
 import { motion } from 'framer-motion'
 
 interface UserDashboardProps {
@@ -17,6 +20,10 @@ interface UserDashboardProps {
 export function UserDashboard({ courses, onSelectCourse, userId }: UserDashboardProps) {
   const userKey = userId || 'default-user'
   const [courseProgress] = useKV<Record<string, UserProgress>>(`course-progress-${userKey}`, {})
+  const { getMentorPairings, getMenteePairing } = useMentorship()
+
+  const isMentor = userId ? getMentorPairings(userId).length > 0 : false
+  const hasMentor = userId ? getMenteePairing(userId) !== undefined : false
 
   const mainMissionCourse = useMemo(() => {
     if (!courseProgress) return null
@@ -56,6 +63,16 @@ export function UserDashboard({ courses, onSelectCourse, userId }: UserDashboard
         <PlayerIdentity userId={userId} />
       </motion.div>
 
+      {isMentor && (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.1 }}
+        >
+          <MentorDashboard mentorId={userId!} />
+        </motion.div>
+      )}
+
       <div className="grid lg:grid-cols-3 gap-6">
         <motion.div
           className="lg:col-span-2 space-y-6"
@@ -89,6 +106,13 @@ export function UserDashboard({ courses, onSelectCourse, userId }: UserDashboard
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.3, delay: 0.2 }}
         >
+          {hasMentor && userId && (
+            <section aria-labelledby="my-mentor-heading">
+              <h2 id="my-mentor-heading" className="sr-only">My Mentor</h2>
+              <MyMentorWidget menteeId={userId} />
+            </section>
+          )}
+
           <section aria-labelledby="progress-goals-heading">
             <h2 id="progress-goals-heading" className="sr-only">Progress and Achievements</h2>
             <ProgressGoals userId={userId} />

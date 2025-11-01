@@ -8,8 +8,9 @@ import { BulkEmployeeUpload } from './BulkEmployeeUpload'
 import { CorporateReportingDashboard } from './CorporateReportingDashboard'
 import { CourseAssignmentManager } from './CourseAssignmentManager'
 import { GroupManagement } from './GroupManagement'
+import { MentorshipManagement } from './MentorshipManagement'
 
-type AdminSection = 'dashboard' | 'courses' | 'users' | 'gamification' | 'reports' | 'enrollment' | 'corporate-reports' | 'assignments' | 'groups'
+type AdminSection = 'dashboard' | 'courses' | 'users' | 'gamification' | 'reports' | 'enrollment' | 'corporate-reports' | 'assignments' | 'groups' | 'mentorship'
 
 export function AdminPanel() {
   const [currentSection, setCurrentSection] = useState<AdminSection>('dashboard')
@@ -69,6 +70,16 @@ export function AdminPanel() {
             </button>
           </div>
           <GroupManagement />
+        </div>
+      )}
+      {currentSection === 'mentorship' && (
+        <div className="space-y-6">
+          <div className="flex items-center gap-4">
+            <button onClick={() => setCurrentSection('dashboard')} className="text-sm text-muted-foreground hover:text-foreground">
+              ← Back to Dashboard
+            </button>
+          </div>
+          <MentorshipManagement />
         </div>
       )}
     </div>

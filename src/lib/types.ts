@@ -440,3 +440,23 @@ export interface UserNotification {
   actionUrl?: string
   relatedId?: string
 }
+
+export interface MentorshipPairing {
+  id: string
+  mentorId: string
+  menteeId: string
+  assignedAt: number
+  assignedBy: string
+  status: 'active' | 'removed'
+}
+
+export interface MentorMessage {
+  id: string
+  pairingId: string
+  senderId: string
+  senderName: string
+  receiverId: string
+  content: string
+  timestamp: number
+  read: boolean
+}

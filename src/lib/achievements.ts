@@ -267,6 +267,17 @@ export const ACHIEVEMENTS: Achievement[] = [
     requirement: 1,
     hidden: true,
   },
+  {
+    id: 'team-up',
+    title: 'Team Up',
+    titleKey: 'achievementTitle.teamUp',
+    description: 'Complete your first mission with guidance from your Mentor',
+    descriptionKey: 'achievementDesc.teamUp',
+    tier: 'bronze',
+    category: 'course',
+    icon: 'UsersFour',
+    requirement: 1,
+  },
 ]
 
 export const TIER_COLORS = {
