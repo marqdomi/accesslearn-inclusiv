@@ -1,21 +1,27 @@
-import { useEffect, useState } from 'react'
+import { useKV } from '@github/spark/hooks'
 import { useXP } from '@/hooks/use-xp'
+import { UserProfile } from '@/lib/types'
 import { Card } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Lightning, Trophy } from '@phosphor-icons/react'
 import { motion } from 'framer-motion'
 import { useTranslation } from '@/lib/i18n'
+import { useMemo } from 'react'
 
 export function PlayerIdentity({ userId }: { userId?: string }) {
   const { t } = useTranslation()
   const { totalXP, currentLevel, getRankName, getProgressToNextLevel } = useXP(userId)
-  const [user, setUser] = useState<{ login: string; avatarUrl: string } | null>(null)
+  const [profilesList] = useKV<UserProfile[]>('user-profiles', [])
   const progress = getProgressToNextLevel()
 
-  useEffect(() => {
-    window.spark.user().then(setUser).catch(() => setUser({ login: 'Player', avatarUrl: '' }))
-  }, [])
+  const userProfile = useMemo(() => {
+    if (!userId) return null
+    return (profilesList || []).find(p => p.id === userId)
+  }, [userId, profilesList])
+
+  const displayName = userProfile?.displayName || userProfile?.firstName || 'Player'
+  const avatarUrl = userProfile?.avatar
 
   return (
     <Card className="p-6 bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10 border-2 border-primary/30">
@@ -26,15 +32,15 @@ export function PlayerIdentity({ userId }: { userId?: string }) {
           transition={{ type: 'spring', stiffness: 200 }}
         >
           <Avatar className="h-20 w-20 border-4 border-primary/30 ring-2 ring-primary/20">
-            <AvatarImage src={user?.avatarUrl} alt={`${user?.login || 'Player'}'s avatar`} />
+            <AvatarImage src={avatarUrl} alt={`${displayName}'s avatar`} />
             <AvatarFallback className="text-2xl font-bold bg-gradient-to-br from-primary to-secondary text-white">
-              {user?.login?.charAt(0).toUpperCase() || 'P'}
+              {displayName.charAt(0).toUpperCase()}
             </AvatarFallback>
           </Avatar>
         </motion.div>
 
         <div className="flex-1 min-w-0">
-          <h2 className="text-2xl font-bold truncate mb-1">{user?.login || 'Player'}</h2>
+          <h2 className="text-2xl font-bold truncate mb-1">{displayName}</h2>
           
           <div className="flex items-center gap-3 flex-wrap">
             <div className="flex items-center gap-2 bg-gradient-to-r from-primary to-secondary text-white px-3 py-1 rounded-full">
