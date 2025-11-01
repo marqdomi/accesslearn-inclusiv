@@ -1,5 +1,7 @@
 import { useKV } from '@github/spark/hooks'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
+import esTranslations from '../locales/es.json'
+import enTranslations from '../locales/en.json'
 
 export type Language = 'es' | 'en'
 
@@ -9,6 +11,11 @@ export const SUPPORTED_LANGUAGES = {
 } as const
 
 export const DEFAULT_LANGUAGE: Language = 'es'
+
+const translationsMap: Record<Language, Record<string, string>> = {
+  es: esTranslations,
+  en: enTranslations
+}
 
 export function useLanguage() {
   const [language, setLanguage, deleteLanguage] = useKV<Language>('user-language', DEFAULT_LANGUAGE)
@@ -23,16 +30,9 @@ export function useLanguage() {
 
 export function useTranslation() {
   const { language } = useLanguage()
-  const [translations, setTranslations] = useState<Record<string, string>>({})
-
-  useEffect(() => {
-    import(`../locales/${language}.json`)
-      .then((module) => {
-        setTranslations(module.default)
-      })
-      .catch((error) => {
-        console.error(`Failed to load translations for ${language}:`, error)
-      })
+  
+  const translations = useMemo(() => {
+    return translationsMap[language] || translationsMap[DEFAULT_LANGUAGE]
   }, [language])
 
   const t = (key: string, fallback?: string): string => {
