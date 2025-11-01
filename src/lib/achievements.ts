@@ -4,7 +4,9 @@ export const ACHIEVEMENTS: Achievement[] = [
   {
     id: 'first-steps',
     title: 'First Steps',
+    titleKey: 'achievementTitle.firstSteps',
     description: 'Complete your first course',
+    descriptionKey: 'achievementDesc.firstSteps',
     tier: 'bronze',
     category: 'course',
     icon: 'GraduationCap',
@@ -13,7 +15,9 @@ export const ACHIEVEMENTS: Achievement[] = [
   {
     id: 'learning-specialist-i',
     title: 'Learning Specialist I',
+    titleKey: 'achievementTitle.learningSpecialistI',
     description: 'Complete 5 courses',
+    descriptionKey: 'achievementDesc.learningSpecialistI',
     tier: 'silver',
     category: 'course',
     icon: 'BookOpen',
@@ -22,7 +26,9 @@ export const ACHIEVEMENTS: Achievement[] = [
   {
     id: 'learning-specialist-ii',
     title: 'Learning Specialist II',
+    titleKey: 'achievementTitle.learningSpecialistII',
     description: 'Complete 10 courses',
+    descriptionKey: 'achievementDesc.learningSpecialistII',
     tier: 'gold',
     category: 'course',
     icon: 'BookBookmark',
@@ -31,7 +37,9 @@ export const ACHIEVEMENTS: Achievement[] = [
   {
     id: 'learning-specialist-iii',
     title: 'Learning Specialist III',
+    titleKey: 'achievementTitle.learningSpecialistIII',
     description: 'Complete 15 courses',
+    descriptionKey: 'achievementDesc.learningSpecialistIII',
     tier: 'platinum',
     category: 'course',
     icon: 'Trophy',
@@ -40,7 +48,9 @@ export const ACHIEVEMENTS: Achievement[] = [
   {
     id: 'learning-master',
     title: 'Learning Master',
+    titleKey: 'achievementTitle.learningMaster',
     description: 'Complete 25 courses',
+    descriptionKey: 'achievementDesc.learningMaster',
     tier: 'platinum',
     category: 'course',
     icon: 'Crown',
@@ -49,7 +59,9 @@ export const ACHIEVEMENTS: Achievement[] = [
   {
     id: 'learning-legend',
     title: 'Learning Legend',
+    titleKey: 'achievementTitle.learningLegend',
     description: 'Complete 50 courses',
+    descriptionKey: 'achievementDesc.learningLegend',
     tier: 'platinum',
     category: 'course',
     icon: 'Star',
@@ -58,7 +70,9 @@ export const ACHIEVEMENTS: Achievement[] = [
   {
     id: 'quick-study',
     title: 'Quick Study',
+    titleKey: 'achievementTitle.quickStudy',
     description: 'Complete 10 modules in a single session',
+    descriptionKey: 'achievementDesc.quickStudy',
     tier: 'silver',
     category: 'speed',
     icon: 'Lightning',
@@ -67,7 +81,9 @@ export const ACHIEVEMENTS: Achievement[] = [
   {
     id: 'perfect-score',
     title: 'Perfect Score',
+    titleKey: 'achievementTitle.perfectScore',
     description: 'Achieve 100% on an assessment',
+    descriptionKey: 'achievementDesc.perfectScore',
     tier: 'gold',
     category: 'assessment',
     icon: 'Star',
@@ -76,7 +92,9 @@ export const ACHIEVEMENTS: Achievement[] = [
   {
     id: 'assessment-specialist-i',
     title: 'Assessment Specialist I',
+    titleKey: 'achievementTitle.assessmentSpecialistI',
     description: 'Pass 5 assessments with 90% or higher',
+    descriptionKey: 'achievementDesc.assessmentSpecialistI',
     tier: 'silver',
     category: 'assessment',
     icon: 'Medal',
@@ -85,7 +103,9 @@ export const ACHIEVEMENTS: Achievement[] = [
   {
     id: 'assessment-specialist-ii',
     title: 'Assessment Specialist II',
+    titleKey: 'achievementTitle.assessmentSpecialistII',
     description: 'Pass 10 assessments with 90% or higher',
+    descriptionKey: 'achievementDesc.assessmentSpecialistII',
     tier: 'gold',
     category: 'assessment',
     icon: 'Medal',
@@ -94,7 +114,9 @@ export const ACHIEVEMENTS: Achievement[] = [
   {
     id: 'assessment-specialist-iii',
     title: 'Assessment Specialist III',
+    titleKey: 'achievementTitle.assessmentSpecialistIII',
     description: 'Pass 25 assessments with 90% or higher',
+    descriptionKey: 'achievementDesc.assessmentSpecialistIII',
     tier: 'platinum',
     category: 'assessment',
     icon: 'Medal',
@@ -103,7 +125,9 @@ export const ACHIEVEMENTS: Achievement[] = [
   {
     id: 'week-warrior',
     title: '7-Day Study Streak',
+    titleKey: 'achievementTitle.sevenDayStreak',
     description: 'Study for 7 days in a row',
+    descriptionKey: 'achievementDesc.sevenDayStreak',
     tier: 'silver',
     category: 'streak',
     icon: 'Fire',
@@ -112,7 +136,9 @@ export const ACHIEVEMENTS: Achievement[] = [
   {
     id: 'dedication',
     title: '30-Day Study Streak',
+    titleKey: 'achievementTitle.thirtyDayStreak',
     description: 'Study for 30 days in a row',
+    descriptionKey: 'achievementDesc.thirtyDayStreak',
     tier: 'gold',
     category: 'streak',
     icon: 'Flame',
@@ -121,7 +147,9 @@ export const ACHIEVEMENTS: Achievement[] = [
   {
     id: 'streak-specialist-i',
     title: 'Streak Specialist I',
+    titleKey: 'achievementTitle.streakSpecialistI',
     description: 'Study for 60 days in a row',
+    descriptionKey: 'achievementDesc.streakSpecialistI',
     tier: 'platinum',
     category: 'streak',
     icon: 'FireSimple',
@@ -130,7 +158,9 @@ export const ACHIEVEMENTS: Achievement[] = [
   {
     id: 'streak-specialist-ii',
     title: 'Streak Specialist II',
+    titleKey: 'achievementTitle.streakSpecialistII',
     description: 'Study for 90 days in a row',
+    descriptionKey: 'achievementDesc.streakSpecialistII',
     tier: 'platinum',
     category: 'streak',
     icon: 'FireSimple',
@@ -139,7 +169,9 @@ export const ACHIEVEMENTS: Achievement[] = [
   {
     id: 'unstoppable',
     title: 'Unstoppable',
+    titleKey: 'achievementTitle.unstoppable',
     description: 'Study for 180 days in a row',
+    descriptionKey: 'achievementDesc.unstoppable',
     tier: 'platinum',
     category: 'streak',
     icon: 'FireSimple',
@@ -148,7 +180,9 @@ export const ACHIEVEMENTS: Achievement[] = [
   {
     id: 'module-specialist-i',
     title: 'Module Specialist I',
+    titleKey: 'achievementTitle.moduleSpecialistI',
     description: 'Complete 25 learning modules',
+    descriptionKey: 'achievementDesc.moduleSpecialistI',
     tier: 'bronze',
     category: 'milestone',
     icon: 'CheckCircle',
@@ -157,7 +191,9 @@ export const ACHIEVEMENTS: Achievement[] = [
   {
     id: 'module-specialist-ii',
     title: 'Module Specialist II',
+    titleKey: 'achievementTitle.moduleSpecialistII',
     description: 'Complete 50 learning modules',
+    descriptionKey: 'achievementDesc.moduleSpecialistII',
     tier: 'silver',
     category: 'milestone',
     icon: 'CheckCircle',
@@ -166,7 +202,9 @@ export const ACHIEVEMENTS: Achievement[] = [
   {
     id: 'module-specialist-iii',
     title: 'Module Specialist III',
+    titleKey: 'achievementTitle.moduleSpecialistIII',
     description: 'Complete 100 learning modules',
+    descriptionKey: 'achievementDesc.moduleSpecialistIII',
     tier: 'gold',
     category: 'milestone',
     icon: 'Target',
@@ -175,7 +213,9 @@ export const ACHIEVEMENTS: Achievement[] = [
   {
     id: 'module-master',
     title: 'Module Master',
+    titleKey: 'achievementTitle.moduleMaster',
     description: 'Complete 250 learning modules',
+    descriptionKey: 'achievementDesc.moduleMaster',
     tier: 'platinum',
     category: 'milestone',
     icon: 'Rocket',
@@ -184,7 +224,9 @@ export const ACHIEVEMENTS: Achievement[] = [
   {
     id: 'module-legend',
     title: 'Module Legend',
+    titleKey: 'achievementTitle.moduleLegend',
     description: 'Complete 500 learning modules',
+    descriptionKey: 'achievementDesc.moduleLegend',
     tier: 'platinum',
     category: 'milestone',
     icon: 'Trophy',
@@ -193,7 +235,9 @@ export const ACHIEVEMENTS: Achievement[] = [
   {
     id: 'first-try',
     title: 'First Try Success',
+    titleKey: 'achievementTitle.firstTrySuccess',
     description: 'Pass an assessment on the first attempt',
+    descriptionKey: 'achievementDesc.firstTrySuccess',
     tier: 'bronze',
     category: 'assessment',
     icon: 'Lightbulb',
@@ -202,7 +246,9 @@ export const ACHIEVEMENTS: Achievement[] = [
   {
     id: 'speed-runner',
     title: 'Speed Runner',
+    titleKey: 'achievementTitle.speedRunner',
     description: 'Complete a course in under 1 hour',
+    descriptionKey: 'achievementDesc.speedRunner',
     tier: 'gold',
     category: 'speed',
     icon: 'Timer',
@@ -212,7 +258,9 @@ export const ACHIEVEMENTS: Achievement[] = [
   {
     id: 'quarterly-engagement',
     title: 'Quarterly Engagement Badge',
+    titleKey: 'achievementTitle.quarterlyEngagement',
     description: 'Complete at least 10 activities in a quarter',
+    descriptionKey: 'achievementDesc.quarterlyEngagement',
     tier: 'silver',
     category: 'milestone',
     icon: 'Calendar',

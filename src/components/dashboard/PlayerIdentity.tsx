@@ -5,8 +5,10 @@ import { Progress } from '@/components/ui/progress'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Lightning, Trophy } from '@phosphor-icons/react'
 import { motion } from 'framer-motion'
+import { useTranslation } from '@/lib/i18n'
 
 export function PlayerIdentity({ userId }: { userId?: string }) {
+  const { t } = useTranslation()
   const { totalXP, currentLevel, getRankName, getProgressToNextLevel } = useXP(userId)
   const [user, setUser] = useState<{ login: string; avatarUrl: string } | null>(null)
   const progress = getProgressToNextLevel()
@@ -37,7 +39,7 @@ export function PlayerIdentity({ userId }: { userId?: string }) {
           <div className="flex items-center gap-3 flex-wrap">
             <div className="flex items-center gap-2 bg-gradient-to-r from-primary to-secondary text-white px-3 py-1 rounded-full">
               <Trophy size={16} weight="fill" aria-hidden="true" />
-              <span className="text-sm font-bold">Level {currentLevel}</span>
+              <span className="text-sm font-bold">{t('playerIdentity.level')} {currentLevel}</span>
             </div>
             <span className="text-sm font-semibold text-primary">{getRankName()}</span>
             <div className="flex items-center gap-1.5">
@@ -49,7 +51,7 @@ export function PlayerIdentity({ userId }: { userId?: string }) {
           <div className="mt-3">
             <div className="flex items-center justify-between mb-1.5 text-xs">
               <span className="font-medium text-muted-foreground">
-                Progress to Level {currentLevel + 1}
+                {t('playerIdentity.progressTo')} {currentLevel + 1}
               </span>
               <span className="font-bold text-foreground">
                 {Math.floor(progress.percentage)}%
@@ -63,7 +65,7 @@ export function PlayerIdentity({ userId }: { userId?: string }) {
               />
             </div>
             <p className="mt-1 text-xs text-muted-foreground text-right">
-              {Math.floor(progress.required - progress.current)} XP to next level
+              {Math.floor(progress.required - progress.current)} {t('playerIdentity.xpToNextLevel')}
             </p>
           </div>
         </div>

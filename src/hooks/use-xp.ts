@@ -1,6 +1,7 @@
 import { useKV } from '@github/spark/hooks'
 import { toast } from 'sonner'
 import { useActivityFeed } from './use-activity-feed'
+import { useTranslation } from '@/lib/i18n'
 
 export const XP_REWARDS = {
   DAILY_LOGIN: 10,
@@ -52,27 +53,28 @@ export function getXPForCurrentLevel(currentLevel: number): number {
   return generateInfiniteLevelThresholds(currentLevel)
 }
 
-export const RANK_NAMES = [
-  'Novice',
-  'Learner',
-  'Student',
-  'Scholar',
-  'Specialist',
-  'Expert',
-  'Professional',
-  'Master',
-  'Grandmaster',
-  'Legend',
-  'Champion',
-  'Hero',
+export const RANK_KEYS = [
+  'userTitle.novice',
+  'userTitle.apprentice',
+  'userTitle.apprentice',
+  'userTitle.scholar',
+  'userTitle.scholar',
+  'userTitle.expert',
+  'userTitle.expert',
+  'userTitle.master',
+  'userTitle.master',
+  'userTitle.grandMaster',
+  'userTitle.grandMaster',
+  'userTitle.legend',
 ]
 
-export function getRankName(level: number): string {
-  const rankIndex = Math.min(Math.floor((level - 1) / 5), RANK_NAMES.length - 1)
-  return RANK_NAMES[rankIndex]
+export function getRankKey(level: number): string {
+  const rankIndex = Math.min(Math.floor((level - 1) / 5), RANK_KEYS.length - 1)
+  return RANK_KEYS[rankIndex]
 }
 
 export function useXP(userId?: string) {
+  const { t } = useTranslation()
   const userKey = userId || 'default-user'
   const [totalXP, setTotalXP] = useKV<number>(`user-total-xp-${userKey}`, 0)
   const [currentLevel, setCurrentLevel] = useKV<number>(`user-level-${userKey}`, 1)
@@ -99,8 +101,9 @@ export function useXP(userId?: string) {
           postLevelUp(userId, newLevel)
         }
         setTimeout(() => {
-          toast.success(`🎉 Level Up! Level ${newLevel}`, {
-            description: `You've reached ${getRankName(newLevel)} rank!`,
+          const rankKey = getRankKey(newLevel)
+          toast.success(`🎉 ${t('playerIdentity.level')} ${newLevel}`, {
+            description: `${t(rankKey)}!`,
             duration: 5000,
             className: 'bg-gradient-to-r from-purple-600 to-pink-600 text-white',
           })
@@ -131,6 +134,6 @@ export function useXP(userId?: string) {
     currentLevel: currentLevel || 1,
     awardXP,
     getProgressToNextLevel,
-    getRankName: () => getRankName(currentLevel || 1),
+    getRankName: () => t(getRankKey(currentLevel || 1)),
   }
 }

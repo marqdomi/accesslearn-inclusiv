@@ -66,7 +66,7 @@ export function AccessibilityPanel() {
           <div className="space-y-6">
             <div>
               <Label className="mb-3 block text-sm font-medium">
-                Language / Idioma
+                {t('accessibility.languageLabel')}
               </Label>
               <LanguageSwitcher variant="outline" showLabel />
             </div>
@@ -122,13 +122,13 @@ export function AccessibilityPanel() {
 
               <div className="flex items-center justify-between gap-4 min-h-[44px]">
                 <Label htmlFor="captions" className="text-base font-medium cursor-pointer">
-                  Captions Enabled
+                  {t('accessibility.captionsEnabled')}
                 </Label>
                 <Switch
                   id="captions"
                   checked={preferences.captionsEnabled}
                   onCheckedChange={(checked) => updatePreference('captionsEnabled', checked)}
-                  aria-label="Toggle captions"
+                  aria-label={t('accessibility.captionsEnabled')}
                 />
               </div>
 
@@ -148,7 +148,7 @@ export function AccessibilityPanel() {
             <div>
               <Label htmlFor="playback-speed" className="mb-3 flex items-center gap-2 text-base font-medium">
                 <Gauge size={20} aria-hidden="true" />
-                Playback Speed: <span className="font-bold">{preferences.playbackSpeed}x</span>
+                {t('accessibility.playbackSpeed')}: <span className="font-bold">{preferences.playbackSpeed}x</span>
               </Label>
               <Slider
                 id="playback-speed"

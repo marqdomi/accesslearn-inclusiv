@@ -69,7 +69,9 @@ export type AchievementTier = 'bronze' | 'silver' | 'gold' | 'platinum'
 export interface Achievement {
   id: string
   title: string
+  titleKey?: string
   description: string
+  descriptionKey?: string
   tier: AchievementTier
   category: 'course' | 'assessment' | 'streak' | 'speed' | 'milestone'
   icon: string

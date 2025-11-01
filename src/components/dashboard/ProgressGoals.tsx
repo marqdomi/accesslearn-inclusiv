@@ -6,8 +6,10 @@ import { ACHIEVEMENTS } from '@/lib/achievements'
 import { Trophy, Fire, Star, Lock } from '@phosphor-icons/react'
 import { motion } from 'framer-motion'
 import { Achievement } from '@/lib/types'
+import { useTranslation } from '@/lib/i18n'
 
 export function ProgressGoals({ userId }: { userId?: string }) {
+  const { t } = useTranslation()
   const { userStats } = useAchievements(userId)
 
   const achievements = ACHIEVEMENTS
@@ -58,8 +60,8 @@ export function ProgressGoals({ userId }: { userId?: string }) {
             <Fire size={24} weight="fill" className="text-white" aria-hidden="true" />
           </div>
           <div>
-            <h3 className="text-xl font-bold">Learning Streak</h3>
-            <p className="text-sm text-muted-foreground">Keep the momentum going!</p>
+            <h3 className="text-xl font-bold">{t('progressGoals.learningStreak')}</h3>
+            <p className="text-sm text-muted-foreground">{t('progressGoals.keepMomentum')}</p>
           </div>
         </div>
 
@@ -73,16 +75,16 @@ export function ProgressGoals({ userId }: { userId?: string }) {
             {currentStreak}
           </motion.div>
           <p className="text-lg font-semibold text-muted-foreground mt-2">
-            {currentStreak === 1 ? 'day' : 'days'} in a row
+            {currentStreak === 1 ? t('progressGoals.day') : t('progressGoals.days')} {t('progressGoals.inARow')}
           </p>
           {currentStreak > 0 && (
             <p className="text-sm text-accent font-medium mt-1">
-              🔥 You're on fire! Come back tomorrow to keep your streak alive.
+              🔥 {t('progressGoals.onFire')}
             </p>
           )}
           {currentStreak === 0 && (
             <p className="text-sm text-muted-foreground mt-1">
-              Complete a lesson today to start your streak!
+              {t('progressGoals.startStreak')}
             </p>
           )}
         </div>
@@ -94,9 +96,9 @@ export function ProgressGoals({ userId }: { userId?: string }) {
             <Trophy size={24} weight="fill" className="text-white" aria-hidden="true" />
           </div>
           <div className="flex-1">
-            <h3 className="text-xl font-bold">Achievements</h3>
+            <h3 className="text-xl font-bold">{t('progressGoals.achievements')}</h3>
             <p className="text-sm text-muted-foreground">
-              {userAchievements.length} of {achievements.length} unlocked
+              {userAchievements.length} {t('progressGoals.of')} {achievements.length} {t('progressGoals.unlocked')}
             </p>
           </div>
         </div>
@@ -104,7 +106,7 @@ export function ProgressGoals({ userId }: { userId?: string }) {
         {recentUnlocked.length > 0 && (
           <div className="mb-6">
             <h4 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide">
-              Recently Unlocked
+              {t('progressGoals.recentlyUnlocked')}
             </h4>
             <div className="space-y-2">
               {recentUnlocked.map((achievement) => (
@@ -118,13 +120,13 @@ export function ProgressGoals({ userId }: { userId?: string }) {
                     <Trophy size={32} weight="fill" aria-hidden="true" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-bold truncate">{achievement.title}</p>
+                    <p className="font-bold truncate">{achievement.titleKey ? t(achievement.titleKey) : achievement.title}</p>
                     <p className="text-xs text-muted-foreground truncate">
-                      {achievement.description}
+                      {achievement.descriptionKey ? t(achievement.descriptionKey) : achievement.description}
                     </p>
                   </div>
                   <Badge variant="secondary" className="capitalize">
-                    {achievement.tier}
+                    {t(`achievements.${achievement.tier}`)}
                   </Badge>
                 </motion.div>
               ))}
@@ -135,7 +137,7 @@ export function ProgressGoals({ userId }: { userId?: string }) {
         {nextToUnlock.length > 0 && (
           <div>
             <h4 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide">
-              Next to Unlock
+              {t('progressGoals.nextToUnlock')}
             </h4>
             <div className="space-y-2">
               {nextToUnlock.map((achievement) => {
@@ -152,9 +154,9 @@ export function ProgressGoals({ userId }: { userId?: string }) {
                       <Lock size={32} weight="fill" aria-hidden="true" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-bold text-muted-foreground truncate">{achievement.title}</p>
+                      <p className="font-bold text-muted-foreground truncate">{achievement.titleKey ? t(achievement.titleKey) : achievement.title}</p>
                       <p className="text-xs text-muted-foreground truncate mb-2">
-                        {achievement.description}
+                        {achievement.descriptionKey ? t(achievement.descriptionKey) : achievement.description}
                       </p>
                       <Progress 
                         value={progressPercent} 
@@ -166,7 +168,7 @@ export function ProgressGoals({ userId }: { userId?: string }) {
                       </p>
                     </div>
                     <Badge variant="outline" className="capitalize">
-                      {achievement.tier}
+                      {t(`achievements.${achievement.tier}`)}
                     </Badge>
                   </div>
                 )
@@ -178,7 +180,7 @@ export function ProgressGoals({ userId }: { userId?: string }) {
         {recentUnlocked.length === 0 && nextToUnlock.length === 0 && (
           <div className="text-center py-8 text-muted-foreground">
             <Star size={48} className="mx-auto mb-3 opacity-50" aria-hidden="true" />
-            <p>Complete courses to unlock achievements!</p>
+            <p>{t('progressGoals.completeCoursesPrompt')}</p>
           </div>
         )}
       </Card>

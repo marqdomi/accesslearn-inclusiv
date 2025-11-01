@@ -5,6 +5,7 @@ import { Progress } from '@/components/ui/progress'
 import { Course, UserProgress } from '@/lib/types'
 import { BookOpen, Clock, Lightning, CheckCircle } from '@phosphor-icons/react'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { useTranslation } from '@/lib/i18n'
 
 interface SideMissionsProps {
   courses: Course[]
@@ -14,22 +15,23 @@ interface SideMissionsProps {
 }
 
 export function SideMissions({ courses, progress, onSelectCourse, excludeCourseId }: SideMissionsProps) {
+  const { t } = useTranslation()
   const availableCourses = courses.filter(course => course.id !== excludeCourseId)
 
   const getStatusBadge = (courseId: string) => {
     const courseProgress = progress[courseId]
     if (!courseProgress) {
-      return <Badge variant="outline" className="gap-1">Not Started</Badge>
+      return <Badge variant="outline" className="gap-1">{t('course.notStarted')}</Badge>
     }
     if (courseProgress.status === 'completed') {
       return (
         <Badge variant="default" className="gap-1 bg-success text-success-foreground">
           <CheckCircle size={14} weight="fill" aria-hidden="true" />
-          Complete
+          {t('course.complete')}
         </Badge>
       )
     }
-    return <Badge variant="secondary" className="gap-1">In Progress</Badge>
+    return <Badge variant="secondary" className="gap-1">{t('course.inProgress')}</Badge>
   }
 
   const getCompletionPercent = (courseId: string, course: Course) => {
@@ -42,7 +44,7 @@ export function SideMissions({ courses, progress, onSelectCourse, excludeCourseI
     return (
       <Card className="p-8 text-center border-2 border-dashed border-muted">
         <BookOpen size={48} className="mx-auto mb-3 text-muted-foreground opacity-50" aria-hidden="true" />
-        <p className="text-muted-foreground">No additional missions available</p>
+        <p className="text-muted-foreground">{t('dashboard.noAdditionalMissions')}</p>
       </Card>
     )
   }
@@ -55,9 +57,9 @@ export function SideMissions({ courses, progress, onSelectCourse, excludeCourseI
             <BookOpen size={20} weight="fill" className="text-white" aria-hidden="true" />
           </div>
           <div className="flex-1">
-            <h3 className="text-lg font-bold">Side Missions</h3>
+            <h3 className="text-lg font-bold">{t('dashboard.sideMissions')}</h3>
             <p className="text-sm text-muted-foreground">
-              {availableCourses.length} {availableCourses.length === 1 ? 'course' : 'courses'} available
+              {availableCourses.length} {availableCourses.length === 1 ? t('dashboard.course') : t('dashboard.courses')} {t('dashboard.available')}
             </p>
           </div>
         </div>
@@ -97,7 +99,7 @@ export function SideMissions({ courses, progress, onSelectCourse, excludeCourseI
                 <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground mb-3">
                   <div className="flex items-center gap-1.5">
                     <Clock size={14} aria-hidden="true" />
-                    <span>{course.estimatedTime} min</span>
+                    <span>{course.estimatedTime} {t('dashboard.minutes')}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <Lightning size={14} weight="fill" className="text-xp" aria-hidden="true" />
@@ -105,14 +107,14 @@ export function SideMissions({ courses, progress, onSelectCourse, excludeCourseI
                   </div>
                   <div className="flex items-center gap-1.5">
                     <BookOpen size={14} aria-hidden="true" />
-                    <span>{course.modules.length} modules</span>
+                    <span>{course.modules.length} {t('dashboard.modules')}</span>
                   </div>
                 </div>
 
                 {courseProgress && courseProgress.status !== 'completed' && (
                   <div>
                     <div className="flex items-center justify-between mb-1.5 text-xs">
-                      <span className="font-medium">Progress</span>
+                      <span className="font-medium">{t('course.progress')}</span>
                       <span className="font-bold">{Math.floor(completionPercent)}%</span>
                     </div>
                     <Progress 
@@ -126,7 +128,7 @@ export function SideMissions({ courses, progress, onSelectCourse, excludeCourseI
                 {courseProgress?.status === 'completed' && (
                   <div className="flex items-center justify-center gap-2 py-2 bg-success/10 rounded-md text-success text-sm font-semibold">
                     <CheckCircle size={16} weight="fill" aria-hidden="true" />
-                    <span>Mission Complete!</span>
+                    <span>{t('dashboard.missionComplete')}</span>
                   </div>
                 )}
               </Card>
