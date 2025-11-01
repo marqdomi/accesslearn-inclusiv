@@ -35,8 +35,16 @@ export function useTranslation() {
     return translationsMap[language] || translationsMap[DEFAULT_LANGUAGE]
   }, [language])
 
-  const t = (key: string, fallback?: string): string => {
-    return translations[key] || fallback || key
+  const t = (key: string, params?: Record<string, string> | string): string => {
+    let translated = translations[key] || (typeof params === 'string' ? params : key)
+    
+    if (typeof params === 'object' && params !== null) {
+      Object.entries(params).forEach(([paramKey, paramValue]) => {
+        translated = translated.replace(new RegExp(`\\{${paramKey}\\}`, 'g'), paramValue)
+      })
+    }
+    
+    return translated
   }
 
   return { t, language }

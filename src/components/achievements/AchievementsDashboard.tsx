@@ -11,8 +11,10 @@ import { Button } from '@/components/ui/button'
 import { Trophy, Fire, Target, ShareNetwork } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { motion } from 'framer-motion'
+import { useTranslation } from '@/lib/i18n'
 
 export function AchievementsDashboard({ userId }: { userId?: string }) {
+  const { t } = useTranslation()
   const { userStats } = useAchievements(userId)
   const { totalXP, currentLevel, getRankName } = useXP(userId)
   const [filter, setFilter] = useState<'all' | 'unlocked' | 'locked'>('all')
@@ -61,24 +63,33 @@ export function AchievementsDashboard({ userId }: { userId?: string }) {
   })
 
   const handleShare = async () => {
-    const shareText = `I've unlocked ${unlockedCount} achievements on GameLearn! 🏆\n\nMy stats:\n⚡ Level ${currentLevel} ${getRankName()}\n🎯 ${totalXP.toLocaleString()} Total XP\n🎓 ${stats.totalCoursesCompleted} courses completed\n📚 ${stats.totalModulesCompleted} modules completed\n🔥 ${stats.currentStreak} day streak\n⭐ ${stats.averageScore.toFixed(0)}% average score`
+    const shareText = t('achievementsDashboard.shareText', {
+      count: unlockedCount.toString(),
+      level: currentLevel.toString(),
+      rank: getRankName(),
+      xp: totalXP.toLocaleString(),
+      courses: stats.totalCoursesCompleted.toString(),
+      modules: stats.totalModulesCompleted.toString(),
+      streak: stats.currentStreak.toString(),
+      score: stats.averageScore.toFixed(0)
+    })
 
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'My GameLearn Achievements',
+          title: t('achievementsDashboard.shareTitle'),
           text: shareText,
         })
-        toast.success('Shared successfully!')
+        toast.success(t('achievementsDashboard.shareSuccess'))
       } catch (error) {
         if (error instanceof Error && error.name !== 'AbortError') {
           await navigator.clipboard.writeText(shareText)
-          toast.success('Achievement stats copied to clipboard!')
+          toast.success(t('achievementsDashboard.copiedToClipboard'))
         }
       }
     } else {
       await navigator.clipboard.writeText(shareText)
-      toast.success('Achievement stats copied to clipboard!')
+      toast.success(t('achievementsDashboard.copiedToClipboard'))
     }
   }
 
@@ -91,15 +102,15 @@ export function AchievementsDashboard({ userId }: { userId?: string }) {
         <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
           <div>
             <h1 className="mb-2 text-4xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
-              Trophy Collection
+              {t('achievementsDashboard.title')}
             </h1>
             <p className="text-lg text-muted-foreground">
-              Track your progress and celebrate your achievements! 🏆
+              {t('achievementsDashboard.subtitle')}
             </p>
           </div>
           <Button onClick={handleShare} className="gap-2 bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90">
             <ShareNetwork size={20} aria-hidden="true" />
-            Share Progress
+            {t('achievementsDashboard.shareProgress')}
           </Button>
         </div>
       </motion.div>
@@ -128,7 +139,7 @@ export function AchievementsDashboard({ userId }: { userId?: string }) {
               <Trophy size={24} weight="fill" className="text-white" aria-hidden="true" />
             </motion.div>
             <div>
-              <p className="text-sm text-muted-foreground">Unlocked</p>
+              <p className="text-sm text-muted-foreground">{t('achievementsDashboard.unlocked')}</p>
               <p className="text-2xl font-bold">
                 {unlockedCount} / {totalAchievements}
               </p>
@@ -136,7 +147,7 @@ export function AchievementsDashboard({ userId }: { userId?: string }) {
           </div>
           <div className="mt-4">
             <Progress value={completionPercentage} className="h-2" aria-label={`Achievement progress: ${completionPercentage}%`} />
-            <p className="mt-2 text-xs text-muted-foreground">{completionPercentage}% Complete</p>
+            <p className="mt-2 text-xs text-muted-foreground">{completionPercentage}% {t('achievementsDashboard.complete')}</p>
           </div>
         </Card>
 
@@ -150,12 +161,12 @@ export function AchievementsDashboard({ userId }: { userId?: string }) {
               <Fire size={24} weight="fill" className="text-white" aria-hidden="true" />
             </motion.div>
             <div>
-              <p className="text-sm text-muted-foreground">Current Streak</p>
-              <p className="text-2xl font-bold">{stats.currentStreak} days</p>
+              <p className="text-sm text-muted-foreground">{t('achievementsDashboard.currentStreak')}</p>
+              <p className="text-2xl font-bold">{stats.currentStreak} {t('achievementsDashboard.days')}</p>
             </div>
           </div>
           <p className="mt-4 text-xs text-muted-foreground">
-            Longest: {stats.longestStreak} days
+            {t('achievementsDashboard.longest')}: {stats.longestStreak} {t('achievementsDashboard.days')}
           </p>
         </Card>
 
@@ -169,12 +180,12 @@ export function AchievementsDashboard({ userId }: { userId?: string }) {
               <Target size={24} weight="fill" className="text-white" aria-hidden="true" />
             </motion.div>
             <div>
-              <p className="text-sm text-muted-foreground">Courses Completed</p>
+              <p className="text-sm text-muted-foreground">{t('achievementsDashboard.coursesCompleted')}</p>
               <p className="text-2xl font-bold">{stats.totalCoursesCompleted}</p>
             </div>
           </div>
           <p className="mt-4 text-xs text-muted-foreground">
-            {stats.totalModulesCompleted} modules total
+            {stats.totalModulesCompleted} {t('achievementsDashboard.modulesTotal')}
           </p>
         </Card>
 
@@ -188,12 +199,12 @@ export function AchievementsDashboard({ userId }: { userId?: string }) {
               <Trophy size={24} weight="fill" className="text-white" aria-hidden="true" />
             </motion.div>
             <div>
-              <p className="text-sm text-muted-foreground">Average Score</p>
+              <p className="text-sm text-muted-foreground">{t('achievementsDashboard.averageScore')}</p>
               <p className="text-2xl font-bold">{stats.averageScore.toFixed(0)}%</p>
             </div>
           </div>
           <p className="mt-4 text-xs text-muted-foreground">
-            {stats.totalAssessmentsPassed} assessments passed
+            {stats.totalAssessmentsPassed} {t('achievementsDashboard.assessmentsPassed')}
           </p>
         </Card>
       </motion.div>
@@ -202,13 +213,13 @@ export function AchievementsDashboard({ userId }: { userId?: string }) {
         <Tabs value={filter} onValueChange={(value) => setFilter(value as typeof filter)}>
           <TabsList className="w-full md:w-auto">
             <TabsTrigger value="all" className="flex-1 md:flex-none">
-              All ({ACHIEVEMENTS.length})
+              {t('achievementsDashboard.all')} ({ACHIEVEMENTS.length})
             </TabsTrigger>
             <TabsTrigger value="unlocked" className="flex-1 md:flex-none">
-              Unlocked ({unlockedCount})
+              {t('achievements.unlocked')} ({unlockedCount})
             </TabsTrigger>
             <TabsTrigger value="locked" className="flex-1 md:flex-none">
-              Locked ({totalAchievements - unlockedCount})
+              {t('achievementsDashboard.locked')} ({totalAchievements - unlockedCount})
             </TabsTrigger>
           </TabsList>
         </Tabs>
@@ -248,7 +259,7 @@ export function AchievementsDashboard({ userId }: { userId?: string }) {
       {filteredAchievements.length === 0 && (
         <div className="py-12 text-center">
           <p className="text-lg text-muted-foreground">
-            No achievements found in this category.
+            {t('achievementsDashboard.noAchievements')}
           </p>
         </div>
       )}

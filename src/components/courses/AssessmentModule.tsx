@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Assessment } from '@/lib/types'
 import { Check, X, House, ArrowRight } from '@phosphor-icons/react'
+import { useTranslation } from '@/lib/i18n'
 
 interface AssessmentModuleProps {
   assessments: Assessment[]
@@ -14,6 +15,7 @@ interface AssessmentModuleProps {
 }
 
 export function AssessmentModule({ assessments, onComplete, onReturnToDashboard, onNextCourse, isAlreadyCompleted = false }: AssessmentModuleProps) {
+  const { t } = useTranslation()
   const [currentQuestion, setCurrentQuestion] = useState(0)
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null)
   const [showFeedback, setShowFeedback] = useState(false)
@@ -51,19 +53,19 @@ export function AssessmentModule({ assessments, onComplete, onReturnToDashboard,
     return (
       <Card className="p-8">
         <div className="text-center">
-          <h2 className="mb-4 text-2xl font-bold">Assessment Complete!</h2>
+          <h2 className="mb-4 text-2xl font-bold">{t('assessment.assessmentComplete')}</h2>
           <p className="mb-6 text-4xl font-bold text-primary">{score}%</p>
           <p className="mb-4 text-lg">
-            You answered {correctAnswers} out of {assessments.length} questions correctly.
+            {t('assessment.answeredCorrectly', { correct: correctAnswers.toString(), total: assessments.length.toString() })}
           </p>
           {passed ? (
             <Alert className="mb-6 border-success bg-success/10">
               <Check size={20} className="text-success" />
               <AlertDescription className="text-base">
-                Congratulations! You passed the assessment.
+                {t('assessment.congratulationsPassed')}
                 {isAlreadyCompleted && (
                   <span className="block mt-2 text-sm text-muted-foreground">
-                    Note: XP is only awarded on your first successful completion.
+                    {t('assessment.xpNote')}
                   </span>
                 )}
               </AlertDescription>
@@ -72,7 +74,7 @@ export function AssessmentModule({ assessments, onComplete, onReturnToDashboard,
             <Alert className="mb-6 border-destructive bg-destructive/10">
               <X size={20} className="text-destructive" />
               <AlertDescription className="text-base">
-                You need 70% to pass. Please review the material and try again.
+                {t('assessment.needToPass')}
               </AlertDescription>
             </Alert>
           )}
@@ -87,7 +89,7 @@ export function AssessmentModule({ assessments, onComplete, onReturnToDashboard,
                   className="gap-2"
                 >
                   <House size={20} aria-hidden="true" />
-                  Return to Dashboard
+                  {t('assessment.returnToDashboard')}
                 </Button>
               )}
               {onNextCourse && (
@@ -96,7 +98,7 @@ export function AssessmentModule({ assessments, onComplete, onReturnToDashboard,
                   size="lg"
                   className="gap-2"
                 >
-                  Start Next Mission
+                  {t('assessment.startNextMission')}
                   <ArrowRight size={20} aria-hidden="true" />
                 </Button>
               )}
@@ -111,7 +113,7 @@ export function AssessmentModule({ assessments, onComplete, onReturnToDashboard,
     <div className="space-y-6">
       <div>
         <p className="text-sm text-muted-foreground">
-          Question {currentQuestion + 1} of {assessments.length}
+          {t('assessment.question')} {currentQuestion + 1} {t('assessment.of')} {assessments.length}
         </p>
         <h2 className="mt-2 text-2xl font-semibold">{assessment.question}</h2>
       </div>
@@ -171,11 +173,11 @@ export function AssessmentModule({ assessments, onComplete, onReturnToDashboard,
             size="lg"
             className="w-full"
           >
-            Submit Answer
+            {t('assessment.submitAnswer')}
           </Button>
         ) : (
           <Button onClick={handleNext} size="lg" className="w-full">
-            {currentQuestion < assessments.length - 1 ? 'Next Question' : 'Finish Assessment'}
+            {currentQuestion < assessments.length - 1 ? t('assessment.nextQuestion') : t('assessment.finishAssessment')}
           </Button>
         )}
       </div>

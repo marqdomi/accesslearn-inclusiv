@@ -76,8 +76,8 @@ export function CourseViewer({ course, onExit, userId }: CourseViewerProps) {
     updateModuleCompletion()
     awardXP(XP_REWARDS.MODULE_COMPLETE, `Completed module: ${currentModule.title}`)
     
-    toast.success('🎉 Module completed!', {
-      description: `You've completed "${currentModule.title}"`,
+    toast.success(t('courseViewer.moduleComplete'), {
+      description: t('courseViewer.moduleCompleteDesc', { title: currentModule.title }),
     })
 
     if (validIndex < course.modules.length - 1) {
@@ -88,8 +88,8 @@ export function CourseViewer({ course, onExit, userId }: CourseViewerProps) {
       completeCourse()
       updateCourseCompletion()
       awardXP(XP_REWARDS.COURSE_COMPLETE, `Completed course: ${course.title}`)
-      toast.success('🏆 Course completed!', {
-        description: `Congratulations on completing "${course.title}"`,
+      toast.success(t('courseViewer.courseComplete'), {
+        description: t('courseViewer.courseCompleteDesc', { title: course.title }),
       })
     }
   }
@@ -206,7 +206,7 @@ export function CourseViewer({ course, onExit, userId }: CourseViewerProps) {
         {isAlreadyCompleted ? (
           <div className="mb-6 p-4 bg-muted/50 border border-border rounded-lg">
             <p className="text-sm text-muted-foreground text-center">
-              <strong>Review Mode:</strong> You've already completed this assessment. XP will not be awarded again.
+              <strong>{t('assessment.reviewMode')}:</strong> {t('assessment.reviewModeNote')}
             </p>
           </div>
         ) : (
@@ -216,7 +216,7 @@ export function CourseViewer({ course, onExit, userId }: CourseViewerProps) {
             className="mb-6 gap-2"
           >
             <ArrowLeft size={20} aria-hidden="true" />
-            Back to Course
+            {t('assessment.backToCourse')}
           </Button>
         )}
 

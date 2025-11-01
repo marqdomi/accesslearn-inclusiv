@@ -21,6 +21,7 @@ import {
   LockSimple
 } from '@phosphor-icons/react'
 import { motion } from 'framer-motion'
+import { useTranslation } from '@/lib/i18n'
 
 interface AchievementCardProps {
   achievement: Achievement
@@ -58,9 +59,12 @@ function getTierGradient(tier: AchievementTier): string {
 }
 
 export function AchievementCard({ achievement, isUnlocked, unlockedAt, progress }: AchievementCardProps) {
+  const { t } = useTranslation()
   const IconComponent = iconMap[achievement.icon] || Trophy
   const colors = TIER_COLORS[achievement.tier]
-  const tierLabel = getTierLabel(achievement.tier)
+  const tierLabel = t(`achievements.${achievement.tier}`)
+  const title = achievement.titleKey ? t(achievement.titleKey) : achievement.title
+  const description = achievement.descriptionKey ? t(achievement.descriptionKey) : achievement.description
 
   const formattedDate = unlockedAt 
     ? new Date(unlockedAt).toLocaleDateString('en-US', { 
@@ -103,21 +107,21 @@ export function AchievementCard({ achievement, isUnlocked, unlockedAt, progress 
           </div>
 
           <div className="space-y-2">
-            <h3 className="text-xl font-bold">{achievement.title}</h3>
-            <p className="text-sm text-muted-foreground">{achievement.description}</p>
+            <h3 className="text-xl font-bold">{title}</h3>
+            <p className="text-sm text-muted-foreground">{description}</p>
           </div>
 
           {isUnlocked && formattedDate && (
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <CheckCircle size={16} weight="fill" className="text-success" aria-hidden="true" />
-              <span>Unlocked on {formattedDate}</span>
+              <span>{t('achievementCard.unlockedOn')} {formattedDate}</span>
             </div>
           )}
 
           {!isUnlocked && progress !== undefined && progress > 0 && (
             <div className="space-y-1">
               <div className="flex justify-between text-xs text-muted-foreground">
-                <span>Progress</span>
+                <span>{t('achievementCard.progress')}</span>
                 <span>{Math.min(progress, achievement.requirement)} / {achievement.requirement}</span>
               </div>
               <div className="h-2 overflow-hidden rounded-full bg-muted">
