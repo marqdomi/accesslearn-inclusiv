@@ -7,8 +7,8 @@ import { Trophy, Fire, Star, Lock } from '@phosphor-icons/react'
 import { motion } from 'framer-motion'
 import { Achievement } from '@/lib/types'
 
-export function ProgressGoals() {
-  const { userStats } = useAchievements()
+export function ProgressGoals({ userId }: { userId?: string }) {
+  const { userStats } = useAchievements(userId)
 
   const achievements = ACHIEVEMENTS
   const userAchievements = userStats?.achievementsUnlocked || []

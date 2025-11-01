@@ -2,9 +2,10 @@ import { useKV } from '@github/spark/hooks'
 import { UserProgress } from '@/lib/types'
 import { useAchievements } from './use-achievements'
 
-export function useCourseProgress(courseId: string) {
+export function useCourseProgress(courseId: string, userId?: string) {
+  const userKey = userId || 'default-user'
   const [progress, setProgress] = useKV<UserProgress>(
-    `course-progress-${courseId}`,
+    `course-progress-${courseId}-${userKey}`,
     {
       courseId,
       status: 'not-started',
@@ -14,7 +15,7 @@ export function useCourseProgress(courseId: string) {
     }
   )
 
-  const { updateModuleCompletion, updateCourseCompletion, updateAssessmentCompletion, updateStreak } = useAchievements()
+  const { updateModuleCompletion, updateCourseCompletion, updateAssessmentCompletion, updateStreak } = useAchievements(userId)
 
   const markModuleComplete = (moduleId: string) => {
     setProgress((current) => {

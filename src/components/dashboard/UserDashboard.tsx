@@ -11,10 +11,12 @@ import { motion } from 'framer-motion'
 interface UserDashboardProps {
   courses: Course[]
   onSelectCourse: (course: Course) => void
+  userId?: string
 }
 
-export function UserDashboard({ courses, onSelectCourse }: UserDashboardProps) {
-  const [courseProgress] = useKV<Record<string, UserProgress>>('course-progress', {})
+export function UserDashboard({ courses, onSelectCourse, userId }: UserDashboardProps) {
+  const userKey = userId || 'default-user'
+  const [courseProgress] = useKV<Record<string, UserProgress>>(`course-progress-${userKey}`, {})
 
   const mainMissionCourse = useMemo(() => {
     if (!courseProgress) return null
@@ -47,7 +49,7 @@ export function UserDashboard({ courses, onSelectCourse }: UserDashboardProps) {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
       >
-        <PlayerIdentity />
+        <PlayerIdentity userId={userId} />
       </motion.div>
 
       <div className="grid lg:grid-cols-3 gap-6">
@@ -85,7 +87,7 @@ export function UserDashboard({ courses, onSelectCourse }: UserDashboardProps) {
         >
           <section aria-labelledby="progress-goals-heading">
             <h2 id="progress-goals-heading" className="sr-only">Progress and Achievements</h2>
-            <ProgressGoals />
+            <ProgressGoals userId={userId} />
           </section>
 
           <section aria-labelledby="accessibility-settings-heading">

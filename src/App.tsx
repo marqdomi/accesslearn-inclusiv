@@ -62,11 +62,15 @@ function App() {
   }
 
   const handleViewChange = (view: View) => {
+    if (view === 'admin' && session?.role !== 'admin') {
+      return
+    }
     setCurrentView(view)
     setSelectedCourse(null)
   }
 
-  const isAdminView = currentView === 'admin'
+  const isAdminView = currentView === 'admin' && session?.role === 'admin'
+  const isAdmin = session?.role === 'admin'
 
   return (
     <>
@@ -153,14 +157,16 @@ function App() {
                     <span className="hidden sm:inline">{t('nav.achievements')}</span>
                     <span className="sm:hidden">{t('nav.trophies')}</span>
                   </Button>
-                  <Button
-                    variant={isAdminView ? 'default' : 'outline'}
-                    onClick={() => handleViewChange('admin' as View)}
-                    className="gap-2"
-                  >
-                    <ShieldCheck size={20} aria-hidden="true" />
-                    <span className="hidden sm:inline">{t('nav.admin')}</span>
-                  </Button>
+                  {isAdmin && (
+                    <Button
+                      variant={isAdminView ? 'default' : 'outline'}
+                      onClick={() => handleViewChange('admin' as View)}
+                      className="gap-2"
+                    >
+                      <ShieldCheck size={20} aria-hidden="true" />
+                      <span className="hidden sm:inline">{t('nav.admin')}</span>
+                    </Button>
+                  )}
                   <LanguageSwitcher />
                   <Button
                     variant="ghost"
@@ -178,15 +184,16 @@ function App() {
 
           <main id="main-content" className="mx-auto max-w-7xl px-6 py-8" role="main">
             {selectedCourse ? (
-              <CourseViewer course={selectedCourse} onExit={() => setSelectedCourse(null)} />
+              <CourseViewer course={selectedCourse} onExit={() => setSelectedCourse(null)} userId={session.userId} />
             ) : currentView === 'achievements' ? (
-              <AchievementsDashboard />
+              <AchievementsDashboard userId={session.userId} />
             ) : currentView === 'community' ? (
               <CommunityDashboard currentUserId={session.userId} />
             ) : (
               <UserDashboard 
                 courses={translatedCourses} 
                 onSelectCourse={setSelectedCourse}
+                userId={session.userId}
               />
             )}
           </main>

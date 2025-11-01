@@ -12,9 +12,9 @@ import { Trophy, Fire, Target, ShareNetwork } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { motion } from 'framer-motion'
 
-export function AchievementsDashboard() {
-  const { userStats } = useAchievements()
-  const { totalXP, currentLevel, getRankName } = useXP()
+export function AchievementsDashboard({ userId }: { userId?: string }) {
+  const { userStats } = useAchievements(userId)
+  const { totalXP, currentLevel, getRankName } = useXP(userId)
   const [filter, setFilter] = useState<'all' | 'unlocked' | 'locked'>('all')
 
   const stats = userStats || {

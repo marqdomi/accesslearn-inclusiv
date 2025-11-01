@@ -73,8 +73,9 @@ export function getRankName(level: number): string {
 }
 
 export function useXP(userId?: string) {
-  const [totalXP, setTotalXP] = useKV<number>('user-total-xp', 0)
-  const [currentLevel, setCurrentLevel] = useKV<number>('user-level', 1)
+  const userKey = userId || 'default-user'
+  const [totalXP, setTotalXP] = useKV<number>(`user-total-xp-${userKey}`, 0)
+  const [currentLevel, setCurrentLevel] = useKV<number>(`user-level-${userKey}`, 1)
   const { postLevelUp } = useActivityFeed()
 
   const awardXP = (amount: number, reason: string, showNotification = true) => {

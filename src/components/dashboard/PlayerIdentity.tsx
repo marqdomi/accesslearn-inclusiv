@@ -6,8 +6,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Lightning, Trophy } from '@phosphor-icons/react'
 import { motion } from 'framer-motion'
 
-export function PlayerIdentity() {
-  const { totalXP, currentLevel, getRankName, getProgressToNextLevel } = useXP()
+export function PlayerIdentity({ userId }: { userId?: string }) {
+  const { totalXP, currentLevel, getRankName, getProgressToNextLevel } = useXP(userId)
   const [user, setUser] = useState<{ login: string; avatarUrl: string } | null>(null)
   const progress = getProgressToNextLevel()
 

@@ -16,8 +16,9 @@ const DEFAULT_USER_STATS: UserStats = {
   level: 1,
 }
 
-export function useAchievements() {
-  const [userStats, setUserStats] = useKV<UserStats>('user-stats', DEFAULT_USER_STATS)
+export function useAchievements(userId?: string) {
+  const userKey = userId || 'default-user'
+  const [userStats, setUserStats] = useKV<UserStats>(`user-stats-${userKey}`, DEFAULT_USER_STATS)
 
   const checkAndUnlockAchievements = (stats: UserStats, setStats: (updater: (current?: UserStats) => UserStats) => void) => {
     const newUnlocks: UserAchievement[] = []

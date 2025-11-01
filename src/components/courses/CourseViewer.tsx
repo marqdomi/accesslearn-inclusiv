@@ -20,13 +20,14 @@ import { motion } from 'framer-motion'
 interface CourseViewerProps {
   course: Course
   onExit: () => void
+  userId?: string
 }
 
-export function CourseViewer({ course, onExit }: CourseViewerProps) {
+export function CourseViewer({ course, onExit, userId }: CourseViewerProps) {
   const { t } = useTranslation()
-  const { progress, markModuleComplete, setCurrentModule, completeCourse, recordAssessmentAttempt } = useCourseProgress(course.id)
-  const { awardXP } = useXP()
-  const { updateModuleCompletion, updateCourseCompletion, updateAssessmentCompletion } = useAchievements()
+  const { progress, markModuleComplete, setCurrentModule, completeCourse, recordAssessmentAttempt } = useCourseProgress(course.id, userId)
+  const { awardXP } = useXP(userId)
+  const { updateModuleCompletion, updateCourseCompletion, updateAssessmentCompletion } = useAchievements(userId)
   const [showAssessment, setShowAssessment] = useState(false)
   const [showModuleList, setShowModuleList] = useState(false)
   const [lessonModules] = useKV<Record<string, LessonModule>>('lesson-modules', {})
