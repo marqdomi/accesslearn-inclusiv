@@ -544,3 +544,69 @@ Animations are critical to creating the video game feel - they should be smooth,
 - Email bounce: System tracks and prompts user to update email
 - Overload prevention: Cap notifications to 10 per hour max
 - Quiet hours: Optional setting to pause notifications during specific times
+
+## Mentorship Program (WCAG 2.1 AA Compliant)
+
+### Purpose
+Enable experienced employees (Mentors) to guide newer or junior employees (Mentees) through their learning journey, fostering knowledge transfer, building team connections, and accelerating employee development within the gamified learning framework.
+
+### Core Concept & User Roles
+
+**Mentor Role**:
+- An experienced employee assigned by administrators to guide one or more mentees
+- Can view detailed progress dashboards for each assigned mentee
+- Can communicate directly with mentees through private messaging
+- Receives 10% XP bonus when mentees complete courses (incentivizing active mentorship)
+
+**Mentee Role**:
+- An employee assigned a mentor for guidance and support
+- Can view their mentor's profile, level, and achievements
+- Can initiate communication with their mentor through integrated messaging
+- Unlocks special "Team Up" achievement upon completing first course with a mentor
+
+### 19. Admin Mentorship Management
+- **Functionality**: Dedicated "Mentorship Management" section in Admin Panel allowing administrators to designate users as mentors, create mentor-mentee pairings, view all active relationships, and remove pairings when necessary
+- **Purpose**: Provide HR/training teams with simple tools to establish and manage mentorship relationships across the organization
+- **Trigger**: Admin navigates to "Mentorship Program" from Admin Dashboard
+- **Progression**: View active pairings → Select mentor from employee list → Select mentee from available employees → Create pairing → View pairing in active list → Search/filter pairings → Remove pairing if needed
+- **Success criteria**: Mentors can be assigned multiple mentees, mentees can only have one active mentor, pairing creation prevents duplicates, search functionality works across mentor and mentee names, removal is confirmed before execution, all actions provide clear feedback
+
+### 20. Mentor Dashboard - Mentee Progress Tracking
+- **Functionality**: Dedicated "My Mentees" section visible to users designated as mentors, displaying a card for each assigned mentee showing: name/avatar, current level and XP progress bar, current course/mission in progress, recently unlocked achievements, and "Send Message" action button
+- **Purpose**: Empower mentors to monitor mentee progress at a glance and proactively offer guidance when needed, making mentorship actionable rather than passive
+- **Trigger**: Automatically appears on mentor's main dashboard when they have assigned mentees
+- **Progression**: View mentee cards → Review progress metrics → Identify struggling mentees or celebration opportunities → Click "Send Message" → Write encouraging message or guidance → Send → Message delivered to mentee
+- **Success criteria**: Progress data updates in real-time, mentee cards are visually distinct and scannable, messaging interface is intuitive, sent messages are confirmed, mentor can view message history, no mentees state shows helpful empty message
+
+### 21. Mentee Mentor Widget - Direct Access to Support
+- **Functionality**: Prominent "My Mentor" widget on mentee's main dashboard displaying mentor's name/avatar, level and rank title, total XP, and large "Ask My Mentor" CTA button that opens messaging interface with conversation history
+- **Purpose**: Make it effortless for mentees to seek help, reducing barriers to asking questions and building mentor-mentee relationship
+- **Trigger**: Widget automatically appears when user has an assigned mentor
+- **Progression**: See mentor info → Click "Ask My Mentor" → View conversation history → Write question or message → Send → Receive response notification when mentor replies → Continue conversation
+- **Success criteria**: Widget is visually prominent but not overwhelming, messaging interface shows full conversation thread with timestamps, unread message badge appears when mentor replies, conversation history persists, keyboard navigation works flawlessly
+
+### 22. Mentorship Rewards & Gamification Integration
+- **Functionality**: Automatic XP bonus system that awards mentors 10% of total XP earned when a mentee completes a course. Special "Team Up" bronze achievement unlocks for mentees who complete their first course while having an assigned mentor.
+- **Purpose**: Incentivize active mentorship through tangible rewards while celebrating the mentor-mentee relationship as a valuable part of the learning journey
+- **Trigger**: Mentee completes course (with or without assessment) → System checks for active mentor pairing → Awards mentor bonus XP → Displays toast notification to mentee crediting their mentor → Checks if it's mentee's first completion with mentor → Unlocks "Team Up" achievement if applicable
+- **Progression**: Mentee finishes course → XP awarded to mentee → Mentor receives 10% bonus automatically → Mentee sees notification: "Your mentor received X XP bonus!" → Achievement check runs → "Team Up" unlocked (if first course) → Both mentor and mentee feel rewarded
+- **Success criteria**: XP bonus calculation is accurate (10% of total including assessment bonuses), mentor XP updates immediately, notification clearly explains bonus, "Team Up" achievement only unlocks once, achievement appears in both users' achievement dashboards, all XP awards logged in activity feed
+
+### Accessibility & Edge Cases
+
+**Accessibility Requirements**:
+- All mentorship interfaces fully keyboard navigable
+- Screen reader announces mentor/mentee relationship status
+- Messaging interface supports assistive technology
+- High contrast between mentor widget and surrounding content
+- Clear focus indicators on all interactive elements
+- Success/error messages use ARIA live regions
+
+**Edge Cases**:
+- Mentor with no mentees: Show encouraging empty state with "Waiting for admin to assign mentees"
+- Mentee with no mentor: Widget hidden, no impact on experience
+- Mentor leaves organization: Admin removes pairing, mentee widget disappears gracefully
+- Multiple mentees complete courses simultaneously: All XP bonuses calculated and awarded correctly
+- Mentee completes course then mentor assigned: "Team Up" achievement checks active pairing at completion time
+- Message sent to removed pairing: System prevents sending and notifies user pairing no longer active
+- Mentor overwhelmed with messages: No artificial limits, relies on human relationship management

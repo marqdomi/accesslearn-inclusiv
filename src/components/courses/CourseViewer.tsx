@@ -5,6 +5,8 @@ import { LessonModule } from '@/lib/lesson-types'
 import { useCourseProgress } from '@/hooks/use-course-progress'
 import { useXP, XP_REWARDS } from '@/hooks/use-xp'
 import { useAchievements } from '@/hooks/use-achievements'
+import { useMentorXP } from '@/hooks/use-mentor-xp'
+import { useMentorship } from '@/hooks/use-mentorship'
 import { useTranslation } from '@/lib/i18n'
 import { translateLessonModule } from '@/lib/translate-course'
 import { ContentViewer } from './ContentViewer'
@@ -28,6 +30,8 @@ export function CourseViewer({ course, onExit, userId }: CourseViewerProps) {
   const { progress, markModuleComplete, setCurrentModule, completeCourse, recordAssessmentAttempt } = useCourseProgress(course.id, userId, course.title)
   const { awardXP } = useXP(userId)
   const { updateModuleCompletion, updateCourseCompletion, updateAssessmentCompletion } = useAchievements(userId)
+  const { awardMentorBonus } = useMentorXP()
+  const { getMenteePairing } = useMentorship()
   const [showAssessment, setShowAssessment] = useState(false)
   const [showModuleList, setShowModuleList] = useState(false)
   const [lessonModules] = useKV<Record<string, LessonModule>>('lesson-modules', {})
@@ -87,7 +91,13 @@ export function CourseViewer({ course, onExit, userId }: CourseViewerProps) {
     } else {
       completeCourse()
       updateCourseCompletion()
-      awardXP(XP_REWARDS.COURSE_COMPLETE, `Completed course: ${course.title}`)
+      const courseXP = XP_REWARDS.COURSE_COMPLETE
+      awardXP(courseXP, `Completed course: ${course.title}`)
+      
+      if (userId) {
+        awardMentorBonus(userId, courseXP)
+      }
+      
       toast.success(t('courseViewer.courseComplete'), {
         description: t('courseViewer.courseCompleteDesc', { title: course.title }),
       })
@@ -122,6 +132,8 @@ export function CourseViewer({ course, onExit, userId }: CourseViewerProps) {
     updateAssessmentCompletion(score, isFirstAttempt)
     updateCourseCompletion()
     
+    let totalXPAwarded = 0
+    
     if (!isAlreadyCompleted && score >= 70) {
       const xpAmount = score === 100 
         ? XP_REWARDS.ASSESSMENT_FINAL_PERFECT 
@@ -131,12 +143,20 @@ export function CourseViewer({ course, onExit, userId }: CourseViewerProps) {
         ? `Perfect score on ${course.title}!` 
         : `Passed assessment: ${course.title}`
       awardXP(xpAmount, xpReason)
+      totalXPAwarded += xpAmount
       
       if (isFirstAttempt) {
         awardXP(XP_REWARDS.FIRST_TRY_BONUS, 'First try bonus!')
+        totalXPAwarded += XP_REWARDS.FIRST_TRY_BONUS
       }
       
-      awardXP(XP_REWARDS.COURSE_COMPLETE, `Completed course: ${course.title}`)
+      const courseXP = XP_REWARDS.COURSE_COMPLETE
+      awardXP(courseXP, `Completed course: ${course.title}`)
+      totalXPAwarded += courseXP
+      
+      if (userId) {
+        awardMentorBonus(userId, totalXPAwarded)
+      }
     }
     
     const emoji = score === 100 ? '🌟' : score >= 90 ? '🎉' : score >= 70 ? '✅' : '💪'
