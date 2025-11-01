@@ -3,14 +3,17 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Assessment } from '@/lib/types'
-import { Check, X } from '@phosphor-icons/react'
+import { Check, X, House, ArrowRight } from '@phosphor-icons/react'
 
 interface AssessmentModuleProps {
   assessments: Assessment[]
   onComplete: (score: number) => void
+  onReturnToDashboard?: () => void
+  onNextCourse?: () => void
+  isAlreadyCompleted?: boolean
 }
 
-export function AssessmentModule({ assessments, onComplete }: AssessmentModuleProps) {
+export function AssessmentModule({ assessments, onComplete, onReturnToDashboard, onNextCourse, isAlreadyCompleted = false }: AssessmentModuleProps) {
   const [currentQuestion, setCurrentQuestion] = useState(0)
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null)
   const [showFeedback, setShowFeedback] = useState(false)
@@ -43,6 +46,8 @@ export function AssessmentModule({ assessments, onComplete }: AssessmentModulePr
 
   if (isComplete) {
     const score = Math.round((correctAnswers / assessments.length) * 100)
+    const passed = score >= 70
+    
     return (
       <Card className="p-8">
         <div className="text-center">
@@ -51,11 +56,16 @@ export function AssessmentModule({ assessments, onComplete }: AssessmentModulePr
           <p className="mb-4 text-lg">
             You answered {correctAnswers} out of {assessments.length} questions correctly.
           </p>
-          {score >= 70 ? (
+          {passed ? (
             <Alert className="mb-6 border-success bg-success/10">
               <Check size={20} className="text-success" />
               <AlertDescription className="text-base">
                 Congratulations! You passed the assessment.
+                {isAlreadyCompleted && (
+                  <span className="block mt-2 text-sm text-muted-foreground">
+                    Note: XP is only awarded on your first successful completion.
+                  </span>
+                )}
               </AlertDescription>
             </Alert>
           ) : (
@@ -65,6 +75,32 @@ export function AssessmentModule({ assessments, onComplete }: AssessmentModulePr
                 You need 70% to pass. Please review the material and try again.
               </AlertDescription>
             </Alert>
+          )}
+
+          {passed && (
+            <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
+              {onReturnToDashboard && (
+                <Button 
+                  onClick={onReturnToDashboard}
+                  size="lg"
+                  variant="outline"
+                  className="gap-2"
+                >
+                  <House size={20} aria-hidden="true" />
+                  Return to Dashboard
+                </Button>
+              )}
+              {onNextCourse && (
+                <Button 
+                  onClick={onNextCourse}
+                  size="lg"
+                  className="gap-2"
+                >
+                  Start Next Mission
+                  <ArrowRight size={20} aria-hidden="true" />
+                </Button>
+              )}
+            </div>
           )}
         </div>
       </Card>

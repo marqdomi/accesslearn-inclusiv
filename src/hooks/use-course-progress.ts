@@ -1,6 +1,7 @@
 import { useKV } from '@github/spark/hooks'
 import { UserProgress } from '@/lib/types'
 import { useAchievements } from './use-achievements'
+import { useEffect } from 'react'
 
 export function useCourseProgress(courseId: string, userId?: string) {
   const userKey = userId || 'default-user'
@@ -14,8 +15,22 @@ export function useCourseProgress(courseId: string, userId?: string) {
       assessmentAttempts: 0,
     }
   )
+  
+  const [globalProgress, setGlobalProgress] = useKV<Record<string, UserProgress>>(
+    `course-progress-${userKey}`,
+    {}
+  )
 
   const { updateModuleCompletion, updateCourseCompletion, updateAssessmentCompletion, updateStreak } = useAchievements(userId)
+
+  useEffect(() => {
+    if (progress) {
+      setGlobalProgress((current) => ({
+        ...(current || {}),
+        [courseId]: progress,
+      }))
+    }
+  }, [progress, courseId, setGlobalProgress])
 
   const markModuleComplete = (moduleId: string) => {
     setProgress((current) => {

@@ -39,7 +39,11 @@ export function UserDashboard({ courses, onSelectCourse, userId }: UserDashboard
       return !progress || progress.status === 'not-started'
     })
 
-    return notStartedCourses[0] || null
+    if (notStartedCourses.length > 0) {
+      return notStartedCourses[0]
+    }
+
+    return null
   }, [courses, courseProgress])
 
   return (

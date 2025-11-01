@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useKV } from '@github/spark/hooks'
-import { Course } from '@/lib/types'
+import { Course, UserProgress } from '@/lib/types'
 import { LessonModule } from '@/lib/lesson-types'
 import { useCourseProgress } from '@/hooks/use-course-progress'
 import { useXP, XP_REWARDS } from '@/hooks/use-xp'
@@ -33,12 +33,30 @@ export function CourseViewer({ course, onExit, userId }: CourseViewerProps) {
   const [lessonModules] = useKV<Record<string, LessonModule>>('lesson-modules', {})
   const [currentLessonIndex, setCurrentLessonIndex] = useState(0)
   const [viewMode, setViewMode] = useState<'intro' | 'lessons' | 'modules'>('intro')
+  const [courses] = useKV<Course[]>('courses', [])
+  const [courseProgress] = useKV<Record<string, UserProgress>>(`course-progress-${userId || 'default-user'}`, {})
 
   const lessonModule = lessonModules?.[course.id]
   const translatedLessonModule = useMemo(() => {
     return lessonModule ? translateLessonModule(lessonModule, t) : undefined
   }, [lessonModule, t])
   const hasLessons = !!translatedLessonModule && translatedLessonModule.lessons.length > 0
+
+  const nextUncompletedCourse = useMemo(() => {
+    if (!courses || !courseProgress) return null
+    
+    const uncompletedCourses = courses.filter(c => {
+      const prog = courseProgress[c.id]
+      return !prog || prog.status !== 'completed'
+    })
+    
+    const firstNotStarted = uncompletedCourses.find(c => {
+      const prog = courseProgress[c.id]
+      return !prog || prog.status === 'not-started'
+    })
+    
+    return firstNotStarted || uncompletedCourses[0] || null
+  }, [courses, courseProgress])
 
   const currentModuleIndex = progress?.currentModule
     ? course.modules.findIndex((m) => m.id === progress.currentModule)
@@ -96,30 +114,30 @@ export function CourseViewer({ course, onExit, userId }: CourseViewerProps) {
   }
 
   const handleAssessmentComplete = (score: number) => {
+    const isAlreadyCompleted = progress?.status === 'completed'
     const isFirstAttempt = !progress?.assessmentAttempts || progress.assessmentAttempts === 0
+    
     recordAssessmentAttempt(score)
     completeCourse(score)
     updateAssessmentCompletion(score, isFirstAttempt)
     updateCourseCompletion()
     
-    const xpAmount = score === 100 
-      ? XP_REWARDS.ASSESSMENT_FINAL_PERFECT 
-      : score >= 70 
-        ? XP_REWARDS.ASSESSMENT_FINAL_PASS 
-        : 0
-    
-    if (xpAmount > 0) {
+    if (!isAlreadyCompleted && score >= 70) {
+      const xpAmount = score === 100 
+        ? XP_REWARDS.ASSESSMENT_FINAL_PERFECT 
+        : XP_REWARDS.ASSESSMENT_FINAL_PASS
+      
       const xpReason = score === 100 
         ? `Perfect score on ${course.title}!` 
         : `Passed assessment: ${course.title}`
       awardXP(xpAmount, xpReason)
       
-      if (isFirstAttempt && score >= 70) {
+      if (isFirstAttempt) {
         awardXP(XP_REWARDS.FIRST_TRY_BONUS, 'First try bonus!')
       }
+      
+      awardXP(XP_REWARDS.COURSE_COMPLETE, `Completed course: ${course.title}`)
     }
-    
-    awardXP(XP_REWARDS.COURSE_COMPLETE, `Completed course: ${course.title}`)
     
     const emoji = score === 100 ? '🌟' : score >= 90 ? '🎉' : score >= 70 ? '✅' : '💪'
     const message = score === 100 
@@ -131,13 +149,27 @@ export function CourseViewer({ course, onExit, userId }: CourseViewerProps) {
           : 'Keep Learning!'
     
     toast.success(`${emoji} ${message}`, {
-      description: `You scored ${score}% on "${course.title}"`,
+      description: isAlreadyCompleted && score >= 70
+        ? `You scored ${score}% (review mode - no XP awarded)`
+        : `You scored ${score}% on "${course.title}"`,
     })
   }
 
   const progressPercentage = progress
     ? Math.round((progress.completedModules.length / course.modules.length) * 100)
     : 0
+
+  const handleReturnToDashboard = () => {
+    onExit()
+  }
+
+  const handleNextCourse = () => {
+    if (nextUncompletedCourse) {
+      window.location.reload()
+    } else {
+      onExit()
+    }
+  }
 
   const handleLessonComplete = () => {
     if (hasLessons && translatedLessonModule && currentLessonIndex < translatedLessonModule.lessons.length - 1) {
@@ -167,18 +199,34 @@ export function CourseViewer({ course, onExit, userId }: CourseViewerProps) {
   }
 
   if (showAssessment && course.assessment) {
+    const isAlreadyCompleted = progress?.status === 'completed'
+    
     return (
       <div className="mx-auto max-w-3xl">
-        <Button
-          onClick={() => setShowAssessment(false)}
-          variant="ghost"
-          className="mb-6 gap-2"
-        >
-          <ArrowLeft size={20} aria-hidden="true" />
-          Back to Course
-        </Button>
+        {isAlreadyCompleted ? (
+          <div className="mb-6 p-4 bg-muted/50 border border-border rounded-lg">
+            <p className="text-sm text-muted-foreground text-center">
+              <strong>Review Mode:</strong> You've already completed this assessment. XP will not be awarded again.
+            </p>
+          </div>
+        ) : (
+          <Button
+            onClick={() => setShowAssessment(false)}
+            variant="ghost"
+            className="mb-6 gap-2"
+          >
+            <ArrowLeft size={20} aria-hidden="true" />
+            Back to Course
+          </Button>
+        )}
 
-        <AssessmentModule assessments={course.assessment} onComplete={handleAssessmentComplete} />
+        <AssessmentModule 
+          assessments={course.assessment} 
+          onComplete={handleAssessmentComplete}
+          onReturnToDashboard={handleReturnToDashboard}
+          onNextCourse={nextUncompletedCourse ? handleNextCourse : undefined}
+          isAlreadyCompleted={isAlreadyCompleted}
+        />
       </div>
     )
   }
