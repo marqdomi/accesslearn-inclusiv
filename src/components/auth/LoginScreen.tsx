@@ -23,38 +23,112 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
   const [showTestHint, setShowTestHint] = useState(true)
   const [credentials, setCredentials] = useKV<EmployeeCredentials[]>('employee-credentials', [])
   const [debugMode, setDebugMode] = useState(false)
+  const isDev = typeof import.meta !== 'undefined' && (import.meta as any).env?.DEV
+  const [kvReady, setKvReady] = useState(false)
+  const [kvStats, setKvStats] = useState<{ credCount: number; profileCount: number; hasSession: boolean }>({ credCount: 0, profileCount: 0, hasSession: false })
+
+  // Shared sample credentials used for quick seeding in development
+  const SAMPLE_CREDS: EmployeeCredentials[] = [
+    {
+      id: 'admin-001',
+      email: 'admin@gamelearn.test',
+      temporaryPassword: 'Admin2024!',
+      firstName: 'Admin',
+      lastName: 'User',
+      department: 'IT',
+      role: 'admin',
+      status: 'activated',
+      createdAt: Date.now(),
+    },
+    {
+      id: 'user-001',
+      email: 'sarah.johnson@gamelearn.test',
+      temporaryPassword: 'Welcome123!',
+      firstName: 'Sarah',
+      lastName: 'Johnson',
+      department: 'Sales',
+      role: 'employee',
+      status: 'activated',
+      createdAt: Date.now(),
+    },
+    {
+      id: 'user-002',
+      email: 'mike.chen@gamelearn.test',
+      temporaryPassword: 'Welcome123!',
+      firstName: 'Mike',
+      lastName: 'Chen',
+      department: 'Engineering',
+      role: 'employee',
+      status: 'activated',
+      createdAt: Date.now(),
+    },
+    {
+      id: 'user-003',
+      email: 'emma.rodriguez@gamelearn.test',
+      temporaryPassword: 'Welcome123!',
+      firstName: 'Emma',
+      lastName: 'Rodriguez',
+      department: 'Marketing',
+      role: 'employee',
+      status: 'activated',
+      createdAt: Date.now(),
+    },
+  ]
 
   useEffect(() => {
     console.log('Login Screen - Current credentials in KV:', credentials)
   }, [credentials])
 
+  // Tiny seeding effect: in development, if there are no credentials yet, seed defaults for easier testing
+  useEffect(() => {
+    if (!isDev) return
+    const count = credentials?.length || 0
+    if (count === 0) {
+      console.log('🧪 Dev mode: Seeding default credentials for login testing...')
+      setCredentials(SAMPLE_CREDS)
+    }
+    // We only want to run when the credentials list changes; isDev is stable in a session
+  }, [credentials])
+
+  // KV readiness poller (dev only): helps diagnose races where spark.kv may not yet be available
+  useEffect(() => {
+    if (!isDev) return
+    let active = true
+    const poll = async () => {
+      const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
+      for (let i = 0; i < 30 && active; i++) {
+        const ready = !!((window as any)?.spark?.kv?.get && (window as any)?.spark?.kv?.set)
+        if (ready) {
+          setKvReady(true)
+          try {
+            const [creds, session, profiles] = await Promise.all([
+              (window as any).spark.kv.get('employee-credentials'),
+              (window as any).spark.kv.get('auth-session'),
+              (window as any).spark.kv.get('user-profiles'),
+            ])
+            if (!active) return
+            setKvStats({
+              credCount: Array.isArray(creds) ? creds.length : (creds ? 1 : 0),
+              profileCount: Array.isArray(profiles) ? profiles.length : (profiles ? 1 : 0),
+              hasSession: !!session,
+            })
+          } catch (e) {
+            console.warn('KV readiness stats failed:', e)
+          }
+          return
+        }
+        await sleep(100)
+      }
+    }
+    poll()
+    return () => {
+      active = false
+    }
+  }, [isDev])
+
   const resetCredentials = () => {
-    const sampleCreds: EmployeeCredentials[] = [
-      {
-        id: 'admin-001',
-        email: 'admin@gamelearn.test',
-        temporaryPassword: 'Admin2024!',
-        firstName: 'Admin',
-        lastName: 'User',
-        department: 'IT',
-        role: 'admin',
-        status: 'activated',
-        createdAt: Date.now(),
-      },
-      {
-        id: 'user-001',
-        email: 'sarah.johnson@gamelearn.test',
-        temporaryPassword: 'Welcome123!',
-        firstName: 'Sarah',
-        lastName: 'Johnson',
-        department: 'Sales',
-        role: 'employee',
-        status: 'activated',
-        createdAt: Date.now(),
-      },
-    ]
-    console.log('Manually resetting credentials to:', sampleCreds)
-    setCredentials(sampleCreds)
+    console.log('Manually resetting credentials to:', SAMPLE_CREDS)
+    setCredentials(SAMPLE_CREDS)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -159,6 +233,15 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
                 <Alert className="bg-yellow-50 border-yellow-200 text-xs">
                   <AlertDescription>
                     <strong>Debug Info:</strong>
+                    <br />
+                    <div className="mt-1">
+                      KV ready: <span className={kvReady ? 'text-green-600' : 'text-red-600'}>{kvReady ? 'Yes' : 'No'}</span>
+                      {isDev && (
+                        <>
+                          {' '}• creds: {kvStats.credCount} • profiles: {kvStats.profileCount} • session: {kvStats.hasSession ? 'present' : 'none'}
+                        </>
+                      )}
+                    </div>
                     <br />
                     Credentials loaded: {credentials?.length || 0}
                     <br />
