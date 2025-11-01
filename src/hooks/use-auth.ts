@@ -46,10 +46,11 @@ export function useAuth() {
     }
 
     console.log('useAuth - Login successful, creating session')
+    const userRole = credential.role || 'employee'
     const newSession = createAuthSession(
       credential.id,
       trimmedEmail,
-      'employee',
+      userRole,
       isFirstLogin
     )
 
@@ -96,7 +97,7 @@ export function useAuth() {
       displayName: preferences.displayName,
       avatar: preferences.avatar,
       department: credential.department,
-      role: 'employee',
+      role: credential.role || 'employee',
       createdAt: Date.now(),
       lastLoginAt: Date.now(),
       preferences

@@ -429,3 +429,118 @@ Animations are critical to creating the video game feel - they should be smooth,
 - **Spacing**: Consistent spacing using Tailwind scale - 4px base unit: Components use p-6 (24px), gaps use gap-4 (16px), sections separated by my-8 (32px), page margins px-6 md:px-12
 
 - **Mobile**: Mobile-first design - single column layouts on mobile, cards stack vertically, navigation collapses to hamburger menu, touch targets minimum 48px, bottom navigation for primary actions, reduced motion by default on mobile, sticky accessibility controls accessible via floating button
+
+## Community & Social Features (WCAG 2.1 AA Compliant)
+
+### Activity Feed - Social Recognition System
+
+**Purpose**: Foster team spirit and motivation through celebrating peer achievements in an accessible, non-intrusive manner.
+
+**Functionality**:
+- Real-time feed displaying team member accomplishments: Level Ups, Badge Unlocks, Course Completions, Achievement Unlocks
+- Simple reaction system with 5 preset options: Congrats (👏), High Five (✨), On Fire (🔥), Superstar (⭐), Champion (🏆)
+- Each activity item shows: User avatar/name, achievement type, timestamp (relative), reaction counts
+- Expandable reactions list showing who reacted and when
+- Chronological feed with newest items at top, limited to most recent 20 items
+
+**Accessibility**:
+- Calm, non-animated presentation (no auto-scrolling or rapid updates)
+- Screen reader announcements for new activity (polite, not aggressive)
+- Keyboard navigation through all reaction buttons
+- Clear ARIA labels on all interactive elements
+- High contrast between text and backgrounds
+- No reliance on color alone for meaning
+
+**Edge Cases**:
+- Empty state: Shows encouraging message when no activity exists
+- Long names: Truncate with ellipsis while maintaining accessibility
+- Multiple reactions: Users can toggle reactions on/off
+- Performance: Limit to 20 most recent items, older items archived
+
+### Team Challenges - Accessible Leaderboards
+
+**Purpose**: Drive engagement through friendly team competition with full accessibility compliance.
+
+**Functionality**:
+- Weekly/Monthly XP challenges between departments
+- Visual leaderboard showing: Rank, Team Name, Department, Member Count, Total XP/Progress
+- Progress bars showing relative performance
+- Rank badges for top 3 teams (Gold/Silver/Bronze)
+- Challenge details: Title, Description, Time Remaining, Rewards
+- Dual view modes: Visual (graphs/progress bars) + Table (semantic HTML table)
+
+**WCAG Compliance**:
+- Toggle between visual leaderboard and accessible data table
+- Table mode uses proper semantic HTML (<table>, <th>, <td>, scope attributes)
+- All data relationships clear to screen readers
+- Progress bars include aria-label with percentage values
+- Rank positions announced clearly ("Team Engineering, Rank 1 of 4")
+- Color never the only indicator of rank (uses icons + text + position)
+
+**Edge Cases**:
+- No active challenges: Show "Check back soon" message
+- Tied scores: Display teams alphabetically when tied
+- Single-member teams: Show member count clearly
+- Mobile: Table scrolls horizontally, visual mode stacks vertically
+
+### Q&A Forum - Contextual Peer Support
+
+**Purpose**: Enable employees to help each other within specific course context, reducing training staff burden.
+
+**Functionality**:
+- Questions scoped to specific course module
+- Ask Question dialog with Title + Details fields
+- Upvoting system for questions and answers
+- Mark Best Answer feature (available to question author and admins)
+- Admin/Expert badges for subject matter experts
+- Sorted by: Best Answer first, then by upvotes, then by recency
+
+**Accessibility Focus**:
+- Large, clearly labeled input fields for questions/answers
+- Keyboard navigation through all questions and answers
+- Expandable question details with clear expand/collapse affordances
+- High contrast between questions, answers, and metadata
+- Screen reader announces answer count and best answer status
+- Form validation with clear error messages
+
+**Hierarchical Structure**:
+- Question → Multiple Answers → Best Answer (highlighted)
+- Questions show: Title, Content, Author, Timestamp, Upvote Count, Answer Count
+- Answers show: Content, Author, Role Badge (if admin/expert), Timestamp, Upvote Count
+- Best Answer: Visually distinct with success color + "Best Answer" badge
+
+**Edge Cases**:
+- No questions: "Be the first to ask!" message with CTA
+- Deleted users: Show "Former Employee" as author name
+- Spam prevention: Admin can mark answers as best to surface quality
+- Multiple best answers: System allows only one per question
+
+### Notification Preferences - Full User Control
+
+**Purpose**: Give users complete control over how they receive updates, critical for accessibility and sensory sensitivity.
+
+**Customizable Alerts**:
+- In-app notification badges (visual count indicators)
+- Email summaries (Never / Daily / Weekly)
+- Individual toggles for each notification type:
+  - Activity Feed Updates
+  - Forum Replies to My Questions
+  - Achievements & Badges Earned
+  - Team Challenge Updates
+  - Course Reminders
+- Sound effects toggle (disabled by default)
+- Notification badge visibility toggle
+
+**Accessibility Priority**:
+- All notifications use clear, concise language
+- No flashing or rapid animations
+- Sound effects opt-in only (never auto-play)
+- Vibration disable option for sensory sensitivity
+- Email summaries formatted for screen reader compatibility
+- Direct links from notifications to relevant content
+
+**Edge Cases**:
+- All notifications disabled: Show warning that user may miss important updates
+- Email bounce: System tracks and prompts user to update email
+- Overload prevention: Cap notifications to 10 per hour max
+- Quiet hours: Optional setting to pause notifications during specific times

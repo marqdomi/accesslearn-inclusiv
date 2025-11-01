@@ -245,6 +245,7 @@ export interface EmployeeCredentials {
   firstName: string
   lastName: string
   department?: string
+  role?: 'employee' | 'admin'
   status: 'pending' | 'activated' | 'disabled'
   createdAt: number
   expiresAt?: number
@@ -333,4 +334,107 @@ export interface GroupReport {
     userName: string
     completionRate: number
   }>
+}
+
+export interface ActivityFeedItem {
+  id: string
+  userId: string
+  userName: string
+  userAvatar?: string
+  type: 'level-up' | 'badge-earned' | 'course-completed' | 'achievement-unlocked'
+  timestamp: number
+  data: {
+    level?: number
+    badgeName?: string
+    badgeIcon?: string
+    courseName?: string
+    achievementName?: string
+    achievementIcon?: string
+  }
+  reactions: ActivityReaction[]
+}
+
+export interface ActivityReaction {
+  id: string
+  userId: string
+  userName: string
+  type: 'congrats' | 'highfive' | 'fire' | 'star' | 'trophy'
+  timestamp: number
+}
+
+export interface ForumQuestion {
+  id: string
+  courseId: string
+  moduleId: string
+  userId: string
+  userName: string
+  userAvatar?: string
+  title: string
+  content: string
+  timestamp: number
+  upvotes: number
+  upvotedBy: string[]
+  answered: boolean
+  bestAnswerId?: string
+  tags?: string[]
+}
+
+export interface ForumAnswer {
+  id: string
+  questionId: string
+  userId: string
+  userName: string
+  userAvatar?: string
+  userRole?: 'employee' | 'admin' | 'expert'
+  content: string
+  timestamp: number
+  upvotes: number
+  upvotedBy: string[]
+  isBestAnswer: boolean
+}
+
+export interface TeamChallenge {
+  id: string
+  title: string
+  description: string
+  type: 'xp' | 'courses' | 'modules'
+  startDate: number
+  endDate: number
+  teams: TeamChallengeTeam[]
+  status: 'upcoming' | 'active' | 'completed'
+  rewards?: string
+}
+
+export interface TeamChallengeTeam {
+  id: string
+  name: string
+  department?: string
+  memberCount: number
+  totalXP?: number
+  totalCoursesCompleted?: number
+  totalModulesCompleted?: number
+  rank?: number
+}
+
+export interface NotificationPreferences {
+  activityFeed: boolean
+  forumReplies: boolean
+  achievements: boolean
+  teamChallenges: boolean
+  courseReminders: boolean
+  emailSummary: 'never' | 'daily' | 'weekly'
+  soundEffects: boolean
+  inAppBadges: boolean
+}
+
+export interface UserNotification {
+  id: string
+  userId: string
+  type: 'activity' | 'forum-reply' | 'achievement' | 'team-challenge' | 'course-reminder'
+  title: string
+  message: string
+  timestamp: number
+  read: boolean
+  actionUrl?: string
+  relatedId?: string
 }

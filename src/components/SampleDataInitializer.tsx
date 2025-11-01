@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { useKV } from '@github/spark/hooks'
-import { Course, EmployeeCredentials } from '@/lib/types'
+import { Course, EmployeeCredentials, TeamChallenge, ActivityFeedItem } from '@/lib/types'
 import { LessonModule } from '@/lib/lesson-types'
 import { htmlFundamentalsModule } from '@/lib/sample-lessons'
 
@@ -259,6 +259,105 @@ const SAMPLE_COURSES: Course[] = [
   },
 ]
 
+const SAMPLE_TEAM_CHALLENGES: TeamChallenge[] = [
+  {
+    id: 'challenge-weekly-xp-1',
+    title: 'Weekly XP Challenge',
+    description: 'Which department can earn the most XP this week?',
+    type: 'xp',
+    startDate: Date.now() - 2 * 24 * 60 * 60 * 1000,
+    endDate: Date.now() + 5 * 24 * 60 * 60 * 1000,
+    status: 'active',
+    rewards: '🏆 Winner gets recognition and special badge!',
+    teams: [
+      {
+        id: 'team-sales',
+        name: 'Sales Team',
+        department: 'Sales',
+        memberCount: 12,
+        totalXP: 8450,
+      },
+      {
+        id: 'team-engineering',
+        name: 'Engineering Team',
+        department: 'Engineering',
+        memberCount: 18,
+        totalXP: 12300,
+      },
+      {
+        id: 'team-marketing',
+        name: 'Marketing Team',
+        department: 'Marketing',
+        memberCount: 8,
+        totalXP: 6200,
+      },
+      {
+        id: 'team-hr',
+        name: 'HR Team',
+        department: 'Human Resources',
+        memberCount: 5,
+        totalXP: 4100,
+      },
+    ],
+  },
+]
+
+const SAMPLE_ACTIVITIES: ActivityFeedItem[] = [
+  {
+    id: 'activity-1',
+    userId: 'user-001',
+    userName: 'Sarah Johnson',
+    userAvatar: '👩',
+    type: 'level-up',
+    timestamp: Date.now() - 2 * 60 * 60 * 1000,
+    data: { level: 5 },
+    reactions: [
+      {
+        id: 'reaction-1',
+        userId: 'user-002',
+        userName: 'Mike Chen',
+        type: 'congrats',
+        timestamp: Date.now() - 1.5 * 60 * 60 * 1000,
+      },
+    ],
+  },
+  {
+    id: 'activity-2',
+    userId: 'user-002',
+    userName: 'Mike Chen',
+    userAvatar: '👨',
+    type: 'course-completed',
+    timestamp: Date.now() - 5 * 60 * 60 * 1000,
+    data: { courseName: 'Web Development Quest' },
+    reactions: [
+      {
+        id: 'reaction-2',
+        userId: 'user-003',
+        userName: 'Emma Rodriguez',
+        type: 'fire',
+        timestamp: Date.now() - 4.5 * 60 * 60 * 1000,
+      },
+      {
+        id: 'reaction-3',
+        userId: 'user-001',
+        userName: 'Sarah Johnson',
+        type: 'trophy',
+        timestamp: Date.now() - 4 * 60 * 60 * 1000,
+      },
+    ],
+  },
+  {
+    id: 'activity-3',
+    userId: 'user-003',
+    userName: 'Emma Rodriguez',
+    userAvatar: '👩‍💼',
+    type: 'badge-earned',
+    timestamp: Date.now() - 24 * 60 * 60 * 1000,
+    data: { badgeName: 'Quick Learner', badgeIcon: '⚡' },
+    reactions: [],
+  },
+]
+
 const SAMPLE_CREDENTIALS: EmployeeCredentials[] = [
   {
     id: 'admin-001',
@@ -267,6 +366,7 @@ const SAMPLE_CREDENTIALS: EmployeeCredentials[] = [
     firstName: 'Admin',
     lastName: 'User',
     department: 'IT',
+    role: 'admin',
     status: 'activated',
     createdAt: Date.now(),
   },
@@ -277,6 +377,7 @@ const SAMPLE_CREDENTIALS: EmployeeCredentials[] = [
     firstName: 'Sarah',
     lastName: 'Johnson',
     department: 'Sales',
+    role: 'employee',
     status: 'activated',
     createdAt: Date.now(),
   },
@@ -287,6 +388,7 @@ const SAMPLE_CREDENTIALS: EmployeeCredentials[] = [
     firstName: 'Mike',
     lastName: 'Chen',
     department: 'Engineering',
+    role: 'employee',
     status: 'activated',
     createdAt: Date.now(),
   },
@@ -297,6 +399,7 @@ const SAMPLE_CREDENTIALS: EmployeeCredentials[] = [
     firstName: 'Emma',
     lastName: 'Rodriguez',
     department: 'Marketing',
+    role: 'employee',
     status: 'activated',
     createdAt: Date.now(),
   },
@@ -306,6 +409,8 @@ export function SampleDataInitializer() {
   const [courses, setCourses] = useKV<Course[]>('courses', [])
   const [lessonModules, setLessonModules] = useKV<Record<string, LessonModule>>('lesson-modules', {})
   const [credentials, setCredentials] = useKV<EmployeeCredentials[]>('employee-credentials', [])
+  const [challenges, setChallenges] = useKV<TeamChallenge[]>('team-challenges', [])
+  const [activities, setActivities] = useKV<ActivityFeedItem[]>('activity-feed', [])
 
   useEffect(() => {
     const initCourses = async () => {
@@ -340,6 +445,26 @@ export function SampleDataInitializer() {
     }
     initCredentials()
   }, [credentials, setCredentials])
+
+  useEffect(() => {
+    const initChallenges = async () => {
+      if (!challenges || challenges.length === 0) {
+        console.log('Initializing team challenges...')
+        setChallenges(SAMPLE_TEAM_CHALLENGES)
+      }
+    }
+    initChallenges()
+  }, [challenges, setChallenges])
+
+  useEffect(() => {
+    const initActivities = async () => {
+      if (!activities || activities.length === 0) {
+        console.log('Initializing activity feed...')
+        setActivities(SAMPLE_ACTIVITIES)
+      }
+    }
+    initActivities()
+  }, [activities, setActivities])
 
   return null
 }

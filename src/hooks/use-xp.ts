@@ -1,5 +1,6 @@
 import { useKV } from '@github/spark/hooks'
 import { toast } from 'sonner'
+import { useActivityFeed } from './use-activity-feed'
 
 export const XP_REWARDS = {
   DAILY_LOGIN: 10,
@@ -71,9 +72,10 @@ export function getRankName(level: number): string {
   return RANK_NAMES[rankIndex]
 }
 
-export function useXP() {
+export function useXP(userId?: string) {
   const [totalXP, setTotalXP] = useKV<number>('user-total-xp', 0)
   const [currentLevel, setCurrentLevel] = useKV<number>('user-level', 1)
+  const { postLevelUp } = useActivityFeed()
 
   const awardXP = (amount: number, reason: string, showNotification = true) => {
     setTotalXP((currentXP) => {
@@ -92,6 +94,9 @@ export function useXP() {
 
       if (newLevel > oldLevel) {
         setCurrentLevel(newLevel)
+        if (userId) {
+          postLevelUp(userId, newLevel)
+        }
         setTimeout(() => {
           toast.success(`🎉 Level Up! Level ${newLevel}`, {
             description: `You've reached ${getRankName(newLevel)} rank!`,

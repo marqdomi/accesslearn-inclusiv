@@ -8,16 +8,17 @@ import { SampleDataInitializer } from '@/components/SampleDataInitializer'
 import { UserDashboard } from '@/components/dashboard/UserDashboard'
 import { CourseViewer } from '@/components/courses/CourseViewer'
 import { AchievementsDashboard } from '@/components/achievements/AchievementsDashboard'
+import { CommunityDashboard } from '@/components/community/CommunityDashboard'
 import { AdminPanel } from '@/components/admin/AdminPanel'
 import { LoginScreen } from '@/components/auth/LoginScreen'
 import { PasswordChangeScreen } from '@/components/auth/PasswordChangeScreen'
 import { OnboardingScreen } from '@/components/auth/OnboardingScreen'
 import { Button } from '@/components/ui/button'
-import { Trophy, GraduationCap, Lightning, ShieldCheck, SignOut } from '@phosphor-icons/react'
+import { Trophy, GraduationCap, Lightning, ShieldCheck, SignOut, Users } from '@phosphor-icons/react'
 import { Toaster } from '@/components/ui/sonner'
 import { motion } from 'framer-motion'
 
-type View = 'dashboard' | 'achievements' | 'admin'
+type View = 'dashboard' | 'achievements' | 'community' | 'admin'
 
 function App() {
   const { session, login, changePassword, completeOnboarding, logout, isAuthenticated } = useAuth()
@@ -125,6 +126,14 @@ function App() {
                     <span className="sm:hidden">Home</span>
                   </Button>
                   <Button
+                    variant={currentView === 'community' ? 'default' : 'outline'}
+                    onClick={() => handleViewChange('community')}
+                    className="gap-2"
+                  >
+                    <Users size={20} aria-hidden="true" />
+                    <span className="hidden sm:inline">Community</span>
+                  </Button>
+                  <Button
                     variant={currentView === 'achievements' ? 'default' : 'outline'}
                     onClick={() => handleViewChange('achievements')}
                     className="gap-2"
@@ -160,6 +169,8 @@ function App() {
               <CourseViewer course={selectedCourse} onExit={() => setSelectedCourse(null)} />
             ) : currentView === 'achievements' ? (
               <AchievementsDashboard />
+            ) : currentView === 'community' ? (
+              <CommunityDashboard currentUserId={session.userId} />
             ) : (
               <UserDashboard 
                 courses={courses || []} 
