@@ -23,6 +23,7 @@ export function useAchievements(userId?: string) {
   const userKey = userId || 'default-user'
   const [userStats, setUserStats] = useKV<UserStats>(`user-stats-${userKey}`, DEFAULT_USER_STATS)
   const [pairings] = useKV<MentorshipPairing[]>('mentorship-pairings', [])
+  const [correctAnswerCount] = useKV<number>(`qanda-correct-answers-${userKey}`, 0)
   const { postAchievementUnlocked } = useActivityFeed()
 
   const checkAndUnlockAchievements = (stats: UserStats, setStats: (updater: (current?: UserStats) => UserStats) => void) => {
@@ -49,7 +50,11 @@ export function useAchievements(userId?: string) {
           }
           break
         case 'milestone':
-          shouldUnlock = stats.totalModulesCompleted >= achievement.requirement
+          if (achievement.id === 'community-helper') {
+            shouldUnlock = (correctAnswerCount || 0) >= achievement.requirement
+          } else {
+            shouldUnlock = stats.totalModulesCompleted >= achievement.requirement
+          }
           break
         case 'assessment':
           if (achievement.id.startsWith('assessment-specialist')) {

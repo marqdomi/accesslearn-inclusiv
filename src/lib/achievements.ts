@@ -278,6 +278,17 @@ export const ACHIEVEMENTS: Achievement[] = [
     icon: 'UsersFour',
     requirement: 1,
   },
+  {
+    id: 'community-helper',
+    title: 'Community Helper',
+    titleKey: 'achievementTitle.communityHelper',
+    description: 'Successfully answer 5 questions in the Q&A forum',
+    descriptionKey: 'achievementDesc.communityHelper',
+    tier: 'silver',
+    category: 'milestone',
+    icon: 'ChatsCircle',
+    requirement: 5,
+  },
 ]
 
 export const TIER_COLORS = {

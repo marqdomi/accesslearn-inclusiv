@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useKV } from '@github/spark/hooks'
-import { Course, UserProgress } from '@/lib/types'
+import { Course, UserProgress, AuthSession } from '@/lib/types'
 import { LessonModule } from '@/lib/lesson-types'
 import { useCourseProgress } from '@/hooks/use-course-progress'
 import { useXP, XP_REWARDS } from '@/hooks/use-xp'
@@ -12,10 +12,12 @@ import { translateLessonModule } from '@/lib/translate-course'
 import { ContentViewer } from './ContentViewer'
 import { AssessmentModule } from './AssessmentModule'
 import { LessonViewer } from './LessonViewer'
+import { QandAForum } from './QandAForum'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
-import { ArrowLeft, Check, ListBullets, GraduationCap } from '@phosphor-icons/react'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { ArrowLeft, Check, ListBullets, GraduationCap, ChatCircle } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { motion } from 'framer-motion'
 
@@ -39,6 +41,8 @@ export function CourseViewer({ course, onExit, userId }: CourseViewerProps) {
   const [viewMode, setViewMode] = useState<'intro' | 'lessons' | 'modules'>('intro')
   const [courses] = useKV<Course[]>('courses', [])
   const [courseProgress] = useKV<Record<string, UserProgress>>(`course-progress-${userId || 'default-user'}`, {})
+  const [session] = useKV<AuthSession>('auth-session', {} as AuthSession)
+  const [activeTab, setActiveTab] = useState<'modules' | 'qanda'>('modules')
 
   const lessonModule = lessonModules?.[course.id]
   const translatedLessonModule = useMemo(() => {
@@ -360,7 +364,7 @@ export function CourseViewer({ course, onExit, userId }: CourseViewerProps) {
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <Button onClick={onExit} variant="ghost" className="gap-2">
           <ArrowLeft size={20} aria-hidden="true" />
-          Back to Courses
+          {t('courseViewer.backToCourses')}
         </Button>
 
         <Button
@@ -370,7 +374,7 @@ export function CourseViewer({ course, onExit, userId }: CourseViewerProps) {
           aria-expanded={showModuleList}
         >
           <ListBullets size={20} aria-hidden="true" />
-          Modules
+          {t('courseViewer.moduleList')}
         </Button>
       </div>
 
@@ -379,64 +383,87 @@ export function CourseViewer({ course, onExit, userId }: CourseViewerProps) {
         <p className="mb-4 text-lg text-muted-foreground">{course.description}</p>
         <div className="space-y-2">
           <div className="flex justify-between text-sm">
-            <span className="font-medium">Overall Progress</span>
+            <span className="font-medium">{t('course.progress')}</span>
             <span className="text-muted-foreground">{progressPercentage}%</span>
           </div>
           <Progress value={progressPercentage} aria-label={`Course progress: ${progressPercentage}%`} />
         </div>
       </Card>
 
-      {showModuleList && (
-        <Card className="mb-6 p-6">
-          <h2 className="mb-4 text-xl font-semibold">Course Modules</h2>
-          <div className="space-y-2">
-            {course.modules.map((module, index) => {
-              const isCompleted = progress?.completedModules.includes(module.id)
-              const isCurrent = module.id === currentModule.id
+      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'modules' | 'qanda')} className="mb-6">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="modules" className="gap-2">
+            <ListBullets size={20} />
+            {t('course.modules')}
+          </TabsTrigger>
+          <TabsTrigger value="qanda" className="gap-2">
+            <ChatCircle size={20} />
+            {t('qanda.tab')}
+          </TabsTrigger>
+        </TabsList>
 
-              return (
-                <button
-                  key={module.id}
-                  onClick={() => handleJumpToModule(module.id)}
-                  className={`flex w-full items-center gap-4 rounded-lg border-2 p-4 text-left transition-all hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-ring ${
-                    isCurrent ? 'border-primary bg-primary/5' : 'border-border'
-                  }`}
-                  aria-current={isCurrent ? 'step' : undefined}
-                >
-                  <div
-                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
-                      isCompleted
-                        ? 'bg-success text-success-foreground'
-                        : isCurrent
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-muted text-muted-foreground'
-                    }`}
-                  >
-                    {isCompleted ? <Check size={16} weight="bold" aria-label="Completed" /> : index + 1}
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-medium">{module.title}</p>
-                    {module.duration && (
-                      <p className="text-sm text-muted-foreground">{module.duration} min</p>
-                    )}
-                  </div>
-                </button>
-              )
-            })}
-          </div>
-        </Card>
-      )}
+        <TabsContent value="modules" className="mt-6">
+          {showModuleList && (
+            <Card className="mb-6 p-6">
+              <h2 className="mb-4 text-xl font-semibold">{t('courseViewer.moduleList')}</h2>
+              <div className="space-y-2">
+                {course.modules.map((module, index) => {
+                  const isCompleted = progress?.completedModules.includes(module.id)
+                  const isCurrent = module.id === currentModule.id
 
-      <ContentViewer
-        module={currentModule}
-        onComplete={handleModuleComplete}
-        onNext={handleNext}
-        onPrevious={handlePrevious}
-        hasNext={validIndex < course.modules.length - 1}
-        hasPrevious={validIndex > 0}
-        currentIndex={validIndex}
-        totalModules={course.modules.length}
-      />
+                  return (
+                    <button
+                      key={module.id}
+                      onClick={() => handleJumpToModule(module.id)}
+                      className={`flex w-full items-center gap-4 rounded-lg border-2 p-4 text-left transition-all hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-ring ${
+                        isCurrent ? 'border-primary bg-primary/5' : 'border-border'
+                      }`}
+                      aria-current={isCurrent ? 'step' : undefined}
+                    >
+                      <div
+                        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
+                          isCompleted
+                            ? 'bg-success text-success-foreground'
+                            : isCurrent
+                              ? 'bg-primary text-primary-foreground'
+                              : 'bg-muted text-muted-foreground'
+                        }`}
+                      >
+                        {isCompleted ? <Check size={16} weight="bold" aria-label="Completed" /> : index + 1}
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-medium">{module.title}</p>
+                        {module.duration && (
+                          <p className="text-sm text-muted-foreground">{module.duration} min</p>
+                        )}
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+            </Card>
+          )}
+
+          <ContentViewer
+            module={currentModule}
+            onComplete={handleModuleComplete}
+            onNext={handleNext}
+            onPrevious={handlePrevious}
+            hasNext={validIndex < course.modules.length - 1}
+            hasPrevious={validIndex > 0}
+            currentIndex={validIndex}
+            totalModules={course.modules.length}
+          />
+        </TabsContent>
+
+        <TabsContent value="qanda" className="mt-6">
+          <QandAForum 
+            course={course} 
+            userId={userId || 'default-user'} 
+            userRole={session?.role}
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }
