@@ -610,3 +610,80 @@ Enable experienced employees (Mentors) to guide newer or junior employees (Mente
 - Mentee completes course then mentor assigned: "Team Up" achievement checks active pairing at completion time
 - Message sent to removed pairing: System prevents sending and notifies user pairing no longer active
 - Mentor overwhelmed with messages: No artificial limits, relies on human relationship management
+
+## Course Ratings & Reviews System (WCAG 2.1 AA Compliant)
+
+### Purpose
+Enable learners to rate and review courses after completion, helping others discover quality content and providing valuable feedback to course creators and administrators.
+
+### Core Functionality
+
+**Rating System**:
+- 5-star rating scale with interactive star selection
+- Visual rating summary showing average rating and total reviews
+- Distribution chart showing breakdown of ratings (5 stars, 4 stars, etc.)
+- Ratings displayed on course cards in Mission Library
+
+**Review System**:
+- Write detailed text reviews (optional, up to 1000 characters)
+- Edit or delete your own review at any time
+- Mark other learners' reviews as "helpful"
+- Verified badge for completed learners
+- Reviews sorted by helpfulness, then recency
+
+### 23. Course Rating & Review Submission
+- **Functionality**: After completing a course, learners can submit a rating (required 1-5 stars) and optional written review. Form includes interactive star selector, text area with character counter (1000 max), and clear submit/cancel buttons.
+- **Purpose**: Collect authentic feedback from course completers to help future learners make informed decisions
+- **Trigger**: User navigates to "Reviews" tab in CourseViewer after completing the course
+- **Progression**: View reviews tab → See prompt to share experience → Click "Write Review" → Select star rating (1-5) → Optionally write review text → Submit → Confirmation toast → Review appears in list
+- **Success criteria**: Only completed learners can submit reviews, star rating is required, review text is optional, character limit enforced, submission provides instant feedback, reviews persist across sessions, users can only have one review per course
+
+### 24. Rating Summary Display
+- **Functionality**: Visual summary showing average star rating (e.g., 4.7/5.0), total review count, and distribution chart with horizontal bars showing percentage breakdown for each star level (5 stars: 60%, 4 stars: 25%, etc.)
+- **Purpose**: Provide at-a-glance quality assessment to help learners choose courses
+- **Trigger**: Automatically displays when course has at least one review
+- **Progression**: View reviews tab or course card → See rating summary → Understand course quality at a glance
+- **Success criteria**: Average rating calculated correctly, total review count accurate, distribution percentages sum to 100%, updates in real-time when new reviews submitted, accessible to screen readers with clear labels
+
+### 25. Review Display & Interaction
+- **Functionality**: List of all course reviews showing reviewer name/avatar, star rating, review text, timestamp, helpful count, and "Helpful" button. Users can mark reviews as helpful (toggle on/off). Reviews sorted by helpful count first, then recency.
+- **Purpose**: Surface high-quality peer feedback and enable learners to contribute to review quality through helpfulness voting
+- **Trigger**: View reviews tab in CourseViewer
+- **Progression**: Scroll review list → Read review → Click "Helpful" if review was valuable → Helpful count increments → Review moves up in sort order
+- **Success criteria**: Reviews display all metadata clearly, helpful toggle works instantly, users cannot mark their own reviews helpful, sort order updates dynamically, verified badge shows for completed learners, timestamps show relative time (e.g., "2 days ago")
+
+### 26. Manage Your Review
+- **Functionality**: Users can view, edit, or delete their own review. Own review displayed prominently at top with "Edit" and "Delete" buttons. Edit opens same form as submission with pre-filled data. Delete requires confirmation.
+- **Purpose**: Give learners control over their contributions and allow updates based on course changes or reflection
+- **Trigger**: View reviews tab when user has already submitted a review
+- **Progression**: See "Your Review" section → Click "Edit" to modify rating/text → Or click "Delete" → Confirm deletion → Review removed or updated
+- **Success criteria**: Own review clearly distinguished from others, edit pre-fills current data, changes save instantly, delete requires confirmation, confirmation dialog accessible, actions provide clear feedback
+
+### 27. Rating Integration in Mission Library
+- **Functionality**: Course cards in Mission Library display average star rating and review count (e.g., "★ 4.7 (23)") when reviews exist. Rating appears below course badges and above XP/time stats.
+- **Purpose**: Help learners discover highly-rated courses and make informed enrollment decisions
+- **Trigger**: Browse Mission Library
+- **Progression**: View course cards → See ratings for courses with reviews → Use ratings to inform course selection
+- **Success criteria**: Ratings display only when reviews exist, average calculated correctly, review count accurate, updates when new reviews added, visually distinct but not overwhelming, accessible with screen readers
+
+### Accessibility & Edge Cases
+
+**Accessibility Requirements**:
+- Star rating uses keyboard navigation (arrow keys to select, Enter/Space to confirm)
+- Rating summary uses semantic progressbar elements with aria-labels
+- Review form has clear labels and validation messages
+- Helpful button clearly announces state to screen readers
+- All interactive elements meet 44px minimum touch target size
+- High contrast maintained between stars and background
+- Success/error messages use ARIA live regions
+
+**Edge Cases**:
+- Course with no reviews: Show "No reviews yet" message with encouragement
+- User tries to review before completion: Show alert explaining requirement
+- User edits review: Previous version replaced completely
+- Multiple users mark review helpful simultaneously: All counts recorded accurately
+- Review text contains profanity/spam: Admin tools for moderation (future enhancement)
+- Course deleted: Reviews archived but not deleted
+- User deletes their account: Reviews remain but author shows "Former Employee"
+- Rating ties in helpfulness: Sort by recency as tiebreaker
+

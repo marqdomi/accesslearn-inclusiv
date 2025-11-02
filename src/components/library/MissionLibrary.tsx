@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge'
 import { useTranslation } from '@/lib/i18n'
 import { useUserLibrary } from '@/hooks/use-user-library'
+import { CourseRatingDisplay } from '@/components/courses/CourseRatingDisplay'
 import { motion } from 'framer-motion'
 import {  MagnifyingGlass, BookmarkSimple, BookmarksSimple, Play, Clock, Star, Bookmark, LockKey } from '@phosphor-icons/react'
 import { toast } from 'sonner'
@@ -254,6 +255,8 @@ export function MissionLibrary({ userId, onSelectCourse }: MissionLibraryProps) 
                         </Badge>
                       )}
                     </div>
+
+                    <CourseRatingDisplay courseId={course.id} size={14} />
 
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
                       <div className="flex items-center gap-1">

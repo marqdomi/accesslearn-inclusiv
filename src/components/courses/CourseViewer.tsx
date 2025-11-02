@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useKV } from '@github/spark/hooks'
-import { Course, UserProgress, AuthSession } from '@/lib/types'
+import { Course, UserProgress, AuthSession, UserProfile } from '@/lib/types'
 import { LessonModule } from '@/lib/lesson-types'
 import { useCourseProgress } from '@/hooks/use-course-progress'
 import { useXP, XP_REWARDS } from '@/hooks/use-xp'
@@ -13,11 +13,12 @@ import { ContentViewer } from './ContentViewer'
 import { AssessmentModule } from './AssessmentModule'
 import { LessonViewer } from './LessonViewer'
 import { QandAForum } from './QandAForum'
+import { CourseReviewsSection } from './CourseReviewsSection'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { ArrowLeft, Check, ListBullets, GraduationCap, ChatCircle } from '@phosphor-icons/react'
+import { ArrowLeft, Check, ListBullets, GraduationCap, ChatCircle, Star } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { motion } from 'framer-motion'
 
@@ -42,7 +43,8 @@ export function CourseViewer({ course, onExit, userId }: CourseViewerProps) {
   const [courses] = useKV<Course[]>('courses', [])
   const [courseProgress] = useKV<Record<string, UserProgress>>(`course-progress-${userId || 'default-user'}`, {})
   const [session] = useKV<AuthSession>('auth-session', {} as AuthSession)
-  const [activeTab, setActiveTab] = useState<'modules' | 'qanda'>('modules')
+  const [userProfile] = useKV<UserProfile>(`user-profile-${userId || 'default-user'}`, {} as UserProfile)
+  const [activeTab, setActiveTab] = useState<'modules' | 'qanda' | 'reviews'>('modules')
 
   const lessonModule = lessonModules?.[course.id]
   const translatedLessonModule = useMemo(() => {
@@ -390,8 +392,8 @@ export function CourseViewer({ course, onExit, userId }: CourseViewerProps) {
         </div>
       </Card>
 
-      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'modules' | 'qanda')} className="mb-6">
-        <TabsList className="grid w-full grid-cols-2">
+      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'modules' | 'qanda' | 'reviews')} className="mb-6">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="modules" className="gap-2">
             <ListBullets size={20} />
             {t('course.modules')}
@@ -399,6 +401,10 @@ export function CourseViewer({ course, onExit, userId }: CourseViewerProps) {
           <TabsTrigger value="qanda" className="gap-2">
             <ChatCircle size={20} />
             {t('qanda.tab')}
+          </TabsTrigger>
+          <TabsTrigger value="reviews" className="gap-2">
+            <Star size={20} />
+            {t('reviews.tab')}
           </TabsTrigger>
         </TabsList>
 
@@ -461,6 +467,15 @@ export function CourseViewer({ course, onExit, userId }: CourseViewerProps) {
             course={course} 
             userId={userId || 'default-user'} 
             userRole={session?.role}
+          />
+        </TabsContent>
+
+        <TabsContent value="reviews" className="mt-6">
+          <CourseReviewsSection
+            courseId={course.id}
+            userId={userId || 'default-user'}
+            userName={userProfile?.displayName || userProfile?.firstName || 'Anonymous'}
+            userAvatar={userProfile?.avatar}
           />
         </TabsContent>
       </Tabs>

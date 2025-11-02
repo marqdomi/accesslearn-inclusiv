@@ -523,3 +523,30 @@ export interface WeeklyChallengeSnapshot {
   winnerId?: string
   winnerName?: string
 }
+
+export interface CourseReview {
+  id: string
+  courseId: string
+  userId: string
+  userName: string
+  userAvatar?: string
+  rating: number
+  reviewText?: string
+  timestamp: number
+  helpful: number
+  helpfulBy: string[]
+  verified: boolean
+}
+
+export interface CourseRatingSummary {
+  courseId: string
+  averageRating: number
+  totalReviews: number
+  ratingDistribution: {
+    1: number
+    2: number
+    3: number
+    4: number
+    5: number
+  }
+}
