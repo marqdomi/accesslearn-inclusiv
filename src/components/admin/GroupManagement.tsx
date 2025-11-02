@@ -12,8 +12,11 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { UserGroup, EmployeeCredentials } from '@/lib/types'
 import { UsersThree, Plus, Trash } from '@phosphor-icons/react'
 import { toast } from 'sonner'
+import { GroupSuggestions } from './GroupSuggestions'
+import { useTranslation } from '@/lib/i18n'
 
 export function GroupManagement() {
+  const { t } = useTranslation()
   const [groups, setGroups] = useKV<UserGroup[]>('user-groups', [])
   const [employees] = useKV<EmployeeCredentials[]>('employee-credentials', [])
   
@@ -24,7 +27,7 @@ export function GroupManagement() {
 
   const handleCreateGroup = () => {
     if (!groupName.trim()) {
-      toast.error('Group name is required')
+      toast.error(t('groups.nameRequired', 'Group name is required'))
       return
     }
 
@@ -38,7 +41,7 @@ export function GroupManagement() {
     }
 
     setGroups((current) => [...(current || []), newGroup])
-    toast.success(`Group "${groupName}" created with ${selectedUserIds.length} members`)
+    toast.success(`${t('groups.createGroup', 'Create Group')}: "${groupName}" - ${selectedUserIds.length} ${t('groups.members', 'members')}`)
 
     setGroupName('')
     setGroupDescription('')
@@ -50,9 +53,9 @@ export function GroupManagement() {
     const group = groups?.find(g => g.id === groupId)
     if (!group) return
 
-    if (confirm(`Are you sure you want to delete the group "${group.name}"?`)) {
+    if (confirm(`${t('groups.confirmDelete', 'Are you sure you want to delete this group?')} "${group.name}"?`)) {
       setGroups((current) => (current || []).filter(g => g.id !== groupId))
-      toast.success('Group deleted')
+      toast.success(t('groups.deleted', 'Group deleted'))
     }
   }
 
@@ -71,36 +74,38 @@ export function GroupManagement() {
 
   return (
     <div className="space-y-6">
+      <GroupSuggestions />
+      
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div>
               <CardTitle className="flex items-center gap-2">
                 <UsersThree size={24} className="text-primary" aria-hidden="true" />
-                Employee Groups
+                {t('groups.title', 'Employee Groups')}
               </CardTitle>
-              <CardDescription>Organize employees into groups for easier course assignment</CardDescription>
+              <CardDescription>{t('groups.description', 'Organize employees into groups for easier course assignment')}</CardDescription>
             </div>
             <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
               <DialogTrigger asChild>
                 <Button className="gap-2">
                   <Plus size={20} aria-hidden="true" />
-                  Create Group
+                  {t('groups.createGroup', 'Create Group')}
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                  <DialogTitle>Create New Group</DialogTitle>
-                  <DialogDescription>Organize employees into a group for batch course assignments</DialogDescription>
+                  <DialogTitle>{t('groups.createNewGroup', 'Create New Group')}</DialogTitle>
+                  <DialogDescription>{t('groups.createDescription', 'Organize employees into a group for batch course assignments')}</DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
                   <div className="space-y-2">
                     <Label htmlFor="group-name" className="text-base font-medium">
-                      Group Name
+                      {t('groups.groupName', 'Group Name')}
                     </Label>
                     <Input
                       id="group-name"
-                      placeholder="e.g., New Hires, Sales Team, Engineering"
+                      placeholder={t('groups.groupNamePlaceholder', 'e.g., New Hires, Sales Team, Engineering')}
                       value={groupName}
                       onChange={(e) => setGroupName(e.target.value)}
                       className="h-12"
@@ -109,11 +114,11 @@ export function GroupManagement() {
 
                   <div className="space-y-2">
                     <Label htmlFor="group-description" className="text-base font-medium">
-                      Description (Optional)
+                      {t('groups.description', 'Description')} ({t('common.optional', 'Optional')})
                     </Label>
                     <Textarea
                       id="group-description"
-                      placeholder="Describe the purpose of this group"
+                      placeholder={t('groups.descriptionPlaceholder', 'Describe the purpose of this group')}
                       value={groupDescription}
                       onChange={(e) => setGroupDescription(e.target.value)}
                       rows={3}
@@ -122,12 +127,12 @@ export function GroupManagement() {
 
                   <div className="space-y-2">
                     <Label className="text-base font-medium">
-                      Select Members ({selectedUserIds.length} selected)
+                      {t('groups.selectMembers', 'Select Members')} ({selectedUserIds.length} {t('groups.selected', 'selected')})
                     </Label>
                     <div className="border rounded-lg max-h-64 overflow-y-auto">
                       {(employees || []).length === 0 ? (
                         <div className="p-4 text-center text-muted-foreground">
-                          No employees available. Upload employees first.
+                          {t('groups.noEmployees', 'No employees available. Upload employees first.')}
                         </div>
                       ) : (
                         <div className="divide-y">
@@ -157,10 +162,10 @@ export function GroupManagement() {
 
                   <div className="flex gap-3 pt-4">
                     <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)} className="flex-1">
-                      Cancel
+                      {t('common.cancel', 'Cancel')}
                     </Button>
                     <Button onClick={handleCreateGroup} className="flex-1">
-                      Create Group
+                      {t('groups.createGroup', 'Create Group')}
                     </Button>
                   </div>
                 </div>
@@ -172,11 +177,11 @@ export function GroupManagement() {
           {(groups || []).length === 0 ? (
             <div className="text-center py-12">
               <UsersThree size={64} className="mx-auto text-muted-foreground mb-4" aria-hidden="true" />
-              <h3 className="text-lg font-semibold mb-2">No Groups Yet</h3>
-              <p className="text-muted-foreground mb-4">Create your first group to organize employees</p>
+              <h3 className="text-lg font-semibold mb-2">{t('groups.noGroups', 'No Groups Yet')}</h3>
+              <p className="text-muted-foreground mb-4">{t('groups.noGroupsDesc', 'Create your first group to organize employees')}</p>
               <Button onClick={() => setIsCreateDialogOpen(true)} className="gap-2">
                 <Plus size={20} aria-hidden="true" />
-                Create First Group
+                {t('groups.createFirstGroup', 'Create First Group')}
               </Button>
             </div>
           ) : (
@@ -224,19 +229,19 @@ export function GroupManagement() {
       {(groups || []).length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>Group Overview</CardTitle>
-            <CardDescription>Summary of all employee groups</CardDescription>
+            <CardTitle>{t('groups.overview', 'Group Overview')}</CardTitle>
+            <CardDescription>{t('groups.overviewDesc', 'Summary of all employee groups')}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="border rounded-lg overflow-hidden">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Group Name</TableHead>
-                    <TableHead>Description</TableHead>
-                    <TableHead className="text-right">Members</TableHead>
-                    <TableHead className="text-right">Courses Assigned</TableHead>
-                    <TableHead>Created</TableHead>
+                    <TableHead>{t('groups.groupName', 'Group Name')}</TableHead>
+                    <TableHead>{t('groups.description', 'Description')}</TableHead>
+                    <TableHead className="text-right">{t('groups.members', 'Members')}</TableHead>
+                    <TableHead className="text-right">{t('groups.coursesAssigned', 'Courses Assigned')}</TableHead>
+                    <TableHead>{t('common.created', 'Created')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
