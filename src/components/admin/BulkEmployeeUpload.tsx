@@ -11,8 +11,10 @@ import { toast } from 'sonner'
 import { motion } from 'framer-motion'
 import { EmployeeCredentials, BulkUploadResult } from '@/lib/types'
 import { parseCSVEmployees, generateTemporaryPassword, formatCredentialsForDownload } from '@/lib/auth-utils'
+import { useTranslation } from '@/lib/i18n'
 
 export function BulkEmployeeUpload() {
+  const { t } = useTranslation()
   const [credentials, setCredentials] = useKV<EmployeeCredentials[]>('employee-credentials', [])
   const [uploadResult, setUploadResult] = useState<BulkUploadResult | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
@@ -23,7 +25,7 @@ export function BulkEmployeeUpload() {
     if (!file) return
 
     if (!file.name.endsWith('.csv')) {
-      toast.error('Please upload a CSV file')
+      toast.error(t('bulkUpload.uploadError'))
       return
     }
 
@@ -42,7 +44,7 @@ export function BulkEmployeeUpload() {
           failed.push({
             row: idx + 2,
             email: emp.email,
-            errors: ['Employee already exists']
+            errors: [t('bulkUpload.employeeExists')]
           })
           return
         }
@@ -80,14 +82,20 @@ export function BulkEmployeeUpload() {
 
       if (successful.length > 0) {
         setCredentials((current) => [...(current || []), ...successful])
-        toast.success(`Successfully created ${successful.length} employee account${successful.length > 1 ? 's' : ''}`)
+        const message = successful.length === 1 
+          ? t('bulkUpload.accountsCreated', { count: successful.length.toString() })
+          : t('bulkUpload.accountsCreatedPlural', { count: successful.length.toString() })
+        toast.success(message)
       }
 
       if (failed.length > 0) {
-        toast.error(`${failed.length} row${failed.length > 1 ? 's' : ''} failed to process`)
+        const message = failed.length === 1
+          ? t('bulkUpload.rowsFailed', { count: failed.length.toString() })
+          : t('bulkUpload.rowsFailedPlural', { count: failed.length.toString() })
+        toast.error(message)
       }
     } catch (error) {
-      toast.error('Failed to process CSV file')
+      toast.error(t('bulkUpload.processingError'))
       console.error(error)
     } finally {
       setIsProcessing(false)
@@ -108,7 +116,7 @@ export function BulkEmployeeUpload() {
     link.click()
     document.body.removeChild(link)
     URL.revokeObjectURL(url)
-    toast.success('Credentials downloaded successfully')
+    toast.success(t('bulkUpload.credentialsDownloaded'))
   }
 
   const handleDownloadTemplate = () => {
@@ -122,7 +130,7 @@ export function BulkEmployeeUpload() {
     link.click()
     document.body.removeChild(link)
     URL.revokeObjectURL(url)
-    toast.success('Template downloaded')
+    toast.success(t('bulkUpload.templateDownloaded'))
   }
 
   const pendingCredentials = (credentials || []).filter(c => c.status === 'pending')
@@ -133,24 +141,24 @@ export function BulkEmployeeUpload() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <UserPlus size={24} className="text-primary" aria-hidden="true" />
-            Bulk Employee Enrollment
+            {t('bulkUpload.title')}
           </CardTitle>
-          <CardDescription>Upload a CSV file to create multiple employee accounts at once</CardDescription>
+          <CardDescription>{t('bulkUpload.description')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="flex flex-wrap gap-3">
             <Button onClick={() => fileInputRef.current?.click()} disabled={isProcessing} className="gap-2">
               <Upload size={20} aria-hidden="true" />
-              {isProcessing ? 'Processing...' : 'Upload CSV File'}
+              {isProcessing ? t('bulkUpload.processing') : t('bulkUpload.uploadButton')}
             </Button>
             <Button variant="outline" onClick={handleDownloadTemplate} className="gap-2">
               <FileCsv size={20} aria-hidden="true" />
-              Download Template
+              {t('bulkUpload.downloadTemplate')}
             </Button>
             {pendingCredentials.length > 0 && (
               <Button variant="secondary" onClick={() => handleDownloadCredentials(pendingCredentials)} className="gap-2">
                 <Download size={20} aria-hidden="true" />
-                Download All Credentials
+                {t('bulkUpload.downloadCredentials')}
               </Button>
             )}
           </div>
@@ -166,8 +174,7 @@ export function BulkEmployeeUpload() {
 
           <Alert className="bg-primary/5 border-primary/20">
             <AlertDescription>
-              <strong>CSV Format:</strong> Your file must include columns: email, firstName, lastName, and optionally department.
-              The system will automatically generate secure temporary passwords for each employee.
+              <strong>{t('bulkUpload.formatHelp')}</strong> {t('bulkUpload.formatDescription')}
             </AlertDescription>
           </Alert>
 
@@ -184,7 +191,7 @@ export function BulkEmployeeUpload() {
                   <CardContent className="pt-6">
                     <div className="text-center">
                       <p className="text-3xl font-bold text-success">{uploadResult.successful.length}</p>
-                      <p className="text-sm text-muted-foreground mt-1">Successful</p>
+                      <p className="text-sm text-muted-foreground mt-1">{t('bulkUpload.successful')}</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -192,7 +199,7 @@ export function BulkEmployeeUpload() {
                   <CardContent className="pt-6">
                     <div className="text-center">
                       <p className="text-3xl font-bold text-destructive">{uploadResult.failed.length}</p>
-                      <p className="text-sm text-muted-foreground mt-1">Failed</p>
+                      <p className="text-sm text-muted-foreground mt-1">{t('bulkUpload.failed')}</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -200,7 +207,7 @@ export function BulkEmployeeUpload() {
                   <CardContent className="pt-6">
                     <div className="text-center">
                       <p className="text-3xl font-bold text-foreground">{uploadResult.totalProcessed}</p>
-                      <p className="text-sm text-muted-foreground mt-1">Total Processed</p>
+                      <p className="text-sm text-muted-foreground mt-1">{t('bulkUpload.totalProcessed')}</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -211,21 +218,21 @@ export function BulkEmployeeUpload() {
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-lg font-semibold flex items-center gap-2">
                       <CheckCircle size={20} className="text-success" aria-hidden="true" />
-                      Successfully Created Accounts
+                      {t('bulkUpload.successfullyCreated')}
                     </h3>
                     <Button size="sm" variant="outline" onClick={() => handleDownloadCredentials(uploadResult.successful)}>
                       <Download size={16} className="mr-2" aria-hidden="true" />
-                      Download These Credentials
+                      {t('bulkUpload.downloadTheseCredentials')}
                     </Button>
                   </div>
                   <div className="border rounded-lg overflow-hidden">
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>Name</TableHead>
-                          <TableHead>Email</TableHead>
-                          <TableHead>Department</TableHead>
-                          <TableHead>Temporary Password</TableHead>
+                          <TableHead>{t('bulkUpload.name')}</TableHead>
+                          <TableHead>{t('bulkUpload.email')}</TableHead>
+                          <TableHead>{t('bulkUpload.department')}</TableHead>
+                          <TableHead>{t('bulkUpload.temporaryPassword')}</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -244,7 +251,7 @@ export function BulkEmployeeUpload() {
                   </div>
                   {uploadResult.successful.length > 10 && (
                     <p className="text-sm text-muted-foreground text-center mt-2">
-                      Showing 10 of {uploadResult.successful.length} accounts. Download CSV to see all.
+                      {t('bulkUpload.showingXofY', { showing: '10', total: uploadResult.successful.length.toString() })}
                     </p>
                   )}
                 </div>
@@ -254,15 +261,15 @@ export function BulkEmployeeUpload() {
                 <div>
                   <h3 className="text-lg font-semibold flex items-center gap-2 mb-3">
                     <Warning size={20} className="text-destructive" aria-hidden="true" />
-                    Failed to Process
+                    {t('bulkUpload.failedToProcess')}
                   </h3>
                   <div className="border rounded-lg overflow-hidden">
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>Row</TableHead>
-                          <TableHead>Email</TableHead>
-                          <TableHead>Errors</TableHead>
+                          <TableHead>{t('bulkUpload.row')}</TableHead>
+                          <TableHead>{t('bulkUpload.email')}</TableHead>
+                          <TableHead>{t('bulkUpload.errors')}</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -286,19 +293,19 @@ export function BulkEmployeeUpload() {
       {pendingCredentials.length > 0 && !uploadResult && (
         <Card>
           <CardHeader>
-            <CardTitle>Pending Employee Accounts ({pendingCredentials.length})</CardTitle>
-            <CardDescription>Employees who have not yet activated their accounts</CardDescription>
+            <CardTitle>{t('bulkUpload.pendingAccounts', { count: pendingCredentials.length.toString() })}</CardTitle>
+            <CardDescription>{t('bulkUpload.pendingDescription')}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="border rounded-lg overflow-hidden">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Department</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Created</TableHead>
+                    <TableHead>{t('bulkUpload.name')}</TableHead>
+                    <TableHead>{t('bulkUpload.email')}</TableHead>
+                    <TableHead>{t('bulkUpload.department')}</TableHead>
+                    <TableHead>{t('bulkUpload.status')}</TableHead>
+                    <TableHead>{t('bulkUpload.created')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -320,7 +327,7 @@ export function BulkEmployeeUpload() {
             </div>
             {pendingCredentials.length > 20 && (
               <p className="text-sm text-muted-foreground text-center mt-4">
-                Showing 20 of {pendingCredentials.length} pending accounts
+                {t('bulkUpload.showingXofYAccounts', { showing: '20', total: pendingCredentials.length.toString() })}
               </p>
             )}
           </CardContent>
