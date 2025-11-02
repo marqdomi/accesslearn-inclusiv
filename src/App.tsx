@@ -10,18 +10,21 @@ import { UserDashboard } from '@/components/dashboard/UserDashboard'
 import { CourseViewer } from '@/components/courses/CourseViewer'
 import { AchievementsDashboard } from '@/components/achievements/AchievementsDashboard'
 import { CommunityDashboard } from '@/components/community/CommunityDashboard'
+import { NotificationsViewer } from '@/components/community/NotificationsViewer'
 import { AdminPanel } from '@/components/admin/AdminPanel'
 import { LoginScreen } from '@/components/auth/LoginScreen'
 import { PasswordChangeScreen } from '@/components/auth/PasswordChangeScreen'
 import { OnboardingScreen } from '@/components/auth/OnboardingScreen'
+import { MissionLibrary } from '@/components/library/MissionLibrary'
+import { MyLibrary } from '@/components/library/MyLibrary'
 import { Button } from '@/components/ui/button'
-import { Trophy, GraduationCap, Lightning, ShieldCheck, SignOut, Users } from '@phosphor-icons/react'
+import { Trophy, GraduationCap, Lightning, ShieldCheck, SignOut, Users, BookmarksSimple, BookBookmark } from '@phosphor-icons/react'
 import { Toaster } from '@/components/ui/sonner'
 import { motion } from 'framer-motion'
 import { useTranslation } from '@/lib/i18n'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 
-type View = 'dashboard' | 'achievements' | 'community' | 'admin'
+type View = 'dashboard' | 'achievements' | 'community' | 'admin' | 'mission-library' | 'my-library'
 
 function App() {
   const { t } = useTranslation()
@@ -130,7 +133,7 @@ function App() {
                     <p className="text-xs text-muted-foreground">{t('app.subtitle')}</p>
                   </div>
                 </motion.div>
-                <nav className="flex gap-2" aria-label="Main navigation">
+                <nav className="flex flex-wrap gap-2" aria-label="Main navigation">
                   <Button
                     variant={currentView === 'dashboard' && !selectedCourse ? 'default' : 'outline'}
                     onClick={() => handleViewChange('dashboard')}
@@ -139,6 +142,14 @@ function App() {
                     <GraduationCap size={20} aria-hidden="true" />
                     <span className="hidden sm:inline">{t('nav.dashboard')}</span>
                     <span className="sm:hidden">{t('nav.home')}</span>
+                  </Button>
+                  <Button
+                    variant={currentView === 'mission-library' ? 'default' : 'outline'}
+                    onClick={() => handleViewChange('mission-library')}
+                    className="gap-2"
+                  >
+                    <BookmarksSimple size={20} aria-hidden="true" />
+                    <span className="hidden sm:inline">{t('nav.missionLibrary')}</span>
                   </Button>
                   <Button
                     variant={currentView === 'community' ? 'default' : 'outline'}
@@ -167,6 +178,7 @@ function App() {
                       <span className="hidden sm:inline">{t('nav.admin')}</span>
                     </Button>
                   )}
+                  <NotificationsViewer userId={session.userId} />
                   <LanguageSwitcher />
                   <Button
                     variant="ghost"
@@ -189,6 +201,14 @@ function App() {
               <AchievementsDashboard userId={session.userId} />
             ) : currentView === 'community' ? (
               <CommunityDashboard currentUserId={session.userId} />
+            ) : currentView === 'mission-library' ? (
+              <MissionLibrary userId={session.userId} onSelectCourse={setSelectedCourse} />
+            ) : currentView === 'my-library' ? (
+              <MyLibrary 
+                userId={session.userId} 
+                onSelectCourse={setSelectedCourse}
+                onBrowseLibrary={() => handleViewChange('mission-library')}
+              />
             ) : (
               <UserDashboard 
                 courses={translatedCourses} 

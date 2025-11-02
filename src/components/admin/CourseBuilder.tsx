@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { useKV } from '@github/spark/hooks'
-import { CourseStructure, Module, Lesson, ValidationError } from '@/lib/types'
+import { CourseStructure, Module, Lesson, ValidationError, CourseEnrollmentMode } from '@/lib/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -14,6 +15,7 @@ import { CourseStructureBuilder } from './CourseStructureBuilder'
 import { LessonEditor } from './LessonEditor'
 import { QuizBuilder } from './QuizBuilder'
 import { toast } from 'sonner'
+import { useTranslation } from '@/lib/i18n'
 
 interface CourseBuilderProps {
   courseId?: string
@@ -21,6 +23,7 @@ interface CourseBuilderProps {
 }
 
 export function CourseBuilder({ courseId, onBack }: CourseBuilderProps) {
+  const { t } = useTranslation()
   const [courses, setCourses] = useKV<CourseStructure[]>('admin-courses', [])
   
   const existingCourse = courseId ? courses?.find(c => c.id === courseId) : null
@@ -34,6 +37,8 @@ export function CourseBuilder({ courseId, onBack }: CourseBuilderProps) {
     estimatedHours: 0,
     totalXP: 0,
     published: false,
+    enrollmentMode: 'open',
+    difficulty: 'Novice',
     createdAt: Date.now(),
     updatedAt: Date.now(),
     createdBy: 'admin'
@@ -265,6 +270,50 @@ export function CourseBuilder({ courseId, onBack }: CourseBuilderProps) {
                 <p className="text-xs text-muted-foreground">
                   Help learners know how long this will take
                 </p>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="difficulty">{t('admin.courseDifficulty')}</Label>
+                  <Select
+                    value={course.difficulty || 'Novice'}
+                    onValueChange={(value: 'Novice' | 'Specialist' | 'Master') => updateCourseField('difficulty', value)}
+                  >
+                    <SelectTrigger id="difficulty">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Novice">{t('admin.difficulty.novice')}</SelectItem>
+                      <SelectItem value="Specialist">{t('admin.difficulty.specialist')}</SelectItem>
+                      <SelectItem value="Master">{t('admin.difficulty.master')}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Helps users find courses matching their skill level
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="enrollment-mode">{t('admin.enrollmentMode')}</Label>
+                  <Select
+                    value={course.enrollmentMode || 'open'}
+                    onValueChange={(value: CourseEnrollmentMode) => updateCourseField('enrollmentMode', value)}
+                  >
+                    <SelectTrigger id="enrollment-mode">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="open">{t('admin.enrollmentMode.open')}</SelectItem>
+                      <SelectItem value="restricted">{t('admin.enrollmentMode.restricted')}</SelectItem>
+                      <SelectItem value="admin-only">{t('admin.enrollmentMode.adminOnly')}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    {course.enrollmentMode === 'open' && t('admin.enrollmentMode.openDesc')}
+                    {course.enrollmentMode === 'restricted' && t('admin.enrollmentMode.restrictedDesc')}
+                    {course.enrollmentMode === 'admin-only' && t('admin.enrollmentMode.adminOnlyDesc')}
+                  </p>
+                </div>
               </div>
             </CardContent>
           </Card>

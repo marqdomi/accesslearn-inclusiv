@@ -96,6 +96,7 @@ export function UserDashboard({ courses, onSelectCourse, userId }: UserDashboard
               progress={courseProgress || {}}
               onSelectCourse={onSelectCourse}
               excludeCourseId={mainMissionCourse?.id}
+              userId={userId}
             />
           </section>
         </motion.div>

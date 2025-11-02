@@ -1,16 +1,18 @@
 import { useState, useEffect } from 'react'
 import { useKV } from '@github/spark/hooks'
-import { ActivityFeedItem, ActivityReaction, UserProfile } from '@/lib/types'
+import { ActivityFeedItem, ActivityReaction, UserProfile, ActivityComment, ActivityMention } from '@/lib/types'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
-import { Trophy, Star, Fire, HandsClapping, Sparkle, Lightbulb } from '@phosphor-icons/react'
+import { Trophy, Star, Fire, HandsClapping, Sparkle, Lightbulb, ChatCircle } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { formatDistanceToNow } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { useTranslation } from '@/lib/i18n'
+import { UserMentionInput } from './UserMentionInput'
+import { useNotifications } from '@/hooks/use-notifications'
 
 interface ActivityFeedProps {
   currentUserId: string
@@ -37,6 +39,8 @@ export function ActivityFeed({ currentUserId, maxItems = 20 }: ActivityFeedProps
   const [activities, setActivities] = useKV<ActivityFeedItem[]>('activity-feed', [])
   const [profiles] = useKV<UserProfile[]>('user-profiles', [])
   const [expandedActivity, setExpandedActivity] = useState<string | null>(null)
+  const [expandedComments, setExpandedComments] = useState<string | null>(null)
+  const { addNotification } = useNotifications(currentUserId)
 
   const sortedActivities = (activities || [])
     .sort((a, b) => b.timestamp - a.timestamp)
@@ -71,6 +75,89 @@ export function ActivityFeed({ currentUserId, maxItems = 20 }: ActivityFeedProps
       updated[activityIndex] = { ...activity }
       return updated
     })
+  }
+
+  const handleAddComment = (activityId: string, content: string, mentions: ActivityMention[]) => {
+    const currentProfile = profiles?.find((p) => p.id === currentUserId)
+    if (!currentProfile) return
+
+    const newComment: ActivityComment = {
+      id: `comment-${Date.now()}-${Math.random()}`,
+      activityId,
+      userId: currentUserId,
+      userName: currentProfile.displayName || currentProfile.firstName,
+      userAvatar: currentProfile.avatar,
+      content,
+      mentions,
+      timestamp: Date.now(),
+    }
+
+    setActivities((current) => {
+      const updated = [...(current || [])]
+      const activityIndex = updated.findIndex((a) => a.id === activityId)
+      
+      if (activityIndex === -1) return current || []
+
+      const activity = updated[activityIndex]
+      activity.comments = [...activity.comments, newComment]
+      updated[activityIndex] = { ...activity }
+      return updated
+    })
+
+    mentions.forEach((mention) => {
+      if (mention.userId !== currentUserId) {
+        addNotification({
+          userId: mention.userId,
+          type: 'mention',
+          title: t('activityFeed.mentionedYou', { userName: newComment.userName }),
+          message: content,
+          actionUrl: `#activity-${activityId}`,
+          relatedId: activityId,
+        })
+      }
+    })
+  }
+
+  const renderCommentContent = (comment: ActivityComment) => {
+    if (comment.mentions.length === 0) {
+      return <span>{comment.content}</span>
+    }
+
+    const parts: React.ReactNode[] = []
+    let lastIndex = 0
+
+    const sortedMentions = [...comment.mentions].sort((a, b) => a.startIndex - b.startIndex)
+
+    sortedMentions.forEach((mention, idx) => {
+      if (mention.startIndex > lastIndex) {
+        parts.push(
+          <span key={`text-${idx}`}>
+            {comment.content.slice(lastIndex, mention.startIndex)}
+          </span>
+        )
+      }
+
+      parts.push(
+        <span
+          key={`mention-${idx}`}
+          className="font-semibold text-primary bg-primary/10 px-1 rounded"
+        >
+          {comment.content.slice(mention.startIndex, mention.endIndex)}
+        </span>
+      )
+
+      lastIndex = mention.endIndex
+    })
+
+    if (lastIndex < comment.content.length) {
+      parts.push(
+        <span key="text-end">
+          {comment.content.slice(lastIndex)}
+        </span>
+      )
+    }
+
+    return <>{parts}</>
   }
 
   const getActivityMessage = (activity: ActivityFeedItem): string => {
@@ -131,6 +218,7 @@ export function ActivityFeed({ currentUserId, maxItems = 20 }: ActivityFeedProps
                   return (
                     <motion.div
                       key={activity.id}
+                      id={`activity-${activity.id}`}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -20 }}
@@ -253,6 +341,74 @@ export function ActivityFeed({ currentUserId, maxItems = 20 }: ActivityFeedProps
                                   )}
                                 </>
                               )}
+
+                              <Separator className="my-3" />
+
+                              <div className="space-y-3">
+                                {activity.comments.length > 0 && (
+                                  <>
+                                    <Button
+                                      variant="link"
+                                      size="sm"
+                                      className="h-auto p-0 text-xs gap-1.5"
+                                      onClick={() =>
+                                        setExpandedComments(expandedComments === activity.id ? null : activity.id)
+                                      }
+                                      aria-expanded={expandedComments === activity.id}
+                                      aria-controls={`comments-${activity.id}`}
+                                    >
+                                      <ChatCircle size={16} aria-hidden="true" />
+                                      {expandedComments === activity.id
+                                        ? t('activityFeed.hideComments')
+                                        : t('activityFeed.showComments', { count: String(activity.comments.length) })}
+                                    </Button>
+
+                                    {expandedComments === activity.id && (
+                                      <motion.div
+                                        id={`comments-${activity.id}`}
+                                        initial={{ height: 0, opacity: 0 }}
+                                        animate={{ height: 'auto', opacity: 1 }}
+                                        exit={{ height: 0, opacity: 0 }}
+                                        className="space-y-3 pl-2 border-l-2 border-muted"
+                                      >
+                                        {activity.comments.map((comment) => (
+                                          <div key={comment.id} className="flex gap-2">
+                                            <div className="flex-shrink-0">
+                                              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-secondary to-accent flex items-center justify-center text-white font-bold text-xs">
+                                                {comment.userAvatar || comment.userName.charAt(0).toUpperCase()}
+                                              </div>
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                              <div className="bg-muted/50 rounded-lg px-3 py-2">
+                                                <p className="text-xs font-semibold mb-1">
+                                                  {comment.userName}
+                                                </p>
+                                                <p className="text-sm">
+                                                  {renderCommentContent(comment)}
+                                                </p>
+                                              </div>
+                                              <p className="text-xs text-muted-foreground mt-1 ml-3">
+                                                {formatDistanceToNow(comment.timestamp, {
+                                                  addSuffix: true,
+                                                  locale: language === 'es' ? es : undefined
+                                                })}
+                                              </p>
+                                            </div>
+                                          </div>
+                                        ))}
+                                      </motion.div>
+                                    )}
+                                  </>
+                                )}
+
+                                <UserMentionInput
+                                  users={profiles || []}
+                                  currentUserId={currentUserId}
+                                  onSubmit={(content, mentions) => handleAddComment(activity.id, content, mentions)}
+                                  placeholder={t('activityFeed.addComment')}
+                                  buttonText={t('activityFeed.postComment')}
+                                />
+                              </div>
                             </div>
                           </div>
                         </CardContent>

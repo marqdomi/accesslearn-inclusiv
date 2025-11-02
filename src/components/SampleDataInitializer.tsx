@@ -320,6 +320,7 @@ const SAMPLE_ACTIVITIES: ActivityFeedItem[] = [
         timestamp: Date.now() - 1.5 * 60 * 60 * 1000,
       },
     ],
+    comments: [],
   },
   {
     id: 'activity-2',
@@ -345,6 +346,7 @@ const SAMPLE_ACTIVITIES: ActivityFeedItem[] = [
         timestamp: Date.now() - 4 * 60 * 60 * 1000,
       },
     ],
+    comments: [],
   },
   {
     id: 'activity-3',
@@ -355,6 +357,7 @@ const SAMPLE_ACTIVITIES: ActivityFeedItem[] = [
     timestamp: Date.now() - 24 * 60 * 60 * 1000,
     data: { badgeName: 'Quick Learner', badgeIcon: '⚡' },
     reactions: [],
+    comments: [],
   },
 ]
 

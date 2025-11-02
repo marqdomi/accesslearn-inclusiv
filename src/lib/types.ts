@@ -1,5 +1,7 @@
 export type CourseStatus = 'not-started' | 'in-progress' | 'completed'
 
+export type CourseEnrollmentMode = 'open' | 'restricted' | 'admin-only'
+
 export type ContentType = 'video' | 'audio' | 'text' | 'image'
 
 export interface AccessibilityMetadata {
@@ -198,9 +200,27 @@ export interface CourseStructure {
   estimatedHours: number
   totalXP: number
   published: boolean
+  enrollmentMode?: CourseEnrollmentMode
+  difficulty?: 'Novice' | 'Specialist' | 'Master'
   createdAt: number
   updatedAt: number
   createdBy: string
+}
+
+export interface UserLibrary {
+  userId: string
+  courseIds: string[]
+  addedAt: Record<string, number>
+}
+
+export interface EnrollmentRequest {
+  id: string
+  userId: string
+  courseId: string
+  requestedAt: number
+  status: 'pending' | 'approved' | 'rejected'
+  reviewedBy?: string
+  reviewedAt?: number
 }
 
 export interface UserGroup {
@@ -354,6 +374,25 @@ export interface ActivityFeedItem {
     achievementIcon?: string
   }
   reactions: ActivityReaction[]
+  comments: ActivityComment[]
+}
+
+export interface ActivityComment {
+  id: string
+  activityId: string
+  userId: string
+  userName: string
+  userAvatar?: string
+  content: string
+  mentions: ActivityMention[]
+  timestamp: number
+}
+
+export interface ActivityMention {
+  userId: string
+  userName: string
+  startIndex: number
+  endIndex: number
 }
 
 export interface ActivityReaction {
@@ -432,7 +471,7 @@ export interface NotificationPreferences {
 export interface UserNotification {
   id: string
   userId: string
-  type: 'activity' | 'forum-reply' | 'achievement' | 'team-challenge' | 'course-reminder'
+  type: 'activity' | 'forum-reply' | 'achievement' | 'team-challenge' | 'course-reminder' | 'mention'
   title: string
   message: string
   timestamp: number

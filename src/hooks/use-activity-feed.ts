@@ -22,6 +22,7 @@ export function useActivityFeed() {
       timestamp: Date.now(),
       data,
       reactions: [],
+      comments: [],
     }
 
     setActivities((current) => [newActivity, ...(current || [])])
