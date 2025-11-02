@@ -26,7 +26,13 @@ export function TeamReport() {
     const teamMembers = (users || []).filter(u => u.department === selectedTeam)
 
     const rows = [
-      ['User Name', 'Email', 'Completion Rate', 'Total XP', 'Courses Completed'],
+      [
+        t('csvExport.userName'),
+        t('csvExport.email'),
+        t('csvExport.completionRate'),
+        t('csvExport.totalXP'),
+        t('csvExport.coursesCompleted')
+      ],
       ...teamMembers.map(user => {
         const userProgress = (allUserProgress || {})[user.id] || []
         const userStats = (allUserStats || {})[user.id]

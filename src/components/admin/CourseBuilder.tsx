@@ -53,50 +53,50 @@ export function CourseBuilder({ courseId, onBack }: CourseBuilderProps) {
     const errors: ValidationError[] = []
 
     if (!course.title.trim()) {
-      errors.push({ field: 'title', message: 'Course title is required', severity: 'error' })
+      errors.push({ field: 'title', message: t('courseBuilder.validation.titleRequired'), severity: 'error' })
     }
     if (!course.description.trim()) {
-      errors.push({ field: 'description', message: 'Course description is required', severity: 'error' })
+      errors.push({ field: 'description', message: t('courseBuilder.validation.descriptionRequired'), severity: 'error' })
     }
     if (!course.category.trim()) {
-      errors.push({ field: 'category', message: 'Course category is required', severity: 'error' })
+      errors.push({ field: 'category', message: t('courseBuilder.validation.categoryRequired'), severity: 'error' })
     }
     if (course.modules.length === 0) {
-      errors.push({ field: 'modules', message: 'Course must have at least one module', severity: 'error' })
+      errors.push({ field: 'modules', message: t('courseBuilder.validation.moduleRequired'), severity: 'error' })
     }
 
     course.modules.forEach((module, mIdx) => {
       if (!module.title.trim()) {
-        errors.push({ field: `module-${mIdx}-title`, message: `Module ${mIdx + 1} needs a title`, severity: 'error' })
+        errors.push({ field: `module-${mIdx}-title`, message: t('courseBuilder.validation.moduleTitleRequired', { number: String(mIdx + 1) }), severity: 'error' })
       }
       if (module.lessons.length === 0) {
-        errors.push({ field: `module-${mIdx}-lessons`, message: `Module "${module.title}" needs at least one lesson`, severity: 'warning' })
+        errors.push({ field: `module-${mIdx}-lessons`, message: t('courseBuilder.validation.moduleLessonsRequired', { title: module.title }), severity: 'warning' })
       }
 
       module.lessons.forEach((lesson, lIdx) => {
         if (!lesson.title.trim()) {
-          errors.push({ field: `lesson-${mIdx}-${lIdx}-title`, message: `Lesson in "${module.title}" needs a title`, severity: 'error' })
+          errors.push({ field: `lesson-${mIdx}-${lIdx}-title`, message: t('courseBuilder.validation.lessonTitleRequired', { moduleTitle: module.title }), severity: 'error' })
         }
 
         lesson.blocks.forEach((block, bIdx) => {
           if (block.type === 'image' && !block.accessibility?.altText) {
             errors.push({ 
               field: `block-${mIdx}-${lIdx}-${bIdx}`, 
-              message: `Image in "${lesson.title}" missing alt text (accessibility requirement)`, 
+              message: t('courseBuilder.validation.imageAltTextRequired', { lessonTitle: lesson.title }), 
               severity: 'error' 
             })
           }
           if (block.type === 'video' && !block.accessibility?.captions) {
             errors.push({ 
               field: `block-${mIdx}-${lIdx}-${bIdx}`, 
-              message: `Video in "${lesson.title}" missing captions (accessibility requirement)`, 
+              message: t('courseBuilder.validation.videoCaptionsRequired', { lessonTitle: lesson.title }), 
               severity: 'error' 
             })
           }
           if (block.type === 'audio' && !block.accessibility?.transcript) {
             errors.push({ 
               field: `block-${mIdx}-${lIdx}-${bIdx}`, 
-              message: `Audio in "${lesson.title}" missing transcript (accessibility requirement)`, 
+              message: t('courseBuilder.validation.audioTranscriptRequired', { lessonTitle: lesson.title }), 
               severity: 'error' 
             })
           }

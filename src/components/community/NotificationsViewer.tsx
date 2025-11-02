@@ -52,7 +52,7 @@ export function NotificationsViewer({ userId }: NotificationsViewerProps) {
       <SheetTrigger asChild>
         <Button variant="ghost" className="relative gap-2">
           <Bell size={20} aria-hidden="true" />
-          <span className="hidden sm:inline">Notifications</span>
+          <span className="hidden sm:inline">{t('notifications.title')}</span>
           {unreadCount > 0 && (
             <Badge
               variant="destructive"
@@ -66,7 +66,7 @@ export function NotificationsViewer({ userId }: NotificationsViewerProps) {
       <SheetContent className="w-full sm:max-w-md">
         <SheetHeader>
           <SheetTitle className="flex items-center justify-between">
-            <span>Notifications</span>
+            <span>{t('notifications.title')}</span>
             {unreadCount > 0 && (
               <Button
                 variant="ghost"
@@ -75,14 +75,16 @@ export function NotificationsViewer({ userId }: NotificationsViewerProps) {
                 className="text-xs gap-1"
               >
                 <Check size={14} />
-                Mark all read
+                {t('notifications.markAllRead')}
               </Button>
             )}
           </SheetTitle>
           <SheetDescription>
             {unreadCount > 0
-              ? `You have ${unreadCount} unread notification${unreadCount === 1 ? '' : 's'}`
-              : "You're all caught up!"}
+              ? (unreadCount === 1 
+                  ? t('notifications.unreadCount', { count: String(unreadCount) })
+                  : t('notifications.unreadCountPlural', { count: String(unreadCount) }))
+              : t('notifications.allCaughtUp')}
           </SheetDescription>
         </SheetHeader>
 
@@ -90,7 +92,7 @@ export function NotificationsViewer({ userId }: NotificationsViewerProps) {
           {notifications.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <Bell size={48} className="text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">No notifications yet</p>
+              <p className="text-muted-foreground">{t('notifications.noNotifications')}</p>
             </div>
           ) : (
             <div className="space-y-2">
@@ -121,7 +123,7 @@ export function NotificationsViewer({ userId }: NotificationsViewerProps) {
                             deleteNotification(notification.id)
                           }}
                           className="absolute top-2 right-2 p-1 rounded-md hover:bg-muted"
-                          aria-label="Delete notification"
+                          aria-label={t('notifications.deleteNotification')}
                         >
                           <X size={14} />
                         </button>
@@ -145,10 +147,14 @@ export function NotificationsViewer({ userId }: NotificationsViewerProps) {
                                 notification.read ? 'font-normal' : 'font-semibold'
                               }`}
                             >
-                              {notification.title}
+                              {notification.titleKey 
+                                ? t(notification.titleKey, notification.messageParams) 
+                                : notification.title}
                             </p>
                             <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
-                              {notification.message}
+                              {notification.messageKey 
+                                ? t(notification.messageKey, notification.messageParams) 
+                                : notification.message}
                             </p>
                             <p className="text-xs text-muted-foreground">
                               {formatDistanceToNow(notification.timestamp, {

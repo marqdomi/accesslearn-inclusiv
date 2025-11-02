@@ -68,7 +68,15 @@ export function UserProgressReport() {
     const userProgress = (allUserProgress || {})[selectedUserId] || []
 
     const rows = [
-      ['User Name', 'Email', 'Course Title', 'Status', 'Score', 'Completion Date', 'Enrolled Date'],
+      [
+        t('csvExport.userName'),
+        t('csvExport.email'),
+        t('csvExport.courseTitle'),
+        t('csvExport.status'),
+        t('csvExport.score'),
+        t('csvExport.completionDate'),
+        t('csvExport.enrolledDate')
+      ],
       ...userProgress.map(progress => {
         const course = (courses || []).find(c => c.id === progress.courseId)
         return [

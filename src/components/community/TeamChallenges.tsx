@@ -62,30 +62,37 @@ export function TeamChallenges({ currentUserId }: TeamChallengesProps) {
   const maxXP = Math.max(...rankedTeams.map(t => t.totalXP))
 
   const getRankBadge = (rank: number) => {
+    const getRankSuffix = (n: number): string => {
+      if (n === 1) return t('teamChallenges.rankSuffix.1')
+      if (n === 2) return t('teamChallenges.rankSuffix.2')
+      if (n === 3) return t('teamChallenges.rankSuffix.3')
+      return t('teamChallenges.rankSuffix.default')
+    }
+
     switch (rank) {
       case 1:
         return (
           <Badge className="bg-[oklch(0.75_0.20_50)] text-white gap-1">
             <Trophy size={14} weight="fill" aria-hidden="true" />
-            {t('teamChallenges.firstPlace') || '1st Place'}
+            {t('teamChallenges.firstPlace')}
           </Badge>
         )
       case 2:
         return (
           <Badge variant="secondary" className="gap-1">
             <Medal size={14} weight="fill" aria-hidden="true" />
-            {t('teamChallenges.secondPlace') || '2nd Place'}
+            {t('teamChallenges.secondPlace')}
           </Badge>
         )
       case 3:
         return (
           <Badge variant="outline" className="gap-1">
             <Medal size={14} aria-hidden="true" />
-            {t('teamChallenges.thirdPlace') || '3rd Place'}
+            {t('teamChallenges.thirdPlace')}
           </Badge>
         )
       default:
-        return <Badge variant="outline">{rank}th</Badge>
+        return <Badge variant="outline">{rank}{getRankSuffix(rank)}</Badge>
     }
   }
 
@@ -114,7 +121,7 @@ export function TeamChallenges({ currentUserId }: TeamChallengesProps) {
                 {t('teamChallenges.timeRemaining') || 'Time Remaining:'}
               </span>
               <span className="text-lg font-bold text-primary">
-                {timeRemaining.days}d {timeRemaining.hours}h {timeRemaining.minutes}m {timeRemaining.seconds}s
+                {timeRemaining.days}{t('teamChallenges.days')} {timeRemaining.hours}{t('teamChallenges.hours')} {timeRemaining.minutes}{t('teamChallenges.minutes')} {timeRemaining.seconds}{t('teamChallenges.seconds')}
               </span>
             </div>
             {userTeam && (

@@ -87,8 +87,12 @@ export function useWeeklyChallenge() {
           id: `notif-${Date.now()}-${memberId}-${Math.random().toString(36).substr(2, 9)}`,
           userId: memberId,
           type: 'team-challenge' as const,
-          title: 'Weekly Challenge Won!',
-          message: `Congratulations! Your team "${winner.teamName}" won the Weekly XP Challenge with ${winner.totalXP.toLocaleString()} XP!`,
+          titleKey: 'weeklyChallenge.winnerTitle',
+          messageKey: 'weeklyChallenge.winnerMessage',
+          messageParams: {
+            teamName: winner.teamName,
+            xp: winner.totalXP.toLocaleString()
+          },
           timestamp: Date.now(),
           read: false,
         }))

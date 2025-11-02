@@ -601,8 +601,11 @@ export interface UserNotification {
   id: string
   userId: string
   type: 'activity' | 'forum-reply' | 'achievement' | 'team-challenge' | 'course-reminder' | 'mention'
-  title: string
-  message: string
+  title?: string
+  titleKey?: string
+  message?: string
+  messageKey?: string
+  messageParams?: Record<string, string>
   timestamp: number
   read: boolean
   actionUrl?: string

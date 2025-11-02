@@ -30,7 +30,14 @@ export function CourseReport() {
     })
 
     const rows = [
-      ['User Name', 'Email', 'Status', 'Progress %', 'Score', 'Completion Date'],
+      [
+        t('csvExport.userName'),
+        t('csvExport.email'),
+        t('csvExport.status'),
+        t('csvExport.progress'),
+        t('csvExport.score'),
+        t('csvExport.completionDate')
+      ],
       ...enrolledUsers.map(user => {
         const userProgress = (allUserProgress || {})[user.id] || []
         const courseProgress = userProgress.find(p => p.courseId === selectedCourseId)
