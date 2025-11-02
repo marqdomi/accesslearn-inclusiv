@@ -9,8 +9,9 @@ import { CorporateReportingDashboard } from './CorporateReportingDashboard'
 import { CourseAssignmentManager } from './CourseAssignmentManager'
 import { GroupManagement } from './GroupManagement'
 import { MentorshipManagement } from './MentorshipManagement'
+import { TeamManagement } from './TeamManagement'
 
-type AdminSection = 'dashboard' | 'courses' | 'users' | 'gamification' | 'reports' | 'enrollment' | 'corporate-reports' | 'assignments' | 'groups' | 'mentorship'
+type AdminSection = 'dashboard' | 'courses' | 'users' | 'gamification' | 'reports' | 'enrollment' | 'corporate-reports' | 'assignments' | 'groups' | 'mentorship' | 'teams'
 
 export function AdminPanel() {
   const [currentSection, setCurrentSection] = useState<AdminSection>('dashboard')
@@ -80,6 +81,16 @@ export function AdminPanel() {
             </button>
           </div>
           <MentorshipManagement />
+        </div>
+      )}
+      {currentSection === 'teams' && (
+        <div className="space-y-6">
+          <div className="flex items-center gap-4">
+            <button onClick={() => setCurrentSection('dashboard')} className="text-sm text-muted-foreground hover:text-foreground">
+              ← Back to Dashboard
+            </button>
+          </div>
+          <TeamManagement />
         </div>
       )}
     </div>

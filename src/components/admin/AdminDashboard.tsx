@@ -6,7 +6,7 @@ import { Users, BookOpen, TrendUp, Trophy, Plus, FileText, UserPlus, Target, Use
 import { motion } from 'framer-motion'
 
 interface AdminDashboardProps {
-  onNavigate: (section: 'courses' | 'users' | 'reports' | 'gamification' | 'enrollment' | 'corporate-reports' | 'assignments' | 'groups' | 'mentorship') => void
+  onNavigate: (section: 'courses' | 'users' | 'reports' | 'gamification' | 'enrollment' | 'corporate-reports' | 'assignments' | 'groups' | 'mentorship' | 'teams') => void
 }
 
 export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
@@ -66,6 +66,13 @@ export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
       description: 'Assign training to groups/users'
     },
     {
+      label: 'Team Management',
+      icon: Users,
+      action: () => onNavigate('teams'),
+      variant: 'outline' as const,
+      description: 'Manage teams for challenges'
+    },
+    {
       label: 'Mentorship Program',
       icon: UsersFour,
       action: () => onNavigate('mentorship'),
@@ -85,13 +92,6 @@ export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
       action: () => onNavigate('courses'),
       variant: 'outline' as const,
       description: 'Build new training content'
-    },
-    {
-      label: 'Manage Users',
-      icon: Users,
-      action: () => onNavigate('users'),
-      variant: 'outline' as const,
-      description: 'Individual user management'
     },
     {
       label: 'View Reports',

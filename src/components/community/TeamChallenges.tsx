@@ -1,6 +1,6 @@
-import { useState } from 'react'
-import { useKV } from '@github/spark/hooks'
-import { TeamChallenge, TeamChallengeTeam } from '@/lib/types'
+import { useState, useEffect } from 'react'
+import { useWeeklyChallenge } from '@/hooks/use-weekly-challenge'
+import { useTranslation } from '@/lib/i18n'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -15,182 +15,210 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Trophy, Users, Lightning, Calendar, Medal } from '@phosphor-icons/react'
+import { Trophy, Users, Lightning, Clock, Medal, ChartBar, ListBullets } from '@phosphor-icons/react'
 import { motion } from 'framer-motion'
-import { formatDistanceToNow, format } from 'date-fns'
 
 interface TeamChallengesProps {
   currentUserId: string
 }
 
 export function TeamChallenges({ currentUserId }: TeamChallengesProps) {
-  const [challenges] = useKV<TeamChallenge[]>('team-challenges', [])
+  const { t } = useTranslation()
+  const { currentChallenge, getUserTeam, getTimeRemaining } = useWeeklyChallenge()
   const [viewMode, setViewMode] = useState<'visual' | 'table'>('visual')
+  const [timeRemaining, setTimeRemaining] = useState(getTimeRemaining())
 
-  const activeChallenges = (challenges || []).filter((c) => c.status === 'active')
-  const upcomingChallenges = (challenges || []).filter((c) => c.status === 'upcoming')
-  const completedChallenges = (challenges || []).filter((c) => c.status === 'completed')
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTimeRemaining(getTimeRemaining())
+    }, 1000)
 
-  const getMetricValue = (team: TeamChallengeTeam, type: string) => {
-    switch (type) {
-      case 'xp':
-        return team.totalXP || 0
-      case 'courses':
-        return team.totalCoursesCompleted || 0
-      case 'modules':
-        return team.totalModulesCompleted || 0
-      default:
-        return 0
-    }
+    return () => clearInterval(interval)
+  }, [currentChallenge])
+
+  if (!currentChallenge || !currentChallenge.teamScores || currentChallenge.teamScores.length === 0) {
+    return (
+      <Card>
+        <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+          <Trophy size={48} className="text-muted-foreground mb-4" aria-hidden="true" />
+          <h3 className="text-lg font-semibold mb-2">
+            {t('teamChallenges.noTeams') || 'No Teams Available'}
+          </h3>
+          <p className="text-muted-foreground">
+            {t('teamChallenges.noTeamsDescription') || 'Teams must be created by an administrator to enable challenges.'}
+          </p>
+        </CardContent>
+      </Card>
+    )
   }
 
-  const getMetricLabel = (type: string) => {
-    switch (type) {
-      case 'xp':
-        return 'XP'
-      case 'courses':
-        return 'Courses'
-      case 'modules':
-        return 'Modules'
-      default:
-        return ''
-    }
-  }
+  const userTeam = getUserTeam(currentUserId)
+  const sortedTeams = [...currentChallenge.teamScores].sort((a, b) => b.totalXP - a.totalXP)
+  const rankedTeams = sortedTeams.map((team, index) => ({
+    ...team,
+    rank: index + 1,
+  }))
+
+  const maxXP = Math.max(...rankedTeams.map(t => t.totalXP))
 
   const getRankBadge = (rank: number) => {
     switch (rank) {
       case 1:
-        return <Badge className="bg-[oklch(0.75_0.20_50)] gap-1">
-          <Trophy size={14} weight="fill" aria-hidden="true" />
-          1st Place
-        </Badge>
+        return (
+          <Badge className="bg-[oklch(0.75_0.20_50)] text-white gap-1">
+            <Trophy size={14} weight="fill" aria-hidden="true" />
+            {t('teamChallenges.firstPlace') || '1st Place'}
+          </Badge>
+        )
       case 2:
-        return <Badge variant="secondary" className="gap-1">
-          <Medal size={14} weight="fill" aria-hidden="true" />
-          2nd Place
-        </Badge>
+        return (
+          <Badge variant="secondary" className="gap-1">
+            <Medal size={14} weight="fill" aria-hidden="true" />
+            {t('teamChallenges.secondPlace') || '2nd Place'}
+          </Badge>
+        )
       case 3:
-        return <Badge variant="outline" className="gap-1">
-          <Medal size={14} aria-hidden="true" />
-          3rd Place
-        </Badge>
+        return (
+          <Badge variant="outline" className="gap-1">
+            <Medal size={14} aria-hidden="true" />
+            {t('teamChallenges.thirdPlace') || '3rd Place'}
+          </Badge>
+        )
       default:
         return <Badge variant="outline">{rank}th</Badge>
     }
   }
 
-  const ChallengeCard = ({ challenge }: { challenge: TeamChallenge }) => {
-    const sortedTeams = [...challenge.teams].sort((a, b) => {
-      const aValue = getMetricValue(a, challenge.type)
-      const bValue = getMetricValue(b, challenge.type)
-      return bValue - aValue
-    })
-
-    const rankedTeams = sortedTeams.map((team, index) => ({
-      ...team,
-      rank: index + 1,
-    }))
-
-    const maxValue = Math.max(...rankedTeams.map((t) => getMetricValue(t, challenge.type)))
-
-    return (
-      <Card>
+  return (
+    <div className="space-y-6">
+      <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-secondary/5">
         <CardHeader>
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1">
               <CardTitle className="flex items-center gap-2 mb-2">
-                <Trophy size={24} weight="fill" className="text-accent" aria-hidden="true" />
-                {challenge.title}
+                <Trophy size={28} weight="fill" className="text-accent" aria-hidden="true" />
+                {t('teamChallenges.title') || 'The Weekly XP Challenge'}
               </CardTitle>
-              <CardDescription>{challenge.description}</CardDescription>
+              <CardDescription className="text-base">
+                {t('teamChallenges.description') || 'Teams compete to earn the most XP this week. The winning team members get recognition!'}
+              </CardDescription>
             </div>
-            <Badge
-              variant={challenge.status === 'active' ? 'default' : 'outline'}
-              className="capitalize"
-            >
-              {challenge.status}
+            <Badge variant="default" className="text-base px-4 py-2">
+              {t('teamChallenges.active') || 'Active'}
             </Badge>
           </div>
-          <div className="flex items-center gap-4 text-sm text-muted-foreground mt-4">
-            <div className="flex items-center gap-1">
-              <Calendar size={16} aria-hidden="true" />
-              <span>Ends {formatDistanceToNow(challenge.endDate, { addSuffix: true })}</span>
+          <div className="flex items-center gap-6 text-sm mt-4 flex-wrap">
+            <div className="flex items-center gap-2">
+              <Clock size={20} weight="fill" className="text-primary" aria-hidden="true" />
+              <span className="font-semibold">
+                {t('teamChallenges.timeRemaining') || 'Time Remaining:'}
+              </span>
+              <span className="text-lg font-bold text-primary">
+                {timeRemaining.days}d {timeRemaining.hours}h {timeRemaining.minutes}m {timeRemaining.seconds}s
+              </span>
             </div>
-            {challenge.rewards && (
-              <div className="flex items-center gap-1">
-                <Trophy size={16} aria-hidden="true" />
-                <span>{challenge.rewards}</span>
+            {userTeam && (
+              <div className="flex items-center gap-2">
+                <Users size={20} weight="fill" className="text-secondary" aria-hidden="true" />
+                <span className="font-semibold">
+                  {t('teamChallenges.yourTeam') || 'Your Team:'}
+                </span>
+                <Badge variant="secondary" className="text-base px-3">
+                  {userTeam.name}
+                </Badge>
               </div>
             )}
           </div>
         </CardHeader>
-        <CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
           <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as 'visual' | 'table')}>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-medium">Team Leaderboard</h3>
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <Lightning size={24} weight="fill" className="text-accent" aria-hidden="true" />
+                {t('teamChallenges.leaderboard') || 'Team Leaderboard'}
+              </h3>
               <TabsList>
                 <TabsTrigger value="visual" className="gap-2">
-                  <Trophy size={16} aria-hidden="true" />
-                  Visual
+                  <ChartBar size={16} aria-hidden="true" />
+                  {t('teamChallenges.visual') || 'Visual'}
                 </TabsTrigger>
                 <TabsTrigger value="table" className="gap-2">
-                  <Table className="h-4 w-4" aria-hidden="true" />
-                  Table
+                  <ListBullets size={16} aria-hidden="true" />
+                  {t('teamChallenges.table') || 'Table'}
                 </TabsTrigger>
               </TabsList>
             </div>
 
             <TabsContent value="visual" className="mt-0">
-              <ScrollArea className="h-[400px]">
-                <div className="space-y-4" role="list" aria-label="Team rankings">
+              <ScrollArea className="h-[500px] pr-4">
+                <div className="space-y-4" role="list" aria-label={t('teamChallenges.rankingsLabel') || 'Team rankings'}>
                   {rankedTeams.map((team) => {
-                    const value = getMetricValue(team, challenge.type)
-                    const percentage = maxValue > 0 ? (value / maxValue) * 100 : 0
+                    const percentage = maxXP > 0 ? (team.totalXP / maxXP) * 100 : 0
+                    const isUserTeam = userTeam?.id === team.teamId
 
                     return (
                       <motion.div
-                        key={team.id}
+                        key={team.teamId}
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
-                        className="space-y-2"
+                        className={`rounded-lg border-2 p-4 space-y-3 transition-all ${
+                          isUserTeam
+                            ? 'border-primary bg-primary/10 shadow-md'
+                            : 'border-border bg-card'
+                        }`}
+                        role="listitem"
                       >
                         <div className="flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-3 flex-1 min-w-0">
-                            <div className="flex-shrink-0 w-8 text-center font-bold text-lg">
-                              {team.rank}
+                          <div className="flex items-center gap-4 flex-1 min-w-0">
+                            <div className="flex-shrink-0 w-10 text-center">
+                              <div className="text-3xl font-bold text-primary">
+                                {team.rank}
+                              </div>
                             </div>
                             <div className="flex-1 min-w-0">
-                              <h4 className="font-semibold truncate">{team.name}</h4>
-                              {team.department && (
-                                <p className="text-xs text-muted-foreground">
-                                  {team.department}
-                                </p>
-                              )}
+                              <h4 className="font-bold text-lg truncate flex items-center gap-2">
+                                {team.teamName}
+                                {isUserTeam && (
+                                  <Badge variant="default" className="text-xs">
+                                    {t('teamChallenges.yourTeamBadge') || 'Your Team'}
+                                  </Badge>
+                                )}
+                              </h4>
+                              <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                                <Users size={14} aria-hidden="true" />
+                                <span>
+                                  {team.memberCount} {t('teamChallenges.members') || 'members'}
+                                </span>
+                              </div>
                             </div>
                           </div>
                           <div className="flex items-center gap-3">
                             <div className="text-right">
-                              <div className="font-bold text-lg">
-                                {value.toLocaleString()}
+                              <div className="font-bold text-2xl text-accent">
+                                {team.totalXP.toLocaleString()}
                               </div>
                               <div className="text-xs text-muted-foreground">
-                                {getMetricLabel(challenge.type)}
+                                {t('teamChallenges.xp') || 'XP'}
                               </div>
                             </div>
                             {team.rank <= 3 && getRankBadge(team.rank)}
                           </div>
                         </div>
-                        <div className="relative h-2 bg-muted rounded-full overflow-hidden">
+                        <div className="relative h-3 bg-muted rounded-full overflow-hidden">
                           <motion.div
-                            className="absolute inset-y-0 left-0 bg-gradient-to-r from-primary via-secondary to-accent rounded-full"
+                            className={`absolute inset-y-0 left-0 rounded-full ${
+                              isUserTeam
+                                ? 'bg-gradient-to-r from-primary via-primary to-secondary'
+                                : 'bg-gradient-to-r from-secondary via-accent to-accent'
+                            }`}
                             initial={{ width: 0 }}
                             animate={{ width: `${percentage}%` }}
                             transition={{ duration: 0.5, delay: 0.1 }}
+                            aria-label={`${percentage.toFixed(0)}% of maximum XP`}
                           />
-                        </div>
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <Users size={12} aria-hidden="true" />
-                          <span>{team.memberCount} members</span>
                         </div>
                       </motion.div>
                     )
@@ -200,99 +228,77 @@ export function TeamChallenges({ currentUserId }: TeamChallengesProps) {
             </TabsContent>
 
             <TabsContent value="table" className="mt-0">
-              <ScrollArea className="h-[400px]">
+              <ScrollArea className="h-[500px]">
                 <Table>
                   <TableCaption>
-                    Team rankings for {challenge.title}
+                    {t('teamChallenges.tableCaption') || 'Team rankings for the Weekly XP Challenge'}
                   </TableCaption>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-16">Rank</TableHead>
-                      <TableHead>Team Name</TableHead>
-                      <TableHead>Department</TableHead>
-                      <TableHead className="text-right">Members</TableHead>
+                      <TableHead className="w-16">
+                        {t('teamChallenges.rank') || 'Rank'}
+                      </TableHead>
+                      <TableHead>
+                        {t('teamChallenges.teamName') || 'Team Name'}
+                      </TableHead>
                       <TableHead className="text-right">
-                        {getMetricLabel(challenge.type)}
+                        {t('teamChallenges.members') || 'Members'}
+                      </TableHead>
+                      <TableHead className="text-right">
+                        {t('teamChallenges.totalXP') || 'Total XP'}
                       </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {rankedTeams.map((team) => (
-                      <TableRow key={team.id}>
-                        <TableCell className="font-bold">{team.rank}</TableCell>
-                        <TableCell className="font-medium">{team.name}</TableCell>
-                        <TableCell>{team.department || 'N/A'}</TableCell>
-                        <TableCell className="text-right">{team.memberCount}</TableCell>
-                        <TableCell className="text-right font-semibold">
-                          {getMetricValue(team, challenge.type).toLocaleString()}
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                    {rankedTeams.map((team) => {
+                      const isUserTeam = userTeam?.id === team.teamId
+                      return (
+                        <TableRow
+                          key={team.teamId}
+                          className={isUserTeam ? 'bg-primary/10 font-semibold' : ''}
+                        >
+                          <TableCell className="font-bold text-lg">{team.rank}</TableCell>
+                          <TableCell className="font-medium">
+                            {team.teamName}
+                            {isUserTeam && (
+                              <Badge variant="default" className="ml-2 text-xs">
+                                {t('teamChallenges.yourTeamBadge') || 'Your Team'}
+                              </Badge>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right">{team.memberCount}</TableCell>
+                          <TableCell className="text-right font-bold text-accent">
+                            {team.totalXP.toLocaleString()}
+                          </TableCell>
+                        </TableRow>
+                      )
+                    })}
                   </TableBody>
                 </Table>
               </ScrollArea>
             </TabsContent>
           </Tabs>
+        </CardHeader>
+      </Card>
+
+      <Card className="border-primary/20">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Trophy size={20} className="text-accent" aria-hidden="true" />
+            {t('teamChallenges.rewards') || 'Rewards & Recognition'}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3 text-sm">
+          <p>
+            <strong>{t('teamChallenges.winnerAnnouncement') || 'Winner Announcement:'}</strong>{' '}
+            {t('teamChallenges.winnerDescription') || 'All members of the winning team receive a notification at the end of the week.'}
+          </p>
+          <p>
+            <strong>{t('teamChallenges.profileBadge') || 'Profile Badge:'}</strong>{' '}
+            {t('teamChallenges.badgeDescription') || 'Winning team members get a "Weekly Champion" badge for the following week.'}
+          </p>
         </CardContent>
       </Card>
-    )
-  }
-
-  return (
-    <div className="space-y-6">
-      {activeChallenges.length === 0 && upcomingChallenges.length === 0 && (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-            <Trophy size={48} className="text-muted-foreground mb-4" aria-hidden="true" />
-            <h3 className="text-lg font-semibold mb-2">No Active Challenges</h3>
-            <p className="text-muted-foreground">
-              Check back soon for new team challenges!
-            </p>
-          </CardContent>
-        </Card>
-      )}
-
-      {activeChallenges.length > 0 && (
-        <div className="space-y-4">
-          <h2 className="text-2xl font-bold flex items-center gap-2">
-            <Lightning size={28} weight="fill" className="text-accent" aria-hidden="true" />
-            Active Challenges
-          </h2>
-          {activeChallenges.map((challenge) => (
-            <ChallengeCard key={challenge.id} challenge={challenge} />
-          ))}
-        </div>
-      )}
-
-      {upcomingChallenges.length > 0 && (
-        <div className="space-y-4">
-          <h2 className="text-xl font-semibold flex items-center gap-2">
-            <Calendar size={24} aria-hidden="true" />
-            Upcoming Challenges
-          </h2>
-          {upcomingChallenges.map((challenge) => (
-            <Card key={challenge.id}>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Trophy size={20} weight="fill" className="text-muted-foreground" aria-hidden="true" />
-                  {challenge.title}
-                </CardTitle>
-                <CardDescription>{challenge.description}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  Starts {format(challenge.startDate, 'PPP')}
-                </p>
-                {challenge.rewards && (
-                  <p className="text-sm font-medium mt-2">
-                    Rewards: {challenge.rewards}
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
     </div>
   )
 }

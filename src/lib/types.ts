@@ -460,3 +460,27 @@ export interface MentorMessage {
   timestamp: number
   read: boolean
 }
+
+export interface Team {
+  id: string
+  name: string
+  description?: string
+  department?: string
+  memberIds: string[]
+  createdAt: number
+  createdBy: string
+}
+
+export interface WeeklyChallengeSnapshot {
+  weekId: string
+  weekStart: number
+  weekEnd: number
+  teamScores: Array<{
+    teamId: string
+    teamName: string
+    totalXP: number
+    memberCount: number
+  }>
+  winnerId?: string
+  winnerName?: string
+}
