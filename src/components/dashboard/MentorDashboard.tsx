@@ -4,6 +4,7 @@ import { UserProfile, UserProgress, Course, UserStats } from '@/lib/types'
 import { useMentorship } from '@/hooks/use-mentorship'
 import { useXP } from '@/hooks/use-xp'
 import { useTranslation } from '@/lib/i18n'
+import { getAchievementById } from '@/lib/achievements'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -235,12 +236,19 @@ function MenteeProgressCard({
               <span>{t('mentorship.recentAchievements') || 'Logros Recientes'}</span>
             </div>
             <div className="flex flex-wrap gap-2">
-              {recentAchievements.map((ua) => (
-                <Badge key={ua.achievementId} variant="secondary" className="gap-1">
-                  <Trophy size={12} weight="fill" />
-                  {ua.achievementId}
-                </Badge>
-              ))}
+              {recentAchievements.map((ua) => {
+                const achievement = getAchievementById(ua.achievementId)
+                const achievementTitle = achievement?.titleKey 
+                  ? t(achievement.titleKey) 
+                  : achievement?.title || ua.achievementId
+                
+                return (
+                  <Badge key={ua.achievementId} variant="secondary" className="gap-1">
+                    <Trophy size={12} weight="fill" />
+                    {achievementTitle}
+                  </Badge>
+                )
+              })}
             </div>
           </div>
         )}

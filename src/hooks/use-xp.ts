@@ -125,13 +125,15 @@ export function useXP(userId?: string) {
     const level = currentLevel || 1
     const currentLevelXP = getXPForCurrentLevel(level)
     const nextLevelXP = getXPForNextLevel(level)
-    const xpInCurrentLevel = xp - currentLevelXP
-    const xpNeededForNextLevel = nextLevelXP - currentLevelXP
+    const xpInCurrentLevel = Math.max(0, xp - currentLevelXP)
+    const xpNeededForNextLevel = Math.max(1, nextLevelXP - currentLevelXP)
+
+    const percentage = Math.max(0, Math.min(100, (xpInCurrentLevel / xpNeededForNextLevel) * 100))
 
     return {
       current: xpInCurrentLevel,
       required: xpNeededForNextLevel,
-      percentage: Math.min(100, (xpInCurrentLevel / xpNeededForNextLevel) * 100),
+      percentage: isNaN(percentage) ? 0 : percentage,
     }
   }
 

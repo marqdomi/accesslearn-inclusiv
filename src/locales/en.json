@@ -300,6 +300,7 @@
   "achievementTitle.speedRunner": "Speed Runner",
   "achievementTitle.quarterlyEngagement": "Quarterly Engagement Badge",
   "achievementTitle.teamUp": "Team Up",
+  "achievementTitle.communityHelper": "Community Helper",
 
   "achievementDesc.learningSpecialistI": "Complete 5 courses",
   "achievementDesc.learningSpecialistII": "Complete 10 courses",
@@ -324,6 +325,7 @@
   "achievementDesc.speedRunner": "Complete a course in under 1 hour",
   "achievementDesc.quarterlyEngagement": "Complete at least 10 activities in a quarter",
   "achievementDesc.teamUp": "Complete your first mission with guidance from your Mentor",
+  "achievementDesc.communityHelper": "Successfully answer 5 questions in the Q&A forum",
 
   "courses.webDev.title": "🚀 Web Development Quest",
   "courses.webDev.description": "Ready to embark on an epic journey to build the internet? Your first mission: Master the ancient art of HTML! Learn to structure web pages and become a digital architect.",
@@ -396,6 +398,17 @@
   "lessons.tagsElements.challenge.incorrect": "Hmm, not quite the right spell!",
   "lessons.tagsElements.challenge.incorrectCaption": "Close, but not a heading tag. Think about what makes text big and bold on a page!",
   "lessons.tagsElements.challenge.hint": "Remember, headings are important for structure. Headings use numbers like h1, h2, etc.",
+
+  "achievementsWidget.title": "Your Achievements",
+  "achievementsWidget.of": "of",
+  "achievementsWidget.unlocked": "unlocked",
+  "achievementsWidget.complete": "Complete",
+  "achievementsWidget.streak": "Streak",
+  "achievementsWidget.days": "days",
+  "achievementsWidget.courses": "Courses",
+  "achievementsWidget.nextAchievement": "Next Achievement",
+  "achievementsWidget.progress": "Progress",
+  "achievementsWidget.viewAll": "View All Achievements",
 
   "achievementsDashboard.title": "Trophy Collection",
   "achievementsDashboard.subtitle": "Track your progress and celebrate your achievements! 🏆",

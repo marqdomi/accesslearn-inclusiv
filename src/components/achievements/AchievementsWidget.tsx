@@ -4,13 +4,16 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Trophy, Fire, Target, ArrowRight } from '@phosphor-icons/react'
 import { Progress } from '@/components/ui/progress'
+import { useTranslation } from '@/lib/i18n'
 
 interface AchievementsWidgetProps {
   onViewAll: () => void
+  userId?: string
 }
 
-export function AchievementsWidget({ onViewAll }: AchievementsWidgetProps) {
-  const { userStats } = useAchievements()
+export function AchievementsWidget({ onViewAll, userId }: AchievementsWidgetProps) {
+  const { t } = useTranslation()
+  const { userStats } = useAchievements(userId)
 
   const stats = userStats || {
     totalCoursesCompleted: 0,
@@ -64,9 +67,9 @@ export function AchievementsWidget({ onViewAll }: AchievementsWidgetProps) {
               <Trophy size={24} weight="fill" className="text-white" aria-hidden="true" />
             </div>
             <div>
-              <h3 className="text-lg font-bold">Your Achievements</h3>
+              <h3 className="text-lg font-bold">{t('achievementsWidget.title')}</h3>
               <p className="text-sm text-muted-foreground">
-                {unlockedCount} of {totalAchievements} unlocked
+                {unlockedCount} {t('achievementsWidget.of')} {totalAchievements} {t('achievementsWidget.unlocked')}
               </p>
             </div>
           </div>
@@ -74,7 +77,7 @@ export function AchievementsWidget({ onViewAll }: AchievementsWidgetProps) {
 
         <div className="mb-4">
           <Progress value={completionPercentage} className="h-3" aria-label={`Achievement progress: ${completionPercentage}%`} />
-          <p className="mt-2 text-xs text-muted-foreground">{completionPercentage}% Complete</p>
+          <p className="mt-2 text-xs text-muted-foreground">{completionPercentage}% {t('achievementsWidget.complete')}</p>
         </div>
 
         <div className="mb-4 grid grid-cols-2 gap-4">
@@ -83,8 +86,8 @@ export function AchievementsWidget({ onViewAll }: AchievementsWidgetProps) {
               <Fire size={16} weight="fill" className="text-white" aria-hidden="true" />
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">Streak</p>
-              <p className="text-sm font-bold">{stats.currentStreak} days</p>
+              <p className="text-xs text-muted-foreground">{t('achievementsWidget.streak')}</p>
+              <p className="text-sm font-bold">{stats.currentStreak} {t('achievementsWidget.days')}</p>
             </div>
           </div>
 
@@ -93,7 +96,7 @@ export function AchievementsWidget({ onViewAll }: AchievementsWidgetProps) {
               <Target size={16} weight="fill" className="text-white" aria-hidden="true" />
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">Courses</p>
+              <p className="text-xs text-muted-foreground">{t('achievementsWidget.courses')}</p>
               <p className="text-sm font-bold">{stats.totalCoursesCompleted}</p>
             </div>
           </div>
@@ -102,11 +105,15 @@ export function AchievementsWidget({ onViewAll }: AchievementsWidgetProps) {
         {nextAchievement && (
           <div className="mb-4 rounded-lg border-2 border-dashed border-muted-foreground/30 bg-background/50 p-4">
             <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Next Achievement
+              {t('achievementsWidget.nextAchievement')}
             </p>
-            <p className="mb-2 font-bold">{nextAchievement.achievement.title}</p>
+            <p className="mb-2 font-bold">
+              {nextAchievement.achievement.titleKey 
+                ? t(nextAchievement.achievement.titleKey) 
+                : nextAchievement.achievement.title}
+            </p>
             <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <span>Progress</span>
+              <span>{t('achievementsWidget.progress')}</span>
               <span>
                 {nextAchievement.progress} / {nextAchievement.max}
               </span>
@@ -128,7 +135,7 @@ export function AchievementsWidget({ onViewAll }: AchievementsWidgetProps) {
         )}
 
         <Button onClick={onViewAll} variant="outline" className="w-full gap-2" size="sm">
-          View All Achievements
+          {t('achievementsWidget.viewAll')}
           <ArrowRight size={16} aria-hidden="true" />
         </Button>
       </div>

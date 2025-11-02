@@ -6,10 +6,11 @@ import { motion } from 'framer-motion'
 
 interface XPWidgetProps {
   compact?: boolean
+  userId?: string
 }
 
-export function XPWidget({ compact = false }: XPWidgetProps) {
-  const { totalXP, currentLevel, getRankName, getProgressToNextLevel } = useXP()
+export function XPWidget({ compact = false, userId }: XPWidgetProps) {
+  const { totalXP, currentLevel, getRankName, getProgressToNextLevel } = useXP(userId)
   const progress = getProgressToNextLevel()
 
   if (compact) {

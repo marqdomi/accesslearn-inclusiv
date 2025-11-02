@@ -300,6 +300,7 @@
   "achievementTitle.speedRunner": "Corredor Veloz",
   "achievementTitle.quarterlyEngagement": "Medalla de Compromiso Trimestral",
   "achievementTitle.teamUp": "Trabajo en Equipo",
+  "achievementTitle.communityHelper": "Ayudante de la Comunidad",
 
   "achievementDesc.learningSpecialistI": "Completa 5 cursos",
   "achievementDesc.learningSpecialistII": "Completa 10 cursos",
@@ -324,6 +325,7 @@
   "achievementDesc.speedRunner": "Completa un curso en menos de 1 hora",
   "achievementDesc.quarterlyEngagement": "Completa al menos 10 actividades en un trimestre",
   "achievementDesc.teamUp": "Completa tu primera misión con la orientación de tu Mentor",
+  "achievementDesc.communityHelper": "Responde exitosamente 5 preguntas en el foro de preguntas y respuestas",
 
   "courses.webDev.title": "🚀 Misión de Desarrollo Web",
   "courses.webDev.description": "¿Listo para embarcarte en un viaje épico para construir internet? Tu primera misión: ¡Domina el arte ancestral del HTML! Aprende a estructurar páginas web y conviértete en un arquitecto digital.",
@@ -396,6 +398,17 @@
   "lessons.tagsElements.challenge.incorrect": "¡Hmm, no es el hechizo correcto!",
   "lessons.tagsElements.challenge.incorrectCaption": "¡Cerca, pero no es una etiqueta de encabezado! ¡Piensa en qué hace que el texto sea grande y en negrita en una página!",
   "lessons.tagsElements.challenge.hint": "Recuerda, los encabezados son importantes para la estructura. Los encabezados usan números como h1, h2, etc.",
+
+  "achievementsWidget.title": "Tus Logros",
+  "achievementsWidget.of": "de",
+  "achievementsWidget.unlocked": "desbloqueados",
+  "achievementsWidget.complete": "Completo",
+  "achievementsWidget.streak": "Racha",
+  "achievementsWidget.days": "días",
+  "achievementsWidget.courses": "Cursos",
+  "achievementsWidget.nextAchievement": "Próximo Logro",
+  "achievementsWidget.progress": "Progreso",
+  "achievementsWidget.viewAll": "Ver Todos los Logros",
 
   "achievementsDashboard.title": "Colección de Trofeos",
   "achievementsDashboard.subtitle": "¡Rastrea tu progreso y celebra tus logros! 🏆",

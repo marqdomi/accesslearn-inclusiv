@@ -18,7 +18,11 @@ import {
   Rocket, 
   Lightbulb,
   Timer,
-  LockSimple
+  LockSimple,
+  Calendar,
+  UsersFour,
+  ChatsCircle,
+  Crown
 } from '@phosphor-icons/react'
 import { motion } from 'framer-motion'
 import { useTranslation } from '@/lib/i18n'
@@ -46,6 +50,10 @@ const iconMap: Record<string, any> = {
   Rocket,
   Lightbulb,
   Timer,
+  Calendar,
+  UsersFour,
+  ChatsCircle,
+  Crown,
 }
 
 function getTierGradient(tier: AchievementTier): string {

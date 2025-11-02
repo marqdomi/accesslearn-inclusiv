@@ -120,7 +120,7 @@ export function AchievementsDashboard({ userId }: { userId?: string }) {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
       >
-        <XPWidget />
+        <XPWidget userId={userId} />
       </motion.div>
 
       <motion.div 
