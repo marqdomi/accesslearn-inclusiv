@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useKV } from '@github/spark/hooks'
 import { useAuth } from '@/hooks/use-auth'
+import { useBranding } from '@/hooks/use-branding'
 import { Course } from '@/lib/types'
 import { translateCourse } from '@/lib/translate-course'
 import { SkipLink } from '@/components/accessibility/SkipLink'
@@ -30,6 +31,7 @@ type View = 'dashboard' | 'achievements' | 'community' | 'admin' | 'mission-libr
 function App() {
   const { t } = useTranslation()
   const { session, login, changePassword, completeOnboarding, logout, isAuthenticated } = useAuth()
+  const { branding } = useBranding()
   const [courses] = useKV<Course[]>('courses', [])
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null)
   const [currentView, setCurrentView] = useState<View>('dashboard')
@@ -76,6 +78,15 @@ function App() {
   const isAdminView = currentView === 'admin' && session?.role === 'admin'
   const isAdmin = session?.role === 'admin'
 
+  const appTitle = branding?.companyName || t('app.title')
+  const logoElement = branding?.logoUrl ? (
+    <img src={branding.logoUrl} alt={appTitle} className="h-10 max-w-[200px] object-contain" />
+  ) : (
+    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-primary via-secondary to-accent">
+      <Lightning size={24} weight="fill" className="text-white" aria-hidden="true" />
+    </div>
+  )
+
   return (
     <>
       <SampleDataInitializer />
@@ -90,15 +101,15 @@ function App() {
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                 >
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-primary via-secondary to-accent">
-                    <ShieldCheck size={24} weight="fill" className="text-white" aria-hidden="true" />
-                  </div>
-                  <div>
-                    <h1 className="text-2xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
-                      {t('app.admin.title')}
-                    </h1>
-                    <p className="text-xs text-muted-foreground">{t('app.admin.subtitle')}</p>
-                  </div>
+                  {logoElement}
+                  {!branding?.logoUrl && (
+                    <div>
+                      <h1 className="text-2xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
+                        {t('app.admin.title')}
+                      </h1>
+                      <p className="text-xs text-muted-foreground">{t('app.admin.subtitle')}</p>
+                    </div>
+                  )}
                 </motion.div>
                 <div className="flex items-center gap-2">
                   <LanguageSwitcher />
@@ -124,15 +135,15 @@ function App() {
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                 >
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-primary via-secondary to-accent">
-                    <Lightning size={24} weight="fill" className="text-white" aria-hidden="true" />
-                  </div>
-                  <div>
-                    <h1 className="text-2xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
-                      {t('app.title')}
-                    </h1>
-                    <p className="text-xs text-muted-foreground">{t('app.subtitle')}</p>
-                  </div>
+                  {logoElement}
+                  {!branding?.logoUrl && (
+                    <div>
+                      <h1 className="text-2xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
+                        {appTitle}
+                      </h1>
+                      <p className="text-xs text-muted-foreground">{t('app.subtitle')}</p>
+                    </div>
+                  )}
                 </motion.div>
                 <nav className="flex flex-wrap gap-2" aria-label="Main navigation">
                   <Button

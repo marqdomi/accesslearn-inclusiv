@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useBranding } from '@/hooks/use-branding'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -33,6 +34,7 @@ const TEXT_SIZE_OPTIONS: Array<{ value: 'normal' | 'large' | 'x-large'; label: s
 ]
 
 export function OnboardingScreen({ userEmail, onComplete }: OnboardingScreenProps) {
+  const { branding } = useBranding()
   const [displayName, setDisplayName] = useState('')
   const [selectedAvatar, setSelectedAvatar] = useState(AVATAR_OPTIONS[0].emoji)
   const [highContrast, setHighContrast] = useState(false)
@@ -245,15 +247,30 @@ export function OnboardingScreen({ userEmail, onComplete }: OnboardingScreenProp
         className="w-full max-w-2xl"
       >
         <div className="text-center mb-8">
-          <motion.div
-            className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary via-secondary to-accent mb-4"
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ type: 'spring', delay: 0.2 }}
-          >
-            <User size={32} weight="fill" className="text-white" aria-hidden="true" />
-          </motion.div>
-          <h1 className="text-3xl font-bold">Welcome to GameLearn!</h1>
+          {branding?.logoUrl ? (
+            <motion.div
+              className="flex justify-center mb-4"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ type: 'spring', delay: 0.2 }}
+            >
+              <img
+                src={branding.logoUrl}
+                alt="Company logo"
+                className="max-h-24 max-w-full object-contain"
+              />
+            </motion.div>
+          ) : (
+            <motion.div
+              className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary via-secondary to-accent mb-4"
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: 'spring', delay: 0.2 }}
+            >
+              <User size={32} weight="fill" className="text-white" aria-hidden="true" />
+            </motion.div>
+          )}
+          <h1 className="text-3xl font-bold">Welcome to {branding?.companyName || 'GameLearn'}!</h1>
           <p className="text-muted-foreground mt-2">Let's set up your learning experience</p>
         </div>
 

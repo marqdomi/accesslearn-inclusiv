@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useKV } from '@github/spark/hooks'
+import { useBranding } from '@/hooks/use-branding'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -18,6 +19,7 @@ interface LoginScreenProps {
 
 export function LoginScreen({ onLogin }: LoginScreenProps) {
   const { t } = useTranslation()
+  const { branding } = useBranding()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -29,6 +31,8 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
   const isDev = typeof import.meta !== 'undefined' && (import.meta as any).env?.DEV
   const [kvReady, setKvReady] = useState(false)
   const [kvStats, setKvStats] = useState<{ credCount: number; profileCount: number; hasSession: boolean }>({ credCount: 0, profileCount: 0, hasSession: false })
+
+  const appTitle = branding?.companyName || t('app.title')
 
   // Shared sample credentials used for quick seeding in development
   const SAMPLE_CREDS: EmployeeCredentials[] = [
@@ -178,18 +182,37 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
         className="w-full max-w-md"
       >
         <div className="text-center mb-8">
-          <motion.div
-            className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary via-secondary to-accent mb-4"
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ type: 'spring', delay: 0.2 }}
-          >
-            <Lightning size={32} weight="fill" className="text-white" aria-hidden="true" />
-          </motion.div>
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
-            {t('app.title')}
-          </h1>
-          <p className="text-muted-foreground mt-2">{t('app.subtitle')}</p>
+          {branding?.logoUrl ? (
+            <motion.div
+              className="flex justify-center mb-4"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ type: 'spring', delay: 0.2 }}
+            >
+              <img
+                src={branding.logoUrl}
+                alt={appTitle}
+                className="max-h-24 max-w-full object-contain"
+              />
+            </motion.div>
+          ) : (
+            <motion.div
+              className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary via-secondary to-accent mb-4"
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: 'spring', delay: 0.2 }}
+            >
+              <Lightning size={32} weight="fill" className="text-white" aria-hidden="true" />
+            </motion.div>
+          )}
+          {!branding?.logoUrl && (
+            <>
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
+                {appTitle}
+              </h1>
+              <p className="text-muted-foreground mt-2">{t('app.subtitle')}</p>
+            </>
+          )}
         </div>
 
         <Card className="shadow-2xl border-2">

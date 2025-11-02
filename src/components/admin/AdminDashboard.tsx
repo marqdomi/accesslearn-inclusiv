@@ -2,11 +2,11 @@ import { useKV } from '@github/spark/hooks'
 import { CourseStructure, User, UserProgress, UserStats, EmployeeCredentials } from '@/lib/types'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Users, BookOpen, TrendUp, Trophy, Plus, FileText, UserPlus, Target, UsersThree, ChartBar, UsersFour, Certificate } from '@phosphor-icons/react'
+import { Users, BookOpen, TrendUp, Trophy, Plus, FileText, UserPlus, Target, UsersThree, ChartBar, UsersFour, Certificate, Palette } from '@phosphor-icons/react'
 import { motion } from 'framer-motion'
 
 interface AdminDashboardProps {
-  onNavigate: (section: 'courses' | 'users' | 'reports' | 'gamification' | 'enrollment' | 'corporate-reports' | 'assignments' | 'groups' | 'mentorship' | 'teams' | 'analytics' | 'company-settings') => void
+  onNavigate: (section: 'courses' | 'users' | 'reports' | 'gamification' | 'enrollment' | 'corporate-reports' | 'assignments' | 'groups' | 'mentorship' | 'teams' | 'analytics' | 'company-settings' | 'branding') => void
 }
 
 export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
@@ -120,6 +120,13 @@ export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
       action: () => onNavigate('company-settings'),
       variant: 'outline' as const,
       description: 'Configure certificate branding'
+    },
+    {
+      label: 'Branding & Appearance',
+      icon: Palette,
+      action: () => onNavigate('branding'),
+      variant: 'default' as const,
+      description: 'Customize platform branding'
     }
   ]
 

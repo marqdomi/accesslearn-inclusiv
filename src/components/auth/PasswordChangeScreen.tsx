@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useBranding } from '@/hooks/use-branding'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -15,6 +16,7 @@ interface PasswordChangeScreenProps {
 }
 
 export function PasswordChangeScreen({ onPasswordChange }: PasswordChangeScreenProps) {
+  const { branding } = useBranding()
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -79,14 +81,29 @@ export function PasswordChangeScreen({ onPasswordChange }: PasswordChangeScreenP
         className="w-full max-w-lg"
       >
         <div className="text-center mb-8">
-          <motion.div
-            className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary via-secondary to-accent mb-4"
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ type: 'spring', delay: 0.2 }}
-          >
-            <ShieldCheck size={32} weight="fill" className="text-white" aria-hidden="true" />
-          </motion.div>
+          {branding?.logoUrl ? (
+            <motion.div
+              className="flex justify-center mb-4"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ type: 'spring', delay: 0.2 }}
+            >
+              <img
+                src={branding.logoUrl}
+                alt="Company logo"
+                className="max-h-24 max-w-full object-contain"
+              />
+            </motion.div>
+          ) : (
+            <motion.div
+              className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary via-secondary to-accent mb-4"
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: 'spring', delay: 0.2 }}
+            >
+              <ShieldCheck size={32} weight="fill" className="text-white" aria-hidden="true" />
+            </motion.div>
+          )}
           <h1 className="text-3xl font-bold">Create Your Password</h1>
           <p className="text-muted-foreground mt-2">Please change your temporary password to continue</p>
         </div>

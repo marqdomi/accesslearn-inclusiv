@@ -12,8 +12,9 @@ import { MentorshipManagement } from './MentorshipManagement'
 import { TeamManagement } from './TeamManagement'
 import { AnalyticsDashboard } from './analytics/AnalyticsDashboard'
 import { CompanySettings } from './CompanySettings'
+import { BrandingManagement } from './BrandingManagement'
 
-type AdminSection = 'dashboard' | 'courses' | 'users' | 'gamification' | 'reports' | 'enrollment' | 'corporate-reports' | 'assignments' | 'groups' | 'mentorship' | 'teams' | 'analytics' | 'company-settings'
+type AdminSection = 'dashboard' | 'courses' | 'users' | 'gamification' | 'reports' | 'enrollment' | 'corporate-reports' | 'assignments' | 'groups' | 'mentorship' | 'teams' | 'analytics' | 'company-settings' | 'branding'
 
 export function AdminPanel() {
   const [currentSection, setCurrentSection] = useState<AdminSection>('dashboard')
@@ -100,6 +101,9 @@ export function AdminPanel() {
       )}
       {currentSection === 'company-settings' && (
         <CompanySettings onBack={() => setCurrentSection('dashboard')} />
+      )}
+      {currentSection === 'branding' && (
+        <BrandingManagement onBack={() => setCurrentSection('dashboard')} />
       )}
     </div>
   )
