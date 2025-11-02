@@ -142,10 +142,10 @@ export interface Badge {
 
 export interface QuizQuestion {
   id: string
-  type: 'multiple-choice' | 'true-false' | 'matching'
+  type: 'multiple-choice' | 'multiple-select' | 'true-false' | 'short-answer' | 'ordering'
   question: string
   options: string[]
-  correctAnswer: number | number[]
+  correctAnswer: number | number[] | string
   correctFeedback: string
   incorrectFeedback: string
   xpValue: number
@@ -169,6 +169,9 @@ export interface LessonBlock {
   characterMessage?: string
   xpValue?: number
   order: number
+  videoUrl?: string
+  videoType?: 'upload' | 'youtube' | 'vimeo' | 'wistia'
+  imageFile?: string
 }
 
 export interface Lesson {
@@ -179,15 +182,18 @@ export interface Lesson {
   quiz?: Quiz
   totalXP: number
   estimatedMinutes: number
+  achievementId?: string
 }
 
 export interface Module {
   id: string
   title: string
   description: string
+  type: 'lesson' | 'quiz' | 'completion'
   lessons: Lesson[]
   order: number
   badge?: string
+  achievementId?: string
 }
 
 export interface CourseStructure {
@@ -200,11 +206,13 @@ export interface CourseStructure {
   estimatedHours: number
   totalXP: number
   published: boolean
+  publishedAt?: number
   enrollmentMode?: CourseEnrollmentMode
   difficulty?: 'Novice' | 'Specialist' | 'Master'
   createdAt: number
   updatedAt: number
   createdBy: string
+  completionAchievementId?: string
 }
 
 export interface UserLibrary {

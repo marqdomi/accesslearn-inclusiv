@@ -25,6 +25,7 @@ export function CourseStructureBuilder({ modules, onModulesChange, onEditLesson 
       id: `module-${Date.now()}`,
       title: newModuleTitle || `Module ${modules.length + 1}`,
       description: newModuleDescription,
+      type: 'lesson',
       lessons: [],
       order: modules.length
     }

@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { ArrowLeft, Plus, MagnifyingGlass, PencilSimple, Trash, Eye } from '@phosphor-icons/react'
-import { CourseBuilder } from './CourseBuilder'
+import { ProfessionalCourseBuilder } from './ProfessionalCourseBuilder'
 
 interface CourseManagementProps {
   onBack: () => void
@@ -31,7 +31,7 @@ export function CourseManagement({ onBack }: CourseManagementProps) {
 
   if (isCreating || editingCourseId) {
     return (
-      <CourseBuilder
+      <ProfessionalCourseBuilder
         courseId={editingCourseId || undefined}
         onBack={() => {
           setIsCreating(false)

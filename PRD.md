@@ -320,6 +320,55 @@ Novice → Learner → Student → Scholar → Specialist → Expert → Profess
 - **Progression**: Select report type → Set filters (user/group/course/dates) → View visualizations and data tables → Drill into details → Export to CSV
 - **Success criteria**: Reports load quickly, filters work intuitively, charts are accessible, CSV exports include all relevant data, trends are easy to identify visually
 
+### 28. Professional Course Authoring Tool - Visual Course Builder
+- **Functionality**: Drag-and-drop visual course builder allowing admins to create courses by dragging module blocks (Lesson, Quiz, Completion) into a timeline/canvas. Easy reordering by dragging blocks up/down. Each module type has distinct visual appearance and icon. Course timeline shows hierarchical structure with clear visual nesting.
+- **Purpose**: Empower non-technical HR/trainers to build professional courses through direct visual manipulation without coding
+- **Trigger**: Admin clicks "Create Course" or "Edit Course" in Course Management
+- **Progression**: Create course → Enter course details → Switch to "Structure" tab → Drag module types onto canvas → Configure each module → Reorder by dragging → Preview course → Save draft or publish
+- **Success criteria**: Drag-and-drop is smooth and intuitive, modules visually distinct, reordering updates instantly, keyboard alternatives available for accessibility, changes auto-save, preview accurately reflects learner view
+
+### 29. WYSIWYG Lesson Editor with Rich Content
+- **Functionality**: Rich text editor (WYSIWYG) for lesson blocks supporting bold, italic, lists (ul/ol), headings, paragraphs. Media upload interface for images and videos with drag-drop support. Embedded video player for YouTube/Vimeo/Wistia URLs. Direct file upload for MP4 videos and JPG/PNG images.
+- **Purpose**: Enable admins to create engaging, multimedia-rich lessons without HTML knowledge
+- **Trigger**: Admin adds or edits a Lesson module within course builder
+- **Progression**: Open lesson editor → Use formatting toolbar for text → Click image upload → Select or drag file → Upload → Fill accessibility fields → Or paste video URL → System auto-embeds → Preview content → Save lesson
+- **Success criteria**: Toolbar buttons clearly labeled, formatting applies instantly, image uploads support drag-drop, video URLs auto-detect platform, preview matches final output, all common formats supported (MP4, MOV, JPG, PNG, GIF)
+
+### 30. Accessibility Guardrails - Mandatory Metadata
+- **Functionality**: System blocks saving/publishing until all accessibility requirements met. Image upload shows disabled "Save" button with warning icon until alt-text field filled (minimum 10 characters). Video upload shows disabled "Publish" button until caption file (.srt or .vtt) uploaded. Warning badges (⚠️) appear next to any incomplete modules in course structure view.
+- **Purpose**: Prevent publication of inaccessible content by enforcing WCAG compliance through required fields
+- **Trigger**: Admin attempts to save lesson with image missing alt-text, or publish course with video missing captions
+- **Progression**: Upload image → Alt-text field required and highlighted → Type alt-text → Save enabled → Or upload video → Caption upload required → Upload .srt file → Publish enabled → Accessibility warnings clear automatically
+- **Success criteria**: Save/publish buttons visually disabled with clear tooltip explaining requirement, warning icons prominent but not alarming, requirements stated in plain language ("Add alt-text to save"), validation occurs real-time, green checkmarks replace warnings when requirements met
+
+### 31. Advanced Quiz Builder - Multiple Question Types
+- **Functionality**: Quiz module builder supporting 5 question types: Multiple Choice (radio buttons, single answer), Multiple Select (checkboxes, multiple answers), True/False (two buttons), Short Answer (text input with keyword matching), and Ordering/Sequencing (drag items into correct order). Each question has custom feedback fields for correct and incorrect responses. XP value configurable per question.
+- **Purpose**: Enable professional assessments beyond basic multiple choice, accommodating diverse learning validation needs
+- **Trigger**: Admin adds Quiz module to course and clicks "Add Question"
+- **Progression**: Click "Add Question" → Select question type → Enter question text → Add answer options → Mark correct answer(s) → Write custom correct feedback ("Great job! +50 XP") → Write custom incorrect feedback ("Almost! Remember that...") → Set XP value → Add next question → Preview quiz → Save
+- **Success criteria**: All question types have clear setup flows, custom feedback fields accept rich text, XP values default to reasonable amounts (50-150), preview shows exact learner experience, questions can be reordered, deletion requires confirmation
+
+### 32. Gamification Controls - XP & Achievement Assignment
+- **Functionality**: Each lesson and quiz module has "Rewards" section with XP input field (number input with suggested values) and Achievement dropdown selector showing all available achievements. Course completion can be linked to unlock a specific achievement badge. Total course XP calculated automatically by summing all module XP values.
+- **Purpose**: Give admins complete control over gamification mechanics without complex configuration
+- **Trigger**: Admin configures lesson or quiz module rewards
+- **Progression**: Edit module → Scroll to "Rewards" section → Enter XP value (or use suggested default) → Optionally select achievement from dropdown → Achievement preview shows icon and description → Save → Total course XP updates automatically in course details
+- **Success criteria**: XP input shows suggested ranges based on module type, achievement dropdown shows icons for visual selection, total XP calculation accurate and real-time, achievement preview includes full metadata, linking achievement prevents duplicate assignments
+
+### 33. Publishing Workflow - Draft vs. Published
+- **Functionality**: All new courses and edits start in "Draft" mode (badge shows "Draft" status). Learners cannot see draft courses. Large "Publish" button in course header (disabled if accessibility validation fails). Publish dialog shows checklist of requirements (title, description, at least one module, all accessibility metadata complete, enrollment mode selected). Published courses show "Published" badge with last published date.
+- **Purpose**: Provide safe editing environment where admins can work without affecting learners, with clear publication gate
+- **Trigger**: Admin completes course creation and clicks "Publish"
+- **Progression**: Build course in draft mode → Click "Publish" → Review requirements checklist → Fix any issues highlighted → All checks pass → Confirm publication → Course goes live → Appears in Mission Library for eligible learners → Draft badge changes to Published
+- **Success criteria**: Draft courses invisible to learners, publish button clearly disabled with tooltip when requirements unmet, checklist shows green checks for met requirements and red X for unmet, publication is instant, published courses immediately available, date stamp shows when published
+
+### 34. Enrollment Mode Integration
+- **Functionality**: Publish dialog includes enrollment mode selector with three radio options: "Open Enrollment" (anyone can enroll), "Restricted" (request access required), "Admin-Assign Only" (hidden from library, admin assigns to users/groups). Description text explains each mode. Selected mode saves with course and controls visibility in Mission Library.
+- **Purpose**: Give admins flexible control over who can access courses, supporting open training and confidential/role-specific content
+- **Trigger**: Admin publishes course or edits published course settings
+- **Progression**: Click "Publish" → Select enrollment mode from radio group → Read description of selected mode → Confirm → Course published with enrollment mode → Mission Library respects mode (Open shows to all, Restricted shows "Request Access" button, Admin-Assign hidden)
+- **Success criteria**: Mode descriptions clear and concise, selection persists with course, Mission Library correctly filters based on mode, restricted courses show request workflow, admin-assign courses only appear for assigned users, mode can be changed post-publication
+
 ## Edge Case Handling
 
 - **Network Interruptions**: Auto-save progress every 30 seconds; display clear offline indicator; resume exactly where user left off when reconnected
