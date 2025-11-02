@@ -262,6 +262,125 @@ export interface AdminReport {
   data: any
 }
 
+export interface UserProgressReportData {
+  userId: string
+  userName: string
+  userEmail: string
+  team?: string
+  mentor?: string
+  courses: Array<{
+    courseId: string
+    courseTitle: string
+    status: CourseStatus
+    progress: number
+    score?: number
+    completedDate?: number
+    enrolledDate: number
+  }>
+}
+
+export interface CourseReportData {
+  courseId: string
+  courseTitle: string
+  totalEnrolled: number
+  totalCompleted: number
+  totalInProgress: number
+  totalNotStarted: number
+  averageScore: number
+  users: Array<{
+    userId: string
+    userName: string
+    userEmail: string
+    progress: number
+    status: CourseStatus
+    score?: number
+    completedDate?: number
+  }>
+}
+
+export interface TeamReportData {
+  teamId: string
+  teamName: string
+  memberCount: number
+  averageCompletionRate: number
+  totalXP: number
+  teamChallengeRank?: number
+  members: Array<{
+    userId: string
+    userName: string
+    completionRate: number
+    totalXP: number
+  }>
+}
+
+export interface AssessmentReportData {
+  quizId: string
+  quizTitle: string
+  courseTitle: string
+  totalAttempts: number
+  averageScore: number
+  passRate: number
+  questions: Array<{
+    questionId: string
+    questionText: string
+    correctAnswerRate: number
+    incorrectAnswerRate: number
+    totalResponses: number
+  }>
+}
+
+export interface MentorshipReportData {
+  mentorId: string
+  mentorName: string
+  mentorEmail: string
+  menteeCount: number
+  averageMenteeCompletionRate: number
+  totalMenteeXP: number
+  mentees: Array<{
+    menteeId: string
+    menteeName: string
+    completionRate: number
+    coursesCompleted: number
+  }>
+}
+
+export interface AnalyticsDashboardMetrics {
+  totalActiveUsers: number
+  totalSeats: number
+  platformCompletionRate: number
+  topEngagedUsers: Array<{
+    userId: string
+    userName: string
+    xp: number
+  }>
+  topPopularCourses: Array<{
+    courseId: string
+    courseTitle: string
+    enrollmentCount: number
+  }>
+  complianceMetrics: Array<{
+    courseId: string
+    courseTitle: string
+    completionRate: number
+    totalAssigned: number
+    totalCompleted: number
+  }>
+}
+
+export interface QuizAttempt {
+  id: string
+  userId: string
+  courseId: string
+  quizId: string
+  score: number
+  answers: Array<{
+    questionId: string
+    selectedAnswer: number | number[] | string
+    correct: boolean
+  }>
+  completedAt: number
+}
+
 export interface ValidationError {
   field: string
   message: string

@@ -6,7 +6,7 @@ import { Users, BookOpen, TrendUp, Trophy, Plus, FileText, UserPlus, Target, Use
 import { motion } from 'framer-motion'
 
 interface AdminDashboardProps {
-  onNavigate: (section: 'courses' | 'users' | 'reports' | 'gamification' | 'enrollment' | 'corporate-reports' | 'assignments' | 'groups' | 'mentorship' | 'teams') => void
+  onNavigate: (section: 'courses' | 'users' | 'reports' | 'gamification' | 'enrollment' | 'corporate-reports' | 'assignments' | 'groups' | 'mentorship' | 'teams' | 'analytics') => void
 }
 
 export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
@@ -82,6 +82,13 @@ export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
     {
       label: 'Analytics Dashboard',
       icon: ChartBar,
+      action: () => onNavigate('analytics'),
+      variant: 'default' as const,
+      description: 'View comprehensive analytics & ROI'
+    },
+    {
+      label: 'Legacy Reports',
+      icon: FileText,
       action: () => onNavigate('corporate-reports'),
       variant: 'outline' as const,
       description: 'View progress & engagement'

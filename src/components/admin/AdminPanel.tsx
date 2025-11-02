@@ -10,8 +10,9 @@ import { CourseAssignmentManager } from './CourseAssignmentManager'
 import { GroupManagement } from './GroupManagement'
 import { MentorshipManagement } from './MentorshipManagement'
 import { TeamManagement } from './TeamManagement'
+import { AnalyticsDashboard } from './analytics/AnalyticsDashboard'
 
-type AdminSection = 'dashboard' | 'courses' | 'users' | 'gamification' | 'reports' | 'enrollment' | 'corporate-reports' | 'assignments' | 'groups' | 'mentorship' | 'teams'
+type AdminSection = 'dashboard' | 'courses' | 'users' | 'gamification' | 'reports' | 'enrollment' | 'corporate-reports' | 'assignments' | 'groups' | 'mentorship' | 'teams' | 'analytics'
 
 export function AdminPanel() {
   const [currentSection, setCurrentSection] = useState<AdminSection>('dashboard')
@@ -92,6 +93,9 @@ export function AdminPanel() {
           </div>
           <TeamManagement />
         </div>
+      )}
+      {currentSection === 'analytics' && (
+        <AnalyticsDashboard onBack={() => setCurrentSection('dashboard')} />
       )}
     </div>
   )
