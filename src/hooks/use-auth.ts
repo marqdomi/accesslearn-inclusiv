@@ -103,6 +103,7 @@ export function useAuth() {
       email: credential.email,
       firstName: credential.firstName,
       lastName: credential.lastName,
+      fullName: preferences.displayName || `${credential.firstName} ${credential.lastName}`,
       displayName: preferences.displayName,
       avatar: preferences.avatar,
       department: credential.department,

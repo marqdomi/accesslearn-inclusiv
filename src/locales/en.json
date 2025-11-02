@@ -7,6 +7,7 @@
   "nav.dashboard": "Dashboard",
   "nav.community": "Community",
   "nav.achievements": "Achievements",
+  "nav.certificates": "Certificates",
   "nav.admin": "Admin",
   "nav.signOut": "Sign Out",
   "nav.exitAdminMode": "Exit Admin Mode",
@@ -833,5 +834,25 @@
 
   "courseStatus.completed": "Completed",
   "courseStatus.in-progress": "In Progress",
-  "courseStatus.not-started": "Not Started"
+  "courseStatus.not-started": "Not Started",
+
+  "certificate.title": "Certificate of Completion",
+  "certificate.awardedTo": "This certificate is awarded to",
+  "certificate.completion": "for the successful completion of",
+  "certificate.courseLabel": "Course",
+  "certificate.dateLabel": "Date of Completion",
+  "certificate.companyLabel": "Company",
+  "certificate.certificateId": "Certificate ID",
+  "certificate.signature": "Authorized Signature",
+  "certificate.download": "Download",
+  "certificate.downloading": "Downloading...",
+  "certificate.downloadCertificate": "Download Your Certificate",
+  "certificate.downloadSuccess": "Certificate downloaded successfully",
+  "certificate.downloadError": "Failed to download certificate",
+  "certificate.completedOn": "Completed on",
+
+  "certificates.title": "My Certificates",
+  "certificates.subtitle": "{count} certificates earned",
+  "certificates.noCertificates": "No Certificates Yet",
+  "certificates.noCertificatesDesc": "Complete missions with certificate issuance enabled to earn your first certificate!"
 }

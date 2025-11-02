@@ -213,6 +213,7 @@ export interface CourseStructure {
   updatedAt: number
   createdBy: string
   completionAchievementId?: string
+  certificateEnabled?: boolean
 }
 
 export interface UserLibrary {
@@ -441,6 +442,7 @@ export interface UserProfile {
   email: string
   firstName: string
   lastName: string
+  fullName?: string
   displayName?: string
   avatar?: string
   department?: string
@@ -676,4 +678,19 @@ export interface CourseRatingSummary {
     4: number
     5: number
   }
+}
+
+export interface Certificate {
+  id: string
+  userId: string
+  courseId: string
+  courseTitle: string
+  completionDate: number
+  certificateCode: string
+  userFullName: string
+}
+
+export interface CompanySettings {
+  companyName: string
+  companyLogo?: string
 }

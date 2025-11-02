@@ -629,6 +629,40 @@ export function ProfessionalCourseBuilder({ courseId, onBack }: ProfessionalCour
 
             <Card>
               <CardHeader>
+                <CardTitle>Certificate Settings</CardTitle>
+                <CardDescription>Configure certificate issuance for course completion</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between gap-4 p-4 border rounded-lg">
+                  <div className="space-y-1">
+                    <div className="font-medium flex items-center gap-2">
+                      <Certificate size={20} className="text-primary" />
+                      Issue Certificate of Completion
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Automatically generate and issue a formal PDF certificate when users complete this mission
+                    </p>
+                  </div>
+                  <Switch
+                    checked={course.certificateEnabled || false}
+                    onCheckedChange={(checked) => setCourse(prev => ({ ...prev, certificateEnabled: checked }))}
+                  />
+                </div>
+                
+                {course.certificateEnabled && (
+                  <Alert>
+                    <Certificate size={16} />
+                    <AlertDescription>
+                      Learners will receive a downloadable certificate upon successful completion. 
+                      The certificate will include the company logo and name configured in Admin Settings.
+                    </AlertDescription>
+                  </Alert>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
                 <CardTitle>Publication Checklist</CardTitle>
                 <CardDescription>Requirements before publishing</CardDescription>
               </CardHeader>

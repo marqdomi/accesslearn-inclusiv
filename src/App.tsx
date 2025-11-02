@@ -18,13 +18,14 @@ import { OnboardingScreen } from '@/components/auth/OnboardingScreen'
 import { MissionLibrary } from '@/components/library/MissionLibrary'
 import { MyLibrary } from '@/components/library/MyLibrary'
 import { Button } from '@/components/ui/button'
-import { Trophy, GraduationCap, Lightning, ShieldCheck, SignOut, Users, BookmarksSimple, BookBookmark } from '@phosphor-icons/react'
+import { Trophy, GraduationCap, Lightning, ShieldCheck, SignOut, Users, BookmarksSimple, BookBookmark, Certificate } from '@phosphor-icons/react'
 import { Toaster } from '@/components/ui/sonner'
 import { motion } from 'framer-motion'
 import { useTranslation } from '@/lib/i18n'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
+import { MyCertificates } from '@/components/dashboard/MyCertificates'
 
-type View = 'dashboard' | 'achievements' | 'community' | 'admin' | 'mission-library' | 'my-library'
+type View = 'dashboard' | 'achievements' | 'community' | 'admin' | 'mission-library' | 'my-library' | 'my-certificates'
 
 function App() {
   const { t } = useTranslation()
@@ -168,6 +169,14 @@ function App() {
                     <span className="hidden sm:inline">{t('nav.achievements')}</span>
                     <span className="sm:hidden">{t('nav.trophies')}</span>
                   </Button>
+                  <Button
+                    variant={currentView === 'my-certificates' ? 'default' : 'outline'}
+                    onClick={() => handleViewChange('my-certificates')}
+                    className="gap-2"
+                  >
+                    <Certificate size={20} aria-hidden="true" />
+                    <span className="hidden sm:inline">{t('nav.certificates')}</span>
+                  </Button>
                   {isAdmin && (
                     <Button
                       variant={isAdminView ? 'default' : 'outline'}
@@ -209,6 +218,8 @@ function App() {
                 onSelectCourse={setSelectedCourse}
                 onBrowseLibrary={() => handleViewChange('mission-library')}
               />
+            ) : currentView === 'my-certificates' ? (
+              <MyCertificates userId={session.userId} />
             ) : (
               <UserDashboard 
                 courses={translatedCourses} 

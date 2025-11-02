@@ -7,6 +7,7 @@
   "nav.dashboard": "Panel Principal",
   "nav.community": "Comunidad",
   "nav.achievements": "Logros",
+  "nav.certificates": "Certificados",
   "nav.admin": "Admin",
   "nav.signOut": "Cerrar Sesión",
   "nav.exitAdminMode": "Salir del Modo Admin",
@@ -833,5 +834,25 @@
 
   "courseStatus.completed": "Completado",
   "courseStatus.in-progress": "En Progreso",
-  "courseStatus.not-started": "No Iniciado"
+  "courseStatus.not-started": "No Iniciado",
+
+  "certificate.title": "Certificado de Finalización",
+  "certificate.awardedTo": "Este certificado se otorga a",
+  "certificate.completion": "por la finalización exitosa de",
+  "certificate.courseLabel": "Curso",
+  "certificate.dateLabel": "Fecha de Finalización",
+  "certificate.companyLabel": "Empresa",
+  "certificate.certificateId": "ID de Certificado",
+  "certificate.signature": "Firma Autorizada",
+  "certificate.download": "Descargar",
+  "certificate.downloading": "Descargando...",
+  "certificate.downloadCertificate": "Descargar Tu Certificado",
+  "certificate.downloadSuccess": "Certificado descargado exitosamente",
+  "certificate.downloadError": "Error al descargar el certificado",
+  "certificate.completedOn": "Completado el",
+
+  "certificates.title": "Mis Certificados",
+  "certificates.subtitle": "{count} certificados obtenidos",
+  "certificates.noCertificates": "Aún No Tienes Certificados",
+  "certificates.noCertificatesDesc": "¡Completa misiones con emisión de certificados habilitada para ganar tu primer certificado!"
 }

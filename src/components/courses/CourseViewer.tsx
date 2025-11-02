@@ -1,12 +1,14 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useKV } from '@github/spark/hooks'
-import { Course, UserProgress, AuthSession, UserProfile } from '@/lib/types'
+import { Course, UserProgress, AuthSession, UserProfile, Certificate, CourseStructure } from '@/lib/types'
 import { LessonModule } from '@/lib/lesson-types'
 import { useCourseProgress } from '@/hooks/use-course-progress'
 import { useXP, XP_REWARDS } from '@/hooks/use-xp'
 import { useAchievements } from '@/hooks/use-achievements'
 import { useMentorXP } from '@/hooks/use-mentor-xp'
 import { useMentorship } from '@/hooks/use-mentorship'
+import { useCertificates, useCompanySettings } from '@/hooks/use-certificates'
+import { generateCertificatePDF, downloadCertificate } from '@/lib/certificate-generator'
 import { useTranslation } from '@/lib/i18n'
 import { translateLessonModule } from '@/lib/translate-course'
 import { ContentViewer } from './ContentViewer'
@@ -35,6 +37,8 @@ export function CourseViewer({ course, onExit, userId }: CourseViewerProps) {
   const { updateModuleCompletion, updateCourseCompletion, updateAssessmentCompletion } = useAchievements(userId)
   const { awardMentorBonus } = useMentorXP()
   const { getMenteePairing } = useMentorship()
+  const { issueCertificate, getCertificateByCourse } = useCertificates(userId)
+  const { companySettings } = useCompanySettings()
   const [showAssessment, setShowAssessment] = useState(false)
   const [showModuleList, setShowModuleList] = useState(false)
   const [lessonModules] = useKV<Record<string, LessonModule>>('lesson-modules', {})
@@ -45,12 +49,45 @@ export function CourseViewer({ course, onExit, userId }: CourseViewerProps) {
   const [session] = useKV<AuthSession>('auth-session', {} as AuthSession)
   const [userProfile] = useKV<UserProfile>(`user-profile-${userId || 'default-user'}`, {} as UserProfile)
   const [activeTab, setActiveTab] = useState<'modules' | 'qanda' | 'reviews'>('modules')
+  const [adminCourses] = useKV<CourseStructure[]>('admin-courses', [])
+  const [issuedCertificate, setIssuedCertificate] = useState<Certificate | undefined>(undefined)
 
   const lessonModule = lessonModules?.[course.id]
   const translatedLessonModule = useMemo(() => {
     return lessonModule ? translateLessonModule(lessonModule, t) : undefined
   }, [lessonModule, t])
   const hasLessons = !!translatedLessonModule && translatedLessonModule.lessons.length > 0
+
+  const existingCertificate = useMemo(() => {
+    if (issuedCertificate) return issuedCertificate
+    return getCertificateByCourse(course.id)
+  }, [issuedCertificate, getCertificateByCourse, course.id])
+
+  const handleDownloadCertificate = async () => {
+    if (!existingCertificate) return
+
+    try {
+      const translations = {
+        certificateTitle: t('certificate.title'),
+        awardedTo: t('certificate.awardedTo'),
+        completion: t('certificate.completion'),
+        courseLabel: t('certificate.courseLabel'),
+        dateLabel: t('certificate.dateLabel'),
+        companyLabel: t('certificate.companyLabel'),
+        certificateId: t('certificate.certificateId'),
+        signature: t('certificate.signature')
+      }
+
+      const blob = await generateCertificatePDF(existingCertificate, companySettings, translations)
+      const fileName = `Certificate-${course.title.replace(/[^a-z0-9]/gi, '-')}-${existingCertificate.certificateCode}.png`
+      downloadCertificate(blob, fileName)
+      
+      toast.success(t('certificate.downloadSuccess'))
+    } catch (error) {
+      console.error('Certificate download error:', error)
+      toast.error(t('certificate.downloadError'))
+    }
+  }
 
   const nextUncompletedCourse = useMemo(() => {
     if (!courses || !courseProgress) return null
@@ -129,7 +166,7 @@ export function CourseViewer({ course, onExit, userId }: CourseViewerProps) {
     setShowModuleList(false)
   }
 
-  const handleAssessmentComplete = (score: number) => {
+  const handleAssessmentComplete = async (score: number) => {
     const isAlreadyCompleted = progress?.status === 'completed'
     const isFirstAttempt = !progress?.assessmentAttempts || progress.assessmentAttempts === 0
     
@@ -162,6 +199,16 @@ export function CourseViewer({ course, onExit, userId }: CourseViewerProps) {
       
       if (userId) {
         awardMentorBonus(userId, totalXPAwarded)
+      }
+
+      const adminCourse = adminCourses?.find(c => c.id === course.id)
+      if (adminCourse?.certificateEnabled && userProfile) {
+        try {
+          const cert = await issueCertificate(course.id, course.title, userProfile)
+          setIssuedCertificate(cert)
+        } catch (error) {
+          console.error('Failed to issue certificate:', error)
+        }
       }
     }
     
@@ -252,6 +299,8 @@ export function CourseViewer({ course, onExit, userId }: CourseViewerProps) {
           onReturnToDashboard={handleReturnToDashboard}
           onNextCourse={nextUncompletedCourse ? handleNextCourse : undefined}
           isAlreadyCompleted={isAlreadyCompleted}
+          certificate={existingCertificate}
+          onDownloadCertificate={existingCertificate ? handleDownloadCertificate : undefined}
         />
       </div>
     )

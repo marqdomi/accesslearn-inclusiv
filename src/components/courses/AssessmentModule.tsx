@@ -2,8 +2,8 @@ import { useState } from 'react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Assessment } from '@/lib/types'
-import { Check, X, House, ArrowRight } from '@phosphor-icons/react'
+import { Assessment, Certificate } from '@/lib/types'
+import { Check, X, House, ArrowRight, Certificate as CertificateIcon, Download } from '@phosphor-icons/react'
 import { useTranslation } from '@/lib/i18n'
 
 interface AssessmentModuleProps {
@@ -12,9 +12,11 @@ interface AssessmentModuleProps {
   onReturnToDashboard?: () => void
   onNextCourse?: () => void
   isAlreadyCompleted?: boolean
+  certificate?: Certificate
+  onDownloadCertificate?: () => void
 }
 
-export function AssessmentModule({ assessments, onComplete, onReturnToDashboard, onNextCourse, isAlreadyCompleted = false }: AssessmentModuleProps) {
+export function AssessmentModule({ assessments, onComplete, onReturnToDashboard, onNextCourse, isAlreadyCompleted = false, certificate, onDownloadCertificate }: AssessmentModuleProps) {
   const { t } = useTranslation()
   const [currentQuestion, setCurrentQuestion] = useState(0)
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null)
@@ -80,28 +82,41 @@ export function AssessmentModule({ assessments, onComplete, onReturnToDashboard,
           )}
 
           {passed && (
-            <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
-              {onReturnToDashboard && (
+            <div className="mt-6 space-y-4">
+              {certificate && onDownloadCertificate && (
                 <Button 
-                  onClick={onReturnToDashboard}
+                  onClick={onDownloadCertificate}
                   size="lg"
-                  variant="outline"
-                  className="gap-2"
+                  className="gap-2 w-full sm:w-auto"
                 >
-                  <House size={20} aria-hidden="true" />
-                  {t('assessment.returnToDashboard')}
+                  <CertificateIcon size={20} weight="fill" aria-hidden="true" />
+                  {t('certificate.downloadCertificate')}
                 </Button>
               )}
-              {onNextCourse && (
-                <Button 
-                  onClick={onNextCourse}
-                  size="lg"
-                  className="gap-2"
-                >
-                  {t('assessment.startNextMission')}
-                  <ArrowRight size={20} aria-hidden="true" />
-                </Button>
-              )}
+              
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                {onNextCourse && (
+                  <Button 
+                    onClick={onNextCourse}
+                    size="lg"
+                    className="gap-2"
+                  >
+                    {t('assessment.startNextMission')}
+                    <ArrowRight size={20} aria-hidden="true" />
+                  </Button>
+                )}
+                {onReturnToDashboard && (
+                  <Button 
+                    onClick={onReturnToDashboard}
+                    size="lg"
+                    variant="outline"
+                    className="gap-2"
+                  >
+                    <House size={20} aria-hidden="true" />
+                    {t('assessment.returnToDashboard')}
+                  </Button>
+                )}
+              </div>
             </div>
           )}
         </div>
