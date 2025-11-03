@@ -4,12 +4,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Users, BookOpen, TrendUp, Trophy, Plus, FileText, UserPlus, Target, UsersThree, ChartBar, UsersFour, Certificate, Palette } from '@phosphor-icons/react'
 import { motion } from 'framer-motion'
+import { useTranslation } from '@/lib/i18n'
 
 interface AdminDashboardProps {
   onNavigate: (section: 'courses' | 'users' | 'reports' | 'gamification' | 'enrollment' | 'manual-enrollment' | 'corporate-reports' | 'assignments' | 'groups' | 'mentorship' | 'teams' | 'analytics' | 'company-settings' | 'branding') => void
 }
 
 export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
+  const { t } = useTranslation()
   const [courses] = useKV<CourseStructure[]>('admin-courses', [])
   const [users] = useKV<User[]>('users', [])
   const [employees] = useKV<EmployeeCredentials[]>('employee-credentials', [])
@@ -45,124 +47,124 @@ export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
 
   const quickActions = [
     {
-      label: 'Bulk Enrollment',
+      label: t('adminDashboard.actions.bulkEnrollment'),
       icon: UserPlus,
       action: () => onNavigate('enrollment'),
       variant: 'default' as const,
-      description: 'Upload employee CSV file'
+      description: t('adminDashboard.actions.bulkEnrollmentDesc')
     },
     {
-      label: 'Add Employee Manually',
+      label: t('adminDashboard.actions.addEmployeeManually'),
       icon: UserPlus,
       action: () => onNavigate('manual-enrollment'),
       variant: 'outline' as const,
-      description: 'Create individual employee account'
+      description: t('adminDashboard.actions.addEmployeeManuallyDesc')
     },
     {
-      label: 'Create Groups',
+      label: t('adminDashboard.actions.createGroups'),
       icon: UsersThree,
       action: () => onNavigate('groups'),
       variant: 'outline' as const,
-      description: 'Organize employees into teams'
+      description: t('adminDashboard.actions.createGroupsDesc')
     },
     {
-      label: 'Assign Courses',
+      label: t('adminDashboard.actions.assignCourses'),
       icon: Target,
       action: () => onNavigate('assignments'),
       variant: 'outline' as const,
-      description: 'Assign training to groups/users'
+      description: t('adminDashboard.actions.assignCoursesDesc')
     },
     {
-      label: 'Team Management',
+      label: t('adminDashboard.actions.teamManagement'),
       icon: Users,
       action: () => onNavigate('teams'),
       variant: 'outline' as const,
-      description: 'Manage teams for challenges'
+      description: t('adminDashboard.actions.teamManagementDesc')
     },
     {
-      label: 'Mentorship Program',
+      label: t('adminDashboard.actions.mentorshipProgram'),
       icon: UsersFour,
       action: () => onNavigate('mentorship'),
       variant: 'outline' as const,
-      description: 'Pair mentors with mentees'
+      description: t('adminDashboard.actions.mentorshipProgramDesc')
     },
     {
-      label: 'Analytics Dashboard',
+      label: t('adminDashboard.actions.analyticsDashboard'),
       icon: ChartBar,
       action: () => onNavigate('analytics'),
       variant: 'default' as const,
-      description: 'View comprehensive analytics & ROI'
+      description: t('adminDashboard.actions.analyticsDashboardDesc')
     },
     {
-      label: 'Legacy Reports',
+      label: t('adminDashboard.actions.legacyReports'),
       icon: FileText,
       action: () => onNavigate('corporate-reports'),
       variant: 'outline' as const,
-      description: 'View progress & engagement'
+      description: t('adminDashboard.actions.legacyReportsDesc')
     },
     {
-      label: 'Create Course',
+      label: t('adminDashboard.actions.createCourse'),
       icon: Plus,
       action: () => onNavigate('courses'),
       variant: 'outline' as const,
-      description: 'Build new training content'
+      description: t('adminDashboard.actions.createCourseDesc')
     },
     {
-      label: 'View Reports',
+      label: t('adminDashboard.actions.viewReports'),
       icon: FileText,
       action: () => onNavigate('reports'),
       variant: 'outline' as const,
-      description: 'Detailed analytics reports'
+      description: t('adminDashboard.actions.viewReportsDesc')
     },
     {
-      label: 'Gamification',
+      label: t('adminDashboard.actions.gamification'),
       icon: Trophy,
       action: () => onNavigate('gamification'),
       variant: 'outline' as const,
-      description: 'Configure XP and badges'
+      description: t('adminDashboard.actions.gamificationDesc')
     },
     {
-      label: 'Company Settings',
+      label: t('adminDashboard.actions.companySettings'),
       icon: Certificate,
       action: () => onNavigate('company-settings'),
       variant: 'outline' as const,
-      description: 'Configure certificate branding'
+      description: t('adminDashboard.actions.companySettingsDesc')
     },
     {
-      label: 'Branding & Appearance',
+      label: t('adminDashboard.actions.brandingAppearance'),
       icon: Palette,
       action: () => onNavigate('branding'),
       variant: 'default' as const,
-      description: 'Customize platform branding'
+      description: t('adminDashboard.actions.brandingAppearanceDesc')
     }
   ]
 
   const stats = [
     {
-      title: 'Total Employees',
+      title: t('adminDashboard.stats.totalEmployees'),
       value: totalEmployees,
-      subtitle: `${pendingEmployees} pending activation`,
+      subtitle: t('adminDashboard.stats.pendingActivation', { count: String(pendingEmployees) }),
       icon: Users,
       color: 'text-primary'
     },
     {
-      title: 'Total Courses',
+      title: t('adminDashboard.stats.totalCourses'),
       value: totalCourses,
-      subtitle: `${publishedCourses} published`,
+      subtitle: t('adminDashboard.stats.published', { count: String(publishedCourses) }),
       icon: BookOpen,
       color: 'text-secondary'
     },
     {
-      title: 'Completion Rate',
+      title: t('adminDashboard.stats.completionRate'),
       value: `${completionRate}%`,
-      subtitle: 'Overall progress',
+      subtitle: t('adminDashboard.stats.overallProgress'),
       icon: TrendUp,
       color: 'text-success'
     },
     {
-      title: 'XP Awarded',
+      title: t('adminDashboard.stats.xpAwarded'),
       value: totalXPAwarded.toLocaleString(),
-      subtitle: 'Total experience earned',
+      subtitle: t('adminDashboard.stats.totalExperienceEarned'),
       icon: Trophy,
       color: 'text-accent'
     }
@@ -171,9 +173,9 @@ export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="text-3xl font-bold tracking-tight">Admin Dashboard</h2>
+        <h2 className="text-3xl font-bold tracking-tight">{t('adminDashboard.title')}</h2>
         <p className="text-muted-foreground mt-1">
-          Manage courses, users, and track learning progress
+          {t('adminDashboard.subtitle')}
         </p>
       </div>
 
@@ -200,7 +202,7 @@ export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
       </div>
 
       <div>
-        <h3 className="text-xl font-semibold mb-4">Quick Actions</h3>
+        <h3 className="text-xl font-semibold mb-4">{t('adminDashboard.quickActions')}</h3>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {quickActions.map((action, index) => (
             <motion.div
@@ -231,9 +233,9 @@ export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
 
       <Card>
         <CardHeader>
-          <CardTitle>Corporate Admin Workflow</CardTitle>
+          <CardTitle>{t('adminDashboard.workflow.title')}</CardTitle>
           <CardDescription>
-            Set up your learning platform in four simple steps
+            {t('adminDashboard.workflow.subtitle')}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -242,9 +244,9 @@ export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
               1
             </div>
             <div>
-              <p className="font-medium">Bulk Enroll Employees</p>
+              <p className="font-medium">{t('adminDashboard.workflow.step1.title')}</p>
               <p className="text-sm text-muted-foreground">
-                Upload a CSV file to create employee accounts with secure temporary passwords
+                {t('adminDashboard.workflow.step1.description')}
               </p>
             </div>
           </div>
@@ -253,9 +255,9 @@ export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
               2
             </div>
             <div>
-              <p className="font-medium">Create Groups</p>
+              <p className="font-medium">{t('adminDashboard.workflow.step2.title')}</p>
               <p className="text-sm text-muted-foreground">
-                Organize employees by department, role, or onboarding cohort
+                {t('adminDashboard.workflow.step2.description')}
               </p>
             </div>
           </div>
@@ -264,9 +266,9 @@ export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
               3
             </div>
             <div>
-              <p className="font-medium">Assign Training Courses</p>
+              <p className="font-medium">{t('adminDashboard.workflow.step3.title')}</p>
               <p className="text-sm text-muted-foreground">
-                Assign courses (missions/quests) to entire groups or individual employees
+                {t('adminDashboard.workflow.step3.description')}
               </p>
             </div>
           </div>
@@ -275,20 +277,20 @@ export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
               4
             </div>
             <div>
-              <p className="font-medium">Monitor Progress & Engagement</p>
+              <p className="font-medium">{t('adminDashboard.workflow.step4.title')}</p>
               <p className="text-sm text-muted-foreground">
-                Track completion rates, engagement metrics, and export reports
+                {t('adminDashboard.workflow.step4.description')}
               </p>
             </div>
           </div>
           <div className="flex gap-3 mt-6">
             <Button onClick={() => onNavigate('enrollment')} className="flex-1" size="lg">
               <UserPlus className="mr-2" size={20} />
-              Upload Employees
+              {t('adminDashboard.workflow.uploadEmployees')}
             </Button>
             <Button onClick={() => onNavigate('corporate-reports')} variant="outline" className="flex-1" size="lg">
               <ChartBar className="mr-2" size={20} />
-              View Analytics
+              {t('adminDashboard.workflow.viewAnalytics')}
             </Button>
           </div>
         </CardContent>
