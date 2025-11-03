@@ -97,9 +97,16 @@ Make sure each employee is only assigned to ONE group. Prioritize creating balan
       const result = JSON.parse(response)
       
       if (result.groups && Array.isArray(result.groups)) {
-        setSuggestions(result.groups)
+        const validEmployeeIds = new Set((employees || []).map(emp => emp.id))
+        
+        const validatedGroups = result.groups.map(group => ({
+          ...group,
+          userIds: group.userIds.filter((userId: string) => validEmployeeIds.has(userId))
+        })).filter(group => group.userIds.length > 0)
+        
+        setSuggestions(validatedGroups)
         setSelectedSuggestions(new Set())
-        toast.success(`${t('groupSuggestions.generated', 'Generated group suggestions')}: ${result.groups.length}`)
+        toast.success(`${t('groupSuggestions.generated', 'Generated group suggestions')}: ${validatedGroups.length}`)
       } else {
         throw new Error('Invalid response format')
       }

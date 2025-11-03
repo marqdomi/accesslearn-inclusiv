@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useKV } from '@github/spark/hooks'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Checkbox } from '@/components/ui/checkbox'
 import { UserGroup, EmployeeCredentials } from '@/lib/types'
-import { UsersThree, Plus, Trash, PencilSimple, X } from '@phosphor-icons/react'
+import { UsersThree, Plus, Trash, PencilSimple, X, Broom } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { GroupSuggestions } from './GroupSuggestions'
 import { useTranslation } from '@/lib/i18n'
@@ -56,7 +56,7 @@ export function GroupManagement() {
     setEditingGroup(group)
     setGroupName(group.name)
     setGroupDescription(group.description || '')
-    setSelectedUserIds([...group.userIds])
+    setSelectedUserIds(getValidUserIds(group.userIds))
     setSearchTerm('')
     setIsEditDialogOpen(true)
   }
@@ -114,8 +114,59 @@ export function GroupManagement() {
 
   const getUserName = (userId: string) => {
     const employee = (employees || []).find(e => e.id === userId)
-    return employee ? `${employee.firstName} ${employee.lastName}` : 'Unknown User'
+    return employee ? `${employee.firstName} ${employee.lastName}` : null
   }
+
+  const getValidUserIds = (userIds: string[]): string[] => {
+    const validEmployeeIds = new Set((employees || []).map(e => e.id))
+    return userIds.filter(id => validEmployeeIds.has(id))
+  }
+
+  const cleanupGhostUsers = () => {
+    const validEmployeeIds = new Set((employees || []).map(e => e.id))
+    let ghostCount = 0
+    let affectedGroups = 0
+
+    const cleanedGroups = (groups || []).map(group => {
+      const validUserIds = group.userIds.filter(id => validEmployeeIds.has(id))
+      const removedCount = group.userIds.length - validUserIds.length
+      
+      if (removedCount > 0) {
+        ghostCount += removedCount
+        affectedGroups++
+      }
+
+      return {
+        ...group,
+        userIds: validUserIds
+      }
+    })
+
+    if (ghostCount > 0) {
+      setGroups(cleanedGroups)
+      toast.success(
+        `${t('groups.cleanupComplete', 'Cleanup complete')}: ${ghostCount} ${t('groups.ghostUsersRemoved', 'ghost users removed from')} ${affectedGroups} ${affectedGroups === 1 ? t('groups.groupName', 'group') : t('groups.members', 'groups')}`
+      )
+    } else {
+      toast.info(t('groups.noGhostUsers', 'No ghost users found. All groups are clean!'))
+    }
+  }
+
+  useEffect(() => {
+    const validEmployeeIds = new Set((employees || []).map(e => e.id))
+    let hasGhosts = false
+
+    for (const group of (groups || [])) {
+      if (group.userIds.some(id => !validEmployeeIds.has(id))) {
+        hasGhosts = true
+        break
+      }
+    }
+
+    if (hasGhosts && (groups || []).length > 0) {
+      console.warn('Ghost users detected in groups. Use the cleanup button to remove them.')
+    }
+  }, [groups, employees])
 
   const getAvailableEmployees = () => {
     const search = searchTerm.toLowerCase()
@@ -141,14 +192,24 @@ export function GroupManagement() {
               </CardTitle>
               <CardDescription>{t('groups.description', 'Organize employees into groups for easier course assignment')}</CardDescription>
             </div>
-            <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-              <DialogTrigger asChild>
-                <Button className="gap-2">
-                  <Plus size={20} aria-hidden="true" />
-                  {t('groups.createGroup', 'Create Group')}
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                onClick={cleanupGhostUsers}
+                className="gap-2"
+                title={t('groups.cleanupGhostUsers', 'Remove invalid user references from all groups')}
+              >
+                <Broom size={20} aria-hidden="true" />
+                <span className="hidden sm:inline">{t('groups.cleanup', 'Cleanup')}</span>
+              </Button>
+              <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button className="gap-2">
+                    <Plus size={20} aria-hidden="true" />
+                    {t('groups.createGroup', 'Create Group')}
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>{t('groups.createNewGroup', 'Create New Group')}</DialogTitle>
                   <DialogDescription>{t('groups.createDescription', 'Organize employees into a group for batch course assignments')}</DialogDescription>
@@ -226,6 +287,7 @@ export function GroupManagement() {
                 </div>
               </DialogContent>
             </Dialog>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -241,51 +303,63 @@ export function GroupManagement() {
             </div>
           ) : (
             <div className="space-y-4">
-              {(groups || []).map((group) => (
-                <Card key={group.id} className="bg-card">
-                  <CardContent className="pt-6">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <h3 className="text-lg font-semibold">{group.name}</h3>
-                          <Badge variant="secondary">{group.userIds.length} {t('groups.members', 'members')}</Badge>
-                        </div>
-                        {group.description && (
-                          <p className="text-sm text-muted-foreground mb-3">{group.description}</p>
-                        )}
-                        <div className="flex flex-wrap gap-2">
-                          {group.userIds.slice(0, 5).map((userId) => (
-                            <Badge key={userId} variant="outline">
-                              {getUserName(userId)}
-                            </Badge>
-                          ))}
-                          {group.userIds.length > 5 && (
-                            <Badge variant="outline">+{group.userIds.length - 5} {t('groups.more', 'more')}</Badge>
+              {(groups || []).map((group) => {
+                const validUserIds = getValidUserIds(group.userIds)
+                const validCount = validUserIds.length
+                return (
+                  <Card key={group.id} className="bg-card">
+                    <CardContent className="pt-6">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <h3 className="text-lg font-semibold">{group.name}</h3>
+                            <Badge variant="secondary">{validCount} {t('groups.members', 'members')}</Badge>
+                            {validCount !== group.userIds.length && (
+                              <Badge variant="destructive" className="text-xs">
+                                {group.userIds.length - validCount} {t('groups.invalid', 'invalid')}
+                              </Badge>
+                            )}
+                          </div>
+                          {group.description && (
+                            <p className="text-sm text-muted-foreground mb-3">{group.description}</p>
                           )}
+                          <div className="flex flex-wrap gap-2">
+                            {validUserIds.slice(0, 5).map((userId) => {
+                              const userName = getUserName(userId)
+                              return userName ? (
+                                <Badge key={userId} variant="outline">
+                                  {userName}
+                                </Badge>
+                              ) : null
+                            })}
+                            {validCount > 5 && (
+                              <Badge variant="outline">+{validCount - 5} {t('groups.more', 'more')}</Badge>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEditGroup(group)}
+                            className="text-primary hover:text-primary hover:bg-primary/10"
+                          >
+                            <PencilSimple size={20} aria-hidden="true" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteGroup(group.id)}
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                          >
+                            <Trash size={20} aria-hidden="true" />
+                          </Button>
                         </div>
                       </div>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEditGroup(group)}
-                          className="text-primary hover:text-primary hover:bg-primary/10"
-                        >
-                          <PencilSimple size={20} aria-hidden="true" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDeleteGroup(group.id)}
-                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                        >
-                          <Trash size={20} aria-hidden="true" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    </CardContent>
+                  </Card>
+                )
+              })}
             </div>
           )}
         </CardContent>
@@ -450,23 +524,26 @@ export function GroupManagement() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {(groups || []).map((group) => (
-                    <TableRow key={group.id}>
-                      <TableCell className="font-medium">{group.name}</TableCell>
-                      <TableCell className="text-sm text-muted-foreground max-w-xs truncate">
-                        {group.description || '-'}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Badge variant="secondary">{group.userIds.length}</Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Badge variant="outline">{group.courseIds.length}</Badge>
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {new Date(group.createdAt).toLocaleDateString()}
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {(groups || []).map((group) => {
+                    const validCount = getValidUserIds(group.userIds).length
+                    return (
+                      <TableRow key={group.id}>
+                        <TableCell className="font-medium">{group.name}</TableCell>
+                        <TableCell className="text-sm text-muted-foreground max-w-xs truncate">
+                          {group.description || '-'}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Badge variant="secondary">{validCount}</Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Badge variant="outline">{group.courseIds.length}</Badge>
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {new Date(group.createdAt).toLocaleDateString()}
+                        </TableCell>
+                      </TableRow>
+                    )
+                  })}
                 </TableBody>
               </Table>
             </div>
