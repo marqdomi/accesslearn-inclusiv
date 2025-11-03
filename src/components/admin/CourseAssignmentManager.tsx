@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useKV } from '@github/spark/hooks'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -11,8 +11,11 @@ import { UserGroup, Course, CourseAssignment, EmployeeCredentials } from '@/lib/
 import { Target, Users, GraduationCap, CalendarBlank, CheckCircle } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { motion } from 'framer-motion'
+import { useTranslation } from '@/lib/i18n'
+import { translateCourse } from '@/lib/translate-course'
 
 export function CourseAssignmentManager() {
+  const { t } = useTranslation()
   const [courses] = useKV<Course[]>('courses', [])
   const [groups] = useKV<UserGroup[]>('user-groups', [])
   const [employees] = useKV<EmployeeCredentials[]>('employee-credentials', [])
@@ -23,19 +26,23 @@ export function CourseAssignmentManager() {
   const [selectedUser, setSelectedUser] = useState<string>('')
   const [assignmentType, setAssignmentType] = useState<'group' | 'individual'>('group')
 
+  const translatedCourses = useMemo(() => {
+    return (courses || []).map(course => translateCourse(course, t))
+  }, [courses, t])
+
   const handleAssignment = () => {
     if (!selectedCourse) {
-      toast.error('Please select a course')
+      toast.error(t('courseAssignment.selectCourse'))
       return
     }
 
     if (assignmentType === 'group' && !selectedGroup) {
-      toast.error('Please select a group')
+      toast.error(t('courseAssignment.selectGroup'))
       return
     }
 
     if (assignmentType === 'individual' && !selectedUser) {
-      toast.error('Please select a user')
+      toast.error(t('courseAssignment.selectEmployee'))
       return
     }
 
@@ -51,12 +58,12 @@ export function CourseAssignmentManager() {
 
     setAssignments((current) => [...(current || []), newAssignment])
 
-    const courseName = courses?.find(c => c.id === selectedCourse)?.title || 'Course'
+    const courseName = getCourseTitle(selectedCourse)
     const targetName = assignmentType === 'group'
-      ? groups?.find(g => g.id === selectedGroup)?.name || 'Group'
-      : employees?.find(e => e.id === selectedUser)?.email || 'User'
+      ? getGroupName(selectedGroup)
+      : getUserEmail(selectedUser)
 
-    toast.success(`${courseName} assigned to ${targetName}`)
+    toast.success(t('courseAssignment.assignSuccess', { course: courseName, target: targetName }))
     
     setSelectedCourse('')
     setSelectedGroup('')
@@ -67,15 +74,17 @@ export function CourseAssignmentManager() {
   const individualAssignments = (assignments || []).filter(a => a.userId)
 
   const getCourseTitle = (courseId: string) => {
-    return courses?.find(c => c.id === courseId)?.title || 'Unknown Course'
+    const course = translatedCourses?.find(c => c.id === courseId)
+    return course?.title || t('courseAssignment.unknownCourse')
   }
 
   const getGroupName = (groupId: string) => {
-    return groups?.find(g => g.id === groupId)?.name || 'Unknown Group'
+    return groups?.find(g => g.id === groupId)?.name || t('courseAssignment.unknownGroup')
   }
 
   const getUserEmail = (userId: string) => {
-    return employees?.find(e => e.id === userId)?.email || 'Unknown User'
+    const employee = employees?.find(e => e.id === userId)
+    return employee ? `${employee.firstName} ${employee.lastName} - ${employee.email}` : t('courseAssignment.unknownUser')
   }
 
   const getGroupMemberCount = (groupId: string) => {
@@ -88,9 +97,9 @@ export function CourseAssignmentManager() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Target size={24} className="text-primary" aria-hidden="true" />
-            Assign Courses
+            {t('courseAssignment.title')}
           </CardTitle>
-          <CardDescription>Assign training courses to groups or individual employees</CardDescription>
+          <CardDescription>{t('courseAssignment.description')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="flex gap-4">
@@ -100,7 +109,7 @@ export function CourseAssignmentManager() {
               className="flex-1 gap-2"
             >
               <Users size={20} aria-hidden="true" />
-              Assign to Group
+              {t('courseAssignment.assignToGroup')}
             </Button>
             <Button
               variant={assignmentType === 'individual' ? 'default' : 'outline'}
@@ -108,21 +117,21 @@ export function CourseAssignmentManager() {
               className="flex-1 gap-2"
             >
               <GraduationCap size={20} aria-hidden="true" />
-              Assign to Individual
+              {t('courseAssignment.assignToIndividual')}
             </Button>
           </div>
 
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="course-select" className="text-base font-medium">
-                Select Course
+                {t('courseAssignment.selectCourseLabel')}
               </Label>
               <Select value={selectedCourse} onValueChange={setSelectedCourse}>
                 <SelectTrigger id="course-select" className="h-12">
-                  <SelectValue placeholder="Choose a course to assign" />
+                  <SelectValue placeholder={t('courseAssignment.selectCoursePlaceholder')} />
                 </SelectTrigger>
                 <SelectContent>
-                  {(courses || []).map((course) => (
+                  {translatedCourses.map((course) => (
                     <SelectItem key={course.id} value={course.id}>
                       {course.title}
                     </SelectItem>
@@ -134,16 +143,16 @@ export function CourseAssignmentManager() {
             {assignmentType === 'group' ? (
               <div className="space-y-2">
                 <Label htmlFor="group-select" className="text-base font-medium">
-                  Select Group
+                  {t('courseAssignment.selectGroupLabel')}
                 </Label>
                 <Select value={selectedGroup} onValueChange={setSelectedGroup}>
                   <SelectTrigger id="group-select" className="h-12">
-                    <SelectValue placeholder="Choose a group" />
+                    <SelectValue placeholder={t('courseAssignment.selectGroupPlaceholder')} />
                   </SelectTrigger>
                   <SelectContent>
                     {(groups || []).map((group) => (
                       <SelectItem key={group.id} value={group.id}>
-                        {group.name} ({group.userIds.length} members)
+                        {group.name} ({group.userIds.length} {t('courseAssignment.members')})
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -152,11 +161,11 @@ export function CourseAssignmentManager() {
             ) : (
               <div className="space-y-2">
                 <Label htmlFor="user-select" className="text-base font-medium">
-                  Select Employee
+                  {t('courseAssignment.selectEmployeeLabel')}
                 </Label>
                 <Select value={selectedUser} onValueChange={setSelectedUser}>
                   <SelectTrigger id="user-select" className="h-12">
-                    <SelectValue placeholder="Choose an employee" />
+                    <SelectValue placeholder={t('courseAssignment.selectEmployeePlaceholder')} />
                   </SelectTrigger>
                   <SelectContent>
                     {(employees || []).map((employee) => (
@@ -171,7 +180,7 @@ export function CourseAssignmentManager() {
 
             <Button onClick={handleAssignment} className="w-full h-12 text-base font-semibold gap-2">
               <CheckCircle size={20} aria-hidden="true" />
-              Assign Course
+              {t('courseAssignment.assignButton')}
             </Button>
           </div>
         </CardContent>
@@ -179,25 +188,25 @@ export function CourseAssignmentManager() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Group Assignments</CardTitle>
-          <CardDescription>Courses assigned to employee groups</CardDescription>
+          <CardTitle>{t('courseAssignment.groupAssignments')}</CardTitle>
+          <CardDescription>{t('courseAssignment.groupAssignmentsDesc')}</CardDescription>
         </CardHeader>
         <CardContent>
           {groupAssignments.length === 0 ? (
             <div className="text-center py-8">
               <Users size={48} className="mx-auto text-muted-foreground mb-3" aria-hidden="true" />
-              <p className="text-muted-foreground">No group assignments yet</p>
+              <p className="text-muted-foreground">{t('courseAssignment.noGroupAssignments')}</p>
             </div>
           ) : (
             <div className="border rounded-lg overflow-hidden">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Course</TableHead>
-                    <TableHead>Group</TableHead>
-                    <TableHead className="text-right">Members</TableHead>
-                    <TableHead>Assigned Date</TableHead>
-                    <TableHead>Status</TableHead>
+                    <TableHead>{t('courseAssignment.course')}</TableHead>
+                    <TableHead>{t('courseAssignment.group')}</TableHead>
+                    <TableHead className="text-right">{t('courseAssignment.members')}</TableHead>
+                    <TableHead>{t('courseAssignment.assignedDate')}</TableHead>
+                    <TableHead>{t('courseAssignment.status')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -206,13 +215,13 @@ export function CourseAssignmentManager() {
                       <TableCell className="font-medium">{getCourseTitle(assignment.courseId)}</TableCell>
                       <TableCell>{getGroupName(assignment.groupId!)}</TableCell>
                       <TableCell className="text-right">
-                        <Badge variant="secondary">{getGroupMemberCount(assignment.groupId!)} users</Badge>
+                        <Badge variant="secondary">{getGroupMemberCount(assignment.groupId!)} {t('courseAssignment.users')}</Badge>
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
                         {new Date(assignment.assignedAt).toLocaleDateString()}
                       </TableCell>
                       <TableCell>
-                        <Badge variant="default">Active</Badge>
+                        <Badge variant="default">{t('courseAssignment.active')}</Badge>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -225,24 +234,24 @@ export function CourseAssignmentManager() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Individual Assignments</CardTitle>
-          <CardDescription>Courses assigned to specific employees</CardDescription>
+          <CardTitle>{t('courseAssignment.individualAssignments')}</CardTitle>
+          <CardDescription>{t('courseAssignment.individualAssignmentsDesc')}</CardDescription>
         </CardHeader>
         <CardContent>
           {individualAssignments.length === 0 ? (
             <div className="text-center py-8">
               <GraduationCap size={48} className="mx-auto text-muted-foreground mb-3" aria-hidden="true" />
-              <p className="text-muted-foreground">No individual assignments yet</p>
+              <p className="text-muted-foreground">{t('courseAssignment.noIndividualAssignments')}</p>
             </div>
           ) : (
             <div className="border rounded-lg overflow-hidden">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Course</TableHead>
-                    <TableHead>Employee</TableHead>
-                    <TableHead>Assigned Date</TableHead>
-                    <TableHead>Status</TableHead>
+                    <TableHead>{t('courseAssignment.course')}</TableHead>
+                    <TableHead>{t('courseAssignment.employee')}</TableHead>
+                    <TableHead>{t('courseAssignment.assignedDate')}</TableHead>
+                    <TableHead>{t('courseAssignment.status')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -254,7 +263,7 @@ export function CourseAssignmentManager() {
                         {new Date(assignment.assignedAt).toLocaleDateString()}
                       </TableCell>
                       <TableCell>
-                        <Badge variant="default">Active</Badge>
+                        <Badge variant="default">{t('courseAssignment.active')}</Badge>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -264,7 +273,7 @@ export function CourseAssignmentManager() {
           )}
           {individualAssignments.length > 20 && (
             <p className="text-sm text-muted-foreground text-center mt-4">
-              Showing 20 of {individualAssignments.length} assignments
+              {t('courseAssignment.showingXofY', { showing: '20', total: individualAssignments.length.toString() })}
             </p>
           )}
         </CardContent>
