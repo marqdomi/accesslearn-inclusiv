@@ -136,21 +136,26 @@ Make sure each employee is only assigned to ONE group. Prioritize creating balan
       return
     }
 
-    const newGroups: UserGroup[] = []
-    selectedSuggestions.forEach(index => {
+    const baseTimestamp = Date.now()
+    const newGroups: UserGroup[] = Array.from(selectedSuggestions).map((index, i) => {
       const suggestion = suggestions[index]
-      newGroups.push({
-        id: `group_${Date.now()}_${index}`,
+      return {
+        id: `group_${baseTimestamp}_${i}`,
         name: suggestion.name,
         description: suggestion.description,
-        userIds: suggestion.userIds,
+        userIds: [...suggestion.userIds],
         courseIds: [],
-        createdAt: Date.now()
-      })
+        createdAt: baseTimestamp + i
+      }
     })
 
     setGroups((current) => [...(current || []), ...newGroups])
-    toast.success(`${t('groups.createGroup', 'Created')}: ${newGroups.length} ${newGroups.length > 1 ? t('groups.members', 'groups') : t('groups.groupName', 'group')}`)
+    
+    const successMessage = newGroups.length > 1 
+      ? `${t('groups.createGroup', 'Created')}: ${newGroups.length} ${t('groups.members', 'groups')}`
+      : `${t('groups.createGroup', 'Created')}: ${newGroups.length} ${t('groups.groupName', 'group')}`
+    
+    toast.success(successMessage)
     
     setSuggestions([])
     setSelectedSuggestions(new Set())
