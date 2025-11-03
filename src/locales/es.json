@@ -959,6 +959,13 @@
   "groupSuggestions.selectAtLeastOne": "Por favor selecciona al menos un grupo para crear",
   "groupSuggestions.createSelected": "Crear Seleccionados",
   "groupSuggestions.dismiss": "Descartar Todos",
+  "groupSuggestions.edit": "Editar",
+  "groupSuggestions.editSuggestion": "Editar Sugerencia de Grupo",
+  "groupSuggestions.editDescription": "Personaliza el nombre, descripción y miembros de este grupo antes de crearlo.",
+  "groupSuggestions.saveChanges": "Guardar Cambios",
+  "groupSuggestions.atLeastOneMember": "Por favor selecciona al menos un miembro",
+  "groupSuggestions.suggestionUpdated": "Sugerencia de grupo actualizada",
+  "groupSuggestions.members": "miembros",
 
   "common.optional": "Opcional",
   "common.cancel": "Cancelar",

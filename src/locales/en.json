@@ -959,6 +959,13 @@
   "groupSuggestions.selectAtLeastOne": "Please select at least one group to create",
   "groupSuggestions.createSelected": "Create Selected",
   "groupSuggestions.dismiss": "Dismiss All",
+  "groupSuggestions.edit": "Edit",
+  "groupSuggestions.editSuggestion": "Edit Group Suggestion",
+  "groupSuggestions.editDescription": "Customize the name, description, and members of this group before creating it.",
+  "groupSuggestions.saveChanges": "Save Changes",
+  "groupSuggestions.atLeastOneMember": "Please select at least one member",
+  "groupSuggestions.suggestionUpdated": "Group suggestion updated",
+  "groupSuggestions.members": "members",
 
   "common.optional": "Optional",
   "common.cancel": "Cancel",

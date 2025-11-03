@@ -6,8 +6,13 @@ import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Separator } from '@/components/ui/separator'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Label } from '@/components/ui/label'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import { UserGroup, EmployeeCredentials } from '@/lib/types'
-import { Sparkle, Check, X, UsersThree } from '@phosphor-icons/react'
+import { Sparkle, Check, X, UsersThree, PencilSimple, UserMinus, UserPlus } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useTranslation } from '@/lib/i18n'
@@ -27,6 +32,11 @@ export function GroupSuggestions() {
   const [isGenerating, setIsGenerating] = useState(false)
   const [suggestions, setSuggestions] = useState<GroupSuggestion[]>([])
   const [selectedSuggestions, setSelectedSuggestions] = useState<Set<number>>(new Set())
+  const [editingIndex, setEditingIndex] = useState<number | null>(null)
+  const [editName, setEditName] = useState('')
+  const [editDescription, setEditDescription] = useState('')
+  const [editUserIds, setEditUserIds] = useState<string[]>([])
+  const [searchTerm, setSearchTerm] = useState('')
 
   const hasEmployees = (employees || []).length > 0
   const hasSuggestions = suggestions.length > 0
@@ -130,6 +140,66 @@ Make sure each employee is only assigned to ONE group. Prioritize creating balan
     })
   }
 
+  const openEditDialog = (index: number) => {
+    const suggestion = suggestions[index]
+    setEditingIndex(index)
+    setEditName(suggestion.name)
+    setEditDescription(suggestion.description)
+    setEditUserIds([...suggestion.userIds])
+    setSearchTerm('')
+  }
+
+  const closeEditDialog = () => {
+    setEditingIndex(null)
+    setEditName('')
+    setEditDescription('')
+    setEditUserIds([])
+    setSearchTerm('')
+  }
+
+  const handleSaveEdit = () => {
+    if (!editName.trim()) {
+      toast.error(t('groups.nameRequired', 'Group name is required'))
+      return
+    }
+
+    if (editUserIds.length === 0) {
+      toast.error(t('groupSuggestions.atLeastOneMember', 'Please select at least one member'))
+      return
+    }
+
+    setSuggestions((current) => 
+      current.map((suggestion, idx) => 
+        idx === editingIndex 
+          ? { 
+              ...suggestion, 
+              name: editName.trim(),
+              description: editDescription.trim(),
+              userIds: [...editUserIds]
+            }
+          : suggestion
+      )
+    )
+
+    toast.success(t('groupSuggestions.suggestionUpdated', 'Group suggestion updated'))
+    closeEditDialog()
+  }
+
+  const toggleUserInEdit = (userId: string) => {
+    setEditUserIds((current) => 
+      current.includes(userId)
+        ? current.filter(id => id !== userId)
+        : [...current, userId]
+    )
+  }
+
+  const filteredAvailableEmployees = (employees || []).filter(emp => {
+    const fullName = `${emp.firstName} ${emp.lastName}`.toLowerCase()
+    const email = emp.email.toLowerCase()
+    const search = searchTerm.toLowerCase()
+    return fullName.includes(search) || email.includes(search)
+  })
+
   const acceptSelectedSuggestions = () => {
     if (selectedSuggestions.size === 0) {
       toast.error(t('groupSuggestions.selectAtLeastOne', 'Please select at least one group to create'))
@@ -222,12 +292,11 @@ Make sure each employee is only assigned to ONE group. Prioritize creating balan
                 transition={{ delay: index * 0.1 }}
               >
                 <Card 
-                  className={`cursor-pointer transition-all ${
+                  className={`transition-all ${
                     selectedSuggestions.has(index) 
                       ? 'border-primary bg-primary/5 shadow-md' 
                       : 'border-border hover:border-primary/50 hover:shadow-sm'
                   }`}
-                  onClick={() => toggleSuggestion(index)}
                 >
                   <CardContent className="pt-6">
                     <div className="flex items-start gap-4">
@@ -236,32 +305,157 @@ Make sure each employee is only assigned to ONE group. Prioritize creating balan
                         onCheckedChange={() => toggleSuggestion(index)}
                         className="mt-1"
                         aria-label={`Select ${suggestion.name}`}
+                        onClick={(e) => e.stopPropagation()}
                       />
                       
                       <div className="flex-1 space-y-3">
                         <div className="flex items-start justify-between gap-4">
-                          <div>
+                          <div className="flex-1">
                             <h3 className="text-lg font-semibold flex items-center gap-2">
                               <UsersThree size={20} className="text-primary" aria-hidden="true" />
                               {suggestion.name}
                             </h3>
                             <p className="text-sm text-muted-foreground mt-1">{suggestion.description}</p>
                           </div>
-                          <Badge variant="secondary" className="shrink-0">
-                            {suggestion.userIds.length} {t('groupSuggestions.members', 'members')}
-                          </Badge>
+                          <div className="flex items-center gap-2">
+                            <Badge variant="secondary" className="shrink-0">
+                              {suggestion.userIds.length} {t('groupSuggestions.members', 'members')}
+                            </Badge>
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  className="gap-2"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    openEditDialog(index)
+                                  }}
+                                >
+                                  <PencilSimple size={16} aria-hidden="true" />
+                                  {t('groupSuggestions.edit', 'Editar')}
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+                                <DialogHeader>
+                                  <DialogTitle>{t('groupSuggestions.editSuggestion', 'Editar Sugerencia de Grupo')}</DialogTitle>
+                                  <DialogDescription>
+                                    {t('groupSuggestions.editDescription', 'Personaliza el nombre, descripción y miembros de este grupo antes de crearlo.')}
+                                  </DialogDescription>
+                                </DialogHeader>
+
+                                {editingIndex === index && (
+                                  <div className="flex-1 overflow-auto space-y-4 py-4">
+                                    <div className="space-y-2">
+                                      <Label htmlFor={`edit-name-${index}`}>
+                                        {t('groups.groupName', 'Nombre del Grupo')}
+                                      </Label>
+                                      <Input
+                                        id={`edit-name-${index}`}
+                                        value={editName}
+                                        onChange={(e) => setEditName(e.target.value)}
+                                        placeholder={t('groups.groupNamePlaceholder', 'ej., Nuevos Empleados, Equipo de Ventas')}
+                                      />
+                                    </div>
+
+                                    <div className="space-y-2">
+                                      <Label htmlFor={`edit-description-${index}`}>
+                                        {t('groups.descriptionPlaceholder', 'Descripción')}
+                                      </Label>
+                                      <Textarea
+                                        id={`edit-description-${index}`}
+                                        value={editDescription}
+                                        onChange={(e) => setEditDescription(e.target.value)}
+                                        placeholder={t('groups.descriptionPlaceholder', 'Describe el propósito de este grupo')}
+                                        rows={3}
+                                      />
+                                    </div>
+
+                                    <Separator />
+
+                                    <div className="space-y-2">
+                                      <Label>{t('groups.selectMembers', 'Seleccionar Miembros')} ({editUserIds.length} {t('groups.selected', 'seleccionados')})</Label>
+                                      <Input
+                                        placeholder={t('groups.searchMembers', 'Buscar miembros...')}
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        className="mb-2"
+                                      />
+                                      
+                                      <ScrollArea className="h-64 border rounded-lg">
+                                        <div className="p-4 space-y-2">
+                                          {filteredAvailableEmployees.length === 0 ? (
+                                            <p className="text-sm text-muted-foreground text-center py-4">
+                                              {t('groups.noAvailableMembers', 'No hay miembros disponibles')}
+                                            </p>
+                                          ) : (
+                                            filteredAvailableEmployees.map((employee) => {
+                                              const isSelected = editUserIds.includes(employee.id)
+                                              return (
+                                                <div
+                                                  key={employee.id}
+                                                  className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                                                    isSelected 
+                                                      ? 'bg-primary/10 border-primary' 
+                                                      : 'bg-card border-border hover:border-primary/50'
+                                                  }`}
+                                                  onClick={() => toggleUserInEdit(employee.id)}
+                                                >
+                                                  <Checkbox
+                                                    checked={isSelected}
+                                                    onCheckedChange={() => toggleUserInEdit(employee.id)}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                  />
+                                                  <div className="flex-1">
+                                                    <p className="font-medium text-sm">
+                                                      {employee.firstName} {employee.lastName}
+                                                    </p>
+                                                    <p className="text-xs text-muted-foreground">{employee.email}</p>
+                                                    {employee.department && (
+                                                      <Badge variant="outline" className="text-xs mt-1">
+                                                        {employee.department}
+                                                      </Badge>
+                                                    )}
+                                                  </div>
+                                                  {isSelected ? (
+                                                    <UserMinus size={18} className="text-destructive" aria-hidden="true" />
+                                                  ) : (
+                                                    <UserPlus size={18} className="text-primary" aria-hidden="true" />
+                                                  )}
+                                                </div>
+                                              )
+                                            })
+                                          )}
+                                        </div>
+                                      </ScrollArea>
+                                    </div>
+
+                                    <div className="flex gap-3 pt-4">
+                                      <Button onClick={handleSaveEdit} className="flex-1 gap-2">
+                                        <Check size={20} weight="bold" aria-hidden="true" />
+                                        {t('groupSuggestions.saveChanges', 'Guardar Cambios')}
+                                      </Button>
+                                      <Button variant="outline" onClick={closeEditDialog}>
+                                        {t('common.cancel', 'Cancelar')}
+                                      </Button>
+                                    </div>
+                                  </div>
+                                )}
+                              </DialogContent>
+                            </Dialog>
+                          </div>
                         </div>
 
                         <div className="bg-muted/50 p-3 rounded-lg">
                           <p className="text-sm text-foreground">
-                            <span className="font-medium">{t('groupSuggestions.rationale', 'Rationale')}: </span>
+                            <span className="font-medium">{t('groupSuggestions.rationale', 'Justificación')}: </span>
                             {suggestion.rationale}
                           </p>
                         </div>
 
                         <div>
                           <p className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide">
-                            {t('groupSuggestions.members', 'Members')}
+                            {t('groupSuggestions.members', 'Miembros')}
                           </p>
                           <div className="flex flex-wrap gap-2">
                             {suggestion.userIds.slice(0, 8).map((userId) => (
@@ -271,7 +465,7 @@ Make sure each employee is only assigned to ONE group. Prioritize creating balan
                             ))}
                             {suggestion.userIds.length > 8 && (
                               <Badge variant="outline" className="text-xs">
-                                +{suggestion.userIds.length - 8} {t('groups.more', 'more')}
+                                +{suggestion.userIds.length - 8} {t('groups.more', 'más')}
                               </Badge>
                             )}
                           </div>
