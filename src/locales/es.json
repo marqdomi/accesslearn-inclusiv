@@ -986,6 +986,8 @@
   "bulkUpload.credentialsDownloaded": "Credenciales descargadas exitosamente",
   "bulkUpload.templateDownloaded": "Plantilla descargada",
   "bulkUpload.employeeExists": "El empleado ya existe",
+  "bulkUpload.accountsSaved": "¡Cuentas Guardadas!",
+  "bulkUpload.accountsSavedDescription": "Todas las cuentas de empleados se han guardado automáticamente en el sistema. Descarga el archivo de credenciales para compartir la información de inicio de sesión con los nuevos empleados.",
 
   "courseAssignment.title": "Asignar Cursos",
   "courseAssignment.description": "Asignar cursos de capacitación a grupos o empleados individuales",

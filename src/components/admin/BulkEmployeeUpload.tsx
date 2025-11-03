@@ -215,16 +215,29 @@ export function BulkEmployeeUpload() {
 
               {uploadResult.successful.length > 0 && (
                 <div>
-                  <div className="flex items-center justify-between mb-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
                     <h3 className="text-lg font-semibold flex items-center gap-2">
                       <CheckCircle size={20} className="text-success" aria-hidden="true" />
                       {t('bulkUpload.successfullyCreated')}
                     </h3>
-                    <Button size="sm" variant="outline" onClick={() => handleDownloadCredentials(uploadResult.successful)}>
-                      <Download size={16} className="mr-2" aria-hidden="true" />
+                    <Button 
+                      size="lg" 
+                      variant="default" 
+                      onClick={() => handleDownloadCredentials(uploadResult.successful)}
+                      className="gap-2 bg-success hover:bg-success/90 text-success-foreground shadow-lg"
+                    >
+                      <Download size={20} aria-hidden="true" />
                       {t('bulkUpload.downloadTheseCredentials')}
                     </Button>
                   </div>
+                  
+                  <Alert className="mb-4 bg-success/10 border-success/30">
+                    <CheckCircle size={20} className="text-success" />
+                    <AlertDescription className="ml-2">
+                      <strong>{t('bulkUpload.accountsSaved')}</strong> {t('bulkUpload.accountsSavedDescription')}
+                    </AlertDescription>
+                  </Alert>
+                  
                   <div className="border rounded-lg overflow-hidden">
                     <Table>
                       <TableHeader>

@@ -986,6 +986,8 @@
   "bulkUpload.credentialsDownloaded": "Credentials downloaded successfully",
   "bulkUpload.templateDownloaded": "Template downloaded",
   "bulkUpload.employeeExists": "Employee already exists",
+  "bulkUpload.accountsSaved": "Accounts Saved!",
+  "bulkUpload.accountsSavedDescription": "All employee accounts have been automatically saved to the system. Download the credentials file to share login information with the new employees.",
 
   "courseAssignment.title": "Assign Courses",
   "courseAssignment.description": "Assign training courses to groups or individual employees",
