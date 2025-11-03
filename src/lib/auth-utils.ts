@@ -150,12 +150,29 @@ export function isValidEmail(email: string): boolean {
 }
 
 export function formatCredentialsForDownload(credentials: EmployeeCredentials[]): string {
+  if (!credentials || credentials.length === 0) {
+    console.warn('formatCredentialsForDownload called with empty credentials')
+    return 'Email,First Name,Last Name,Department,Temporary Password,Instructions\n'
+  }
+
+  console.log('Formatting', credentials.length, 'credentials for download')
+  
   const header = 'Email,First Name,Last Name,Department,Temporary Password,Instructions\n'
   const rows = credentials.map(cred => {
     const instructions = 'Please log in and change your password immediately'
-    return `${cred.email},"${cred.firstName}","${cred.lastName}","${cred.department || ''}",${cred.temporaryPassword},"${instructions}"`
+    const email = cred.email || ''
+    const firstName = cred.firstName || ''
+    const lastName = cred.lastName || ''
+    const department = cred.department || ''
+    const password = cred.temporaryPassword || ''
+    
+    return `${email},"${firstName}","${lastName}","${department}",${password},"${instructions}"`
   })
-  return header + rows.join('\n')
+  
+  const result = header + rows.join('\n')
+  console.log('CSV content length:', result.length)
+  
+  return result
 }
 
 export function createAuthSession(userId: string, email: string, role: 'employee' | 'admin', isFirstLogin: boolean): AuthSession {

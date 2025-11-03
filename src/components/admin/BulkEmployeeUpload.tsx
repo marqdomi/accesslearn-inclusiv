@@ -106,17 +106,32 @@ export function BulkEmployeeUpload() {
   }
 
   const handleDownloadCredentials = (credList: EmployeeCredentials[]) => {
-    const csvContent = formatCredentialsForDownload(credList)
-    const blob = new Blob([csvContent], { type: 'text/csv' })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `employee-credentials-${new Date().toISOString().split('T')[0]}.csv`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    URL.revokeObjectURL(url)
-    toast.success(t('bulkUpload.credentialsDownloaded'))
+    if (!credList || credList.length === 0) {
+      toast.error('No hay credenciales para descargar')
+      return
+    }
+
+    try {
+      const csvContent = formatCredentialsForDownload(credList)
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `employee-credentials-${new Date().toISOString().split('T')[0]}.csv`
+      link.style.display = 'none'
+      document.body.appendChild(link)
+      link.click()
+      
+      setTimeout(() => {
+        document.body.removeChild(link)
+        URL.revokeObjectURL(url)
+      }, 100)
+      
+      toast.success(t('bulkUpload.credentialsDownloaded'))
+    } catch (error) {
+      console.error('Error downloading credentials:', error)
+      toast.error('Error al descargar las credenciales')
+    }
   }
 
   const handleDownloadTemplate = () => {
@@ -223,7 +238,11 @@ export function BulkEmployeeUpload() {
                     <Button 
                       size="lg" 
                       variant="default" 
-                      onClick={() => handleDownloadCredentials(uploadResult.successful)}
+                      onClick={() => {
+                        console.log('Downloading credentials:', uploadResult.successful.length, 'accounts')
+                        console.log('Sample credential:', uploadResult.successful[0])
+                        handleDownloadCredentials(uploadResult.successful)
+                      }}
                       className="gap-2 bg-success hover:bg-success/90 text-success-foreground shadow-lg"
                     >
                       <Download size={20} aria-hidden="true" />
