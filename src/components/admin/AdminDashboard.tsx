@@ -6,7 +6,7 @@ import { Users, BookOpen, TrendUp, Trophy, Plus, FileText, UserPlus, Target, Use
 import { motion } from 'framer-motion'
 
 interface AdminDashboardProps {
-  onNavigate: (section: 'courses' | 'users' | 'reports' | 'gamification' | 'enrollment' | 'corporate-reports' | 'assignments' | 'groups' | 'mentorship' | 'teams' | 'analytics' | 'company-settings' | 'branding') => void
+  onNavigate: (section: 'courses' | 'users' | 'reports' | 'gamification' | 'enrollment' | 'manual-enrollment' | 'corporate-reports' | 'assignments' | 'groups' | 'mentorship' | 'teams' | 'analytics' | 'company-settings' | 'branding') => void
 }
 
 export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
@@ -50,6 +50,13 @@ export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
       action: () => onNavigate('enrollment'),
       variant: 'default' as const,
       description: 'Upload employee CSV file'
+    },
+    {
+      label: 'Add Employee Manually',
+      icon: UserPlus,
+      action: () => onNavigate('manual-enrollment'),
+      variant: 'outline' as const,
+      description: 'Create individual employee account'
     },
     {
       label: 'Create Groups',

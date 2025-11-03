@@ -175,7 +175,7 @@ export function formatCredentialsForDownload(credentials: EmployeeCredentials[])
   return result
 }
 
-export function createAuthSession(userId: string, email: string, role: 'employee' | 'admin', isFirstLogin: boolean): AuthSession {
+export function createAuthSession(userId: string, email: string, role: 'employee' | 'admin' | 'mentor', isFirstLogin: boolean): AuthSession {
   return {
     userId,
     email,

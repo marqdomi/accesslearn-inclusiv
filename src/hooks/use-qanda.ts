@@ -42,7 +42,7 @@ export function useQandA(courseId: string, userId?: string) {
     content: string,
     userName: string,
     userAvatar?: string,
-    userRole?: 'employee' | 'admin'
+    userRole?: 'employee' | 'admin' | 'mentor'
   ) => {
     const newAnswer: ForumAnswer = {
       id: generateId(),

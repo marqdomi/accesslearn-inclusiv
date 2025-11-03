@@ -51,7 +51,7 @@ import { formatDistanceToNow } from 'date-fns'
 interface QandAForumProps {
   course: Course
   userId: string
-  userRole?: 'employee' | 'admin'
+  userRole?: 'employee' | 'admin' | 'mentor'
 }
 
 type SortOption = 'newest' | 'mostUpvoted' | 'unansweredFirst'

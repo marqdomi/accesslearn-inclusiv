@@ -5,6 +5,7 @@ import { UserManagement } from './UserManagement'
 import { GamificationHub } from './GamificationHub'
 import { ReportsView } from './ReportsView'
 import { BulkEmployeeUpload } from './BulkEmployeeUpload'
+import { ManualEmployeeEnrollment } from './ManualEmployeeEnrollment'
 import { CorporateReportingDashboard } from './CorporateReportingDashboard'
 import { CourseAssignmentManager } from './CourseAssignmentManager'
 import { GroupManagement } from './GroupManagement'
@@ -14,7 +15,7 @@ import { AnalyticsDashboard } from './analytics/AnalyticsDashboard'
 import { CompanySettings } from './CompanySettings'
 import { BrandingManagement } from './BrandingManagement'
 
-type AdminSection = 'dashboard' | 'courses' | 'users' | 'gamification' | 'reports' | 'enrollment' | 'corporate-reports' | 'assignments' | 'groups' | 'mentorship' | 'teams' | 'analytics' | 'company-settings' | 'branding'
+type AdminSection = 'dashboard' | 'courses' | 'users' | 'gamification' | 'reports' | 'enrollment' | 'manual-enrollment' | 'corporate-reports' | 'assignments' | 'groups' | 'mentorship' | 'teams' | 'analytics' | 'company-settings' | 'branding'
 
 export function AdminPanel() {
   const [currentSection, setCurrentSection] = useState<AdminSection>('dashboard')
@@ -44,6 +45,16 @@ export function AdminPanel() {
             </button>
           </div>
           <BulkEmployeeUpload />
+        </div>
+      )}
+      {currentSection === 'manual-enrollment' && (
+        <div className="space-y-6">
+          <div className="flex items-center gap-4">
+            <button onClick={() => setCurrentSection('dashboard')} className="text-sm text-muted-foreground hover:text-foreground">
+              ← Back to Dashboard
+            </button>
+          </div>
+          <ManualEmployeeEnrollment />
         </div>
       )}
       {currentSection === 'corporate-reports' && (

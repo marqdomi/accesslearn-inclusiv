@@ -62,7 +62,7 @@ export interface User {
   id: string
   name: string
   email: string
-  role: 'employee' | 'admin'
+  role: 'employee' | 'admin' | 'mentor'
   assignedCourses: string[]
 }
 
@@ -395,7 +395,7 @@ export interface EmployeeCredentials {
   firstName: string
   lastName: string
   department?: string
-  role?: 'employee' | 'admin'
+  role?: 'employee' | 'admin' | 'mentor'
   status: 'pending' | 'activated' | 'disabled'
   createdAt: number
   expiresAt?: number
@@ -414,7 +414,7 @@ export interface BulkUploadResult {
 export interface AuthSession {
   userId: string
   email: string
-  role: 'employee' | 'admin'
+  role: 'employee' | 'admin' | 'mentor'
   isFirstLogin: boolean
   requiresPasswordChange: boolean
   requiresOnboarding: boolean
@@ -446,7 +446,7 @@ export interface UserProfile {
   displayName?: string
   avatar?: string
   department?: string
-  role: 'employee' | 'admin'
+  role: 'employee' | 'admin' | 'mentor'
   createdAt: number
   lastLoginAt?: number
   preferences: OnboardingPreferences
@@ -555,7 +555,7 @@ export interface ForumAnswer {
   userId: string
   userName: string
   userAvatar?: string
-  userRole?: 'employee' | 'admin' | 'expert'
+  userRole?: 'employee' | 'admin' | 'expert' | 'mentor'
   content: string
   timestamp: number
   upvotes: number

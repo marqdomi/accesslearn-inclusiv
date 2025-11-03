@@ -13,11 +13,18 @@ import { EmployeeCredentials, BulkUploadResult } from '@/lib/types'
 import { parseCSVEmployees, generateTemporaryPassword, formatCredentialsForDownload } from '@/lib/auth-utils'
 import { useTranslation } from '@/lib/i18n'
 
+type UploadStage = 'initial' | 'preview' | 'confirmed'
+
 export function BulkEmployeeUpload() {
   const { t } = useTranslation()
   const [credentials, setCredentials] = useKV<EmployeeCredentials[]>('employee-credentials', [])
   const [uploadResult, setUploadResult] = useState<BulkUploadResult | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
+  const [uploadStage, setUploadStage] = useState<UploadStage>('initial')
+  const [previewData, setPreviewData] = useState<{
+    successful: EmployeeCredentials[]
+    failed: Array<{ row: number; email: string; errors: string[] }>
+  } | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -37,10 +44,10 @@ export function BulkEmployeeUpload() {
       const successful: EmployeeCredentials[] = []
       const failed: Array<{ row: number; email: string; errors: string[] }> = []
 
-      const existingEmails = new Set((credentials || []).map(c => c.email))
+      const existingEmails = new Set((credentials || []).map(c => c.email.toLowerCase()))
 
       employees.forEach((emp, idx) => {
-        if (existingEmails.has(emp.email)) {
+        if (existingEmails.has(emp.email.toLowerCase())) {
           failed.push({
             row: idx + 2,
             email: emp.email,
@@ -61,7 +68,7 @@ export function BulkEmployeeUpload() {
           expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000
         }
         successful.push(newCredential)
-        existingEmails.add(emp.email)
+        existingEmails.add(emp.email.toLowerCase())
       })
 
       errors.forEach(error => {
@@ -72,27 +79,14 @@ export function BulkEmployeeUpload() {
         })
       })
 
-      const result: BulkUploadResult = {
-        successful,
-        failed,
-        totalProcessed: employees.length + errors.length
-      }
-
-      setUploadResult(result)
-
+      setPreviewData({ successful, failed })
+      setUploadStage('preview')
+      
       if (successful.length > 0) {
-        setCredentials((current) => [...(current || []), ...successful])
-        const message = successful.length === 1 
-          ? t('bulkUpload.accountsCreated', { count: successful.length.toString() })
-          : t('bulkUpload.accountsCreatedPlural', { count: successful.length.toString() })
-        toast.success(message)
+        toast.success(`${t('bulkUpload.validEmployeesFound')}: ${successful.length}`)
       }
-
       if (failed.length > 0) {
-        const message = failed.length === 1
-          ? t('bulkUpload.rowsFailed', { count: failed.length.toString() })
-          : t('bulkUpload.rowsFailedPlural', { count: failed.length.toString() })
-        toast.error(message)
+        toast.warning(`${t('bulkUpload.invalidRows')}: ${failed.length}`)
       }
     } catch (error) {
       toast.error(t('bulkUpload.processingError'))
@@ -103,6 +97,48 @@ export function BulkEmployeeUpload() {
         fileInputRef.current.value = ''
       }
     }
+  }
+
+  const handleConfirmUpload = () => {
+    if (!previewData) return
+
+    setIsProcessing(true)
+    try {
+      const result: BulkUploadResult = {
+        successful: previewData.successful,
+        failed: previewData.failed,
+        totalProcessed: previewData.successful.length + previewData.failed.length
+      }
+
+      if (previewData.successful.length > 0) {
+        setCredentials((current) => [...(current || []), ...previewData.successful])
+        const message = previewData.successful.length === 1 
+          ? t('bulkUpload.accountsCreated', { count: previewData.successful.length.toString() })
+          : t('bulkUpload.accountsCreatedPlural', { count: previewData.successful.length.toString() })
+        toast.success(message)
+      }
+
+      setUploadResult(result)
+      setUploadStage('confirmed')
+      setPreviewData(null)
+    } catch (error) {
+      toast.error('Error al confirmar la inscripción')
+      console.error(error)
+    } finally {
+      setIsProcessing(false)
+    }
+  }
+
+  const handleCancelUpload = () => {
+    setPreviewData(null)
+    setUploadStage('initial')
+    toast.info(t('bulkUpload.uploadCancelled'))
+  }
+
+  const handleStartNewUpload = () => {
+    setUploadResult(null)
+    setUploadStage('initial')
+    setPreviewData(null)
   }
 
   const handleDownloadCredentials = (credList: EmployeeCredentials[]) => {
@@ -116,16 +152,13 @@ export function BulkEmployeeUpload() {
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
       const url = URL.createObjectURL(blob)
       const link = document.createElement('a')
-      link.href = url
-      link.download = `employee-credentials-${new Date().toISOString().split('T')[0]}.csv`
-      link.style.display = 'none'
+      link.setAttribute('href', url)
+      link.setAttribute('download', `employee-credentials-${new Date().toISOString().split('T')[0]}.csv`)
+      link.style.visibility = 'hidden'
       document.body.appendChild(link)
       link.click()
-      
-      setTimeout(() => {
-        document.body.removeChild(link)
-        URL.revokeObjectURL(url)
-      }, 100)
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
       
       toast.success(t('bulkUpload.credentialsDownloaded'))
     } catch (error) {
@@ -161,39 +194,163 @@ export function BulkEmployeeUpload() {
           <CardDescription>{t('bulkUpload.description')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="flex flex-wrap gap-3">
-            <Button onClick={() => fileInputRef.current?.click()} disabled={isProcessing} className="gap-2">
-              <Upload size={20} aria-hidden="true" />
-              {isProcessing ? t('bulkUpload.processing') : t('bulkUpload.uploadButton')}
-            </Button>
-            <Button variant="outline" onClick={handleDownloadTemplate} className="gap-2">
-              <FileCsv size={20} aria-hidden="true" />
-              {t('bulkUpload.downloadTemplate')}
-            </Button>
-            {pendingCredentials.length > 0 && (
-              <Button variant="secondary" onClick={() => handleDownloadCredentials(pendingCredentials)} className="gap-2">
-                <Download size={20} aria-hidden="true" />
-                {t('bulkUpload.downloadCredentials')}
-              </Button>
-            )}
-          </div>
+          {uploadStage === 'initial' && (
+            <>
+              <div className="flex flex-wrap gap-3">
+                <Button onClick={() => fileInputRef.current?.click()} disabled={isProcessing} className="gap-2">
+                  <Upload size={20} aria-hidden="true" />
+                  {isProcessing ? t('bulkUpload.processing') : t('bulkUpload.uploadButton')}
+                </Button>
+                <Button variant="outline" onClick={handleDownloadTemplate} className="gap-2">
+                  <FileCsv size={20} aria-hidden="true" />
+                  {t('bulkUpload.downloadTemplate')}
+                </Button>
+                {pendingCredentials.length > 0 && (
+                  <Button variant="secondary" onClick={() => handleDownloadCredentials(pendingCredentials)} className="gap-2">
+                    <Download size={20} aria-hidden="true" />
+                    {t('bulkUpload.downloadCredentials')}
+                  </Button>
+                )}
+              </div>
 
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".csv"
-            onChange={handleFileUpload}
-            className="hidden"
-            aria-label="Upload CSV file"
-          />
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".csv"
+                onChange={handleFileUpload}
+                className="hidden"
+                aria-label="Upload CSV file"
+              />
 
-          <Alert className="bg-primary/5 border-primary/20">
-            <AlertDescription>
-              <strong>{t('bulkUpload.formatHelp')}</strong> {t('bulkUpload.formatDescription')}
-            </AlertDescription>
-          </Alert>
+              <Alert className="bg-primary/5 border-primary/20">
+                <AlertDescription>
+                  <strong>{t('bulkUpload.formatHelp')}</strong> {t('bulkUpload.formatDescription')}
+                </AlertDescription>
+              </Alert>
+            </>
+          )}
 
-          {uploadResult && (
+          {uploadStage === 'preview' && previewData && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-4"
+            >
+              <Alert className="bg-accent/10 border-accent/30">
+                <Warning size={20} className="text-accent" />
+                <AlertDescription className="ml-2">
+                  <strong>{t('bulkUpload.confirmationRequired')}</strong> {t('bulkUpload.reviewBeforeConfirming')}
+                </AlertDescription>
+              </Alert>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Card className="bg-card">
+                  <CardContent className="pt-6">
+                    <div className="text-center">
+                      <p className="text-3xl font-bold text-success">{previewData.successful.length}</p>
+                      <p className="text-sm text-muted-foreground mt-1">{t('bulkUpload.validEmployees')}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card className="bg-card">
+                  <CardContent className="pt-6">
+                    <div className="text-center">
+                      <p className="text-3xl font-bold text-destructive">{previewData.failed.length}</p>
+                      <p className="text-sm text-muted-foreground mt-1">{t('bulkUpload.invalidRows')}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card className="bg-card">
+                  <CardContent className="pt-6">
+                    <div className="text-center">
+                      <p className="text-3xl font-bold text-foreground">{previewData.successful.length + previewData.failed.length}</p>
+                      <p className="text-sm text-muted-foreground mt-1">{t('bulkUpload.totalProcessed')}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {previewData.successful.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-semibold flex items-center gap-2 mb-3">
+                    <CheckCircle size={20} className="text-success" aria-hidden="true" />
+                    {t('bulkUpload.employeesToBeCreated')}
+                  </h3>
+                  <div className="border rounded-lg overflow-hidden max-h-96 overflow-y-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>{t('bulkUpload.name')}</TableHead>
+                          <TableHead>{t('bulkUpload.email')}</TableHead>
+                          <TableHead>{t('bulkUpload.department')}</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {previewData.successful.map((cred) => (
+                          <TableRow key={cred.id}>
+                            <TableCell className="font-medium">{cred.firstName} {cred.lastName}</TableCell>
+                            <TableCell>{cred.email}</TableCell>
+                            <TableCell>{cred.department || '-'}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+              )}
+
+              {previewData.failed.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-semibold flex items-center gap-2 mb-3">
+                    <Warning size={20} className="text-destructive" aria-hidden="true" />
+                    {t('bulkUpload.invalidRowsWillBeSkipped')}
+                  </h3>
+                  <div className="border rounded-lg overflow-hidden max-h-64 overflow-y-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>{t('bulkUpload.row')}</TableHead>
+                          <TableHead>{t('bulkUpload.email')}</TableHead>
+                          <TableHead>{t('bulkUpload.errors')}</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {previewData.failed.map((fail, idx) => (
+                          <TableRow key={idx}>
+                            <TableCell>{fail.row}</TableCell>
+                            <TableCell>{fail.email || '-'}</TableCell>
+                            <TableCell className="text-destructive text-sm">{fail.errors.join(', ')}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex flex-wrap gap-3 pt-4">
+                <Button 
+                  size="lg" 
+                  onClick={handleConfirmUpload} 
+                  disabled={isProcessing || previewData.successful.length === 0}
+                  className="gap-2"
+                >
+                  <CheckCircle size={20} aria-hidden="true" />
+                  {isProcessing ? t('bulkUpload.processing') : t('bulkUpload.confirmAndCreate')}
+                </Button>
+                <Button 
+                  size="lg" 
+                  variant="outline" 
+                  onClick={handleCancelUpload}
+                  disabled={isProcessing}
+                >
+                  {t('bulkUpload.cancel')}
+                </Button>
+              </div>
+            </motion.div>
+          )}
+
+          {uploadStage === 'confirmed' && uploadResult && (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -238,11 +395,7 @@ export function BulkEmployeeUpload() {
                     <Button 
                       size="lg" 
                       variant="default" 
-                      onClick={() => {
-                        console.log('Downloading credentials:', uploadResult.successful.length, 'accounts')
-                        console.log('Sample credential:', uploadResult.successful[0])
-                        handleDownloadCredentials(uploadResult.successful)
-                      }}
+                      onClick={() => handleDownloadCredentials(uploadResult.successful)}
                       className="gap-2 bg-success hover:bg-success/90 text-success-foreground shadow-lg"
                     >
                       <Download size={20} aria-hidden="true" />
@@ -317,6 +470,13 @@ export function BulkEmployeeUpload() {
                   </div>
                 </div>
               )}
+
+              <div className="pt-4">
+                <Button onClick={handleStartNewUpload} variant="outline" className="gap-2">
+                  <Upload size={20} aria-hidden="true" />
+                  {t('bulkUpload.uploadAnotherFile')}
+                </Button>
+              </div>
             </motion.div>
           )}
         </CardContent>
