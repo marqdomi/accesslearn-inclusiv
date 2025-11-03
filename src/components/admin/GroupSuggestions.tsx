@@ -49,7 +49,30 @@ export function GroupSuggestions() {
 
       const employeeDataStr = JSON.stringify(employeeData, null, 2)
       
-      const promptText = `You are an HR assistant helping to organize employees into logical groups for a corporate learning platform.
+      const isSpanish = t('app.title') === 'GameLearn' && t('nav.dashboard') === 'Panel Principal'
+      
+      const promptText = isSpanish 
+        ? `Eres un asistente de RRHH que ayuda a organizar empleados en grupos lógicos para una plataforma de aprendizaje corporativo.
+
+Analiza los siguientes datos de empleados y sugiere 3-5 grupos de empleados que tengan sentido para asignaciones de cursos y gestión de capacitación.
+
+Datos de Empleados:
+${employeeDataStr}
+
+Considera agrupar por:
+- Departamento (si está disponible)
+- Tamaño del equipo (grupos óptimos de 5-15 personas)
+- Patrones de dominio de correo electrónico que puedan indicar equipos o ubicaciones
+- Patrones de nombres que puedan sugerir agrupaciones culturales o regionales
+
+Devuelve un objeto JSON con una propiedad "groups" que contenga un array de sugerencias de grupos. Cada sugerencia debe tener:
+- name: Un nombre de grupo claro y profesional (en español)
+- description: Breve explicación del propósito del grupo (en español)
+- userIds: Array de IDs de empleados que pertenecen a este grupo
+- rationale: Por qué esta agrupación tiene sentido (1-2 oraciones en español)
+
+Asegúrate de que cada empleado esté asignado a UN SOLO grupo. Prioriza crear grupos equilibrados y significativos.`
+        : `You are an HR assistant helping to organize employees into logical groups for a corporate learning platform.
 
 Analyze the following employee data and suggest 3-5 employee groups that would make sense for course assignments and training management.
 
@@ -236,7 +259,7 @@ Make sure each employee is only assigned to ONE group. Prioritize creating balan
                             ))}
                             {suggestion.userIds.length > 8 && (
                               <Badge variant="outline" className="text-xs">
-                                +{suggestion.userIds.length - 8} {t('groupSuggestions.more', 'more')}
+                                +{suggestion.userIds.length - 8} {t('groups.more', 'more')}
                               </Badge>
                             )}
                           </div>

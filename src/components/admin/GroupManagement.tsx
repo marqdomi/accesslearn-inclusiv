@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Checkbox } from '@/components/ui/checkbox'
 import { UserGroup, EmployeeCredentials } from '@/lib/types'
-import { UsersThree, Plus, Trash } from '@phosphor-icons/react'
+import { UsersThree, Plus, Trash, PencilSimple, X } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { GroupSuggestions } from './GroupSuggestions'
 import { useTranslation } from '@/lib/i18n'
@@ -21,9 +21,12 @@ export function GroupManagement() {
   const [employees] = useKV<EmployeeCredentials[]>('employee-credentials', [])
   
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [editingGroup, setEditingGroup] = useState<UserGroup | null>(null)
   const [groupName, setGroupName] = useState('')
   const [groupDescription, setGroupDescription] = useState('')
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([])
+  const [searchTerm, setSearchTerm] = useState('')
 
   const handleCreateGroup = () => {
     if (!groupName.trim()) {
@@ -49,6 +52,44 @@ export function GroupManagement() {
     setIsCreateDialogOpen(false)
   }
 
+  const handleEditGroup = (group: UserGroup) => {
+    setEditingGroup(group)
+    setGroupName(group.name)
+    setGroupDescription(group.description || '')
+    setSelectedUserIds([...group.userIds])
+    setSearchTerm('')
+    setIsEditDialogOpen(true)
+  }
+
+  const handleUpdateGroup = () => {
+    if (!editingGroup) return
+    
+    if (!groupName.trim()) {
+      toast.error(t('groups.nameRequired', 'Group name is required'))
+      return
+    }
+
+    const updatedGroup: UserGroup = {
+      ...editingGroup,
+      name: groupName.trim(),
+      description: groupDescription.trim(),
+      userIds: selectedUserIds
+    }
+
+    setGroups((current) => 
+      (current || []).map(g => g.id === editingGroup.id ? updatedGroup : g)
+    )
+    
+    toast.success(t('groups.updated', 'Group updated successfully'))
+    
+    setEditingGroup(null)
+    setGroupName('')
+    setGroupDescription('')
+    setSelectedUserIds([])
+    setSearchTerm('')
+    setIsEditDialogOpen(false)
+  }
+
   const handleDeleteGroup = (groupId: string) => {
     const group = groups?.find(g => g.id === groupId)
     if (!group) return
@@ -67,9 +108,23 @@ export function GroupManagement() {
     )
   }
 
+  const handleRemoveMember = (userId: string) => {
+    setSelectedUserIds((current) => current.filter(id => id !== userId))
+  }
+
   const getUserName = (userId: string) => {
-    const employee = employees?.find(e => e.id === userId)
+    const employee = (employees || []).find(e => e.id === userId)
     return employee ? `${employee.firstName} ${employee.lastName}` : 'Unknown User'
+  }
+
+  const getAvailableEmployees = () => {
+    const search = searchTerm.toLowerCase()
+    return (employees || []).filter(emp => {
+      if (selectedUserIds.includes(emp.id)) return false
+      if (!search) return true
+      const fullName = `${emp.firstName} ${emp.lastName}`.toLowerCase()
+      return fullName.includes(search) || emp.email.toLowerCase().includes(search)
+    })
   }
 
   return (
@@ -193,7 +248,7 @@ export function GroupManagement() {
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
                           <h3 className="text-lg font-semibold">{group.name}</h3>
-                          <Badge variant="secondary">{group.userIds.length} members</Badge>
+                          <Badge variant="secondary">{group.userIds.length} {t('groups.members', 'members')}</Badge>
                         </div>
                         {group.description && (
                           <p className="text-sm text-muted-foreground mb-3">{group.description}</p>
@@ -205,18 +260,28 @@ export function GroupManagement() {
                             </Badge>
                           ))}
                           {group.userIds.length > 5 && (
-                            <Badge variant="outline">+{group.userIds.length - 5} more</Badge>
+                            <Badge variant="outline">+{group.userIds.length - 5} {t('groups.more', 'more')}</Badge>
                           )}
                         </div>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeleteGroup(group.id)}
-                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                      >
-                        <Trash size={20} aria-hidden="true" />
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEditGroup(group)}
+                          className="text-primary hover:text-primary hover:bg-primary/10"
+                        >
+                          <PencilSimple size={20} aria-hidden="true" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteGroup(group.id)}
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        >
+                          <Trash size={20} aria-hidden="true" />
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -225,6 +290,146 @@ export function GroupManagement() {
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{t('groups.editGroup', 'Edit Group')}</DialogTitle>
+            <DialogDescription>{t('groups.editDescription', 'Update group details and members')}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-group-name" className="text-base font-medium">
+                {t('groups.groupName', 'Group Name')}
+              </Label>
+              <Input
+                id="edit-group-name"
+                placeholder={t('groups.groupNamePlaceholder', 'e.g., New Hires, Sales Team, Engineering')}
+                value={groupName}
+                onChange={(e) => setGroupName(e.target.value)}
+                className="h-12"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-group-description" className="text-base font-medium">
+                {t('groups.description', 'Description')} ({t('common.optional', 'Optional')})
+              </Label>
+              <Textarea
+                id="edit-group-description"
+                placeholder={t('groups.descriptionPlaceholder', 'Describe the purpose of this group')}
+                value={groupDescription}
+                onChange={(e) => setGroupDescription(e.target.value)}
+                rows={3}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-base font-medium">
+                {t('groups.currentMembers', 'Current Members')} ({selectedUserIds.length})
+              </Label>
+              <div className="border rounded-lg max-h-48 overflow-y-auto">
+                {selectedUserIds.length === 0 ? (
+                  <div className="p-4 text-center text-muted-foreground text-sm">
+                    {t('groups.noCurrentMembers', 'This group has no members')}
+                  </div>
+                ) : (
+                  <div className="divide-y">
+                    {selectedUserIds.map((userId) => {
+                      const employee = (employees || []).find(e => e.id === userId)
+                      if (!employee) return null
+                      return (
+                        <div key={userId} className="flex items-center justify-between gap-3 p-3 hover:bg-muted/50">
+                          <div className="flex-1">
+                            <div className="font-medium">{employee.firstName} {employee.lastName}</div>
+                            <div className="text-sm text-muted-foreground">{employee.email}</div>
+                          </div>
+                          {employee.department && (
+                            <Badge variant="outline">{employee.department}</Badge>
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleRemoveMember(userId)}
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                          >
+                            <X size={18} aria-hidden="true" />
+                          </Button>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-base font-medium">
+                {t('groups.availableMembers', 'Available Members')}
+              </Label>
+              <Input
+                placeholder={t('groups.searchMembers', 'Search members...')}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="h-10"
+              />
+              <div className="border rounded-lg max-h-64 overflow-y-auto">
+                {getAvailableEmployees().length === 0 ? (
+                  <div className="p-4 text-center text-muted-foreground text-sm">
+                    {t('groups.noAvailableMembers', 'No members available to add')}
+                  </div>
+                ) : (
+                  <div className="divide-y">
+                    {getAvailableEmployees().map((employee) => (
+                      <div key={employee.id} className="flex items-center gap-3 p-3 hover:bg-muted/50 cursor-pointer" onClick={() => handleToggleUser(employee.id)}>
+                        <div className="flex-1">
+                          <div className="font-medium">{employee.firstName} {employee.lastName}</div>
+                          <div className="text-sm text-muted-foreground">{employee.email}</div>
+                        </div>
+                        {employee.department && (
+                          <Badge variant="outline">{employee.department}</Badge>
+                        )}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleToggleUser(employee.id)
+                          }}
+                          className="gap-2"
+                        >
+                          <Plus size={16} aria-hidden="true" />
+                          {t('groups.addMember', 'Add')}
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="flex gap-3 pt-4">
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setIsEditDialogOpen(false)
+                  setEditingGroup(null)
+                  setGroupName('')
+                  setGroupDescription('')
+                  setSelectedUserIds([])
+                  setSearchTerm('')
+                }} 
+                className="flex-1"
+              >
+                {t('common.cancel', 'Cancel')}
+              </Button>
+              <Button onClick={handleUpdateGroup} className="flex-1">
+                {t('groups.updateGroup', 'Update Group')}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {(groups || []).length > 0 && (
         <Card>
