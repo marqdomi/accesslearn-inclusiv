@@ -1,5 +1,4 @@
-import { useState } from 'react'
-import { useKV } from '@github/spark/hooks'
+import { useState, useEffect } from 'react'
 import { Course, UserProgress } from '@/lib/types'
 import { CourseCard } from './CourseCard'
 import { GameStatsWidget } from '@/components/gamification/GameStatsWidget'
@@ -8,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { MagnifyingGlass, SquaresFour, ListBullets } from '@phosphor-icons/react'
 import { motion } from 'framer-motion'
+import { UserProgressService } from '@/services'
 
 interface CourseDashboardProps {
   courses: Course[]
@@ -19,7 +19,31 @@ export function CourseDashboard({ courses, onSelectCourse, onViewAchievements }:
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | 'not-started' | 'in-progress' | 'completed'>('all')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
-  const [allProgress] = useKV<Record<string, UserProgress>>('all-course-progress', {})
+  const [allProgress, setAllProgress] = useState<Record<string, UserProgress>>({})
+  const [loading, setLoading] = useState(true)
+
+  // Load all progress for current user
+  useEffect(() => {
+    const loadProgress = async () => {
+      try {
+        setLoading(true)
+        const userId = 'current-user' // TODO: Get from auth context
+        const progressList = await UserProgressService.getByUserId(userId)
+        
+        // Convert array to map for easier lookup
+        const progressMap: Record<string, UserProgress> = {}
+        progressList.forEach(progress => {
+          progressMap[progress.courseId] = progress
+        })
+        setAllProgress(progressMap)
+      } catch (error) {
+        console.error('Failed to load progress:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadProgress()
+  }, [])
 
   const filteredCourses = courses.filter((course) => {
     const matchesSearch =
@@ -30,7 +54,7 @@ export function CourseDashboard({ courses, onSelectCourse, onViewAchievements }:
 
     if (statusFilter === 'all') return true
 
-    const progress = allProgress?.[`course-progress-${course.id}`]
+    const progress = allProgress?.[course.id]
     if (!progress) return statusFilter === 'not-started'
 
     return progress.status === statusFilter

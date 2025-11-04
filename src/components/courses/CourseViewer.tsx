@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react'
-import { useKV } from '@github/spark/hooks'
 import { Course } from '@/lib/types'
 import { LessonModule } from '@/lib/lesson-types'
 import { useCourseProgress } from '@/hooks/use-course-progress'
@@ -21,17 +20,17 @@ interface CourseViewerProps {
 }
 
 export function CourseViewer({ course, onExit }: CourseViewerProps) {
-  const { progress, markModuleComplete, setCurrentModule, completeCourse, recordAssessmentAttempt } = useCourseProgress(course.id)
+  const { progress, loading: progressLoading, markModuleComplete, setCurrentModule, completeCourse, recordAssessmentAttempt } = useCourseProgress(course.id)
   const { awardXP } = useXP()
   const { updateModuleCompletion, updateCourseCompletion, updateAssessmentCompletion } = useAchievements()
   const [showAssessment, setShowAssessment] = useState(false)
   const [showModuleList, setShowModuleList] = useState(false)
-  const [lessonModules] = useKV<Record<string, LessonModule>>('lesson-modules', {})
   const [currentLessonIndex, setCurrentLessonIndex] = useState(0)
   const [viewMode, setViewMode] = useState<'intro' | 'lessons' | 'modules'>('intro')
 
-  const lessonModule = lessonModules?.[course.id]
-  const hasLessons = !!lessonModule && lessonModule.lessons.length > 0
+  // Note: lesson-modules was a separate KV store - now we use the course structure directly
+  // If course has a specific lessonModule structure, it should be part of the course data
+  const hasLessons = false // Set to false for now, as we use course.modules
 
   const currentModuleIndex = progress?.currentModule
     ? course.modules.findIndex((m) => m.id === progress.currentModule)
@@ -46,10 +45,10 @@ export function CourseViewer({ course, onExit }: CourseViewerProps) {
     }
   }, [currentModule, progress?.currentModule, setCurrentModule])
 
-  const handleModuleComplete = () => {
-    markModuleComplete(currentModule.id)
-    updateModuleCompletion()
-    awardXP(XP_REWARDS.MODULE_COMPLETE, `Completed module: ${currentModule.title}`)
+  const handleModuleComplete = async () => {
+    await markModuleComplete(currentModule.id)
+    await updateModuleCompletion()
+    await awardXP(XP_REWARDS.MODULE_COMPLETE, `Completed module: ${currentModule.title}`, true, 'module')
     
     toast.success('🎉 Module completed!', {
       description: `You've completed "${currentModule.title}"`,
@@ -60,9 +59,9 @@ export function CourseViewer({ course, onExit }: CourseViewerProps) {
     } else if (course.assessment && course.assessment.length > 0) {
       setShowAssessment(true)
     } else {
-      completeCourse()
-      updateCourseCompletion()
-      awardXP(XP_REWARDS.COURSE_COMPLETE, `Completed course: ${course.title}`)
+      await completeCourse()
+      await updateCourseCompletion()
+      await awardXP(XP_REWARDS.COURSE_COMPLETE, `Completed course: ${course.title}`, true, 'course')
       toast.success('🏆 Course completed!', {
         description: `Congratulations on completing "${course.title}"`,
       })
@@ -88,12 +87,12 @@ export function CourseViewer({ course, onExit }: CourseViewerProps) {
     setShowModuleList(false)
   }
 
-  const handleAssessmentComplete = (score: number) => {
+  const handleAssessmentComplete = async (score: number) => {
     const isFirstAttempt = !progress?.assessmentAttempts || progress.assessmentAttempts === 0
-    recordAssessmentAttempt(score)
-    completeCourse(score)
-    updateAssessmentCompletion(score, isFirstAttempt)
-    updateCourseCompletion()
+    await recordAssessmentAttempt(score)
+    await completeCourse(score)
+    await updateAssessmentCompletion(score, isFirstAttempt)
+    await updateCourseCompletion()
     
     const xpAmount = score === 100 
       ? XP_REWARDS.ASSESSMENT_FINAL_PERFECT 
