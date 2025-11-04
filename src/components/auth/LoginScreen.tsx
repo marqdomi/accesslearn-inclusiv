@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -13,6 +14,7 @@ interface LoginScreenProps {
 }
 
 export function LoginScreen({ onLogin }: LoginScreenProps) {
+  const { t } = useTranslation()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -25,12 +27,12 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
     setError('')
 
     if (!email || !password) {
-      setError('Email and password are required')
+      setError(t('auth.emailRequired'))
       return
     }
 
     if (!isValidEmail(email)) {
-      setError('Please enter a valid email address')
+      setError(t('auth.invalidEmail'))
       return
     }
 
@@ -38,10 +40,10 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
     try {
       const result = await onLogin(email, password)
       if (!result.success) {
-        setError(result.error || 'Login failed. Please check your credentials.')
+        setError(result.error || t('auth.loginFailed'))
       }
     } catch (err) {
-      setError('An unexpected error occurred. Please try again.')
+      setError(t('auth.unexpectedError'))
     } finally {
       setIsLoading(false)
     }
@@ -65,15 +67,15 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
             <Lightning size={32} weight="fill" className="text-white" aria-hidden="true" />
           </motion.div>
           <h1 className="text-4xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
-            GameLearn
+            {t('app.title')}
           </h1>
-          <p className="text-muted-foreground mt-2">Level Up Your Skills</p>
+          <p className="text-muted-foreground mt-2">{t('app.subtitle')}</p>
         </div>
 
         <Card className="shadow-2xl border-2">
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl">Welcome Back</CardTitle>
-            <CardDescription>Enter your credentials to access your learning dashboard</CardDescription>
+            <CardTitle className="text-2xl">{t('auth.welcomeBack')}</CardTitle>
+            <CardDescription>{t('auth.loginDescription')}</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -82,12 +84,12 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
                   <Info size={18} className="mt-0.5 text-primary" aria-hidden="true" />
                   <div className="flex items-start justify-between gap-2">
                     <AlertDescription className="flex-1 text-sm">
-                      <strong className="font-semibold">Test Credentials:</strong>
+                      <strong className="font-semibold">{t('auth.testCredentials')}</strong>
                       <br />
                       <span className="text-xs">
-                        Admin: admin@gamelearn.test / Admin2024!
+                        {t('auth.adminCredentials')}
                         <br />
-                        User: sarah.johnson@gamelearn.test / Welcome123!
+                        {t('auth.userCredentials')}
                       </span>
                     </AlertDescription>
                     <Button
@@ -97,7 +99,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
                       className="h-6 px-2 text-xs"
                       onClick={() => setShowTestHint(false)}
                     >
-                      Dismiss
+                      {t('common.dismiss')}
                     </Button>
                   </div>
                 </Alert>
@@ -112,7 +114,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
 
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-base font-medium">
-                  Email Address
+                  {t('auth.email')}
                 </Label>
                 <Input
                   id="email"
@@ -130,7 +132,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
 
               <div className="space-y-2">
                 <Label htmlFor="password" className="text-base font-medium">
-                  Password
+                  {t('auth.password')}
                 </Label>
                 <div className="relative">
                   <Input
@@ -150,7 +152,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
                     size="sm"
                     className="absolute right-1 top-1/2 -translate-y-1/2 h-10 w-10 p-0"
                     onClick={() => setShowPassword(!showPassword)}
-                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    aria-label={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
                   >
                     {showPassword ? (
                       <EyeSlash size={20} aria-hidden="true" />
@@ -177,7 +179,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
                 className="w-full h-12 text-base font-semibold"
                 disabled={isLoading}
               >
-                {isLoading ? 'Signing in...' : 'Sign In'}
+                {isLoading ? t('auth.loggingIn') : t('auth.signIn')}
               </Button>
             </form>
 
