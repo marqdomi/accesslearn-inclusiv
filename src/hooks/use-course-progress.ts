@@ -1,110 +1,98 @@
-import { useKV } from '@github/spark/hooks'
+import { useState, useEffect } from 'react'
+import { UserProgressService } from '@/services'
 import { UserProgress } from '@/lib/types'
 import { useAchievements } from './use-achievements'
 
-export function useCourseProgress(courseId: string) {
-  const [progress, setProgress] = useKV<UserProgress>(
-    `course-progress-${courseId}`,
-    {
-      courseId,
-      status: 'not-started',
-      completedModules: [],
-      lastAccessed: Date.now(),
-      assessmentAttempts: 0,
-    }
-  )
+export function useCourseProgress(courseId: string, userId: string = 'current-user') {
+  const [progress, setProgress] = useState<UserProgress | null>(null)
+  const [loading, setLoading] = useState(true)
 
   const { updateModuleCompletion, updateCourseCompletion, updateAssessmentCompletion, updateStreak } = useAchievements()
 
-  const markModuleComplete = (moduleId: string) => {
-    setProgress((current) => {
-      if (!current) return {
-        courseId,
-        status: 'in-progress' as const,
-        completedModules: [moduleId],
-        lastAccessed: Date.now(),
-        assessmentAttempts: 0,
+  // Load initial progress
+  useEffect(() => {
+    const loadProgress = async () => {
+      try {
+        setLoading(true)
+        const data = await UserProgressService.getByUserAndCourse(userId, courseId)
+        setProgress(data || {
+          id: '',
+          userId,
+          courseId,
+          status: 'not-started',
+          completedModules: [],
+          lastAccessed: Date.now(),
+          assessmentAttempts: 0,
+        })
+      } catch (error) {
+        console.error('Failed to load progress:', error)
+      } finally {
+        setLoading(false)
       }
-      
-      const completedModules = [...current.completedModules]
-      if (!completedModules.includes(moduleId)) {
-        completedModules.push(moduleId)
+    }
+    loadProgress()
+  }, [courseId, userId])
+
+  const markModuleComplete = async (moduleId: string) => {
+    try {
+      if (!progress?.completedModules.includes(moduleId)) {
         updateModuleCompletion()
         updateStreak()
       }
-      return {
-        ...current,
-        completedModules,
-        status: 'in-progress' as const,
-        lastAccessed: Date.now(),
-      }
-    })
+      const updated = await UserProgressService.completeModule(userId, courseId, moduleId)
+      setProgress(updated)
+    } catch (error) {
+      console.error('Failed to mark module complete:', error)
+    }
   }
 
-  const setCurrentModule = (moduleId: string) => {
-    setProgress((current) => ({
-      ...(current || {
-        courseId,
-        status: 'not-started' as const,
-        completedModules: [],
-        assessmentAttempts: 0,
-        lastAccessed: Date.now(),
-      }),
-      currentModule: moduleId,
-      status: 'in-progress' as const,
-      lastAccessed: Date.now(),
-    }))
+  const setCurrentModule = async (moduleId: string) => {
+    try {
+      const updated = await UserProgressService.upsert(userId, courseId, {
+        currentModule: moduleId,
+        status: 'in-progress',
+      })
+      setProgress(updated)
+    } catch (error) {
+      console.error('Failed to set current module:', error)
+    }
   }
 
-  const completeCourse = (assessmentScore?: number) => {
-    setProgress((current) => {
-      const isFirstCompletion = current?.status !== 'completed'
+  const completeCourse = async (assessmentScore?: number) => {
+    try {
+      const isFirstCompletion = progress?.status !== 'completed'
       if (isFirstCompletion) {
         updateCourseCompletion()
         updateStreak()
       }
       
-      return {
-        ...(current || {
-          courseId,
-          status: 'not-started' as const,
-          completedModules: [],
-          assessmentAttempts: 0,
-          lastAccessed: Date.now(),
-        }),
-        status: 'completed' as const,
-        assessmentScore,
-        lastAccessed: Date.now(),
-      }
-    })
+      const updated = await UserProgressService.completeCourse(userId, courseId, assessmentScore)
+      setProgress(updated)
+    } catch (error) {
+      console.error('Failed to complete course:', error)
+    }
   }
 
-  const recordAssessmentAttempt = (score?: number) => {
-    setProgress((current) => {
-      const base = current || {
-        courseId,
-        status: 'not-started' as const,
-        completedModules: [],
-        lastAccessed: Date.now(),
-        assessmentAttempts: 0,
-      }
-      
-      const isFirstAttempt = base.assessmentAttempts === 0
-      const newAttempts = base.assessmentAttempts + 1
+  const recordAssessmentAttempt = async (score?: number) => {
+    try {
+      const isFirstAttempt = progress?.assessmentAttempts === 0
       
       if (score !== undefined) {
         updateAssessmentCompletion(score, isFirstAttempt)
       }
       
-      return {
-        ...base,
-        assessmentAttempts: newAttempts,
-      }
-    })
+      const updated = await UserProgressService.upsert(userId, courseId, {
+        assessmentAttempts: (progress?.assessmentAttempts || 0) + 1,
+      })
+      setProgress(updated)
+    } catch (error) {
+      console.error('Failed to record assessment attempt:', error)
+    }
   }
 
   return {
     progress,
+    loading,
     markModuleComplete,
     setCurrentModule,
     completeCourse,

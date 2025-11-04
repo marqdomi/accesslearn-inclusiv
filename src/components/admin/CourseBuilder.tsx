@@ -1,5 +1,4 @@
-import { useState } from 'react'
-import { useKV } from '@github/spark/hooks'
+import { useState, useEffect } from 'react'
 import { CourseStructure, Module, Lesson, ValidationError } from '@/lib/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -13,6 +12,7 @@ import { ArrowLeft, FloppyDisk, Eye, Warning, CheckCircle, Plus, Tree } from '@p
 import { CourseStructureBuilder } from './CourseStructureBuilder'
 import { LessonEditor } from './LessonEditor'
 import { QuizBuilder } from './QuizBuilder'
+import { useCourse, useCourseActions } from '@/hooks/use-courses'
 import { toast } from 'sonner'
 
 interface CourseBuilderProps {
@@ -21,11 +21,10 @@ interface CourseBuilderProps {
 }
 
 export function CourseBuilder({ courseId, onBack }: CourseBuilderProps) {
-  const [courses, setCourses] = useKV<CourseStructure[]>('admin-courses', [])
+  const { course: existingCourse, loading } = useCourse(courseId)
+  const { createCourse, updateCourse, publishCourse: publishCourseAction } = useCourseActions()
   
-  const existingCourse = courseId ? courses?.find(c => c.id === courseId) : null
-  
-  const [course, setCourse] = useState<CourseStructure>(existingCourse || {
+  const [course, setCourse] = useState<CourseStructure>({
     id: `course-${Date.now()}`,
     title: '',
     description: '',
@@ -38,6 +37,13 @@ export function CourseBuilder({ courseId, onBack }: CourseBuilderProps) {
     updatedAt: Date.now(),
     createdBy: 'admin'
   })
+
+  // Load existing course data when available
+  useEffect(() => {
+    if (existingCourse) {
+      setCourse(existingCourse)
+    }
+  }, [existingCourse])
 
   const [activeTab, setActiveTab] = useState('details')
   const [selectedModule, setSelectedModule] = useState<Module | null>(null)
@@ -102,21 +108,25 @@ export function CourseBuilder({ courseId, onBack }: CourseBuilderProps) {
     return errors
   }
 
-  const handleSaveDraft = () => {
-    const updatedCourse = { ...course, updatedAt: Date.now() }
-    
-    if (courseId) {
-      setCourses((current) => 
-        (current || []).map(c => c.id === courseId ? updatedCourse : c)
-      )
-    } else {
-      setCourses((current) => [...(current || []), updatedCourse])
+  const handleSaveDraft = async () => {
+    try {
+      const courseData = { ...course, updatedAt: Date.now() }
+      
+      if (courseId) {
+        await updateCourse(courseId, courseData)
+        toast.success('Course draft saved')
+      } else {
+        const newCourse = await createCourse(courseData)
+        setCourse(newCourse)
+        toast.success('Course draft saved')
+      }
+    } catch (error) {
+      toast.error('Failed to save course draft')
+      console.error('Save error:', error)
     }
-
-    toast.success('Course draft saved')
   }
 
-  const handlePublish = () => {
+  const handlePublish = async () => {
     const errors = validateCourse()
     setValidationErrors(errors)
 
@@ -129,24 +139,35 @@ export function CourseBuilder({ courseId, onBack }: CourseBuilderProps) {
       return
     }
 
-    const publishedCourse = { ...course, published: true, updatedAt: Date.now() }
-    
-    if (courseId) {
-      setCourses((current) => 
-        (current || []).map(c => c.id === courseId ? publishedCourse : c)
-      )
-    } else {
-      setCourses((current) => [...(current || []), publishedCourse])
-    }
+    try {
+      const courseData = { ...course, published: true, updatedAt: Date.now() }
+      
+      if (courseId) {
+        await updateCourse(courseId, courseData)
+      } else {
+        await createCourse(courseData)
+      }
 
-    toast.success('Course published successfully!', {
-      description: 'Learners can now access this course'
-    })
-    onBack()
+      toast.success('Course published successfully!', {
+        description: 'Learners can now access this course'
+      })
+      onBack()
+    } catch (error) {
+      toast.error('Failed to publish course')
+      console.error('Publish error:', error)
+    }
   }
 
   const updateCourseField = (field: keyof CourseStructure, value: any) => {
     setCourse(prev => ({ ...prev, [field]: value }))
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-16">
+        <p className="text-muted-foreground">Loading course...</p>
+      </div>
+    )
   }
 
   return (

@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { useKV } from '@github/spark/hooks'
 import { CourseStructure } from '@/lib/types'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -7,13 +6,16 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { ArrowLeft, Plus, MagnifyingGlass, PencilSimple, Trash, Eye } from '@phosphor-icons/react'
 import { CourseBuilder } from './CourseBuilder'
+import { useCourses, useCourseActions } from '@/hooks/use-courses'
+import { toast } from 'sonner'
 
 interface CourseManagementProps {
   onBack: () => void
 }
 
 export function CourseManagement({ onBack }: CourseManagementProps) {
-  const [courses, setCourses] = useKV<CourseStructure[]>('admin-courses', [])
+  const { courses, loading, refresh } = useCourses()
+  const { deleteCourse } = useCourseActions()
   const [searchQuery, setSearchQuery] = useState('')
   const [editingCourseId, setEditingCourseId] = useState<string | null>(null)
   const [isCreating, setIsCreating] = useState(false)
@@ -23,9 +25,15 @@ export function CourseManagement({ onBack }: CourseManagementProps) {
     course.category.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
-  const deleteCourse = (courseId: string) => {
+  const handleDelete = async (courseId: string) => {
     if (confirm('Are you sure you want to delete this course?')) {
-      setCourses((current) => (current || []).filter(c => c.id !== courseId))
+      try {
+        await deleteCourse(courseId)
+        toast.success('Course deleted successfully')
+        refresh()
+      } catch (error) {
+        toast.error('Failed to delete course')
+      }
     }
   }
 
@@ -36,8 +44,17 @@ export function CourseManagement({ onBack }: CourseManagementProps) {
         onBack={() => {
           setIsCreating(false)
           setEditingCourseId(null)
+          refresh() // Refresh the list when returning
         }}
       />
+    )
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-16">
+        <p className="text-muted-foreground">Loading courses...</p>
+      </div>
     )
   }
 
@@ -140,7 +157,7 @@ export function CourseManagement({ onBack }: CourseManagementProps) {
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={() => deleteCourse(course.id)}
+                    onClick={() => handleDelete(course.id)}
                   >
                     <Trash size={14} className="text-destructive" />
                   </Button>
