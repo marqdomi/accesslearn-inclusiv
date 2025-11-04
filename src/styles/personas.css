@@ -49,7 +49,9 @@
 }
 
 /* High contrast mode for learner persona */
-.high-contrast {
+.learner-persona.high-contrast,
+.high-contrast .learner-card,
+.high-contrast .learner-button {
   --learner-primary: oklch(0.45 0.25 290);
   --learner-secondary: oklch(0.55 0.15 195);
   --learner-accent: oklch(0.60 0.22 30);
@@ -105,7 +107,9 @@
 }
 
 /* High contrast mode for admin persona */
-.high-contrast {
+.admin-persona.high-contrast,
+.high-contrast .admin-card,
+.high-contrast .admin-button {
   --admin-primary: oklch(0.35 0.15 240);
   --admin-accent: oklch(0.40 0.15 240);
   --admin-success: oklch(0.50 0.18 140);
@@ -271,6 +275,17 @@
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  /* Fallback for high contrast and accessibility modes */
+  color: var(--learner-primary);
+}
+
+/* Ensure gradient headings work in high contrast mode */
+@media (prefers-contrast: more) {
+  .learner-heading {
+    -webkit-text-fill-color: currentColor;
+    background: none;
+    color: var(--learner-primary);
+  }
 }
 
 .admin-heading {

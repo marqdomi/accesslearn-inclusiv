@@ -51,8 +51,8 @@ export function PlayerIdentity() {
 
           <div className="mt-4">
             <div className="flex items-center justify-between mb-2 text-sm">
-              <span className="font-semibold text-foreground flex items-center gap-1">
-                <span className="text-lg">⚡</span>
+              <span className="font-semibold text-foreground">
+                <span aria-hidden="true">⚡ </span>
                 Progress to Level {currentLevel + 1}
               </span>
               <span className="font-bold text-lg text-primary">
@@ -74,9 +74,10 @@ export function PlayerIdentity() {
                 />
               </div>
             </div>
-            <p className="mt-2 text-sm font-semibold text-muted-foreground text-right flex items-center justify-end gap-1">
+            <p className="mt-2 text-sm font-semibold text-muted-foreground text-right">
               <span className="text-primary font-bold">{Math.floor(progress.required - progress.current)} XP</span>
-              to next level! 🎯
+              {' '}to next level!
+              <span aria-hidden="true"> 🎯</span>
             </p>
           </div>
         </div>

@@ -126,10 +126,10 @@ export function MainMission({ course, progress, onContinue }: MainMissionProps) 
 
         {isCompleted && (
           <div className="bg-gradient-to-r from-green-500/30 via-emerald-500/30 to-teal-500/30 px-8 py-6 border-t-4 border-green-500/50">
-            <p className="text-center text-lg font-bold text-foreground flex items-center justify-center gap-2">
-              <span className="text-2xl">🎉</span>
+            <p className="text-center text-lg font-bold text-foreground">
+              <span aria-hidden="true">🎉 </span>
               Mission accomplished! You've mastered this course. Ready for the next challenge?
-              <span className="text-2xl">🏆</span>
+              <span aria-hidden="true"> 🏆</span>
             </p>
           </div>
         )}
