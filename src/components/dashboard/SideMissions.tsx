@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -14,22 +15,23 @@ interface SideMissionsProps {
 }
 
 export function SideMissions({ courses, progress, onSelectCourse, excludeCourseId }: SideMissionsProps) {
+  const { t } = useTranslation()
   const availableCourses = courses.filter(course => course.id !== excludeCourseId)
 
   const getStatusBadge = (courseId: string) => {
     const courseProgress = progress[courseId]
     if (!courseProgress) {
-      return <Badge variant="outline" className="gap-1">Not Started</Badge>
+      return <Badge variant="outline" className="gap-1">{t('dashboard.notStarted')}</Badge>
     }
     if (courseProgress.status === 'completed') {
       return (
         <Badge variant="default" className="gap-1 bg-success text-success-foreground">
           <CheckCircle size={14} weight="fill" aria-hidden="true" />
-          Complete
+          {t('dashboard.completed')}
         </Badge>
       )
     }
-    return <Badge variant="secondary" className="gap-1">In Progress</Badge>
+    return <Badge variant="secondary" className="gap-1">{t('dashboard.inProgress')}</Badge>
   }
 
   const getCompletionPercent = (courseId: string, course: Course) => {
@@ -55,9 +57,9 @@ export function SideMissions({ courses, progress, onSelectCourse, excludeCourseI
             <BookOpen size={20} weight="fill" className="text-white" aria-hidden="true" />
           </div>
           <div className="flex-1">
-            <h3 className="text-lg font-bold">Side Missions</h3>
+            <h3 className="text-lg font-bold">{t('dashboard.sideMissions')}</h3>
             <p className="text-sm text-muted-foreground">
-              {availableCourses.length} {availableCourses.length === 1 ? 'course' : 'courses'} available
+              {availableCourses.length} {availableCourses.length === 1 ? t('course.title').toLowerCase() : t('dashboard.modules').toLowerCase()} available
             </p>
           </div>
         </div>
