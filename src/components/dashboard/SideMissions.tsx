@@ -19,17 +19,17 @@ export function SideMissions({ courses, progress, onSelectCourse, excludeCourseI
   const getStatusBadge = (courseId: string) => {
     const courseProgress = progress[courseId]
     if (!courseProgress) {
-      return <Badge variant="outline" className="gap-1">Not Started</Badge>
+      return <Badge variant="outline" className="gap-1.5 font-semibold">🆕 Not Started</Badge>
     }
     if (courseProgress.status === 'completed') {
       return (
-        <Badge variant="default" className="gap-1 bg-success text-success-foreground">
-          <CheckCircle size={14} weight="fill" aria-hidden="true" />
-          Complete
+        <Badge variant="default" className="learner-badge gap-1.5 bg-gradient-to-r from-green-500 to-emerald-500 text-white">
+          <CheckCircle size={16} weight="fill" aria-hidden="true" />
+          ✨ Complete
         </Badge>
       )
     }
-    return <Badge variant="secondary" className="gap-1">In Progress</Badge>
+    return <Badge variant="secondary" className="gap-1.5 font-semibold bg-yellow-100 text-yellow-800 border-yellow-300">⚡ In Progress</Badge>
   }
 
   const getCompletionPercent = (courseId: string, course: Course) => {
@@ -40,24 +40,24 @@ export function SideMissions({ courses, progress, onSelectCourse, excludeCourseI
 
   if (availableCourses.length === 0) {
     return (
-      <Card className="p-8 text-center border-2 border-dashed border-muted">
-        <BookOpen size={48} className="mx-auto mb-3 text-muted-foreground opacity-50" aria-hidden="true" />
-        <p className="text-muted-foreground">No additional missions available</p>
+      <Card className="learner-card p-10 text-center border-2 border-dashed border-primary/30 bg-gradient-to-br from-muted/30 to-muted/10">
+        <BookOpen size={56} className="mx-auto mb-3 text-primary/50" aria-hidden="true" />
+        <p className="text-muted-foreground text-lg font-medium">No additional missions available</p>
       </Card>
     )
   }
 
   return (
-    <Card className="overflow-hidden">
-      <div className="p-6 pb-4 border-b bg-muted/30">
+    <Card className="learner-card overflow-hidden border-2 border-secondary/30">
+      <div className="p-6 pb-4 border-b bg-gradient-to-r from-secondary/10 via-primary/5 to-accent/10">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-secondary to-secondary/70">
-            <BookOpen size={20} weight="fill" className="text-white" aria-hidden="true" />
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-secondary to-secondary/70 shadow-lg">
+            <BookOpen size={24} weight="fill" className="text-white" aria-hidden="true" />
           </div>
           <div className="flex-1">
-            <h3 className="text-lg font-bold">Side Missions</h3>
-            <p className="text-sm text-muted-foreground">
-              {availableCourses.length} {availableCourses.length === 1 ? 'course' : 'courses'} available
+            <h3 className="text-xl font-bold learner-heading">Side Missions 🎯</h3>
+            <p className="text-sm font-semibold text-muted-foreground">
+              {availableCourses.length} {availableCourses.length === 1 ? 'course' : 'courses'} ready to explore!
             </p>
           </div>
         </div>
@@ -72,7 +72,7 @@ export function SideMissions({ courses, progress, onSelectCourse, excludeCourseI
             return (
               <Card 
                 key={course.id} 
-                className="p-4 hover:border-primary/50 transition-all hover:shadow-md cursor-pointer"
+                className="learner-card learner-focus p-5 hover:border-primary/70 hover:scale-[1.02] transition-all cursor-pointer bg-gradient-to-br from-card to-card/50"
                 onClick={() => onSelectCourse(course)}
                 tabIndex={0}
                 onKeyDown={(e) => {
@@ -86,47 +86,55 @@ export function SideMissions({ courses, progress, onSelectCourse, excludeCourseI
               >
                 <div className="flex items-start justify-between gap-3 mb-3">
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-bold text-base truncate mb-1">{course.title}</h4>
-                    <p className="text-xs text-muted-foreground line-clamp-2">
+                    <h4 className="font-bold text-lg truncate mb-1 text-primary">{course.title}</h4>
+                    <p className="text-sm text-muted-foreground line-clamp-2 font-medium">
                       {course.description}
                     </p>
                   </div>
                   {getStatusBadge(course.id)}
                 </div>
 
-                <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground mb-3">
-                  <div className="flex items-center gap-1.5">
-                    <Clock size={14} aria-hidden="true" />
+                <div className="flex flex-wrap items-center gap-4 text-sm font-semibold text-muted-foreground mb-3">
+                  <div className="flex items-center gap-1.5 bg-muted/50 px-2 py-1 rounded-full">
+                    <Clock size={16} className="text-primary" aria-hidden="true" />
                     <span>{course.estimatedTime} min</span>
                   </div>
-                  <div className="flex items-center gap-1.5">
-                    <Lightning size={14} weight="fill" className="text-xp" aria-hidden="true" />
-                    <span className="text-xp font-semibold">+50 XP</span>
+                  <div className="flex items-center gap-1.5 bg-gradient-to-r from-green-500/10 to-emerald-500/10 px-2 py-1 rounded-full">
+                    <Lightning size={16} weight="fill" className="text-green-600" aria-hidden="true" />
+                    <span className="text-green-700">+50 XP</span>
                   </div>
-                  <div className="flex items-center gap-1.5">
-                    <BookOpen size={14} aria-hidden="true" />
+                  <div className="flex items-center gap-1.5 bg-muted/50 px-2 py-1 rounded-full">
+                    <BookOpen size={16} className="text-secondary" aria-hidden="true" />
                     <span>{course.modules.length} modules</span>
                   </div>
                 </div>
 
                 {courseProgress && courseProgress.status !== 'completed' && (
-                  <div>
-                    <div className="flex items-center justify-between mb-1.5 text-xs">
-                      <span className="font-medium">Progress</span>
-                      <span className="font-bold">{Math.floor(completionPercent)}%</span>
+                  <div className="bg-card/50 p-3 rounded-lg border border-primary/20">
+                    <div className="flex items-center justify-between mb-2 text-sm">
+                      <span className="font-semibold flex items-center gap-1">
+                        <span className="text-base">📊</span> Progress
+                      </span>
+                      <span className="font-bold text-primary text-base">{Math.floor(completionPercent)}%</span>
                     </div>
-                    <Progress 
-                      value={completionPercent} 
-                      className="h-2 bg-muted"
-                      aria-label={`Course progress: ${Math.floor(completionPercent)}%`}
-                    />
+                    <div className="h-3 bg-muted/50 rounded-full overflow-hidden shadow-inner">
+                      <div
+                        className="learner-progress-bar h-full"
+                        style={{ width: `${completionPercent}%` }}
+                        aria-label={`Course progress: ${Math.floor(completionPercent)}%`}
+                        role="progressbar"
+                        aria-valuenow={Math.floor(completionPercent)}
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                      />
+                    </div>
                   </div>
                 )}
 
                 {courseProgress?.status === 'completed' && (
-                  <div className="flex items-center justify-center gap-2 py-2 bg-success/10 rounded-md text-success text-sm font-semibold">
-                    <CheckCircle size={16} weight="fill" aria-hidden="true" />
-                    <span>Mission Complete!</span>
+                  <div className="flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-green-500/20 to-emerald-500/20 rounded-lg border-2 border-green-500/30 text-green-700 text-base font-bold">
+                    <CheckCircle size={20} weight="fill" aria-hidden="true" />
+                    <span>Mission Complete! 🎉</span>
                   </div>
                 )}
               </Card>
