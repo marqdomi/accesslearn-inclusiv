@@ -11,10 +11,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Checkbox } from '@/components/ui/checkbox'
 import { UserGroup, EmployeeCredentials } from '@/lib/types'
 import { UsersThree, Plus, Trash } from '@phosphor-icons/react'
+import { useGroups, useGroupActions } from '@/hooks/use-groups'
 import { toast } from 'sonner'
 
 export function GroupManagement() {
-  const [groups, setGroups] = useKV<UserGroup[]>('user-groups', [])
+  const { groups, loading, refresh } = useGroups()
+  const { createGroup, deleteGroup } = useGroupActions()
   const [employees] = useKV<EmployeeCredentials[]>('employee-credentials', [])
   
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
@@ -22,37 +24,48 @@ export function GroupManagement() {
   const [groupDescription, setGroupDescription] = useState('')
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([])
 
-  const handleCreateGroup = () => {
+  const handleCreateGroup = async () => {
     if (!groupName.trim()) {
       toast.error('Group name is required')
       return
     }
 
-    const newGroup: UserGroup = {
-      id: `group_${Date.now()}`,
-      name: groupName.trim(),
-      description: groupDescription.trim(),
-      userIds: selectedUserIds,
-      courseIds: [],
-      createdAt: Date.now()
+    try {
+      await createGroup({
+        name: groupName.trim(),
+        description: groupDescription.trim(),
+        userIds: selectedUserIds,
+        courseIds: [],
+        createdAt: Date.now()
+      })
+      
+      toast.success(`Group "${groupName}" created with ${selectedUserIds.length} members`)
+      
+      setGroupName('')
+      setGroupDescription('')
+      setSelectedUserIds([])
+      setIsCreateDialogOpen(false)
+      
+      refresh()
+    } catch (error) {
+      toast.error('Failed to create group')
+      console.error('Create group error:', error)
     }
-
-    setGroups((current) => [...(current || []), newGroup])
-    toast.success(`Group "${groupName}" created with ${selectedUserIds.length} members`)
-
-    setGroupName('')
-    setGroupDescription('')
-    setSelectedUserIds([])
-    setIsCreateDialogOpen(false)
   }
 
-  const handleDeleteGroup = (groupId: string) => {
-    const group = groups?.find(g => g.id === groupId)
+  const handleDeleteGroup = async (groupId: string) => {
+    const group = groups.find(g => g.id === groupId)
     if (!group) return
 
     if (confirm(`Are you sure you want to delete the group "${group.name}"?`)) {
-      setGroups((current) => (current || []).filter(g => g.id !== groupId))
-      toast.success('Group deleted')
+      try {
+        await deleteGroup(groupId)
+        toast.success('Group deleted')
+        refresh()
+      } catch (error) {
+        toast.error('Failed to delete group')
+        console.error('Delete group error:', error)
+      }
     }
   }
 
@@ -67,6 +80,14 @@ export function GroupManagement() {
   const getUserName = (userId: string) => {
     const employee = employees?.find(e => e.id === userId)
     return employee ? `${employee.firstName} ${employee.lastName}` : 'Unknown User'
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-16">
+        <p className="text-muted-foreground">Loading groups...</p>
+      </div>
+    )
   }
 
   return (

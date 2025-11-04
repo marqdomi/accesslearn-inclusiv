@@ -1,4 +1,5 @@
-import { useKV } from '@github/spark/hooks'
+import { useState, useEffect } from 'react'
+import { AchievementService } from '@/services'
 import { toast } from 'sonner'
 
 export const XP_REWARDS = {
@@ -71,16 +72,35 @@ export function getRankName(level: number): string {
   return RANK_NAMES[rankIndex]
 }
 
-export function useXP() {
-  const [totalXP, setTotalXP] = useKV<number>('user-total-xp', 0)
-  const [currentLevel, setCurrentLevel] = useKV<number>('user-level', 1)
+export function useXP(userId: string = 'current-user') {
+  const [totalXP, setTotalXP] = useState(0)
+  const [currentLevel, setCurrentLevel] = useState(1)
+  const [loading, setLoading] = useState(true)
 
-  const awardXP = (amount: number, reason: string, showNotification = true) => {
-    setTotalXP((currentXP) => {
-      const current = currentXP || 0
-      const newXP = current + amount
-      const oldLevel = getLevelFromXP(current)
-      const newLevel = getLevelFromXP(newXP)
+  // Load XP and level from stats
+  useEffect(() => {
+    const loadStats = async () => {
+      try {
+        setLoading(true)
+        const stats = await AchievementService.getOrCreateUserStats(userId)
+        setTotalXP(stats.totalXP)
+        setCurrentLevel(stats.level)
+      } catch (error) {
+        console.error('Failed to load XP:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadStats()
+  }, [userId])
+
+  const awardXP = async (amount: number, reason: string, showNotification = true, type: 'module' | 'course' | 'assessment' | 'login' | 'streak' | 'perfect-score' = 'module') => {
+    try {
+      const oldLevel = currentLevel
+      const stats = await AchievementService.addXP(userId, amount, type, reason)
+      
+      setTotalXP(stats.totalXP)
+      setCurrentLevel(stats.level)
 
       if (showNotification) {
         toast.success(`+${amount} XP`, {
@@ -90,27 +110,24 @@ export function useXP() {
         })
       }
 
-      if (newLevel > oldLevel) {
-        setCurrentLevel(newLevel)
+      if (stats.level > oldLevel) {
         setTimeout(() => {
-          toast.success(`🎉 Level Up! Level ${newLevel}`, {
-            description: `You've reached ${getRankName(newLevel)} rank!`,
+          toast.success(`🎉 Level Up! Level ${stats.level}`, {
+            description: `You've reached ${getRankName(stats.level)} rank!`,
             duration: 5000,
             className: 'bg-gradient-to-r from-purple-600 to-pink-600 text-white',
           })
         }, 500)
       }
-
-      return newXP
-    })
+    } catch (error) {
+      console.error('Failed to award XP:', error)
+    }
   }
 
   const getProgressToNextLevel = () => {
-    const xp = totalXP || 0
-    const level = currentLevel || 1
-    const currentLevelXP = getXPForCurrentLevel(level)
-    const nextLevelXP = getXPForNextLevel(level)
-    const xpInCurrentLevel = xp - currentLevelXP
+    const currentLevelXP = getXPForCurrentLevel(currentLevel)
+    const nextLevelXP = getXPForNextLevel(currentLevel)
+    const xpInCurrentLevel = totalXP - currentLevelXP
     const xpNeededForNextLevel = nextLevelXP - currentLevelXP
 
     return {
@@ -121,10 +138,11 @@ export function useXP() {
   }
 
   return {
-    totalXP: totalXP || 0,
-    currentLevel: currentLevel || 1,
+    totalXP,
+    currentLevel,
+    loading,
     awardXP,
     getProgressToNextLevel,
-    getRankName: () => getRankName(currentLevel || 1),
+    getRankName: () => getRankName(currentLevel),
   }
 }
