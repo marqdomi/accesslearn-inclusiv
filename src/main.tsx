@@ -8,6 +8,7 @@ import { ErrorFallback } from './ErrorFallback.tsx'
 import "./main.css"
 import "./styles/theme.css"
 import "./index.css"
+import './i18n/config'
 
 createRoot(document.getElementById('root')!).render(
   <ErrorBoundary FallbackComponent={ErrorFallback}>
