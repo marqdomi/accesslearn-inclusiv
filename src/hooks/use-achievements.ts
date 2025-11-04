@@ -1,33 +1,39 @@
-import { useKV } from '@github/spark/hooks'
+import { useState, useEffect } from 'react'
+import { AchievementService } from '@/services'
 import { UserStats, UserAchievement } from '@/lib/types'
 import { ACHIEVEMENTS } from '@/lib/achievements'
 import { toast } from 'sonner'
 
-const DEFAULT_USER_STATS: UserStats = {
-  totalCoursesCompleted: 0,
-  totalModulesCompleted: 0,
-  totalAssessmentsPassed: 0,
-  averageScore: 0,
-  currentStreak: 0,
-  longestStreak: 0,
-  lastActivityDate: 0,
-  achievementsUnlocked: [],
-  totalXP: 0,
-  level: 1,
-}
+export function useAchievements(userId: string = 'current-user') {
+  const [userStats, setUserStats] = useState<UserStats | null>(null)
+  const [loading, setLoading] = useState(true)
 
-export function useAchievements() {
-  const [userStats, setUserStats] = useKV<UserStats>('user-stats', DEFAULT_USER_STATS)
+  // Load user stats on mount
+  useEffect(() => {
+    const loadStats = async () => {
+      try {
+        setLoading(true)
+        const stats = await AchievementService.getOrCreateUserStats(userId)
+        setUserStats(stats)
+      } catch (error) {
+        console.error('Failed to load user stats:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadStats()
+  }, [userId])
 
-  const checkAndUnlockAchievements = (stats: UserStats, setStats: (updater: (current?: UserStats) => UserStats) => void) => {
+  const checkAndUnlockAchievements = async (stats: UserStats) => {
+    const userAchievements = await AchievementService.getUserAchievements(userId)
     const newUnlocks: UserAchievement[] = []
 
-    ACHIEVEMENTS.forEach((achievement) => {
-      const alreadyUnlocked = stats.achievementsUnlocked.some(
+    for (const achievement of ACHIEVEMENTS) {
+      const alreadyUnlocked = userAchievements.some(
         (ua) => ua.achievementId === achievement.id
       )
 
-      if (alreadyUnlocked) return
+      if (alreadyUnlocked) continue
 
       let shouldUnlock = false
 
@@ -53,58 +59,41 @@ export function useAchievements() {
       }
 
       if (shouldUnlock) {
-        newUnlocks.push({
-          achievementId: achievement.id,
-          unlockedAt: Date.now(),
-        })
-
+        await AchievementService.unlockAchievement(userId, achievement.id)
+        
         toast.success('🏆 Achievement Unlocked!', {
           description: `${achievement.title} - ${achievement.description}`,
           duration: 5000,
         })
       }
-    })
-
-    if (newUnlocks.length > 0) {
-      setStats((current) => {
-        const currentStats = current || DEFAULT_USER_STATS
-        return {
-          ...currentStats,
-          achievementsUnlocked: [...currentStats.achievementsUnlocked, ...newUnlocks],
-        }
-      })
     }
   }
 
-  const updateCourseCompletion = () => {
-    setUserStats((current) => {
-      const stats = current || DEFAULT_USER_STATS
-      const updated: UserStats = {
-        ...stats,
-        totalCoursesCompleted: stats.totalCoursesCompleted + 1,
-        lastActivityDate: Date.now(),
-      }
-      setTimeout(() => checkAndUnlockAchievements(updated, setUserStats), 0)
-      return updated
-    })
+  const updateCourseCompletion = async () => {
+    try {
+      const updated = await AchievementService.incrementCoursesCompleted(userId)
+      setUserStats(updated)
+      await checkAndUnlockAchievements(updated)
+    } catch (error) {
+      console.error('Failed to update course completion:', error)
+    }
   }
 
-  const updateModuleCompletion = () => {
-    setUserStats((current) => {
-      const stats = current || DEFAULT_USER_STATS
-      const updated: UserStats = {
-        ...stats,
-        totalModulesCompleted: stats.totalModulesCompleted + 1,
-        lastActivityDate: Date.now(),
-      }
-      setTimeout(() => checkAndUnlockAchievements(updated, setUserStats), 0)
-      return updated
-    })
+  const updateModuleCompletion = async () => {
+    try {
+      const updated = await AchievementService.incrementModulesCompleted(userId)
+      setUserStats(updated)
+      await checkAndUnlockAchievements(updated)
+    } catch (error) {
+      console.error('Failed to update module completion:', error)
+    }
   }
 
-  const updateAssessmentCompletion = (score: number, isFirstAttempt: boolean) => {
-    setUserStats((current) => {
-      const stats = current || DEFAULT_USER_STATS
+  const updateAssessmentCompletion = async (score: number, isFirstAttempt: boolean) => {
+    try {
+      const stats = userStats
+      if (!stats) return
+
       const passedWithHighScore = score >= 90
       const perfectScore = score === 100
 
@@ -112,58 +101,55 @@ export function useAchievements() {
       const totalScore = stats.averageScore * stats.totalAssessmentsPassed + score
       const newAverage = totalAssessments > 0 ? totalScore / totalAssessments : score
 
-      const updated: UserStats = {
-        ...stats,
+      const updated = await AchievementService.updateUserStats(userId, {
         totalAssessmentsPassed: passedWithHighScore
           ? stats.totalAssessmentsPassed + 1
           : stats.totalAssessmentsPassed,
         averageScore: newAverage,
-        lastActivityDate: Date.now(),
-      }
+      })
+      setUserStats(updated)
 
-      setTimeout(() => checkAndUnlockAchievements(updated, setUserStats), 0)
+      await checkAndUnlockAchievements(updated)
 
-      if (perfectScore && !stats.achievementsUnlocked.some((a) => a.achievementId === 'perfect-score')) {
-        const perfectAchievement = ACHIEVEMENTS.find((a) => a.id === 'perfect-score')
-        if (perfectAchievement) {
-          updated.achievementsUnlocked = [
-            ...updated.achievementsUnlocked,
-            {
-              achievementId: 'perfect-score',
-              unlockedAt: Date.now(),
-            },
-          ]
-          toast.success('🏆 Achievement Unlocked!', {
-            description: `${perfectAchievement.title} - ${perfectAchievement.description}`,
-            duration: 5000,
-          })
+      // Check for perfect score achievement
+      if (perfectScore) {
+        const hasAchievement = await AchievementService.hasAchievement(userId, 'perfect-score')
+        if (!hasAchievement) {
+          await AchievementService.unlockAchievement(userId, 'perfect-score')
+          const perfectAchievement = ACHIEVEMENTS.find((a) => a.id === 'perfect-score')
+          if (perfectAchievement) {
+            toast.success('🏆 Achievement Unlocked!', {
+              description: `${perfectAchievement.title} - ${perfectAchievement.description}`,
+              duration: 5000,
+            })
+          }
         }
       }
 
-      if (isFirstAttempt && score >= 70 && !stats.achievementsUnlocked.some((a) => a.achievementId === 'first-try')) {
-        const firstTryAchievement = ACHIEVEMENTS.find((a) => a.id === 'first-try')
-        if (firstTryAchievement) {
-          updated.achievementsUnlocked = [
-            ...updated.achievementsUnlocked,
-            {
-              achievementId: 'first-try',
-              unlockedAt: Date.now(),
-            },
-          ]
-          toast.success('🏆 Achievement Unlocked!', {
-            description: `${firstTryAchievement.title} - ${firstTryAchievement.description}`,
-            duration: 5000,
-          })
+      // Check for first-try achievement
+      if (isFirstAttempt && score >= 70) {
+        const hasAchievement = await AchievementService.hasAchievement(userId, 'first-try')
+        if (!hasAchievement) {
+          await AchievementService.unlockAchievement(userId, 'first-try')
+          const firstTryAchievement = ACHIEVEMENTS.find((a) => a.id === 'first-try')
+          if (firstTryAchievement) {
+            toast.success('🏆 Achievement Unlocked!', {
+              description: `${firstTryAchievement.title} - ${firstTryAchievement.description}`,
+              duration: 5000,
+            })
+          }
         }
       }
-
-      return updated
-    })
+    } catch (error) {
+      console.error('Failed to update assessment completion:', error)
+    }
   }
 
-  const updateStreak = () => {
-    setUserStats((current) => {
-      const stats = current || DEFAULT_USER_STATS
+  const updateStreak = async () => {
+    try {
+      const stats = userStats
+      if (!stats) return
+
       const now = Date.now()
       const oneDayMs = 24 * 60 * 60 * 1000
       const daysSinceLastActivity = Math.floor((now - stats.lastActivityDate) / oneDayMs)
@@ -171,27 +157,24 @@ export function useAchievements() {
       let newStreak = stats.currentStreak
 
       if (daysSinceLastActivity === 0) {
-        return stats
+        return
       } else if (daysSinceLastActivity === 1) {
         newStreak = stats.currentStreak + 1
       } else {
         newStreak = 1
       }
 
-      const updated: UserStats = {
-        ...stats,
-        currentStreak: newStreak,
-        longestStreak: Math.max(stats.longestStreak, newStreak),
-        lastActivityDate: now,
-      }
-
-      setTimeout(() => checkAndUnlockAchievements(updated, setUserStats), 0)
-      return updated
-    })
+      const updated = await AchievementService.updateStreak(userId, newStreak)
+      setUserStats(updated)
+      await checkAndUnlockAchievements(updated)
+    } catch (error) {
+      console.error('Failed to update streak:', error)
+    }
   }
 
   return {
     userStats,
+    loading,
     updateCourseCompletion,
     updateModuleCompletion,
     updateAssessmentCompletion,
