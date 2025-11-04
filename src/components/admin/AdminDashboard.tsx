@@ -1,4 +1,5 @@
 import { useKV } from '@github/spark/hooks'
+import { useTranslation } from 'react-i18next'
 import { CourseStructure, User, UserProgress, UserStats, EmployeeCredentials } from '@/lib/types'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -10,6 +11,7 @@ interface AdminDashboardProps {
 }
 
 export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
+  const { t } = useTranslation()
   const [courses] = useKV<CourseStructure[]>('admin-courses', [])
   const [users] = useKV<User[]>('users', [])
   const [employees] = useKV<EmployeeCredentials[]>('employee-credentials', [])
@@ -45,87 +47,87 @@ export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
 
   const quickActions = [
     {
-      label: 'Bulk Enrollment',
+      label: t('admin.bulkEnrollment'),
       icon: UserPlus,
       action: () => onNavigate('enrollment'),
       variant: 'default' as const,
-      description: 'Upload employee CSV file'
+      description: t('admin.uploadEmployeeCSV')
     },
     {
-      label: 'Create Groups',
+      label: t('admin.createGroups'),
       icon: UsersThree,
       action: () => onNavigate('groups'),
       variant: 'outline' as const,
-      description: 'Organize employees into teams'
+      description: t('admin.organizeEmployees')
     },
     {
-      label: 'Assign Courses',
+      label: t('admin.assignCourses'),
       icon: Target,
       action: () => onNavigate('assignments'),
       variant: 'outline' as const,
-      description: 'Assign training to groups/users'
+      description: t('admin.assignTraining')
     },
     {
-      label: 'Analytics Dashboard',
+      label: t('admin.analyticsDashboard'),
       icon: ChartBar,
       action: () => onNavigate('corporate-reports'),
       variant: 'outline' as const,
-      description: 'View progress & engagement'
+      description: t('admin.viewProgress')
     },
     {
-      label: 'Create Course',
+      label: t('admin.createCourse'),
       icon: Plus,
       action: () => onNavigate('courses'),
       variant: 'outline' as const,
-      description: 'Build new training content'
+      description: t('admin.buildNewContent')
     },
     {
-      label: 'Manage Users',
+      label: t('admin.manageUsers'),
       icon: Users,
       action: () => onNavigate('users'),
       variant: 'outline' as const,
-      description: 'Individual user management'
+      description: t('admin.individualUserManagement')
     },
     {
-      label: 'View Reports',
+      label: t('admin.viewReports'),
       icon: FileText,
       action: () => onNavigate('reports'),
       variant: 'outline' as const,
-      description: 'Detailed analytics reports'
+      description: t('admin.detailedAnalytics')
     },
     {
-      label: 'Gamification',
+      label: t('admin.gamification'),
       icon: Trophy,
       action: () => onNavigate('gamification'),
       variant: 'outline' as const,
-      description: 'Configure XP and badges'
+      description: t('admin.gamificationSettings')
     }
   ]
 
   const stats = [
     {
-      title: 'Total Employees',
+      title: t('admin.totalEmployees'),
       value: totalEmployees,
-      subtitle: `${pendingEmployees} pending activation`,
+      subtitle: `${pendingEmployees} ${t('admin.pendingEmployees').toLowerCase()}`,
       icon: Users,
       color: 'text-primary'
     },
     {
-      title: 'Total Courses',
+      title: t('admin.totalCourses'),
       value: totalCourses,
-      subtitle: `${publishedCourses} published`,
+      subtitle: `${publishedCourses} ${t('course.published').toLowerCase()}`,
       icon: BookOpen,
       color: 'text-secondary'
     },
     {
-      title: 'Completion Rate',
+      title: t('admin.completionRate'),
       value: `${completionRate}%`,
       subtitle: 'Overall progress',
       icon: TrendUp,
       color: 'text-success'
     },
     {
-      title: 'XP Awarded',
+      title: t('admin.totalXP'),
       value: totalXPAwarded.toLocaleString(),
       subtitle: 'Total experience earned',
       icon: Trophy,

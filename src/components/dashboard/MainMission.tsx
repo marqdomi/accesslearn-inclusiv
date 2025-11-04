@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -13,6 +14,8 @@ interface MainMissionProps {
 }
 
 export function MainMission({ course, progress, onContinue }: MainMissionProps) {
+  const { t } = useTranslation()
+  
   if (!course) {
     return (
       <Card className="p-8 border-2 border-dashed border-muted text-center">
@@ -21,9 +24,9 @@ export function MainMission({ course, progress, onContinue }: MainMissionProps) 
             <Target size={32} className="text-muted-foreground" aria-hidden="true" />
           </div>
           <div>
-            <h2 className="text-xl font-bold mb-2">No Active Mission</h2>
+            <h2 className="text-xl font-bold mb-2">{t('dashboard.noActiveMission')}</h2>
             <p className="text-muted-foreground">
-              Select a course from below to begin your learning adventure!
+              {t('dashboard.noActiveMissionDescription')}
             </p>
           </div>
         </div>
@@ -51,12 +54,12 @@ export function MainMission({ course, progress, onContinue }: MainMissionProps) 
                 <Badge variant="default" className="gap-1.5 px-3 py-1">
                   <Target size={16} weight="fill" aria-hidden="true" />
                   <span className="font-bold">
-                    {isCompleted ? 'MISSION COMPLETE' : 'CURRENT MISSION'}
+                    {isCompleted ? t('dashboard.missionComplete') : t('dashboard.currentMissionLabel')}
                   </span>
                 </Badge>
               </div>
               <h2 className="text-3xl font-bold mb-2 leading-tight">
-                Mission: {course.title}
+                {t('dashboard.mission')} {course.title}
               </h2>
               <p className="text-muted-foreground text-lg">
                 {course.description}
@@ -68,15 +71,15 @@ export function MainMission({ course, progress, onContinue }: MainMissionProps) 
             <div className="flex items-center gap-2">
               <Clock size={20} className="text-muted-foreground" aria-hidden="true" />
               <span className="text-sm font-medium">
-                <span className="font-bold text-foreground">{course.estimatedTime} min</span>
-                <span className="text-muted-foreground"> estimated</span>
+                <span className="font-bold text-foreground">{course.estimatedTime} {t('time.min')}</span>
+                <span className="text-muted-foreground"> {t('dashboard.estimated')}</span>
               </span>
             </div>
             <div className="flex items-center gap-2">
               <Lightning size={20} weight="fill" className="text-xp" aria-hidden="true" />
               <span className="text-sm font-medium">
-                <span className="font-bold text-xp">+50 XP</span>
-                <span className="text-muted-foreground"> per module</span>
+                <span className="font-bold text-xp">+50 {t('gamification.xp')}</span>
+                <span className="text-muted-foreground"> {t('dashboard.perModule')}</span>
               </span>
             </div>
           </div>
@@ -93,7 +96,7 @@ export function MainMission({ course, progress, onContinue }: MainMissionProps) 
                 aria-label={`Mission progress: ${Math.floor(completionPercent)}% complete`}
               />
               <p className="mt-2 text-xs text-muted-foreground">
-                {progress?.completedModules.length || 0} of {course.modules.length} modules completed
+                {progress?.completedModules.length || 0} of {course.modules.length} {t('dashboard.modules').toLowerCase()} {t('dashboard.completed').toLowerCase()}
               </p>
             </div>
           )}
@@ -104,7 +107,7 @@ export function MainMission({ course, progress, onContinue }: MainMissionProps) 
             className="w-full sm:w-auto gap-2 text-lg h-14 px-8 shadow-lg hover:shadow-xl transition-shadow"
           >
             <PlayCircle size={24} weight="fill" aria-hidden="true" />
-            {isCompleted ? 'Review Mission' : progress?.status === 'in-progress' ? 'Continue Adventure!' : 'Start Mission!'}
+            {isCompleted ? t('dashboard.replayMission') : progress?.status === 'in-progress' ? t('dashboard.continue') : t('dashboard.startMission')}
           </Button>
         </div>
 
