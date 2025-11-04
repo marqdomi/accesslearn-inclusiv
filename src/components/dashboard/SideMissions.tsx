@@ -84,7 +84,7 @@ export function SideMissions({ courses, progress, onSelectCourse, excludeCourseI
                   }
                 }}
                 role="button"
-                aria-label={`Select ${course.title} course. ${courseProgress?.status === 'completed' ? 'Completed' : courseProgress?.status === 'in-progress' ? `${Math.floor(completionPercent)}% complete` : 'Not started'}`}
+                aria-label={`${course.title}. ${courseProgress?.status === 'completed' ? t('dashboard.completed') : courseProgress?.status === 'in-progress' ? `${Math.floor(completionPercent)}% ${t('dashboard.completed').toLowerCase()}` : t('dashboard.notStarted')}`}
               >
                 <div className="flex items-start justify-between gap-3 mb-3">
                   <div className="flex-1 min-w-0">

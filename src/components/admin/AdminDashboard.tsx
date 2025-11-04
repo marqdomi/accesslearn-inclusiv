@@ -122,14 +122,14 @@ export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
     {
       title: t('admin.completionRate'),
       value: `${completionRate}%`,
-      subtitle: 'Overall progress',
+      subtitle: t('admin.overallProgress'),
       icon: TrendUp,
       color: 'text-success'
     },
     {
       title: t('admin.totalXP'),
       value: totalXPAwarded.toLocaleString(),
-      subtitle: 'Total experience earned',
+      subtitle: t('admin.totalExperienceEarned'),
       icon: Trophy,
       color: 'text-accent'
     }

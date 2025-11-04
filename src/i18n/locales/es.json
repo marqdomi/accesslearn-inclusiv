@@ -119,6 +119,8 @@
     "publishedCourses": "Cursos Publicados",
     "totalEmployees": "Empleados Totales",
     "pendingEmployees": "Empleados Pendientes",
+    "overallProgress": "Progreso General",
+    "totalExperienceEarned": "Experiencia Total Ganada",
     "quickActions": "Acciones Rápidas",
     "bulkEnrollment": "Inscripción Masiva",
     "uploadEmployeeCSV": "Subir archivo CSV de empleados",

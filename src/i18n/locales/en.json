@@ -119,6 +119,8 @@
     "publishedCourses": "Published Courses",
     "totalEmployees": "Total Employees",
     "pendingEmployees": "Pending Employees",
+    "overallProgress": "Overall Progress",
+    "totalExperienceEarned": "Total Experience Earned",
     "quickActions": "Quick Actions",
     "bulkEnrollment": "Bulk Enrollment",
     "uploadEmployeeCSV": "Upload employee CSV file",
