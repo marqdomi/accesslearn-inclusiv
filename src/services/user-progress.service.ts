@@ -16,6 +16,8 @@ class UserProgressServiceClass {
 
   /**
    * Get all progress records for a user
+   * Note: Currently uses in-memory filtering. For large datasets, 
+   * consider implementing database-level filtering when DB API supports it.
    */
   async getByUserId(userId: string): Promise<UserProgress[]> {
     const allProgress = await this.db.getAll<Omit<UserProgress, 'id'>>(COLLECTION_NAME)
@@ -24,6 +26,8 @@ class UserProgressServiceClass {
 
   /**
    * Get progress for a specific user and course
+   * Note: Uses getByUserId which filters in memory. 
+   * Consider caching if this becomes a performance bottleneck.
    */
   async getByUserAndCourse(userId: string, courseId: string): Promise<UserProgress | null> {
     const allProgress = await this.getByUserId(userId)
@@ -47,7 +51,12 @@ class UserProgressServiceClass {
           lastAccessed: Date.now(),
         }
       )
-      return updated!
+      
+      if (!updated) {
+        throw new Error(`Failed to update progress for user ${userId}, course ${courseId}`)
+      }
+      
+      return updated
     } else {
       // Create new progress record
       const newProgress = await this.db.insert(

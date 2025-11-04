@@ -27,7 +27,9 @@ export function CourseDashboard({ courses, onSelectCourse, onViewAchievements }:
     const loadProgress = async () => {
       try {
         setLoading(true)
-        const userId = 'current-user' // TODO: Get from auth context
+        // TODO: Replace with actual user ID from auth context
+        // For now using placeholder - should be replaced with useAuth() or similar
+        const userId = 'current-user'
         const progressList = await UserProgressService.getByUserId(userId)
         
         // Convert array to map for easier lookup

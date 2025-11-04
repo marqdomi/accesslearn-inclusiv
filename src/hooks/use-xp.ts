@@ -72,6 +72,13 @@ export function getRankName(level: number): string {
   return RANK_NAMES[rankIndex]
 }
 
+interface AwardXPOptions {
+  amount: number
+  reason: string
+  showNotification?: boolean
+  type?: 'module' | 'course' | 'assessment' | 'login' | 'streak' | 'perfect-score'
+}
+
 export function useXP(userId: string = 'current-user') {
   const [totalXP, setTotalXP] = useState(0)
   const [currentLevel, setCurrentLevel] = useState(1)
@@ -94,17 +101,34 @@ export function useXP(userId: string = 'current-user') {
     loadStats()
   }, [userId])
 
-  const awardXP = async (amount: number, reason: string, showNotification = true, type: 'module' | 'course' | 'assessment' | 'login' | 'streak' | 'perfect-score' = 'module') => {
+  const awardXP = async (options: AwardXPOptions | number, legacyReason?: string, legacyShowNotification?: boolean, legacyType?: 'module' | 'course' | 'assessment' | 'login' | 'streak' | 'perfect-score') => {
+    // Support both old and new function signatures
+    let opts: AwardXPOptions
+    if (typeof options === 'number') {
+      opts = {
+        amount: options,
+        reason: legacyReason || '',
+        showNotification: legacyShowNotification ?? true,
+        type: legacyType || 'module'
+      }
+    } else {
+      opts = {
+        showNotification: true,
+        type: 'module',
+        ...options
+      }
+    }
+
     try {
       const oldLevel = currentLevel
-      const stats = await AchievementService.addXP(userId, amount, type, reason)
+      const stats = await AchievementService.addXP(userId, opts.amount, opts.type, opts.reason)
       
       setTotalXP(stats.totalXP)
       setCurrentLevel(stats.level)
 
-      if (showNotification) {
-        toast.success(`+${amount} XP`, {
-          description: reason,
+      if (opts.showNotification) {
+        toast.success(`+${opts.amount} XP`, {
+          description: opts.reason,
           duration: 3000,
           className: 'bg-gradient-to-r from-lime-500 to-green-600 text-white',
         })
