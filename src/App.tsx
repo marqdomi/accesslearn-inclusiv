@@ -64,26 +64,22 @@ function App() {
       <SampleDataInitializer />
       <SkipLink />
       {isAdminView ? (
-        <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background">
-          <header className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-50 shadow-sm">
+        <div className="min-h-screen admin-bg">
+          <header className="admin-header sticky top-0 z-50">
             <div className="mx-auto max-w-7xl px-6 py-4">
               <div className="flex flex-wrap items-center justify-between gap-4">
-                <motion.div
-                  className="flex items-center gap-3"
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                >
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-primary via-secondary to-accent">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-md bg-[var(--admin-primary)]">
                     <ShieldCheck size={24} weight="fill" className="text-white" aria-hidden="true" />
                   </div>
                   <div>
-                    <h1 className="text-2xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
-                      GameLearn Admin
+                    <h1 className="text-2xl admin-heading">
+                      AccessLearn Admin
                     </h1>
-                    <p className="text-xs text-muted-foreground">Content Management</p>
+                    <p className="text-xs text-muted-foreground">Training Management System</p>
                   </div>
-                </motion.div>
-                <Button variant="outline" onClick={() => handleViewChange('dashboard')}>
+                </div>
+                <Button variant="outline" className="admin-button admin-focus" onClick={() => handleViewChange('dashboard')}>
                   <GraduationCap size={20} className="mr-2" />
                   Exit Admin Mode
                 </Button>
@@ -95,8 +91,8 @@ function App() {
           </main>
         </div>
       ) : (
-        <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-secondary/5">
-          <header className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-50 shadow-sm">
+        <div className="min-h-screen learner-gradient-bg">
+          <header className="border-b bg-card/90 backdrop-blur-md sticky top-0 z-50 shadow-lg">
             <div className="mx-auto max-w-7xl px-6 py-4">
               <div className="flex flex-wrap items-center justify-between gap-4">
                 <motion.div
@@ -104,21 +100,21 @@ function App() {
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                 >
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-primary via-secondary to-accent">
-                    <Lightning size={24} weight="fill" className="text-white" aria-hidden="true" />
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary via-secondary to-accent shadow-lg">
+                    <Lightning size={28} weight="fill" className="text-white" aria-hidden="true" />
                   </div>
                   <div>
-                    <h1 className="text-2xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
+                    <h1 className="text-3xl font-bold learner-heading">
                       GameLearn
                     </h1>
-                    <p className="text-xs text-muted-foreground">Level Up Your Skills</p>
+                    <p className="text-sm font-semibold text-muted-foreground">Level Up Your Skills! 🚀</p>
                   </div>
                 </motion.div>
                 <nav className="flex gap-2" aria-label="Main navigation">
                   <Button
                     variant={currentView === 'dashboard' && !selectedCourse ? 'default' : 'outline'}
                     onClick={() => handleViewChange('dashboard')}
-                    className="gap-2"
+                    className="gap-2 learner-button learner-focus"
                   >
                     <GraduationCap size={20} aria-hidden="true" />
                     <span className="hidden sm:inline">Dashboard</span>
@@ -127,7 +123,7 @@ function App() {
                   <Button
                     variant={currentView === 'achievements' ? 'default' : 'outline'}
                     onClick={() => handleViewChange('achievements')}
-                    className="gap-2"
+                    className="gap-2 learner-button learner-focus"
                   >
                     <Trophy size={20} aria-hidden="true" />
                     <span className="hidden sm:inline">Achievements</span>
@@ -136,7 +132,7 @@ function App() {
                   <Button
                     variant={isAdminView ? 'default' : 'outline'}
                     onClick={() => handleViewChange('admin' as View)}
-                    className="gap-2"
+                    className="gap-2 learner-button learner-focus"
                   >
                     <ShieldCheck size={20} aria-hidden="true" />
                     <span className="hidden sm:inline">Admin</span>
@@ -144,7 +140,7 @@ function App() {
                   <Button
                     variant="ghost"
                     onClick={logout}
-                    className="gap-2"
+                    className="gap-2 learner-button learner-focus"
                     title="Sign out"
                   >
                     <SignOut size={20} aria-hidden="true" />

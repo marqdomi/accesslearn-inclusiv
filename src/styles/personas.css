@@ -1,0 +1,280 @@
+/**
+ * Dual Persona Design System
+ * 
+ * This file defines two distinct visual identities:
+ * 1. Learner Persona: Gamified, fun, engaging (video game aesthetic)
+ * 2. Admin Persona: Professional, clean, data-driven (SaaS tool aesthetic)
+ */
+
+/* ========================================
+   LEARNER PERSONA - "The Accessible Game"
+   ======================================== */
+
+/* Learner-specific theme variables */
+:root {
+  /* Vibrant, energetic colors for gamified experience */
+  --learner-primary: oklch(0.55 0.20 290);  /* Purple */
+  --learner-primary-foreground: oklch(0.98 0 0);
+  
+  --learner-secondary: oklch(0.65 0.15 195);  /* Cyan */
+  --learner-secondary-foreground: oklch(0.25 0.08 280);
+  
+  --learner-accent: oklch(0.70 0.18 30);  /* Orange */
+  --learner-accent-foreground: oklch(0.98 0 0);
+  
+  --learner-success: oklch(0.75 0.20 130);  /* Green */
+  --learner-xp: oklch(0.75 0.20 130);  /* XP Green */
+  
+  /* Colorful backgrounds for game feel */
+  --learner-bg-gradient-start: oklch(0.98 0.01 290);
+  --learner-bg-gradient-mid: oklch(0.97 0.02 195);
+  --learner-bg-gradient-end: oklch(0.96 0.02 30);
+  
+  /* Card styling for missions/quests */
+  --learner-card-border: 2px;
+  --learner-card-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --learner-card-hover-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  
+  /* Animation settings (respects reduce-motion) */
+  --learner-transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --learner-transition-normal: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  --learner-transition-slow: 500ms cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* Badge/Achievement styling */
+  --learner-badge-glow: 0 0 20px rgb(0 0 0 / 0.3);
+  
+  /* Rounded, friendly corners */
+  --learner-radius: 0.75rem;
+  --learner-radius-lg: 1rem;
+}
+
+/* High contrast mode for learner persona */
+.high-contrast {
+  --learner-primary: oklch(0.45 0.25 290);
+  --learner-secondary: oklch(0.55 0.15 195);
+  --learner-accent: oklch(0.60 0.22 30);
+  --learner-success: oklch(0.60 0.20 130);
+  --learner-xp: oklch(0.60 0.20 130);
+}
+
+/* ========================================
+   ADMIN PERSONA - "The Professional Tool"
+   ======================================== */
+
+/* Admin-specific theme variables */
+:root {
+  /* Muted, professional colors */
+  --admin-primary: oklch(0.40 0.10 240);  /* Muted Blue */
+  --admin-primary-foreground: oklch(0.98 0 0);
+  
+  --admin-secondary: oklch(0.92 0.01 240);  /* Light Gray-Blue */
+  --admin-secondary-foreground: oklch(0.25 0.05 240);
+  
+  --admin-accent: oklch(0.50 0.12 240);  /* Medium Blue */
+  --admin-accent-foreground: oklch(0.98 0 0);
+  
+  --admin-success: oklch(0.65 0.15 140);  /* Professional Green */
+  --admin-warning: oklch(0.70 0.15 60);  /* Professional Yellow */
+  --admin-danger: oklch(0.55 0.20 25);  /* Professional Red */
+  
+  /* Clean, minimal backgrounds */
+  --admin-bg: oklch(0.98 0 0);
+  --admin-bg-secondary: oklch(0.96 0.01 240);
+  --admin-bg-tertiary: oklch(0.94 0.01 240);
+  
+  /* Subtle card styling */
+  --admin-card-border: 1px;
+  --admin-card-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --admin-card-hover-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.06);
+  
+  /* Minimal animations for efficiency */
+  --admin-transition: 150ms ease-in-out;
+  
+  /* Professional, clean corners */
+  --admin-radius: 0.5rem;
+  --admin-radius-sm: 0.375rem;
+  
+  /* Table/Data styling */
+  --admin-table-header-bg: oklch(0.95 0.01 240);
+  --admin-table-border: oklch(0.88 0.02 240);
+  --admin-table-hover: oklch(0.97 0.01 240);
+  
+  /* Form styling */
+  --admin-input-border: oklch(0.85 0.02 240);
+  --admin-input-focus: oklch(0.50 0.12 240);
+}
+
+/* High contrast mode for admin persona */
+.high-contrast {
+  --admin-primary: oklch(0.35 0.15 240);
+  --admin-accent: oklch(0.40 0.15 240);
+  --admin-success: oklch(0.50 0.18 140);
+  --admin-input-border: oklch(0.30 0.05 240);
+  --admin-table-border: oklch(0.30 0.05 240);
+}
+
+/* ========================================
+   PERSONA-SPECIFIC UTILITY CLASSES
+   ======================================== */
+
+/* Learner-specific classes */
+.learner-gradient-bg {
+  background: linear-gradient(
+    135deg,
+    var(--learner-bg-gradient-start) 0%,
+    var(--learner-bg-gradient-mid) 50%,
+    var(--learner-bg-gradient-end) 100%
+  );
+}
+
+.learner-card {
+  border-width: var(--learner-card-border);
+  border-radius: var(--learner-radius);
+  box-shadow: var(--learner-card-shadow);
+  transition: box-shadow var(--learner-transition-normal), transform var(--learner-transition-normal);
+}
+
+.learner-card:hover {
+  box-shadow: var(--learner-card-hover-shadow);
+}
+
+.learner-button {
+  border-radius: var(--learner-radius);
+  font-weight: 600;
+  transition: all var(--learner-transition-fast);
+}
+
+.learner-badge {
+  border-radius: 9999px;
+  font-weight: 700;
+  box-shadow: var(--learner-badge-glow);
+}
+
+.learner-progress-bar {
+  height: 12px;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, var(--learner-primary), var(--learner-secondary));
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+}
+
+/* Admin-specific classes */
+.admin-bg {
+  background-color: var(--admin-bg);
+}
+
+.admin-card {
+  border-width: var(--admin-card-border);
+  border-radius: var(--admin-radius);
+  border-color: var(--admin-table-border);
+  box-shadow: var(--admin-card-shadow);
+  background-color: white;
+  transition: box-shadow var(--admin-transition);
+}
+
+.admin-card:hover {
+  box-shadow: var(--admin-card-hover-shadow);
+}
+
+.admin-button {
+  border-radius: var(--admin-radius-sm);
+  font-weight: 500;
+  transition: all var(--admin-transition);
+}
+
+.admin-table {
+  border-radius: var(--admin-radius);
+  border: 1px solid var(--admin-table-border);
+}
+
+.admin-table thead {
+  background-color: var(--admin-table-header-bg);
+}
+
+.admin-table tbody tr:hover {
+  background-color: var(--admin-table-hover);
+}
+
+.admin-input {
+  border-radius: var(--admin-radius-sm);
+  border: 1px solid var(--admin-input-border);
+  transition: border-color var(--admin-transition), box-shadow var(--admin-transition);
+}
+
+.admin-input:focus {
+  border-color: var(--admin-input-focus);
+  outline: none;
+  box-shadow: 0 0 0 3px oklch(0.50 0.12 240 / 0.1);
+}
+
+/* ========================================
+   REDUCE MOTION SUPPORT
+   ======================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .learner-card,
+  .learner-button,
+  .admin-card,
+  .admin-button,
+  .admin-input {
+    transition: none !important;
+  }
+}
+
+.reduce-motion .learner-card,
+.reduce-motion .learner-button,
+.reduce-motion .admin-card,
+.reduce-motion .admin-button,
+.reduce-motion .admin-input {
+  transition: none !important;
+  animation: none !important;
+}
+
+/* ========================================
+   ACCESSIBILITY - FOCUS INDICATORS
+   ======================================== */
+
+/* Learner focus styles - bold and colorful */
+.learner-focus:focus-visible {
+  outline: 3px solid var(--learner-primary);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 6px oklch(0.55 0.20 290 / 0.2);
+}
+
+/* Admin focus styles - professional and clear */
+.admin-focus:focus-visible {
+  outline: 2px solid var(--admin-primary);
+  outline-offset: 1px;
+  box-shadow: 0 0 0 4px oklch(0.40 0.10 240 / 0.15);
+}
+
+/* ========================================
+   COMPONENT-SPECIFIC OVERRIDES
+   ======================================== */
+
+/* Learner-specific header styling */
+.learner-header {
+  background: linear-gradient(135deg, var(--learner-primary) 0%, var(--learner-secondary) 50%, var(--learner-accent) 100%);
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+}
+
+/* Admin-specific header styling */
+.admin-header {
+  background-color: white;
+  border-bottom: 1px solid var(--admin-table-border);
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.05);
+}
+
+/* Typography adjustments */
+.learner-heading {
+  font-weight: 700;
+  background: linear-gradient(90deg, var(--learner-primary), var(--learner-secondary), var(--learner-accent));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.admin-heading {
+  font-weight: 600;
+  color: var(--admin-primary);
+  letter-spacing: -0.025em;
+}
