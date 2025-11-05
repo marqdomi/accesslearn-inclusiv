@@ -12,7 +12,7 @@
 const kv = window.spark?.kv
 
 if (!kv) {
-  console.warn('Spark KV storage not available')
+  console.warn('GitHub Spark KV storage not available - services will not function properly. Ensure you are running in a Spark environment.')
 }
 
 /**
@@ -20,6 +20,13 @@ if (!kv) {
  */
 export class BaseService<T extends { id: string }> {
   constructor(protected readonly tableName: string) {}
+
+  /**
+   * Get KV storage instance
+   */
+  protected getKV() {
+    return kv
+  }
 
   /**
    * Get all records from the table

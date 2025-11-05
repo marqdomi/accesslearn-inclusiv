@@ -7,6 +7,9 @@
 import { BaseService, UserScopedService } from './base-service'
 import { Achievement, Certificate, QuizAttempt, CourseReview, CourseRatingSummary } from '@/lib/types'
 
+// Constants
+export const QUIZ_PASSING_SCORE = 70
+
 class AchievementServiceClass extends BaseService<Achievement> {
   constructor() {
     super('achievements-catalog')
@@ -174,7 +177,7 @@ class QuizAttemptServiceClass extends UserScopedService<QuizAttemptRecord> {
     const uniqueUsers = new Set(attempts.map(a => a.userId)).size
     const totalScore = attempts.reduce((sum, a) => sum + a.score, 0)
     const averageScore = totalScore / attempts.length
-    const passed = attempts.filter(a => a.score >= 70).length
+    const passed = attempts.filter(a => a.score >= QUIZ_PASSING_SCORE).length
     const passRate = (passed / attempts.length) * 100
 
     return {

@@ -7,7 +7,9 @@
 import { BaseService, UserScopedService } from './base-service'
 import { UserProfile, UserStats, UserAchievement, XPEvent } from '@/lib/types'
 
-const DEFAULT_USER_STATS: UserStats = {
+// Constants
+export const XP_PER_LEVEL = 1000
+export const DEFAULT_USER_STATS: UserStats = {
   totalCoursesCompleted: 0,
   totalModulesCompleted: 0,
   totalAssessmentsPassed: 0,
@@ -122,7 +124,7 @@ class UserStatsServiceClass extends UserScopedService<UserStatsRecord> {
   async addXP(userId: string, amount: number): Promise<UserStats> {
     const stats = await this.getUserStats(userId)
     const newTotalXP = stats.totalXP + amount
-    const newLevel = Math.floor(newTotalXP / 1000) + 1
+    const newLevel = Math.floor(newTotalXP / XP_PER_LEVEL) + 1
 
     return this.updateStats(userId, {
       totalXP: newTotalXP,

@@ -5,7 +5,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react'
-import { UserProgressService, UserStatsService, XPEventService } from '@/services'
+import { UserProgressService, UserStatsService, XPEventService, DEFAULT_USER_STATS } from '@/services'
 import { UserProgress, UserStats, XPEvent } from '@/lib/types'
 
 export interface UseUserProgressResult {
@@ -207,18 +207,7 @@ export function useUserProgress(userId: string): UseUserProgressResult {
 
   return {
     progress,
-    stats: stats || {
-      totalCoursesCompleted: 0,
-      totalModulesCompleted: 0,
-      totalAssessmentsPassed: 0,
-      averageScore: 0,
-      currentStreak: 0,
-      longestStreak: 0,
-      lastActivityDate: 0,
-      achievementsUnlocked: [],
-      totalXP: 0,
-      level: 1
-    },
+    stats: stats || DEFAULT_USER_STATS,
     recentXPEvents,
     loading,
     error,

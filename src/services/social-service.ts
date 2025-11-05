@@ -72,8 +72,6 @@ class MentorshipServiceClass extends BaseService<MentorshipPairing> {
 }
 
 class ForumServiceClass extends BaseService<ForumQuestion> {
-  private answersTableName = 'forum-answers'
-
   /**
    * Get questions for a course
    */
@@ -138,76 +136,45 @@ class ForumServiceClass extends BaseService<ForumQuestion> {
    * Get answers for a question
    */
   async getAnswers(questionId: string): Promise<ForumAnswer[]> {
-    const kv = window.spark?.kv
-    if (!kv) return []
-
-    try {
-      const allAnswers = await kv.get<ForumAnswer[]>(this.answersTableName) || []
-      const filtered = allAnswers.filter(a => a.questionId === questionId)
-      return filtered.sort((a, b) => {
-        // Best answer first
-        if (a.isBestAnswer && !b.isBestAnswer) return -1
-        if (!a.isBestAnswer && b.isBestAnswer) return 1
-        // Then by upvotes
-        if (a.upvotes !== b.upvotes) return b.upvotes - a.upvotes
-        // Then by timestamp
-        return a.timestamp - b.timestamp
-      })
-    } catch (error) {
-      console.error('Error getting answers:', error)
-      return []
-    }
+    const answerService = new BaseService<ForumAnswer>('forum-answers')
+    const allAnswers = await answerService.find(a => a.questionId === questionId)
+    
+    return allAnswers.sort((a, b) => {
+      // Best answer first
+      if (a.isBestAnswer && !b.isBestAnswer) return -1
+      if (!a.isBestAnswer && b.isBestAnswer) return 1
+      // Then by upvotes
+      if (a.upvotes !== b.upvotes) return b.upvotes - a.upvotes
+      // Then by timestamp
+      return a.timestamp - b.timestamp
+    })
   }
 
   /**
    * Post an answer
    */
   async postAnswer(answer: ForumAnswer): Promise<ForumAnswer> {
-    const kv = window.spark?.kv
-    if (!kv) throw new Error('KV storage not available')
-
-    try {
-      const allAnswers = await kv.get<ForumAnswer[]>(this.answersTableName) || []
-      allAnswers.push(answer)
-      await kv.set(this.answersTableName, allAnswers)
-      return answer
-    } catch (error) {
-      console.error('Error posting answer:', error)
-      throw error
-    }
+    const answerService = new BaseService<ForumAnswer>('forum-answers')
+    return answerService.create(answer)
   }
 
   /**
    * Upvote answer
    */
   async upvoteAnswer(answerId: string, userId: string): Promise<ForumAnswer | null> {
-    const kv = window.spark?.kv
-    if (!kv) return null
+    const answerService = new BaseService<ForumAnswer>('forum-answers')
+    const answer = await answerService.getById(answerId)
+    
+    if (!answer) return null
 
-    try {
-      const allAnswers = await kv.get<ForumAnswer[]>(this.answersTableName) || []
-      const index = allAnswers.findIndex(a => a.id === answerId)
-      
-      if (index === -1) return null
+    const upvotedBy = answer.upvotedBy.includes(userId)
+      ? answer.upvotedBy.filter(id => id !== userId)
+      : [...answer.upvotedBy, userId]
 
-      const answer = allAnswers[index]
-      const upvotedBy = answer.upvotedBy.includes(userId)
-        ? answer.upvotedBy.filter(id => id !== userId)
-        : [...answer.upvotedBy, userId]
-
-      const updated: ForumAnswer = {
-        ...answer,
-        upvotedBy,
-        upvotes: upvotedBy.length
-      }
-
-      allAnswers[index] = updated
-      await kv.set(this.answersTableName, allAnswers)
-      return updated
-    } catch (error) {
-      console.error('Error upvoting answer:', error)
-      return null
-    }
+    return answerService.update(answerId, {
+      upvotedBy,
+      upvotes: upvotedBy.length
+    } as Partial<ForumAnswer>)
   }
 }
 
