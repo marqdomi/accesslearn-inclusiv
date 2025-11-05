@@ -23,6 +23,7 @@ import {
 import { DetailsTab } from './course-editor/DetailsTab'
 import { StructureTab } from './course-editor/StructureTab'
 import { PublishingTab } from './course-editor/PublishingTab'
+import { ContentTab } from './course-editor/ContentTab'
 
 interface CourseEditorProps {
   courseId?: string
@@ -315,7 +316,7 @@ export function CourseEditor({ courseId, onBack }: CourseEditorProps) {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="details" className="flex items-center gap-2">
             <Article size={16} />
             Details
@@ -327,6 +328,10 @@ export function CourseEditor({ courseId, onBack }: CourseEditorProps) {
             {(!course.modules || course.modules.length === 0) && (
               <Warning size={14} className="text-yellow-500" />
             )}
+          </TabsTrigger>
+          <TabsTrigger value="content" className="flex items-center gap-2">
+            <Article size={16} />
+            Content
           </TabsTrigger>
           <TabsTrigger value="publishing" className="flex items-center gap-2">
             <GearSix size={16} />
@@ -355,6 +360,13 @@ export function CourseEditor({ courseId, onBack }: CourseEditorProps) {
             onEditLesson={handleEditLesson}
             onDeleteLesson={handleDeleteLesson}
             onMoveLesson={handleMoveLesson}
+          />
+        </TabsContent>
+
+        <TabsContent value="content" className="mt-6">
+          <ContentTab
+            course={course}
+            onChange={handleCourseChange}
           />
         </TabsContent>
 
