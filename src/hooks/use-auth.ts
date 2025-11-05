@@ -1,11 +1,12 @@
 import { useKV } from '@github/spark/hooks'
 import { AuthSession, EmployeeCredentials, UserProfile, OnboardingPreferences } from '@/lib/types'
-import { createAuthSession, isSessionValid } from '@/lib/auth-utils'
+import { createAuthSession, isSessionValid, validatePassword } from '@/lib/auth-utils'
 
 export function useAuth() {
   const [session, setSession] = useKV<AuthSession | null>('auth-session', null)
   const [profilesList, setProfiles] = useKV<UserProfile[]>('user-profiles', [])
-  const [credentialsList] = useKV<EmployeeCredentials[]>('employee-credentials', [])
+  const [credentialsList, setCredentialsList] = useKV<EmployeeCredentials[]>('employee-credentials', [])
+  const [hasAdminUser, setHasAdminUser] = useKV<boolean>('has-admin-user', false)
 
   const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     try {
@@ -128,6 +129,72 @@ export function useAuth() {
     setSession(null)
   }
 
+  const setupInitialAdmin = async (
+    email: string,
+    password: string,
+    firstName: string,
+    lastName: string
+  ): Promise<{ success: boolean; error?: string }> => {
+    // Check if admin already exists
+    if (hasAdminUser) {
+      return { success: false, error: 'Administrator already exists' }
+    }
+
+    // Validate password
+    const passwordValidation = validatePassword(password)
+    if (!passwordValidation.isValid) {
+      return { success: false, error: passwordValidation.errors.join(', ') }
+    }
+
+    // Create admin credential
+    const adminId = `admin-${Date.now()}`
+    const adminCredential: EmployeeCredentials = {
+      id: adminId,
+      email: email.toLowerCase(),
+      temporaryPassword: password, // In production, this should be hashed
+      firstName,
+      lastName,
+      department: 'Administration',
+      role: 'admin',
+      status: 'activated',
+      createdAt: Date.now()
+    }
+
+    // Create admin profile
+    const adminProfile: UserProfile = {
+      id: adminId,
+      email: email.toLowerCase(),
+      firstName,
+      lastName,
+      fullName: `${firstName} ${lastName}`,
+      displayName: `${firstName} ${lastName}`,
+      department: 'Administration',
+      role: 'admin',
+      createdAt: Date.now(),
+      lastLoginAt: Date.now(),
+      preferences: {
+        highContrast: false,
+        textSize: 'normal',
+        reduceMotion: false,
+        disableSoundEffects: false
+      }
+    }
+
+    // Save credentials and profile
+    setCredentialsList([adminCredential])
+    setProfiles([adminProfile])
+    setHasAdminUser(true)
+
+    // Auto-login the new admin
+    const newSession = createAuthSession(adminId, email, 'admin', false)
+    newSession.requiresPasswordChange = false
+    newSession.requiresOnboarding = false
+    
+    setSession(newSession)
+
+    return { success: true }
+  }
+
   const isValid = session ? isSessionValid(session) : false
 
   return {
@@ -136,6 +203,8 @@ export function useAuth() {
     changePassword,
     completeOnboarding,
     logout,
+    setupInitialAdmin,
+    hasAdminUser,
     isAuthenticated: isValid
   }
 }

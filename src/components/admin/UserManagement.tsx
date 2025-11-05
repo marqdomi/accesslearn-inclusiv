@@ -94,15 +94,15 @@ export function UserManagement({ onBack }: UserManagementProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between border-b pb-4">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={onBack}>
+          <Button variant="ghost" size="icon" onClick={onBack} className="admin-button admin-focus">
             <ArrowLeft size={20} />
           </Button>
           <div>
-            <h2 className="text-2xl font-bold">User Management</h2>
-            <p className="text-sm text-muted-foreground">
-              {users?.length || 0} users, {groups?.length || 0} groups
+            <h2 className="text-3xl font-semibold admin-heading">User Management</h2>
+            <p className="text-sm text-muted-foreground font-medium">
+              {users?.length || 0} users · {groups?.length || 0} groups
             </p>
           </div>
         </div>
@@ -110,11 +110,11 @@ export function UserManagement({ onBack }: UserManagementProps) {
 
       <Tabs defaultValue="users">
         <TabsList>
-          <TabsTrigger value="users" className="gap-2">
+          <TabsTrigger value="users" className="admin-button gap-2">
             <UsersIcon size={16} />
             Users
           </TabsTrigger>
-          <TabsTrigger value="groups" className="gap-2">
+          <TabsTrigger value="groups" className="admin-button gap-2">
             <UsersThree size={16} />
             Groups
           </TabsTrigger>
@@ -124,14 +124,14 @@ export function UserManagement({ onBack }: UserManagementProps) {
           <div className="flex justify-end">
             <Dialog open={isAddingUser} onOpenChange={setIsAddingUser}>
               <DialogTrigger asChild>
-                <Button>
+                <Button className="admin-button admin-focus bg-[var(--admin-primary)]">
                   <UserPlus className="mr-2" size={18} />
                   Add User
                 </Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent className="admin-card">
                 <DialogHeader>
-                  <DialogTitle>Add New User</DialogTitle>
+                  <DialogTitle className="text-[var(--admin-primary)]">Add New User</DialogTitle>
                   <DialogDescription>
                     Create a new learner account manually
                   </DialogDescription>
@@ -141,6 +141,7 @@ export function UserManagement({ onBack }: UserManagementProps) {
                     <Label htmlFor="user-name">Name *</Label>
                     <Input
                       id="user-name"
+                      className="admin-input admin-focus"
                       placeholder="John Doe"
                       value={newUser.name}
                       onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
@@ -150,6 +151,7 @@ export function UserManagement({ onBack }: UserManagementProps) {
                     <Label htmlFor="user-email">Email *</Label>
                     <Input
                       id="user-email"
+                      className="admin-input admin-focus"
                       type="email"
                       placeholder="john@example.com"
                       value={newUser.email}
@@ -164,7 +166,7 @@ export function UserManagement({ onBack }: UserManagementProps) {
                         setNewUser({ ...newUser, role: value as 'employee' | 'admin' })
                       }
                     >
-                      <SelectTrigger id="user-role">
+                      <SelectTrigger id="user-role" className="admin-input admin-focus">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>

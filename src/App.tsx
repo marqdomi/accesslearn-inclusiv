@@ -16,6 +16,7 @@ import { AdminPanel } from '@/components/admin/AdminPanel'
 import { LoginScreen } from '@/components/auth/LoginScreen'
 import { PasswordChangeScreen } from '@/components/auth/PasswordChangeScreen'
 import { OnboardingScreen } from '@/components/auth/OnboardingScreen'
+import { InitialSetupScreen } from '@/components/auth/InitialSetupScreen'
 import { MissionLibrary } from '@/components/library/MissionLibrary'
 import { MyLibrary } from '@/components/library/MyLibrary'
 import { Button } from '@/components/ui/button'
@@ -30,7 +31,7 @@ type View = 'dashboard' | 'achievements' | 'community' | 'admin' | 'mission-libr
 
 function App() {
   const { t } = useTranslation()
-  const { session, login, changePassword, completeOnboarding, logout, isAuthenticated } = useAuth()
+  const { session, login, changePassword, completeOnboarding, logout, setupInitialAdmin, hasAdminUser, isAuthenticated } = useAuth()
   const { branding } = useBranding()
   const [courses] = useKV<Course[]>('courses', [])
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null)
@@ -39,6 +40,16 @@ function App() {
   const translatedCourses = useMemo(() => {
     return (courses || []).map(course => translateCourse(course, t))
   }, [courses, t])
+
+  // CRITICAL: Check if initial setup is required
+  if (!hasAdminUser) {
+    return (
+      <>
+        <InitialSetupScreen onSetupComplete={setupInitialAdmin} />
+        <Toaster richColors position="top-center" />
+      </>
+    )
+  }
 
   if (!isAuthenticated || !session) {
     return (

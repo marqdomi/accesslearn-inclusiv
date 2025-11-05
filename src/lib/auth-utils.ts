@@ -1,5 +1,10 @@
 import { AuthSession, EmployeeCredentials, UserProfile, PasswordChangeRequest } from './types'
 
+export function isValidEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  return emailRegex.test(email)
+}
+
 export function generateTemporaryPassword(): string {
   const adjectives = ['Swift', 'Bright', 'Quick', 'Bold', 'Clear', 'Smart', 'Strong', 'Fresh']
   const nouns = ['Eagle', 'Tiger', 'Phoenix', 'Dragon', 'Falcon', 'Wolf', 'Bear', 'Lion']
@@ -9,7 +14,7 @@ export function generateTemporaryPassword(): string {
   return `${adjective}${noun}${number}!`
 }
 
-export function validatePassword(password: string): { valid: boolean; errors: string[] } {
+export function validatePassword(password: string): { valid: boolean; isValid: boolean; errors: string[] } {
   const errors: string[] = []
   
   if (password.length < 8) {
@@ -32,8 +37,11 @@ export function validatePassword(password: string): { valid: boolean; errors: st
     errors.push('Password must contain at least one special character')
   }
   
+  const isValid = errors.length === 0
+  
   return {
-    valid: errors.length === 0,
+    valid: isValid,
+    isValid,
     errors
   }
 }
@@ -142,11 +150,6 @@ export function parseCSVEmployees(csvContent: string): {
   }
   
   return { employees, errors }
-}
-
-export function isValidEmail(email: string): boolean {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  return emailRegex.test(email)
 }
 
 export function formatCredentialsForDownload(credentials: EmployeeCredentials[]): string {
