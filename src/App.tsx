@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useKV } from '@github/spark/hooks'
 import { useAuth } from '@/hooks/use-auth'
 import { useBranding } from '@/hooks/use-branding'
@@ -16,6 +16,7 @@ import { AdminPanel } from '@/components/admin/AdminPanel'
 import { LoginScreen } from '@/components/auth/LoginScreen'
 import { PasswordChangeScreen } from '@/components/auth/PasswordChangeScreen'
 import { OnboardingScreen } from '@/components/auth/OnboardingScreen'
+import { InitialSetupScreen } from '@/components/auth/InitialSetupScreen'
 import { MissionLibrary } from '@/components/library/MissionLibrary'
 import { MyLibrary } from '@/components/library/MyLibrary'
 import { Button } from '@/components/ui/button'
@@ -25,20 +26,80 @@ import { motion } from 'framer-motion'
 import { useTranslation } from '@/lib/i18n'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { MyCertificates } from '@/components/dashboard/MyCertificates'
+import { AuthService } from '@/services/auth-service'
 
 type View = 'dashboard' | 'achievements' | 'community' | 'admin' | 'mission-library' | 'my-library' | 'my-certificates'
 
 function App() {
   const { t } = useTranslation()
-  const { session, login, changePassword, completeOnboarding, logout, isAuthenticated } = useAuth()
+  const { session, login, changePassword, completeOnboarding, logout, isAuthenticated, isAuthReady } = useAuth()
   const { branding } = useBranding()
+  const [needsSetup, setNeedsSetup] = useState(false)
+  const [setupChecked, setSetupChecked] = useState(false)
+  const [setupError, setSetupError] = useState<string | null>(null)
   const [courses] = useKV<Course[]>('courses', [])
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null)
   const [currentView, setCurrentView] = useState<View>('dashboard')
 
+  useEffect(() => {
+    let active = true
+
+    AuthService.getSetupStatus()
+      .then((requiresSetup) => {
+        if (!active) return
+        setNeedsSetup(requiresSetup)
+        setSetupError(null)
+      })
+      .catch(error => {
+        if (!active) return
+        console.error('Failed to determine setup status:', error)
+        setSetupError(error instanceof Error ? error.message : 'No se pudo verificar el estado de configuración.')
+        setNeedsSetup(true)
+      })
+      .finally(() => {
+        if (!active) return
+        setSetupChecked(true)
+      })
+
+    return () => {
+      active = false
+    }
+  }, [])
+
+  const handleInitialSetupComplete = async ({ email, password }: { email: string; password: string }) => {
+    const result = await login(email, password)
+    if (!result.success) {
+      throw new Error(result.error || 'No se pudo iniciar sesión automáticamente con el nuevo administrador.')
+    }
+    setSetupError(null)
+    setNeedsSetup(false)
+  }
+
   const translatedCourses = useMemo(() => {
     return (courses || []).map(course => translateCourse(course, t))
   }, [courses, t])
+
+  if (!setupChecked || !isAuthReady) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-background via-muted/30 to-background text-center">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="space-y-3"
+        >
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-primary to-secondary text-white shadow-lg">
+            <Lightning size={28} weight="fill" />
+          </div>
+          <p className="text-muted-foreground">Preparando el entorno…</p>
+        </motion.div>
+      </div>
+    )
+  }
+
+  if (needsSetup) {
+    return <InitialSetupScreen onSetupComplete={handleInitialSetupComplete} initialError={setupError} />
+  }
 
   if (!isAuthenticated || !session) {
     return (

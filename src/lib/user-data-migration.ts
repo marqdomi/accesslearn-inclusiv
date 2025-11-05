@@ -4,8 +4,9 @@
  * CRITICAL: This handles the migration from the old dual-storage system
  * (users + employee-credentials) to a unified Single Source of Truth.
  * 
- * Context: GitHub Spark uses KV (key-value) storage, not SQL databases.
- * Therefore, this is a KV data consolidation, not a SQL migration.
+ * Context: Legacy environments stored data in Spark KV. This module provides
+ * the consolidation logic that can be reused by SQL migration scripts to ensure
+ * we merge duplicated records before persisting them in the new database.
  */
 
 import { User, EmployeeCredentials } from './types'

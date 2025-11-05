@@ -16,25 +16,35 @@ The application was experiencing critical data integrity bugs due to:
 
 ## Solution
 
-Implement a service layer that provides SQL-like operations over KV storage:
-- Centralized data access through services
-- Referential integrity validation
-- Consistent CRUD operations
-- Type-safe data management
-- Data migration utilities
+Implement a real SQL persistence layer backed by SQLite and exposed through an Express API:
+- Centralized data access through HTTP services
+- Durable storage in `data/app.db`
+- Consistent CRUD operations enforced by the backend
+- Type-safe data management in the client service layer
+- Data migration utilities for importing legacy KV snapshots
 
 ## Architecture
 
+### Backend API (`server/`)
+
+1. **index.js**: Express server exposing REST endpoints at `/api/:table`
+2. **SQLite datastore**: `data_store` table persists JSON payloads by table + id
+3. **.env config**: `.env.example` documents `API_PORT`, `SQLITE_DATA_DIR`, etc.
+4. **Admin bootstrap**: Rutas `/api/admin/setup-status` y `/api/admin/initialize` crean el primer usuario administrador de forma segura.
+5. **Login seguro**: Endpoint `/api/auth/login` valida contraseñas con hashing `scrypt`.
+6. **Migrate script**: `scripts/migrate-kv-to-sql.js` importa instantáneas históricas de KV.
+
 ### Service Layer (`src/services/`)
 
-1. **base-service.ts**: Core CRUD operations for all entities
+1. **base-service.ts**: Core CRUD operations executed through the API
 2. **course-service.ts**: Course management with publishing
 3. **user-progress-service.ts**: Progress tracking
 4. **team-service.ts**: Teams and groups management
 5. **user-service.ts**: User profiles, stats, and XP tracking
 6. **social-service.ts**: Mentorships, forums, activities, notifications
 7. **gamification-service.ts**: Achievements, certificates, quizzes, reviews
-8. **migration-utils.ts**: Data cleanup and validation utilities
+8. **auth-service.ts**: Setup inicial, login seguro y futuras operaciones de autenticación.
+9. **migration-utils.ts**: Data cleanup and validation utilities
 
 ### Modern Hooks (`src/hooks/`)
 
@@ -45,12 +55,12 @@ New hooks that wrap the service layer:
 
 ## Migration Strategy
 
-### Phase 1: Create Service Layer ✅ COMPLETED
+### Phase 1: Provision SQL Backend ✅ COMPLETED
 
-- [x] Implement base service classes
-- [x] Create specific services for all entities
-- [x] Add data validation and integrity checks
-- [x] Build data migration utilities
+- [x] Add Express server with SQLite persistence (`server/index.js`)
+- [x] Store entity payloads in `data_store` with ACID guarantees
+- [x] Provide migration script for legacy KV exports (`scripts/migrate-kv-to-sql.js`)
+- [x] Document environment variables and runtime scripts
 
 ### Phase 2: Create Modern Hooks 🔄 IN PROGRESS
 

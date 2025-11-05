@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-This implementation successfully addresses the critical data persistence and integrity issues by introducing a comprehensive service layer that provides SQL-like operations over GitHub Spark's KV storage.
+This implementation successfully addresses the critical data persistence and integrity issues by introducing a durable SQLite persistence layer exposed by an Express API and consumed through a refactored TypeScript service layer.
 
 ## Problem Solved
 
@@ -21,9 +21,18 @@ This implementation successfully addresses the critical data persistence and int
 
 ## Solution Architecture
 
+### Backend Persistence (`server/`)
+
+- **Express API** (`server/index.js`) exposing CRUD routes at `/api/:table`
+- **SQLite datastore** (`data/app.db`) storing JSON payloads per entity
+- **Environment variables** documented in `.env.example`
+- **Admin bootstrap** (`/api/admin/setup-status` y `/api/admin/initialize`) para crear el primer usuario administrador
+- **Login seguro** (`/api/auth/login`) con contraseñas encriptadas mediante `scrypt`
+- **Migration script** (`scripts/migrate-kv-to-sql.js`) to import legacy KV data
+
 ### Service Layer (`src/services/`)
 
-A complete abstraction layer providing SQL-like operations:
+A complete abstraction layer providing SQL-backed operations:
 
 ```
 BaseService (Generic CRUD)
@@ -80,6 +89,7 @@ BaseService (Generic CRUD)
 | BaseService | Generic CRUD | getAll, getById, create, update, delete, find |
 | UserScopedService | User-specific data | getByUserId, deleteByUserId |
 | CourseService | Course management | getPublished, publish, unpublish |
+| AuthService | Auth & setup | initializeAdmin, getSetupStatus, login |
 | UserProgressService | Progress tracking | getUserCourseProgress, completeModule, completeCourse |
 | TeamService | Team management | addMember, removeMember, cleanInvalidMembers |
 | GroupService | Group management | addUser, assignCourse, cleanInvalidReferences |

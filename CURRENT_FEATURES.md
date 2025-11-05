@@ -79,13 +79,14 @@ Este branch contiene TODAS las features desarrolladas hasta ahora:
 - Auto-save
 - Adaptive feedback
 - Quiz attempts tracking
+- Asistente de configuración inicial (setup admin)
 
 ## 📊 Estadísticas del Código
 
 ```
 Total de componentes: 100+
 Total de hooks: 20+
-Total de servicios: En localStorage (pendiente migrar a SQL)
+Total de servicios: Persistencia en SQLite (servicio API SQL)
 Líneas de código: ~23,000+
 Archivos de traducción: 2,204 líneas
 ```
@@ -95,9 +96,9 @@ Archivos de traducción: 2,204 líneas
 Ahora que tenemos TODAS las features en un solo branch, los próximos pasos son:
 
 ### 1. Migración a SQL Database
-- [ ] Migrar de localStorage a SQL
-- [ ] Implementar servicios backend
-- [ ] Schemas y validaciones
+- [x] Migrar de localStorage a SQL
+- [x] Implementar servicios backend
+- [x] Schemas y validaciones
 
 ### 2. Refactor de Arquitectura
 - [ ] Implementar service layer

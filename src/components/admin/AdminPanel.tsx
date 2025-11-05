@@ -14,8 +14,9 @@ import { TeamManagement } from './TeamManagement'
 import { AnalyticsDashboard } from './analytics/AnalyticsDashboard'
 import { CompanySettings } from './CompanySettings'
 import { BrandingManagement } from './BrandingManagement'
+import { EmployeeManagement } from './EmployeeManagement'
 
-type AdminSection = 'dashboard' | 'courses' | 'users' | 'gamification' | 'reports' | 'enrollment' | 'manual-enrollment' | 'corporate-reports' | 'assignments' | 'groups' | 'mentorship' | 'teams' | 'analytics' | 'company-settings' | 'branding'
+type AdminSection = 'dashboard' | 'courses' | 'users' | 'gamification' | 'reports' | 'enrollment' | 'manual-enrollment' | 'corporate-reports' | 'assignments' | 'groups' | 'mentorship' | 'teams' | 'analytics' | 'company-settings' | 'branding' | 'employees'
 
 export function AdminPanel() {
   const [currentSection, setCurrentSection] = useState<AdminSection>('dashboard')
@@ -115,6 +116,12 @@ export function AdminPanel() {
       )}
       {currentSection === 'branding' && (
         <BrandingManagement onBack={() => setCurrentSection('dashboard')} />
+      )}
+      {currentSection === 'employees' && (
+        <EmployeeManagement 
+          onBack={() => setCurrentSection('dashboard')} 
+          onAddEmployee={() => setCurrentSection('manual-enrollment')}
+        />
       )}
     </div>
   )

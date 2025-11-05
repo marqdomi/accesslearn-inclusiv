@@ -1,49 +1,55 @@
-import { useKV } from '@github/spark/hooks'
-import { CourseStructure, User, UserProgress, UserStats, EmployeeCredentials } from '@/lib/types'
+import { useState, useEffect } from 'react'
+import { EmployeeCredentials } from '@/lib/types'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Users, BookOpen, TrendUp, Trophy, Plus, FileText, UserPlus, Target, UsersThree, ChartBar, UsersFour, Certificate, Palette } from '@phosphor-icons/react'
 import { motion } from 'framer-motion'
 import { useTranslation } from '@/lib/i18n'
+import { AdminStatsService, AdminStats } from '@/services/admin-stats-service'
+import { EmployeeService } from '@/services/employee-service'
 
 interface AdminDashboardProps {
-  onNavigate: (section: 'courses' | 'users' | 'reports' | 'gamification' | 'enrollment' | 'manual-enrollment' | 'corporate-reports' | 'assignments' | 'groups' | 'mentorship' | 'teams' | 'analytics' | 'company-settings' | 'branding') => void
+  onNavigate: (section: 'courses' | 'users' | 'reports' | 'gamification' | 'enrollment' | 'manual-enrollment' | 'corporate-reports' | 'assignments' | 'groups' | 'mentorship' | 'teams' | 'analytics' | 'company-settings' | 'branding' | 'employees') => void
 }
 
 export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
   const { t } = useTranslation()
-  const [courses] = useKV<CourseStructure[]>('admin-courses', [])
-  const [users] = useKV<User[]>('users', [])
-  const [employees] = useKV<EmployeeCredentials[]>('employee-credentials', [])
-  const [allProgress] = useKV<Record<string, UserProgress[]>>('all-user-progress', {})
-  const [allStats] = useKV<Record<string, UserStats>>('all-user-stats', {})
+  const [adminStats, setAdminStats] = useState<AdminStats>({
+    totalEmployees: 0,
+    pendingActivation: 0,
+    totalCourses: 0,
+    publishedCourses: 0,
+    completionRate: 0,
+    totalXP: 0,
+    totalUsers: 0,
+    activeUsers: 0
+  })
+  const [isLoading, setIsLoading] = useState(true)
 
-  const totalCourses = courses?.length || 0
-  const totalUsers = users?.length || 0
-  const totalEmployees = employees?.length || 0
-  const pendingEmployees = employees?.filter(e => e.status === 'pending').length || 0
-  const publishedCourses = courses?.filter(c => c.published).length || 0
+  // Cargar estadísticas al montar el componente
+  useEffect(() => {
+    loadStats()
+  }, [])
 
-  const completionRate = (() => {
-    if (!allProgress || Object.keys(allProgress).length === 0) return 0
-    
-    let totalCompleted = 0
-    let totalAssignments = 0
-    
-    Object.values(allProgress).forEach(userProgressList => {
-      userProgressList.forEach(progress => {
-        totalAssignments++
-        if (progress.status === 'completed') totalCompleted++
-      })
-    })
-    
-    return totalAssignments > 0 ? Math.round((totalCompleted / totalAssignments) * 100) : 0
-  })()
+  const loadStats = async () => {
+    try {
+      setIsLoading(true)
+      const data = await AdminStatsService.getStats()
+      setAdminStats(data)
+    } catch (error) {
+      console.error('Failed to load admin stats:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
-  const totalXPAwarded = (() => {
-    if (!allStats) return 0
-    return Object.values(allStats).reduce((sum, stats) => sum + (stats?.totalXP || 0), 0)
-  })()
+  const totalCourses = adminStats.totalCourses
+  const totalUsers = adminStats.totalUsers
+  const totalEmployees = adminStats.totalEmployees
+  const pendingEmployees = adminStats.pendingActivation
+  const publishedCourses = adminStats.publishedCourses
+  const completionRate = adminStats.completionRate
+  const totalXPAwarded = adminStats.totalXP
 
   const quickActions = [
     {
@@ -180,25 +186,38 @@ export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat, index) => (
-          <motion.div
-            key={stat.title}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
-          >
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
-                <stat.icon className={`h-5 w-5 ${stat.color}`} weight="duotone" aria-hidden="true" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stat.value}</div>
-                <p className="text-xs text-muted-foreground mt-1">{stat.subtitle}</p>
-              </CardContent>
-            </Card>
-          </motion.div>
-        ))}
+        {stats.map((stat, index) => {
+          // Hacer la tarjeta de empleados clickeable
+          const isEmployeesCard = stat.title === t('adminDashboard.stats.totalEmployees')
+          
+          return (
+            <motion.div
+              key={stat.title}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
+            >
+              <Card 
+                className={isEmployeesCard ? "hover:shadow-lg transition-all cursor-pointer hover:border-primary" : ""}
+                onClick={isEmployeesCard ? () => onNavigate('employees') : undefined}
+              >
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
+                  <stat.icon className={`h-5 w-5 ${stat.color}`} weight="duotone" aria-hidden="true" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stat.value}</div>
+                  <p className="text-xs text-muted-foreground mt-1">{stat.subtitle}</p>
+                  {isEmployeesCard && (
+                    <p className="text-xs text-primary mt-2 font-medium">
+                      Click para gestionar →
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            </motion.div>
+          )
+        })}
       </div>
 
       <div>

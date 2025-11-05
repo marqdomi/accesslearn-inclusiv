@@ -35,7 +35,7 @@
 - ✅ Auto-save, Adaptive feedback, Quiz tracking
 
 **Arquitectura actual:**
-- ⚠️ Usando localStorage (pendiente migrar a SQL)
+- ✅ Persistencia en SQLite mediante API Express
 - ⚠️ Sin service layer estructurado
 - ⚠️ Sin dual persona design system
 
@@ -46,7 +46,7 @@
 Ahora que tienes la **base correcta**, ejecuta los agentes en este orden:
 
 ### Agente 1: Migración a SQL Database
-**Objetivo:** Migrar de localStorage a base de datos SQL
+**Objetivo (Completado):** Migrar de localStorage a base de datos SQL
 
 **Tareas del agente:**
 1. Configurar base de datos SQL (SQLite/PostgreSQL)
@@ -59,7 +59,7 @@ Ahora que tienes la **base correcta**, ejecuta los agentes en este orden:
    - Q&A Forums
    - Analytics data
 3. Implementar service layer (CRUD operations)
-4. Migrar datos de localStorage a SQL
+4. Migrar datos de localStorage a SQL (ejecutado con `scripts/migrate-kv-to-sql.js`)
 5. Actualizar todos los hooks para usar servicios
 
 **Branch sugerido:** `copilot/migrate-to-sql`

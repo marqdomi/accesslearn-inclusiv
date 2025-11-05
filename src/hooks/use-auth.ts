@@ -1,141 +1,121 @@
-import { useKV } from '@github/spark/hooks'
-import { AuthSession, EmployeeCredentials, UserProfile, OnboardingPreferences } from '@/lib/types'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { AuthSession } from '@/lib/types'
 import { createAuthSession, isSessionValid } from '@/lib/auth-utils'
+import { AuthService } from '@/services/auth-service'
+
+type LoginResult = { success: boolean; error?: string }
+type SessionUpdater = AuthSession | null | ((prev: AuthSession | null) => AuthSession | null)
+
+const STORAGE_KEY = 'accesslearn.auth-session'
 
 export function useAuth() {
-  const [session, setSession] = useKV<AuthSession | null>('auth-session', null)
-  const [profilesList, setProfiles] = useKV<UserProfile[]>('user-profiles', [])
-  const [credentialsList] = useKV<EmployeeCredentials[]>('employee-credentials', [])
+  const [session, setSession] = useState<AuthSession | null>(null)
+  const [isReady, setIsReady] = useState(false)
 
-  const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
-    try {
-      const trimmedEmail = email.trim()
-      const trimmedPassword = password.trim()
+  const persistSession = useCallback((next: SessionUpdater) => {
+    setSession(prev => {
+      const resolved = typeof next === 'function' ? (next as (value: AuthSession | null) => AuthSession | null)(prev) : next
 
-      console.log('🔐 useAuth.login called with:', { email: trimmedEmail, passwordLength: trimmedPassword.length })
-
-      console.log('🔍 useAuth - credentials from hook:', credentialsList?.length || 0)
-      const credential = (credentialsList || []).find(c => c.email.toLowerCase() === trimmedEmail.toLowerCase())
-
-      console.log('🎯 useAuth - found credential:', credential)
-
-      if (!credential) {
-        console.log('❌ useAuth - No credential found for email:', trimmedEmail)
-        return { success: false, error: 'Invalid email or password' }
-      }
-
-      if (credential.status === 'disabled') {
-        console.log('⛔ useAuth - Account is disabled')
-        return { success: false, error: 'This account has been disabled' }
-      }
-
-      const profile = (profilesList || []).find(p => p.email.toLowerCase() === trimmedEmail.toLowerCase())
-      const isFirstLogin = !profile || credential.status === 'pending'
-
-      console.log('🔑 useAuth - Password check:', {
-        expected: credential.temporaryPassword,
-        received: trimmedPassword,
-        match: credential.temporaryPassword === trimmedPassword
-      })
-
-      if (credential.temporaryPassword !== trimmedPassword) {
-        console.log('❌ useAuth - Password mismatch')
-        return { success: false, error: 'Invalid email or password' }
-      }
-
-      console.log('✅ useAuth - Login successful, creating session')
-      const userRole = credential.role || 'employee'
-      const newSession = createAuthSession(
-        credential.id,
-        trimmedEmail,
-        userRole,
-        isFirstLogin
-      )
-
-      setSession(newSession)
-      return { success: true }
-    } catch (e) {
-      console.error('❗ useAuth.login unexpected error:', e)
-      return { success: false, error: 'An unexpected error occurred during login' }
-    }
-  }
-
-  const changePassword = async (currentPassword: string, newPassword: string): Promise<{ success: boolean; error?: string }> => {
-    try {
-      if (!session) {
-        return { success: false, error: 'No active session' }
-      }
-
-      const credential = (credentialsList || []).find(c => c.id === session.userId)
-      if (!credential) {
-        return { success: false, error: 'User not found' }
-      }
-
-      if (credential.temporaryPassword !== currentPassword) {
-        return { success: false, error: 'Current password is incorrect' }
-      }
-
-      // Note: For demo purposes we do not persist the changed password.
-      // We simply clear the password change requirement.
-      setSession((current) => {
-        if (!current) return null
-        return {
-          ...current,
-          requiresPasswordChange: false
+      if (typeof window !== 'undefined') {
+        try {
+          if (resolved) {
+            window.localStorage.setItem(STORAGE_KEY, JSON.stringify(resolved))
+          } else {
+            window.localStorage.removeItem(STORAGE_KEY)
+          }
+        } catch (error) {
+          console.warn('Failed to persist auth session:', error)
         }
-      })
+      }
 
+      return resolved
+    })
+  }, [])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      setIsReady(true)
+      return
+    }
+
+    try {
+      const raw = window.localStorage.getItem(STORAGE_KEY)
+      if (raw) {
+        const parsed = JSON.parse(raw) as AuthSession
+        if (isSessionValid(parsed)) {
+          setSession(parsed)
+        } else {
+          window.localStorage.removeItem(STORAGE_KEY)
+        }
+      }
+    } catch (error) {
+      console.warn('Failed to restore auth session:', error)
+    } finally {
+      setIsReady(true)
+    }
+  }, [])
+
+  const login = useCallback(async (email: string, password: string): Promise<LoginResult> => {
+    try {
+      const response = await AuthService.login(email, password)
+      const user = response.data
+      const baseSession = createAuthSession(user.id, user.email, user.role, false)
+      const hydratedSession: AuthSession = {
+        ...baseSession,
+        requiresPasswordChange: false,
+        requiresOnboarding: false,
+        isFirstLogin: false
+      }
+      persistSession(hydratedSession)
       return { success: true }
-    } catch (e) {
-      console.error('❗ useAuth.changePassword unexpected error:', e)
-      return { success: false, error: 'An unexpected error occurred while changing password' }
+    } catch (error) {
+      console.error('useAuth.login failed:', error)
+      const message = error instanceof Error ? error.message : 'Login failed. Please try again.'
+      return { success: false, error: message }
     }
-  }
+  }, [persistSession])
 
-  const completeOnboarding = async (preferences: OnboardingPreferences): Promise<void> => {
-    if (!session) return
+  const logout = useCallback(() => {
+    persistSession(null)
+  }, [persistSession])
 
-    const credential = (credentialsList || []).find(c => c.id === session.userId)
-    if (!credential) return
+  const changePassword = useCallback(async (): Promise<LoginResult> => {
+    return { success: false, error: 'Password changes are not yet available.' }
+  }, [])
 
-    const newProfile: UserProfile = {
-      id: session.userId,
-      email: credential.email,
-      firstName: credential.firstName,
-      lastName: credential.lastName,
-      fullName: preferences.displayName || `${credential.firstName} ${credential.lastName}`,
-      displayName: preferences.displayName,
-      avatar: preferences.avatar,
-      department: credential.department,
-      role: credential.role || 'employee',
-      createdAt: Date.now(),
-      lastLoginAt: Date.now(),
-      preferences
-    }
+  const completeOnboarding = useCallback(async () => {
+    persistSession(prev => {
+      if (!prev) {
+        return prev
+      }
 
-    setProfiles((current) => [...(current || []), newProfile])
-
-    setSession((current) => {
-      if (!current) return null
       return {
-        ...current,
-        requiresOnboarding: false
+        ...prev,
+        requiresOnboarding: false,
+        lastActivity: Date.now()
       }
     })
-  }
+  }, [persistSession])
 
-  const logout = () => {
-    setSession(null)
-  }
+  useEffect(() => {
+    if (!session) {
+      return
+    }
 
-  const isValid = session ? isSessionValid(session) : false
+    if (!isSessionValid(session)) {
+      persistSession(null)
+    }
+  }, [session, persistSession])
+
+  const isAuthenticated = useMemo(() => Boolean(session), [session])
 
   return {
-    session: isValid ? session : null,
+    session: isAuthenticated ? session : null,
     login,
     changePassword,
     completeOnboarding,
     logout,
-    isAuthenticated: isValid
+    isAuthenticated,
+    isAuthReady: isReady
   }
 }

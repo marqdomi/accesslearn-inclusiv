@@ -1,5 +1,4 @@
-import { useState, useRef } from 'react'
-import { useKV } from '@github/spark/hooks'
+import { useState, useRef, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -12,20 +11,40 @@ import { motion } from 'framer-motion'
 import { EmployeeCredentials, BulkUploadResult } from '@/lib/types'
 import { parseCSVEmployees, generateTemporaryPassword, formatCredentialsForDownload } from '@/lib/auth-utils'
 import { useTranslation } from '@/lib/i18n'
+import { EmployeeService } from '@/services/employee-service'
 
 type UploadStage = 'initial' | 'preview' | 'confirmed'
 
 export function BulkEmployeeUpload() {
   const { t } = useTranslation()
-  const [credentials, setCredentials] = useKV<EmployeeCredentials[]>('employee-credentials', [])
+  const [credentials, setCredentials] = useState<EmployeeCredentials[]>([])
   const [uploadResult, setUploadResult] = useState<BulkUploadResult | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
   const [uploadStage, setUploadStage] = useState<UploadStage>('initial')
   const [previewData, setPreviewData] = useState<{
     successful: EmployeeCredentials[]
     failed: Array<{ row: number; email: string; errors: string[] }>
   } | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Cargar credenciales existentes al montar el componente
+  useEffect(() => {
+    loadCredentials()
+  }, [])
+
+  const loadCredentials = async () => {
+    try {
+      setIsLoading(true)
+      const data = await EmployeeService.getAll()
+      setCredentials(data)
+    } catch (error) {
+      console.error('Failed to load credentials:', error)
+      toast.error('Error al cargar credenciales existentes')
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -99,22 +118,21 @@ export function BulkEmployeeUpload() {
     }
   }
 
-  const handleConfirmUpload = () => {
+  const handleConfirmUpload = async () => {
     if (!previewData) return
 
     setIsProcessing(true)
     try {
-      const result: BulkUploadResult = {
-        successful: previewData.successful,
-        failed: previewData.failed,
-        totalProcessed: previewData.successful.length + previewData.failed.length
-      }
-
-      if (previewData.successful.length > 0) {
-        setCredentials((current) => [...(current || []), ...previewData.successful])
-        const message = previewData.successful.length === 1 
-          ? t('bulkUpload.accountsCreated', { count: previewData.successful.length.toString() })
-          : t('bulkUpload.accountsCreatedPlural', { count: previewData.successful.length.toString() })
+      // Enviar empleados al servidor para crear en batch
+      const result = await EmployeeService.createBulk(previewData.successful)
+      
+      if (result.successful.length > 0) {
+        // Recargar las credenciales desde el servidor
+        await loadCredentials()
+        
+        const message = result.successful.length === 1 
+          ? t('bulkUpload.accountsCreated', { count: result.successful.length.toString() })
+          : t('bulkUpload.accountsCreatedPlural', { count: result.successful.length.toString() })
         toast.success(message)
       }
 

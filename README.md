@@ -69,10 +69,22 @@ See [TEST_CREDENTIALS.md](./TEST_CREDENTIALS.md) for complete test account detai
 npm install
 ```
 
-**Development:**
+**Environment setup:**
 ```bash
+cp .env.example .env
+```
+
+**Development:**
+Run the backend API and the Vite dev server in separate terminals:
+```bash
+npm run server
 npm run dev
 ```
+
+**Primer uso (setup inicial):**
+- Abre `http://localhost:5173`. Si la base de datos está vacía se mostrará el asistente para crear el usuario administrador inicial.
+- Completa nombre, correo y contraseña segura. La cuenta se persiste en SQLite y se inicia sesión automáticamente tras la creación.
+- A partir de ese momento podrás iniciar sesión desde la pantalla habitual con las credenciales recién creadas.
 
 **Build:**
 ```bash
@@ -111,7 +123,7 @@ See [ACCESSIBILITY_TESTING.md](./ACCESSIBILITY_TESTING.md) for complete checklis
 - **Animation**: Framer Motion
 - **Icons**: Phosphor Icons
 - **Build**: Vite
-- **Persistence**: Spark KV (useKV hook)
+- **Persistence**: SQLite (Express API + data services layer)
 
 ## 📦 Project Structure
 

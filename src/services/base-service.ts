@@ -1,19 +1,13 @@
 /**
- * Base Service Layer for KV Storage
- * 
- * Implements SQL-like CRUD operations with:
- * - Referential integrity
- * - Data validation
- * - Single Source of Truth (SSOT)
- * - Normalized data structures
+ * Base Service Layer for SQL-backed persistence
+ *
+ * Provides CRUD helpers that communicate with the backend API layer.
  */
 
-// KV Storage Access via Spark
-const kv = window.spark?.kv
+import { apiRequest } from './http-client'
 
-if (!kv) {
-  console.warn('GitHub Spark KV storage not available - services will not function properly. Ensure you are running in a Spark environment.')
-}
+type ListResponse<T> = { data: T[] }
+type ItemResponse<T> = { data: T }
 
 /**
  * Base CRUD service for any entity type
@@ -21,11 +15,13 @@ if (!kv) {
 export class BaseService<T extends { id: string }> {
   constructor(protected readonly tableName: string) {}
 
-  /**
-   * Get KV storage instance
-   */
-  protected getKV() {
-    return kv
+  protected endpoint(path = ''): string {
+    if (!path) {
+      return this.tableName
+    }
+
+    const cleaned = path.startsWith('/') ? path.slice(1) : path
+    return `${this.tableName}/${cleaned}`
   }
 
   /**
@@ -33,8 +29,8 @@ export class BaseService<T extends { id: string }> {
    */
   async getAll(): Promise<T[]> {
     try {
-      const data = await kv.get<T[]>(this.tableName)
-      return data || []
+      const response = await apiRequest<ListResponse<T>>(this.endpoint())
+      return response?.data ?? []
     } catch (error) {
       console.error(`Error getting all from ${this.tableName}:`, error)
       return []
@@ -46,8 +42,10 @@ export class BaseService<T extends { id: string }> {
    */
   async getById(id: string): Promise<T | null> {
     try {
-      const all = await this.getAll()
-      return all.find(item => item.id === id) || null
+      const response = await apiRequest<ItemResponse<T> | undefined>(this.endpoint(id), {
+        allow404: true
+      })
+      return response?.data ?? null
     } catch (error) {
       console.error(`Error getting ${this.tableName} by id ${id}:`, error)
       return null
@@ -73,16 +71,11 @@ export class BaseService<T extends { id: string }> {
    */
   async create(data: T): Promise<T> {
     try {
-      const all = await this.getAll()
-      
-      // Check for duplicate ID
-      if (all.some(item => item.id === data.id)) {
-        throw new Error(`${this.tableName}: Record with id ${data.id} already exists`)
-      }
-
-      all.push(data)
-      await kv.set(this.tableName, all)
-      return data
+      const response = await apiRequest<ItemResponse<T>>(this.endpoint(), {
+        method: 'POST',
+        body: data
+      })
+      return response.data
     } catch (error) {
       console.error(`Error creating ${this.tableName}:`, error)
       throw error
@@ -94,17 +87,17 @@ export class BaseService<T extends { id: string }> {
    */
   async update(id: string, updates: Partial<T>): Promise<T | null> {
     try {
-      const all = await this.getAll()
-      const index = all.findIndex(item => item.id === id)
-      
-      if (index === -1) {
+      const existing = await this.getById(id)
+      if (!existing) {
         throw new Error(`${this.tableName}: Record with id ${id} not found`)
       }
 
-      const updated = { ...all[index], ...updates, id } as T
-      all[index] = updated
-      await kv.set(this.tableName, all)
-      return updated
+      const updated = { ...existing, ...updates, id } as T
+      const response = await apiRequest<ItemResponse<T>>(this.endpoint(id), {
+        method: 'PUT',
+        body: updated
+      })
+      return response.data
     } catch (error) {
       console.error(`Error updating ${this.tableName}:`, error)
       return null
@@ -116,14 +109,10 @@ export class BaseService<T extends { id: string }> {
    */
   async delete(id: string): Promise<boolean> {
     try {
-      const all = await this.getAll()
-      const filtered = all.filter(item => item.id !== id)
-      
-      if (filtered.length === all.length) {
-        return false // Nothing was deleted
-      }
-
-      await kv.set(this.tableName, filtered)
+      await apiRequest<void>(this.endpoint(id), {
+        method: 'DELETE',
+        allow404: true
+      })
       return true
     } catch (error) {
       console.error(`Error deleting ${this.tableName}:`, error)
@@ -162,8 +151,8 @@ export class BaseService<T extends { id: string }> {
    */
   async exists(id: string): Promise<boolean> {
     try {
-      const all = await this.getAll()
-      return all.some(item => item.id === id)
+      const record = await this.getById(id)
+      return record !== null
     } catch (error) {
       console.error(`Error checking existence in ${this.tableName}:`, error)
       return false
@@ -187,15 +176,19 @@ export class UserScopedService<T extends { id: string; userId: string }> extends
    */
   async deleteByUserId(userId: string): Promise<number> {
     try {
-      const all = await this.getAll()
-      const filtered = all.filter(item => item.userId !== userId)
-      const deletedCount = all.length - filtered.length
-      
-      if (deletedCount > 0) {
-        await kv.set(this.tableName, filtered)
-      }
-      
-      return deletedCount
+      const records = await this.getAll()
+      const toDelete = records.filter(item => item.userId === userId)
+
+      await Promise.all(
+        toDelete.map(record =>
+          apiRequest<void>(this.endpoint(record.id), {
+            method: 'DELETE',
+            allow404: true
+          })
+        )
+      )
+
+      return toDelete.length
     } catch (error) {
       console.error(`Error deleting by userId in ${this.tableName}:`, error)
       return 0
@@ -216,10 +209,10 @@ export class DataValidator {
   ): Promise<{ valid: string[]; invalid: string[] }> {
     const all = await service.getAll()
     const validIds = new Set(all.map(item => item.id))
-    
+
     const valid = ids.filter(id => validIds.has(id))
     const invalid = ids.filter(id => !validIds.has(id))
-    
+
     return { valid, invalid }
   }
 

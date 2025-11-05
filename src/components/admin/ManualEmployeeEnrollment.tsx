@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { useKV } from '@github/spark/hooks'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -13,10 +12,10 @@ import { motion } from 'framer-motion'
 import { EmployeeCredentials } from '@/lib/types'
 import { generateTemporaryPassword, isValidEmail, validatePassword } from '@/lib/auth-utils'
 import { useTranslation } from '@/lib/i18n'
+import { EmployeeService } from '@/services/employee-service'
 
 export function ManualEmployeeEnrollment() {
   const { t } = useTranslation()
-  const [credentials, setCredentials] = useKV<EmployeeCredentials[]>('employee-credentials', [])
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -54,7 +53,9 @@ export function ManualEmployeeEnrollment() {
         return
       }
 
-      const existingEmployee = (credentials || []).find(
+      // Verificar si el empleado ya existe en el servidor
+      const existingEmployees = await EmployeeService.getAll()
+      const existingEmployee = existingEmployees.find(
         c => c.email.toLowerCase() === formData.email.toLowerCase()
       )
 
@@ -95,7 +96,8 @@ export function ManualEmployeeEnrollment() {
         expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000
       }
 
-      setCredentials((current) => [...(current || []), newEmployee])
+      // Crear empleado en el servidor
+      await EmployeeService.create(newEmployee)
       setCreatedEmployee(newEmployee)
       toast.success(`Empleado creado: ${newEmployee.firstName} ${newEmployee.lastName}`)
 
