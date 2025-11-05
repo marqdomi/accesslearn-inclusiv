@@ -152,11 +152,6 @@ export function parseCSVEmployees(csvContent: string): {
   return { employees, errors }
 }
 
-export function isValidEmail(email: string): boolean {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  return emailRegex.test(email)
-}
-
 export function formatCredentialsForDownload(credentials: EmployeeCredentials[]): string {
   const header = 'Email,First Name,Last Name,Department,Temporary Password,Instructions\n'
   const rows = credentials.map(cred => {
