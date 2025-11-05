@@ -12,6 +12,7 @@ import { AdminPanel } from '@/components/admin/AdminPanel'
 import { LoginScreen } from '@/components/auth/LoginScreen'
 import { PasswordChangeScreen } from '@/components/auth/PasswordChangeScreen'
 import { OnboardingScreen } from '@/components/auth/OnboardingScreen'
+import { InitialSetupScreen } from '@/components/auth/InitialSetupScreen'
 import { Button } from '@/components/ui/button'
 import { Trophy, GraduationCap, Lightning, ShieldCheck, SignOut } from '@phosphor-icons/react'
 import { Toaster } from '@/components/ui/sonner'
@@ -20,10 +21,20 @@ import { motion } from 'framer-motion'
 type View = 'dashboard' | 'achievements' | 'admin'
 
 function App() {
-  const { session, login, changePassword, completeOnboarding, logout, isAuthenticated } = useAuth()
+  const { session, login, changePassword, completeOnboarding, logout, setupInitialAdmin, hasAdminUser, isAuthenticated } = useAuth()
   const [courses] = useKV<Course[]>('courses', [])
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null)
   const [currentView, setCurrentView] = useState<View>('dashboard')
+
+  // CRITICAL: Check if initial setup is required
+  if (!hasAdminUser) {
+    return (
+      <>
+        <InitialSetupScreen onSetupComplete={setupInitialAdmin} />
+        <Toaster richColors position="top-center" />
+      </>
+    )
+  }
 
   if (!isAuthenticated || !session) {
     return (
