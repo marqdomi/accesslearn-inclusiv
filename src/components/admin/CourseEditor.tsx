@@ -136,7 +136,7 @@ export function CourseEditor({ courseId, onBack }: CourseEditorProps) {
     setValidationWarnings(warnings)
   }
 
-  const handleCourseChange = (updates: Partial<Course>) => {
+  const handleCourseChange = (updates: Partial<CourseWithStructure>) => {
     const updated = { ...course, ...updates }
     setCourse(updated)
     setHasUnsavedChanges(true)
@@ -217,45 +217,255 @@ export function CourseEditor({ courseId, onBack }: CourseEditorProps) {
     }
   }
 
-  // Structure tab handlers (placeholders)
+  // Structure tab handlers - IMPLEMENTED
   const handleAddModule = () => {
-    alert('Module creation will be integrated with the backend API in the next update')
+    const title = prompt('Enter module title:')
+    if (!title?.trim()) return
+
+    const description = prompt('Enter module description (optional):') || ''
+    
+    const newModule = {
+      id: `module-${Date.now()}`,
+      courseId: courseId || '',
+      title: title.trim(),
+      description: description.trim(),
+      order: (course.modules?.length || 0) + 1,
+      lessons: [],
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    }
+
+    handleCourseChange({
+      modules: [...(course.modules || []), newModule],
+    })
+    
+    setHasUnsavedChanges(true)
   }
 
   const handleEditModule = (moduleId: string) => {
-    alert(`Edit module ${moduleId} - Coming soon`)
+    const module = course.modules?.find((m) => m.id === moduleId)
+    if (!module) return
+
+    const title = prompt('Edit module title:', module.title)
+    if (title === null) return // User cancelled
+
+    const description = prompt('Edit module description:', module.description || '')
+    
+    handleCourseChange({
+      modules: course.modules?.map((m) =>
+        m.id === moduleId
+          ? {
+              ...m,
+              title: title?.trim() || m.title,
+              description: description?.trim() || '',
+              updatedAt: Date.now(),
+            }
+          : m
+      ),
+    })
+    
+    setHasUnsavedChanges(true)
   }
 
   const handleDeleteModule = (moduleId: string) => {
-    if (confirm('Delete this module and all its lessons?')) {
-      alert(`Delete module ${moduleId} - Coming soon`)
-    }
+    const module = course.modules?.find((m) => m.id === moduleId)
+    if (!module) return
+
+    const lessonCount = module.lessons?.length || 0
+    const confirmMessage = lessonCount > 0
+      ? `Delete "${module.title}" and its ${lessonCount} lesson(s)?`
+      : `Delete module "${module.title}"?`
+
+    if (!confirm(confirmMessage)) return
+
+    handleCourseChange({
+      modules: course.modules?.filter((m) => m.id !== moduleId),
+    })
+    
+    setHasUnsavedChanges(true)
   }
 
   const handleDuplicateModule = (moduleId: string) => {
-    alert(`Duplicate module ${moduleId} - Coming soon`)
+    const module = course.modules?.find((m) => m.id === moduleId)
+    if (!module) return
+
+    const duplicatedModule = {
+      ...module,
+      id: `module-${Date.now()}`,
+      title: `${module.title} (Copy)`,
+      order: (course.modules?.length || 0) + 1,
+      lessons: module.lessons?.map((lesson, index) => ({
+        ...lesson,
+        id: `lesson-${Date.now()}-${index}`,
+        moduleId: `module-${Date.now()}`,
+      })),
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    }
+
+    handleCourseChange({
+      modules: [...(course.modules || []), duplicatedModule],
+    })
+    
+    setHasUnsavedChanges(true)
   }
 
   const handleMoveModule = (moduleId: string, direction: 'up' | 'down') => {
-    alert(`Move module ${moduleId} ${direction} - Coming soon`)
+    const modules = [...(course.modules || [])]
+    const index = modules.findIndex((m) => m.id === moduleId)
+    if (index === -1) return
+
+    const newIndex = direction === 'up' ? index - 1 : index + 1
+    if (newIndex < 0 || newIndex >= modules.length) return
+
+    // Swap modules
+    ;[modules[index], modules[newIndex]] = [modules[newIndex], modules[index]]
+
+    // Update orders
+    modules.forEach((module, idx) => {
+      module.order = idx + 1
+      module.updatedAt = Date.now()
+    })
+
+    handleCourseChange({ modules })
+    setHasUnsavedChanges(true)
   }
 
   const handleAddLesson = (moduleId: string) => {
-    alert(`Add lesson to module ${moduleId} - Coming soon`)
+    const title = prompt('Enter lesson title:')
+    if (!title?.trim()) return
+
+    const typeOptions = ['video', 'text', 'quiz', 'interactive', 'exercise']
+    const type = prompt(
+      `Select lesson type:\n1. Video\n2. Text\n3. Quiz\n4. Interactive\n5. Exercise\n\nEnter number (1-5):`,
+      '2'
+    )
+    
+    const typeIndex = parseInt(type || '2') - 1
+    const lessonType = typeOptions[typeIndex] || 'text'
+
+    const module = course.modules?.find((m) => m.id === moduleId)
+    const lessonCount = module?.lessons?.length || 0
+
+    const newLesson = {
+      id: `lesson-${Date.now()}`,
+      moduleId,
+      title: title.trim(),
+      description: '',
+      type: lessonType as any,
+      content: '',
+      duration: 0,
+      order: lessonCount + 1,
+      xpReward: 10,
+      isOptional: false,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    }
+
+    handleCourseChange({
+      modules: course.modules?.map((m) =>
+        m.id === moduleId
+          ? {
+              ...m,
+              lessons: [...(m.lessons || []), newLesson],
+              updatedAt: Date.now(),
+            }
+          : m
+      ),
+    })
+    
+    setHasUnsavedChanges(true)
   }
 
   const handleEditLesson = (moduleId: string, lessonId: string) => {
-    alert(`Edit lesson ${lessonId} - Coming soon`)
+    const module = course.modules?.find((m) => m.id === moduleId)
+    const lesson = module?.lessons?.find((l) => l.id === lessonId)
+    if (!lesson) return
+
+    const title = prompt('Edit lesson title:', lesson.title)
+    if (title === null) return
+
+    const description = prompt('Edit lesson description:', lesson.description || '')
+    
+    handleCourseChange({
+      modules: course.modules?.map((m) =>
+        m.id === moduleId
+          ? {
+              ...m,
+              lessons: m.lessons?.map((l) =>
+                l.id === lessonId
+                  ? {
+                      ...l,
+                      title: title?.trim() || l.title,
+                      description: description?.trim() || '',
+                      updatedAt: Date.now(),
+                    }
+                  : l
+              ),
+              updatedAt: Date.now(),
+            }
+          : m
+      ),
+    })
+    
+    setHasUnsavedChanges(true)
   }
 
   const handleDeleteLesson = (moduleId: string, lessonId: string) => {
-    if (confirm('Delete this lesson?')) {
-      alert(`Delete lesson ${lessonId} - Coming soon`)
-    }
+    const module = course.modules?.find((m) => m.id === moduleId)
+    const lesson = module?.lessons?.find((l) => l.id === lessonId)
+    if (!lesson) return
+
+    if (!confirm(`Delete lesson "${lesson.title}"?`)) return
+
+    handleCourseChange({
+      modules: course.modules?.map((m) =>
+        m.id === moduleId
+          ? {
+              ...m,
+              lessons: m.lessons?.filter((l) => l.id !== lessonId),
+              updatedAt: Date.now(),
+            }
+          : m
+      ),
+    })
+    
+    setHasUnsavedChanges(true)
   }
 
   const handleMoveLesson = (moduleId: string, lessonId: string, direction: 'up' | 'down') => {
-    alert(`Move lesson ${lessonId} ${direction} - Coming soon`)
+    const module = course.modules?.find((m) => m.id === moduleId)
+    if (!module?.lessons) return
+
+    const lessons = [...module.lessons]
+    const index = lessons.findIndex((l) => l.id === lessonId)
+    if (index === -1) return
+
+    const newIndex = direction === 'up' ? index - 1 : index + 1
+    if (newIndex < 0 || newIndex >= lessons.length) return
+
+    // Swap lessons
+    ;[lessons[index], lessons[newIndex]] = [lessons[newIndex], lessons[index]]
+
+    // Update orders
+    lessons.forEach((lesson, idx) => {
+      lesson.order = idx + 1
+      lesson.updatedAt = Date.now()
+    })
+
+    handleCourseChange({
+      modules: course.modules?.map((m) =>
+        m.id === moduleId
+          ? {
+              ...m,
+              lessons,
+              updatedAt: Date.now(),
+            }
+          : m
+      ),
+    })
+    
+    setHasUnsavedChanges(true)
   }
 
   if (loading) {
