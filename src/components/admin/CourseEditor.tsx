@@ -28,6 +28,8 @@ import { AdvancedSettingsTab } from './course-editor/AdvancedSettingsTab'
 import { ModuleDialog } from './course-editor/ModuleDialog'
 import { LessonDialog } from './course-editor/LessonDialog'
 import type { CourseModule, CourseLesson } from '@/services/course-management-service'
+import { toast } from 'sonner'
+import { useConfirm } from '@/hooks/use-confirm'
 
 interface CourseEditorProps {
   courseId?: string
@@ -35,6 +37,8 @@ interface CourseEditorProps {
 }
 
 export function CourseEditor({ courseId, onBack }: CourseEditorProps) {
+  const confirm = useConfirm()
+  
   const [course, setCourse] = useState<Partial<CourseWithStructure>>({
     title: '',
     description: '',
@@ -95,7 +99,7 @@ export function CourseEditor({ courseId, onBack }: CourseEditorProps) {
       }
     } catch (error) {
       console.error('Failed to load course:', error)
-      alert('Failed to load course')
+      toast.error('Failed to load course')
     } finally {
       setLoading(false)
     }
@@ -175,7 +179,7 @@ export function CourseEditor({ courseId, onBack }: CourseEditorProps) {
           instructor: course.instructor,
         }
         await CourseManagementService.updateCourse(courseId, payload)
-        alert('Course saved successfully')
+        toast.success('Course saved successfully')
       } else {
         // Create new course
         const payload: CreateCoursePayload = {
@@ -193,13 +197,13 @@ export function CourseEditor({ courseId, onBack }: CourseEditorProps) {
         }
         const newCourse = await CourseManagementService.createCourse(payload)
         setCourse(newCourse)
-        alert('Course created successfully')
+        toast.success('Course created successfully')
       }
 
       setHasUnsavedChanges(false)
     } catch (error) {
       console.error('Failed to save course:', error)
-      alert('Failed to save course')
+      toast.error('Failed to save course')
     } finally {
       setSaving(false)
     }
@@ -207,23 +211,30 @@ export function CourseEditor({ courseId, onBack }: CourseEditorProps) {
 
   const handlePublish = async () => {
     if (validationErrors.length > 0) {
-      alert('Cannot publish: Please fix all errors first')
+      toast.error('Cannot publish: Please fix all errors first')
       return
     }
 
     if (!courseId) {
-      alert('Please save the course first before publishing')
+      toast.error('Please save the course first before publishing')
       return
     }
 
-    if (confirm('Publish this course? It will become visible to students.')) {
+    const confirmed = await confirm.confirm({
+      title: 'Publish course?',
+      description: 'This course will become visible to students.',
+      confirmText: 'Publish',
+    })
+
+    if (confirmed) {
       try {
         await CourseManagementService.publishCourse(courseId)
         await loadCourse()
-        alert('Course published successfully')
+        toast.success('Course published successfully')
       } catch (error) {
         console.error('Failed to publish:', error)
-        alert('Failed to publish course')
+        const errorMessage = error instanceof Error ? error.message : 'Failed to publish course'
+        toast.error(errorMessage)
       }
     }
   }
@@ -234,40 +245,47 @@ export function CourseEditor({ courseId, onBack }: CourseEditorProps) {
     setModuleDialogOpen(true)
   }
 
-  const handleSaveModule = (data: { title: string; description: string }) => {
-    if (editingModule) {
-      // Edit existing module
-      handleCourseChange({
-        modules: course.modules?.map((m) =>
-          m.id === editingModule.id
-            ? {
-                ...m,
-                title: data.title,
-                description: data.description,
-                updatedAt: Date.now(),
-              }
-            : m
-        ),
-      })
-    } else {
-      // Create new module
-      const newModule = {
-        id: `module-${Date.now()}`,
-        courseId: courseId || '',
-        title: data.title,
-        description: data.description,
-        order: (course.modules?.length || 0) + 1,
-        lessons: [],
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-      }
-
-      handleCourseChange({
-        modules: [...(course.modules || []), newModule],
-      })
+  const handleSaveModule = async (data: { title: string; description: string }) => {
+    if (!courseId) {
+      toast.error('Please save the course first before adding modules')
+      return
     }
-    
-    setHasUnsavedChanges(true)
+
+    try {
+      if (editingModule) {
+        // Edit existing module
+        const updatedModule = await CourseManagementService.updateModule(editingModule.id, {
+          title: data.title,
+          description: data.description,
+        })
+
+        // Update local state
+        handleCourseChange({
+          modules: course.modules?.map((m) =>
+            m.id === editingModule.id ? updatedModule : m
+          ),
+        })
+
+        toast.success('Module updated successfully')
+      } else {
+        // Create new module
+        const newModule = await CourseManagementService.createModule(courseId, {
+          title: data.title,
+          description: data.description,
+          order: (course.modules?.length || 0) + 1,
+        })
+
+        // Update local state
+        handleCourseChange({
+          modules: [...(course.modules || []), newModule],
+        })
+
+        toast.success('Module created successfully')
+      }
+    } catch (error) {
+      console.error('Failed to save module:', error)
+      toast.error('Failed to save module')
+    }
   }
 
   const handleEditModule = (moduleId: string) => {
@@ -278,7 +296,7 @@ export function CourseEditor({ courseId, onBack }: CourseEditorProps) {
     setModuleDialogOpen(true)
   }
 
-  const handleDeleteModule = (moduleId: string) => {
+  const handleDeleteModule = async (moduleId: string) => {
     const module = course.modules?.find((m) => m.id === moduleId)
     if (!module) return
 
@@ -287,13 +305,28 @@ export function CourseEditor({ courseId, onBack }: CourseEditorProps) {
       ? `Delete "${module.title}" and its ${lessonCount} lesson(s)?`
       : `Delete module "${module.title}"?`
 
-    if (!confirm(confirmMessage)) return
-
-    handleCourseChange({
-      modules: course.modules?.filter((m) => m.id !== moduleId),
+    const confirmed = await confirm.confirm({
+      title: 'Delete module?',
+      description: confirmMessage,
+      confirmText: 'Delete',
+      variant: 'destructive',
     })
-    
-    setHasUnsavedChanges(true)
+
+    if (!confirmed) return
+
+    try {
+      await CourseManagementService.deleteModule(moduleId)
+
+      // Update local state
+      handleCourseChange({
+        modules: course.modules?.filter((m) => m.id !== moduleId),
+      })
+
+      toast.success('Module deleted successfully')
+    } catch (error) {
+      console.error('Failed to delete module:', error)
+      toast.error('Failed to delete module')
+    }
   }
 
   const handleDuplicateModule = (moduleId: string) => {
@@ -348,70 +381,73 @@ export function CourseEditor({ courseId, onBack }: CourseEditorProps) {
     setLessonDialogOpen(true)
   }
 
-  const handleSaveLesson = (data: {
+  const handleSaveLesson = async (data: {
     title: string
     description: string
     type: 'video' | 'text' | 'quiz' | 'interactive' | 'exercise'
   }) => {
     if (!selectedModuleId) return
 
-    if (editingLesson) {
-      // Edit existing lesson
-      handleCourseChange({
-        modules: course.modules?.map((m) =>
-          m.id === selectedModuleId
-            ? {
-                ...m,
-                lessons: m.lessons?.map((l) =>
-                  l.id === editingLesson.id
-                    ? {
-                        ...l,
-                        title: data.title,
-                        description: data.description,
-                        type: data.type,
-                        updatedAt: Date.now(),
-                      }
-                    : l
-                ),
-                updatedAt: Date.now(),
-              }
-            : m
-        ),
-      })
-    } else {
-      // Create new lesson
-      const module = course.modules?.find((m) => m.id === selectedModuleId)
-      const lessonCount = module?.lessons?.length || 0
+    try {
+      if (editingLesson) {
+        // Edit existing lesson
+        const updatedLesson = await CourseManagementService.updateLesson(editingLesson.id, {
+          title: data.title,
+          description: data.description,
+          type: data.type,
+        })
 
-      const newLesson = {
-        id: `lesson-${Date.now()}`,
-        moduleId: selectedModuleId,
-        title: data.title,
-        description: data.description,
-        type: data.type,
-        content: '',
-        duration: 0,
-        order: lessonCount + 1,
-        xpReward: 10,
-        isOptional: false,
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
+        // Update local state
+        handleCourseChange({
+          modules: course.modules?.map((m) =>
+            m.id === selectedModuleId
+              ? {
+                  ...m,
+                  lessons: m.lessons?.map((l) =>
+                    l.id === editingLesson.id ? updatedLesson : l
+                  ),
+                  updatedAt: Date.now(),
+                }
+              : m
+          ),
+        })
+
+        toast.success('Lesson updated successfully')
+      } else {
+        // Create new lesson
+        const module = course.modules?.find((m) => m.id === selectedModuleId)
+        const lessonCount = module?.lessons?.length || 0
+
+        const newLesson = await CourseManagementService.createLesson(selectedModuleId, {
+          title: data.title,
+          description: data.description,
+          type: data.type,
+          content: '',
+          duration: 0,
+          order: lessonCount + 1,
+          xpReward: 10,
+          isOptional: false,
+        })
+
+        // Update local state
+        handleCourseChange({
+          modules: course.modules?.map((m) =>
+            m.id === selectedModuleId
+              ? {
+                  ...m,
+                  lessons: [...(m.lessons || []), newLesson],
+                  updatedAt: Date.now(),
+                }
+              : m
+          ),
+        })
+
+        toast.success('Lesson created successfully')
       }
-
-      handleCourseChange({
-        modules: course.modules?.map((m) =>
-          m.id === selectedModuleId
-            ? {
-                ...m,
-                lessons: [...(m.lessons || []), newLesson],
-                updatedAt: Date.now(),
-              }
-            : m
-        ),
-      })
+    } catch (error) {
+      console.error('Failed to save lesson:', error)
+      toast.error('Failed to save lesson')
     }
-    
-    setHasUnsavedChanges(true)
   }
 
   const handleEditLesson = (moduleId: string, lessonId: string) => {
@@ -424,26 +460,41 @@ export function CourseEditor({ courseId, onBack }: CourseEditorProps) {
     setLessonDialogOpen(true)
   }
 
-  const handleDeleteLesson = (moduleId: string, lessonId: string) => {
+  const handleDeleteLesson = async (moduleId: string, lessonId: string) => {
     const module = course.modules?.find((m) => m.id === moduleId)
     const lesson = module?.lessons?.find((l) => l.id === lessonId)
     if (!lesson) return
 
-    if (!confirm(`Delete lesson "${lesson.title}"?`)) return
-
-    handleCourseChange({
-      modules: course.modules?.map((m) =>
-        m.id === moduleId
-          ? {
-              ...m,
-              lessons: m.lessons?.filter((l) => l.id !== lessonId),
-              updatedAt: Date.now(),
-            }
-          : m
-      ),
+    const confirmed = await confirm.confirm({
+      title: 'Delete lesson?',
+      description: `Delete lesson "${lesson.title}"?`,
+      confirmText: 'Delete',
+      variant: 'destructive',
     })
-    
-    setHasUnsavedChanges(true)
+
+    if (!confirmed) return
+
+    try {
+      await CourseManagementService.deleteLesson(lessonId)
+
+      // Update local state
+      handleCourseChange({
+        modules: course.modules?.map((m) =>
+          m.id === moduleId
+            ? {
+                ...m,
+                lessons: m.lessons?.filter((l) => l.id !== lessonId),
+                updatedAt: Date.now(),
+              }
+            : m
+        ),
+      })
+
+      toast.success('Lesson deleted successfully')
+    } catch (error) {
+      console.error('Failed to delete lesson:', error)
+      toast.error('Failed to delete lesson')
+    }
   }
 
   const handleMoveLesson = (moduleId: string, lessonId: string, direction: 'up' | 'down') => {

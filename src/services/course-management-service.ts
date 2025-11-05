@@ -504,4 +504,146 @@ export class CourseManagementService {
       return { valid: false, errors: ['Failed to validate course'] }
     }
   }
+
+  // ============================================
+  // MODULE MANAGEMENT
+  // ============================================
+
+  /**
+   * Crear un módulo
+   */
+  static async createModule(courseId: string, data: { title: string; description?: string; order: number }): Promise<CourseModule> {
+    try {
+      const response = await fetch(`${API_BASE}/api/courses/${courseId}/modules`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      })
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || `Failed to create module: ${response.statusText}`)
+      }
+      
+      const { data: module } = await response.json()
+      return module
+    } catch (error) {
+      console.error('CourseManagementService.createModule failed:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Actualizar un módulo
+   */
+  static async updateModule(moduleId: string, data: Partial<CourseModule>): Promise<CourseModule> {
+    try {
+      const response = await fetch(`${API_BASE}/api/modules/${moduleId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      })
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || `Failed to update module: ${response.statusText}`)
+      }
+      
+      const { data: module } = await response.json()
+      return module
+    } catch (error) {
+      console.error('CourseManagementService.updateModule failed:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Eliminar un módulo
+   */
+  static async deleteModule(moduleId: string): Promise<void> {
+    try {
+      const response = await fetch(`${API_BASE}/api/modules/${moduleId}`, {
+        method: 'DELETE'
+      })
+      
+      if (!response.ok && response.status !== 204) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || `Failed to delete module: ${response.statusText}`)
+      }
+    } catch (error) {
+      console.error('CourseManagementService.deleteModule failed:', error)
+      throw error
+    }
+  }
+
+  // ============================================
+  // LESSON MANAGEMENT
+  // ============================================
+
+  /**
+   * Crear una lección
+   */
+  static async createLesson(moduleId: string, data: Partial<CourseLesson>): Promise<CourseLesson> {
+    try {
+      const response = await fetch(`${API_BASE}/api/modules/${moduleId}/lessons`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      })
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || `Failed to create lesson: ${response.statusText}`)
+      }
+      
+      const { data: lesson } = await response.json()
+      return lesson
+    } catch (error) {
+      console.error('CourseManagementService.createLesson failed:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Actualizar una lección
+   */
+  static async updateLesson(lessonId: string, data: Partial<CourseLesson>): Promise<CourseLesson> {
+    try {
+      const response = await fetch(`${API_BASE}/api/lessons/${lessonId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      })
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || `Failed to update lesson: ${response.statusText}`)
+      }
+      
+      const { data: lesson } = await response.json()
+      return lesson
+    } catch (error) {
+      console.error('CourseManagementService.updateLesson failed:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Eliminar una lección
+   */
+  static async deleteLesson(lessonId: string): Promise<void> {
+    try {
+      const response = await fetch(`${API_BASE}/api/lessons/${lessonId}`, {
+        method: 'DELETE'
+      })
+      
+      if (!response.ok && response.status !== 204) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || `Failed to delete lesson: ${response.statusText}`)
+      }
+    } catch (error) {
+      console.error('CourseManagementService.deleteLesson failed:', error)
+      throw error
+    }
+  }
 }

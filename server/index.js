@@ -61,6 +61,95 @@ function normalizeEmail(email) {
   return email.trim().toLowerCase()
 }
 
+// ============================================================================
+// SQL Employee Credentials Functions
+// ============================================================================
+
+// Crear tabla employee_credentials si no existe
+db.prepare(`
+  CREATE TABLE IF NOT EXISTS employee_credentials (
+    id TEXT PRIMARY KEY,
+    full_name TEXT NOT NULL,
+    email TEXT UNIQUE NOT NULL,
+    department TEXT,
+    role TEXT NOT NULL DEFAULT 'employee',
+    status TEXT DEFAULT 'active',
+    hire_date TEXT,
+    phone TEXT,
+    emergency_contact TEXT,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL
+  )
+`).run()
+
+const getEmployeesStmt = db.prepare('SELECT * FROM employee_credentials ORDER BY created_at DESC')
+const getEmployeeStmt = db.prepare('SELECT * FROM employee_credentials WHERE id = ?')
+const getEmployeeByEmailStmt = db.prepare('SELECT * FROM employee_credentials WHERE email = ?')
+const insertEmployeeStmt = db.prepare(`
+  INSERT INTO employee_credentials (id, full_name, email, department, role, status, hire_date, phone, emergency_contact, created_at, updated_at)
+  VALUES (@id, @full_name, @email, @department, @role, @status, @hire_date, @phone, @emergency_contact, @created_at, @updated_at)
+`)
+const updateEmployeeStmt = db.prepare(`
+  UPDATE employee_credentials
+  SET full_name = @full_name, email = @email, department = @department, role = @role, 
+      status = @status, hire_date = @hire_date, phone = @phone, emergency_contact = @emergency_contact, updated_at = @updated_at
+  WHERE id = @id
+`)
+const deleteEmployeeStmt = db.prepare('DELETE FROM employee_credentials WHERE id = ?')
+
+function getAllEmployees() {
+  return getEmployeesStmt.all()
+}
+
+function getEmployeeById(id) {
+  return getEmployeeStmt.get(id)
+}
+
+function getEmployeeByEmail(email) {
+  return getEmployeeByEmailStmt.get(normalizeEmail(email))
+}
+
+function createEmployee(data) {
+  const timestamp = Date.now()
+  insertEmployeeStmt.run({
+    id: data.id,
+    full_name: `${data.firstName} ${data.lastName}`,
+    email: normalizeEmail(data.email),
+    department: data.department || null,
+    role: data.role || 'employee',
+    status: data.status || 'pending',
+    hire_date: data.hireDate || null,
+    phone: data.phone || null,
+    emergency_contact: data.emergencyContact || null,
+    created_at: data.createdAt || timestamp,
+    updated_at: timestamp
+  })
+}
+
+function updateEmployee(id, data) {
+  const existing = getEmployeeById(id)
+  if (!existing) return false
+  
+  updateEmployeeStmt.run({
+    id,
+    full_name: data.fullName || existing.full_name,
+    email: data.email ? normalizeEmail(data.email) : existing.email,
+    department: data.department !== undefined ? data.department : existing.department,
+    role: data.role || existing.role,
+    status: data.status || existing.status,
+    hire_date: data.hireDate !== undefined ? data.hireDate : existing.hire_date,
+    phone: data.phone !== undefined ? data.phone : existing.phone,
+    emergency_contact: data.emergencyContact !== undefined ? data.emergencyContact : existing.emergency_contact,
+    updated_at: Date.now()
+  })
+  return true
+}
+
+function deleteEmployee(id) {
+  const result = deleteEmployeeStmt.run(id)
+  return result.changes > 0
+}
+
 function getRecords(tableName) {
   return getAllStmt
     .all(tableName)
@@ -296,9 +385,9 @@ app.post('/api/employees/bulk', (req, res) => {
 
         const normalizedEmail = normalizeEmail(email)
         
-        // Verificar si el usuario ya existe
-        const existingAuth = getRecords('auth-users').find(u => u.email === normalizedEmail)
-        if (existingAuth) {
+        // Verificar si el usuario ya existe en tabla SQL
+        const existingEmployee = getEmployeeByEmail(normalizedEmail)
+        if (existingEmployee) {
           failed.push({
             row: index + 1,
             email,
@@ -345,19 +434,36 @@ app.post('/api/employees/bulk', (req, res) => {
           }
         }
 
-        // Guardar credenciales temporales
-        const credentialRecord = {
-          ...employee,
+        // Guardar en tabla SQL usando la función createEmployee
+        createEmployee({
+          id,
+          firstName,
+          lastName,
+          email: normalizedEmail,
+          department: department || null,
+          role: 'employee',
           status: 'pending',
-          createdAt: timestamp,
-          expiresAt: timestamp + 30 * 24 * 60 * 60 * 1000
-        }
+          hireDate: employee.hireDate || null,
+          phone: employee.phone || null,
+          emergencyContact: employee.emergencyContact || null,
+          createdAt: timestamp
+        })
 
+        // Guardar auth y perfil en data_store (para login)
         insertRecord('auth-users', authRecord)
         insertRecord('user-profiles', profile)
-        insertRecord('employee-credentials', credentialRecord)
 
-        successful.push(credentialRecord)
+        // Retornar en formato camelCase
+        successful.push({
+          id,
+          fullName: `${firstName} ${lastName}`,
+          email: normalizedEmail,
+          department: department || null,
+          role: 'employee',
+          status: 'pending',
+          createdAt: timestamp,
+          temporaryPassword
+        })
       } catch (error) {
         console.error(`Error processing employee at index ${index}:`, error)
         failed.push({
@@ -387,7 +493,7 @@ app.post('/api/employees/bulk', (req, res) => {
 // Endpoint para obtener estadísticas del dashboard
 app.get('/api/admin/stats', (req, res) => {
   try {
-    const employees = getRecords('employee-credentials')
+    const employees = getAllEmployees()  // Ahora usa tabla SQL
     const users = getRecords('user-profiles')
     const courses = getRecords('courses')
     const allProgress = getRecords('user-progress')
@@ -441,7 +547,7 @@ app.get('/api/users/all', (req, res) => {
   try {
     const profiles = getRecords('user-profiles')
     const authUsers = getRecords('auth-users')
-    const credentials = getRecords('employee-credentials')
+    const credentials = getAllEmployees()  // Ahora usa tabla SQL
     
     // Combinar datos de múltiples tablas
     const users = profiles.map(profile => {
@@ -893,6 +999,163 @@ app.delete('/api/courses/:id', (req, res) => {
   }
 })
 
+// ============================================
+// MODULE MANAGEMENT ENDPOINTS
+// ============================================
+
+// Crear un módulo
+app.post('/api/courses/:courseId/modules', (req, res) => {
+  try {
+    const course = getRecord('courses', req.params.courseId)
+    if (!course) {
+      return res.status(404).json({ error: 'Course not found' })
+    }
+    
+    const moduleId = crypto.randomUUID()
+    const timestamp = Date.now()
+    
+    const newModule = {
+      id: moduleId,
+      courseId: req.params.courseId,
+      title: req.body.title || 'New Module',
+      description: req.body.description || '',
+      order: req.body.order ?? 0,
+      createdAt: timestamp,
+      updatedAt: timestamp
+    }
+    
+    insertRecord('course-modules', newModule)
+    res.status(201).json({ data: newModule })
+  } catch (error) {
+    console.error('Failed to create module:', error)
+    res.status(500).json({ error: 'Failed to create module' })
+  }
+})
+
+// Actualizar un módulo
+app.put('/api/modules/:id', (req, res) => {
+  try {
+    const module = getRecord('course-modules', req.params.id)
+    if (!module) {
+      return res.status(404).json({ error: 'Module not found' })
+    }
+    
+    const updatedModule = {
+      ...module,
+      ...req.body,
+      id: req.params.id,
+      courseId: module.courseId,
+      updatedAt: Date.now()
+    }
+    
+    updateRecord('course-modules', updatedModule)
+    res.json({ data: updatedModule })
+  } catch (error) {
+    console.error('Failed to update module:', error)
+    res.status(500).json({ error: 'Failed to update module' })
+  }
+})
+
+// Eliminar un módulo
+app.delete('/api/modules/:id', (req, res) => {
+  try {
+    const module = getRecord('course-modules', req.params.id)
+    if (!module) {
+      return res.status(404).json({ error: 'Module not found' })
+    }
+    
+    // Eliminar lecciones asociadas
+    const lessons = getRecords('course-lessons').filter(l => l.moduleId === module.id)
+    lessons.forEach(lesson => {
+      deleteStmt.run('course-lessons', lesson.id)
+    })
+    
+    // Eliminar el módulo
+    deleteStmt.run('course-modules', req.params.id)
+    res.status(204).send()
+  } catch (error) {
+    console.error('Failed to delete module:', error)
+    res.status(500).json({ error: 'Failed to delete module' })
+  }
+})
+
+// ============================================
+// LESSON MANAGEMENT ENDPOINTS
+// ============================================
+
+// Crear una lección
+app.post('/api/modules/:moduleId/lessons', (req, res) => {
+  try {
+    const module = getRecord('course-modules', req.params.moduleId)
+    if (!module) {
+      return res.status(404).json({ error: 'Module not found' })
+    }
+    
+    const lessonId = crypto.randomUUID()
+    const timestamp = Date.now()
+    
+    const newLesson = {
+      id: lessonId,
+      moduleId: req.params.moduleId,
+      title: req.body.title || 'New Lesson',
+      description: req.body.description || '',
+      type: req.body.type || 'content',
+      content: req.body.content || '',
+      duration: req.body.duration || 0,
+      order: req.body.order ?? 0,
+      xpReward: req.body.xpReward || 0,
+      createdAt: timestamp,
+      updatedAt: timestamp
+    }
+    
+    insertRecord('course-lessons', newLesson)
+    res.status(201).json({ data: newLesson })
+  } catch (error) {
+    console.error('Failed to create lesson:', error)
+    res.status(500).json({ error: 'Failed to create lesson' })
+  }
+})
+
+// Actualizar una lección
+app.put('/api/lessons/:id', (req, res) => {
+  try {
+    const lesson = getRecord('course-lessons', req.params.id)
+    if (!lesson) {
+      return res.status(404).json({ error: 'Lesson not found' })
+    }
+    
+    const updatedLesson = {
+      ...lesson,
+      ...req.body,
+      id: req.params.id,
+      moduleId: lesson.moduleId,
+      updatedAt: Date.now()
+    }
+    
+    updateRecord('course-lessons', updatedLesson)
+    res.json({ data: updatedLesson })
+  } catch (error) {
+    console.error('Failed to update lesson:', error)
+    res.status(500).json({ error: 'Failed to update lesson' })
+  }
+})
+
+// Eliminar una lección
+app.delete('/api/lessons/:id', (req, res) => {
+  try {
+    const lesson = getRecord('course-lessons', req.params.id)
+    if (!lesson) {
+      return res.status(404).json({ error: 'Lesson not found' })
+    }
+    
+    deleteStmt.run('course-lessons', req.params.id)
+    res.status(204).send()
+  } catch (error) {
+    console.error('Failed to delete lesson:', error)
+    res.status(500).json({ error: 'Failed to delete lesson' })
+  }
+})
+
 app.get('/api/:table', (req, res) => {
   if (SENSITIVE_TABLES.has(req.params.table)) {
     return res.status(403).json({ error: 'Access to this resource is restricted' })
@@ -971,6 +1234,353 @@ app.delete('/api/:table/:id', (req, res) => {
   }
   res.status(204).send()
 })
+
+// ============================================================================
+// Employee Credentials CRUD Endpoints
+// ============================================================================
+
+/**
+ * GET /api/employee-credentials
+ * Obtener todas las credenciales de empleados
+ */
+app.get('/api/employee-credentials', (req, res) => {
+  try {
+    const employees = getAllEmployees()
+    
+    // Convertir de snake_case (SQL) a camelCase (JSON)
+    const credentials = employees.map(emp => ({
+      id: emp.id,
+      fullName: emp.full_name,
+      email: emp.email,
+      department: emp.department,
+      role: emp.role,
+      status: emp.status,
+      hireDate: emp.hire_date,
+      phone: emp.phone,
+      emergencyContact: emp.emergency_contact,
+      createdAt: emp.created_at,
+      updatedAt: emp.updated_at
+    }))
+    
+    res.json({ data: credentials })
+  } catch (error) {
+    console.error('Error fetching employee credentials:', error)
+    res.status(500).json({ error: 'Failed to fetch employee credentials' })
+  }
+})
+
+/**
+ * GET /api/employee-credentials/:id
+ * Obtener una credencial específica por ID
+ */
+app.get('/api/employee-credentials/:id', (req, res) => {
+  try {
+    const employee = getEmployeeById(req.params.id)
+    if (!employee) {
+      return res.status(404).json({ error: 'Employee credential not found' })
+    }
+    
+    // Convertir de snake_case a camelCase
+    const credential = {
+      id: employee.id,
+      fullName: employee.full_name,
+      email: employee.email,
+      department: employee.department,
+      role: employee.role,
+      status: employee.status,
+      hireDate: employee.hire_date,
+      phone: employee.phone,
+      emergencyContact: employee.emergency_contact,
+      createdAt: employee.created_at,
+      updatedAt: employee.updated_at
+    }
+    
+    res.json({ data: credential })
+  } catch (error) {
+    console.error('Error fetching employee credential:', error)
+    res.status(500).json({ error: 'Failed to fetch employee credential' })
+  }
+})
+
+/**
+ * POST /api/employee-credentials
+ * Crear una nueva credencial de empleado
+ */
+app.post('/api/employee-credentials', (req, res) => {
+  try {
+    const employee = req.body
+
+    // Validar campos requeridos
+    if (!employee.id || !employee.email || !employee.firstName || 
+        !employee.lastName || !employee.temporaryPassword) {
+      return res.status(400).json({ 
+        error: 'Missing required fields: id, email, firstName, lastName, temporaryPassword' 
+      })
+    }
+
+    const normalizedEmail = normalizeEmail(employee.email)
+
+    // Verificar si el email ya existe en employee_credentials
+    const existingEmployee = getEmployeeByEmail(normalizedEmail)
+    if (existingEmployee) {
+      return res.status(409).json({ error: 'Email already exists' })
+    }
+
+    const timestamp = Date.now()
+    const { salt, hash } = hashPassword(employee.temporaryPassword)
+
+    // Crear registro de autenticación (aún en data_store)
+    const authRecord = {
+      id: employee.id,
+      email: normalizedEmail,
+      role: employee.role || 'employee',
+      passwordSalt: salt,
+      passwordHash: hash,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+      passwordChangedAt: timestamp,
+      requiresPasswordChange: true
+    }
+
+    // Crear perfil de usuario (aún en data_store)
+    const profile = {
+      id: employee.id,
+      email: normalizedEmail,
+      firstName: employee.firstName,
+      lastName: employee.lastName,
+      fullName: `${employee.firstName} ${employee.lastName}`,
+      displayName: `${employee.firstName} ${employee.lastName}`,
+      department: employee.department || 'General',
+      role: employee.role || 'employee',
+      createdAt: timestamp,
+      lastLoginAt: null,
+      preferences: {
+        highContrast: false,
+        textSize: 'normal',
+        reduceMotion: false,
+        disableSoundEffects: false,
+        avatar: undefined,
+        displayName: `${employee.firstName} ${employee.lastName}`
+      }
+    }
+
+    // Guardar en la base de datos SQL y data_store
+    const transaction = db.transaction(() => {
+      // Guardar en tabla SQL
+      createEmployee({
+        id: employee.id,
+        firstName: employee.firstName,
+        lastName: employee.lastName,
+        email: normalizedEmail,
+        department: employee.department,
+        role: employee.role || 'employee',
+        status: employee.status || 'pending',
+        hireDate: employee.hireDate,
+        phone: employee.phone,
+        emergencyContact: employee.emergencyContact,
+        createdAt: timestamp
+      })
+      
+      // Guardar en data_store (auth y perfil)
+      insertRecord('auth-users', authRecord)
+      insertRecord('user-profiles', profile)
+    })
+
+    transaction()
+
+    // Retornar en formato camelCase
+    res.status(201).json({ 
+      data: {
+        id: employee.id,
+        fullName: `${employee.firstName} ${employee.lastName}`,
+        email: normalizedEmail,
+        department: employee.department,
+        role: employee.role || 'employee',
+        status: employee.status || 'pending',
+        hireDate: employee.hireDate,
+        phone: employee.phone,
+        emergencyContact: employee.emergencyContact,
+        createdAt: timestamp,
+        updatedAt: timestamp
+      }
+    })
+  } catch (error) {
+    console.error('Error creating employee credential:', error)
+    res.status(500).json({ error: 'Failed to create employee credential' })
+  }
+})
+
+/**
+ * PUT /api/employee-credentials/:id
+ * Actualizar una credencial de empleado
+ */
+app.put('/api/employee-credentials/:id', (req, res) => {
+  try {
+    const id = req.params.id
+    const updates = req.body
+
+    const existing = getEmployeeById(id)
+    if (!existing) {
+      return res.status(404).json({ error: 'Employee credential not found' })
+    }
+
+    // Actualizar en tabla SQL
+    updateEmployee(id, updates)
+
+    // Si se actualizan ciertos campos, también actualizar el perfil en data_store
+    if (updates.firstName || updates.lastName || updates.department) {
+      const profile = getRecord('user-profiles', id)
+      if (profile) {
+        const updatedProfile = {
+          ...profile,
+          firstName: updates.firstName || profile.firstName,
+          lastName: updates.lastName || profile.lastName,
+          department: updates.department || profile.department,
+          fullName: `${updates.firstName || profile.firstName} ${updates.lastName || profile.lastName}`,
+          displayName: `${updates.firstName || profile.firstName} ${updates.lastName || profile.lastName}`,
+          updatedAt: Date.now()
+        }
+        updateRecord('user-profiles', updatedProfile)
+      }
+    }
+
+    // Obtener empleado actualizado
+    const updated = getEmployeeById(id)
+    const credential = {
+      id: updated.id,
+      fullName: updated.full_name,
+      email: updated.email,
+      department: updated.department,
+      role: updated.role,
+      status: updated.status,
+      hireDate: updated.hire_date,
+      phone: updated.phone,
+      emergencyContact: updated.emergency_contact,
+      createdAt: updated.created_at,
+      updatedAt: updated.updated_at
+    }
+
+    res.json({ data: credential })
+  } catch (error) {
+    console.error('Error updating employee credential:', error)
+    res.status(500).json({ error: 'Failed to update employee credential' })
+  }
+})
+
+/**
+ * DELETE /api/employee-credentials/:id
+ * Eliminar una credencial de empleado y sus registros relacionados
+ */
+app.delete('/api/employee-credentials/:id', (req, res) => {
+  try {
+    const id = req.params.id
+
+    const existing = getEmployeeById(id)
+    if (!existing) {
+      return res.status(404).json({ error: 'Employee credential not found' })
+    }
+
+    // Eliminar todos los registros relacionados en una transacción
+    const transaction = db.transaction(() => {
+      deleteEmployee(id)  // Tabla SQL
+      deleteStmt.run('user-profiles', id)  // data_store
+      deleteStmt.run('auth-users', id)     // data_store
+    })
+
+    transaction()
+
+    res.status(204).send()
+  } catch (error) {
+    console.error('Error deleting employee credential:', error)
+    res.status(500).json({ error: 'Failed to delete employee credential' })
+  }
+})
+
+// ============================================================================
+// Migration Utilities (temporal)
+// ============================================================================
+
+/**
+ * POST /api/employees/regenerate-auth
+ * Regenerar auth-users y user-profiles desde employee_credentials SQL table
+ * TEMPORAL: Solo para migración de datos existentes
+ */
+app.post('/api/employees/regenerate-auth', (req, res) => {
+  try {
+    const employees = getAllEmployees()
+    
+    if (employees.length === 0) {
+      return res.json({ message: 'No employees found in SQL table' })
+    }
+
+    const transaction = db.transaction(() => {
+      employees.forEach(emp => {
+        const timestamp = emp.created_at || Date.now()
+        
+        // Generar password temporal (será reemplazado en primer login)
+        const tempPassword = `Welcome${Math.random().toString(36).slice(2, 10)}!`
+        const { salt, hash } = hashPassword(tempPassword)
+        
+        // Extraer firstName y lastName de full_name
+        const nameParts = emp.full_name.split(' ')
+        const firstName = nameParts[0] || 'Unknown'
+        const lastName = nameParts.slice(1).join(' ') || 'User'
+
+        // Crear auth-user
+        const authRecord = {
+          id: emp.id,
+          email: emp.email,
+          role: emp.role || 'employee',
+          passwordSalt: salt,
+          passwordHash: hash,
+          createdAt: timestamp,
+          updatedAt: Date.now(),
+          passwordChangedAt: timestamp,
+          requiresPasswordChange: true
+        }
+
+        // Crear user-profile
+        const profile = {
+          id: emp.id,
+          email: emp.email,
+          firstName,
+          lastName,
+          fullName: emp.full_name,
+          displayName: emp.full_name,
+          department: emp.department || 'General',
+          role: emp.role || 'employee',
+          createdAt: timestamp,
+          lastLoginAt: null,
+          preferences: {
+            highContrast: false,
+            textSize: 'normal',
+            reduceMotion: false,
+            disableSoundEffects: false,
+            avatar: undefined,
+            displayName: emp.full_name
+          }
+        }
+
+        insertRecord('auth-users', authRecord)
+        insertRecord('user-profiles', profile)
+      })
+    })
+
+    transaction()
+
+    res.json({ 
+      message: `Successfully regenerated auth records for ${employees.length} employees`,
+      count: employees.length
+    })
+  } catch (error) {
+    console.error('Error regenerating auth records:', error)
+    res.status(500).json({ error: 'Failed to regenerate auth records' })
+  }
+})
+
+// ============================================================================
+// Error Handler
+// ============================================================================
 
 app.use((err, req, res, _next) => {
   console.error('Unhandled error in API', err)
