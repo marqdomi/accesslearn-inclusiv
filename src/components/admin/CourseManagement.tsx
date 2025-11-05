@@ -34,7 +34,7 @@ import {
   SortAscending,
   SortDescending,
 } from '@phosphor-icons/react'
-import { ProfessionalCourseBuilder } from './ProfessionalCourseBuilder'
+import { CourseEditor } from './CourseEditor'
 import { 
   CourseManagementService, 
   Course, 
@@ -340,7 +340,7 @@ export function CourseManagement({ onBack }: CourseManagementProps) {
 
   if (isCreating || editingCourseId) {
     return (
-      <ProfessionalCourseBuilder
+      <CourseEditor
         courseId={editingCourseId || undefined}
         onBack={refreshData}
       />
