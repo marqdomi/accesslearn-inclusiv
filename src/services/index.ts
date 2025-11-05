@@ -13,9 +13,13 @@ export * from './course-service'
 export * from './user-progress-service'
 export * from './team-service'
 export * from './user-service'
+export * from './social-service'
+export * from './gamification-service'
 
 // Re-export service instances for convenient access
 export { CourseService } from './course-service'
 export { UserProgressService } from './user-progress-service'
 export { TeamService, GroupService } from './team-service'
 export { UserProfileService, UserStatsService, XPEventService } from './user-service'
+export { MentorshipService, ForumService, ActivityFeedService, NotificationService } from './social-service'
+export { AchievementService, CertificateService, QuizAttemptService, CourseReviewService } from './gamification-service'
