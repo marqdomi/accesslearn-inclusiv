@@ -134,54 +134,44 @@ export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
   ]
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h2 className="text-3xl font-bold tracking-tight">Admin Dashboard</h2>
-        <p className="text-muted-foreground mt-1">
-          Manage courses, users, and track learning progress
+    <div className="space-y-6">
+      <div className="border-b pb-4">
+        <h2 className="text-3xl font-semibold tracking-tight admin-heading">Admin Dashboard</h2>
+        <p className="text-muted-foreground mt-1 text-sm">
+          Training Management System - Manage courses, users, and track learning progress
         </p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat, index) => (
-          <motion.div
-            key={stat.title}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
-          >
-            <Card>
+          <div key={stat.title}>
+            <Card className="admin-card h-full">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
-                <stat.icon className={`h-5 w-5 ${stat.color}`} weight="duotone" aria-hidden="true" />
+                <CardTitle className="text-sm font-medium text-[var(--admin-primary)]">{stat.title}</CardTitle>
+                <stat.icon className="h-5 w-5 text-[var(--admin-accent)]" weight="regular" aria-hidden="true" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{stat.value}</div>
+                <div className="text-3xl font-bold text-[var(--admin-primary)]">{stat.value}</div>
                 <p className="text-xs text-muted-foreground mt-1">{stat.subtitle}</p>
               </CardContent>
             </Card>
-          </motion.div>
+          </div>
         ))}
       </div>
 
       <div>
-        <h3 className="text-xl font-semibold mb-4">Quick Actions</h3>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <h3 className="text-lg font-semibold mb-4 text-[var(--admin-primary)]">Quick Actions</h3>
+        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
           {quickActions.map((action, index) => (
-            <motion.div
-              key={action.label}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 + index * 0.05 }}
-            >
-              <Card className="hover:shadow-md transition-shadow cursor-pointer group h-full" onClick={action.action}>
-                <CardHeader>
+            <div key={action.label}>
+              <Card className="admin-card cursor-pointer group h-full" onClick={action.action}>
+                <CardHeader className="p-4">
                   <div className="flex items-start gap-3">
-                    <div className="p-2 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                      <action.icon className="h-5 w-5 text-primary" weight="duotone" aria-hidden="true" />
+                    <div className="p-2 rounded-md bg-[var(--admin-primary)]/10">
+                      <action.icon className="h-5 w-5 text-[var(--admin-primary)]" weight="regular" aria-hidden="true" />
                     </div>
                     <div className="flex-1">
-                      <CardTitle className="text-sm leading-tight">{action.label}</CardTitle>
+                      <CardTitle className="text-sm leading-tight font-medium">{action.label}</CardTitle>
                       <CardDescription className="text-xs mt-1">
                         {action.description}
                       </CardDescription>
@@ -189,14 +179,14 @@ export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
                   </div>
                 </CardHeader>
               </Card>
-            </motion.div>
+            </div>
           ))}
         </div>
       </div>
 
-      <Card>
+      <Card className="admin-card">
         <CardHeader>
-          <CardTitle>Corporate Admin Workflow</CardTitle>
+          <CardTitle className="text-[var(--admin-primary)]">Corporate Admin Workflow</CardTitle>
           <CardDescription>
             Set up your learning platform in four simple steps
           </CardDescription>

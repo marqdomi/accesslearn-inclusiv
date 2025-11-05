@@ -172,33 +172,33 @@ export function CourseBuilder({ courseId, onBack }: CourseBuilderProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between border-b pb-4">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={onBack}>
+          <Button variant="ghost" size="icon" onClick={onBack} className="admin-button admin-focus">
             <ArrowLeft size={20} />
           </Button>
           <div>
-            <h2 className="text-2xl font-bold">
+            <h2 className="text-3xl font-semibold admin-heading">
               {courseId ? 'Edit Course' : 'Create New Course'}
             </h2>
             <p className="text-sm text-muted-foreground mt-1">
               {course.published ? (
-                <Badge variant="default" className="gap-1">
+                <Badge variant="default" className="gap-1 bg-[var(--admin-success)]">
                   <CheckCircle size={14} weight="fill" />
                   Published
                 </Badge>
               ) : (
-                <Badge variant="secondary">Draft</Badge>
+                <Badge variant="secondary" className="bg-[var(--admin-secondary)]">Draft</Badge>
               )}
             </p>
           </div>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={handleSaveDraft}>
+          <Button variant="outline" onClick={handleSaveDraft} className="admin-button admin-focus">
             <FloppyDisk className="mr-2" size={18} />
             Save Draft
           </Button>
-          <Button onClick={handlePublish}>
+          <Button onClick={handlePublish} className="admin-button admin-focus bg-[var(--admin-primary)]">
             <CheckCircle className="mr-2" size={18} weight="fill" />
             Publish Course
           </Button>
@@ -206,7 +206,7 @@ export function CourseBuilder({ courseId, onBack }: CourseBuilderProps) {
       </div>
 
       {validationErrors.length > 0 && (
-        <Alert variant={validationErrors.some(e => e.severity === 'error') ? 'destructive' : 'default'}>
+        <Alert variant={validationErrors.some(e => e.severity === 'error') ? 'destructive' : 'default'} className="admin-card">
           <Warning size={18} />
           <AlertDescription>
             <p className="font-medium mb-2">
@@ -227,15 +227,15 @@ export function CourseBuilder({ courseId, onBack }: CourseBuilderProps) {
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="details">Course Details</TabsTrigger>
-          <TabsTrigger value="structure">Course Structure</TabsTrigger>
-          <TabsTrigger value="preview">Preview</TabsTrigger>
+          <TabsTrigger value="details" className="admin-button">Course Details</TabsTrigger>
+          <TabsTrigger value="structure" className="admin-button">Course Structure</TabsTrigger>
+          <TabsTrigger value="preview" className="admin-button">Preview</TabsTrigger>
         </TabsList>
 
         <TabsContent value="details" className="space-y-6 mt-6">
-          <Card>
+          <Card className="admin-card">
             <CardHeader>
-              <CardTitle>Basic Information</CardTitle>
+              <CardTitle className="text-[var(--admin-primary)]">Basic Information</CardTitle>
               <CardDescription>
                 Enter the core details about this training course
               </CardDescription>
@@ -245,7 +245,8 @@ export function CourseBuilder({ courseId, onBack }: CourseBuilderProps) {
                 <Label htmlFor="course-title">Course Title *</Label>
                 <Input
                   id="course-title"
-                  placeholder="e.g., Web Development Quest: HTML Fundamentals"
+                  className="admin-input admin-focus"
+                  placeholder="e.g., Web Development Fundamentals"
                   value={course.title}
                   onChange={(e) => updateCourseField('title', e.target.value)}
                 />
@@ -255,6 +256,7 @@ export function CourseBuilder({ courseId, onBack }: CourseBuilderProps) {
                 <Label htmlFor="course-description">Description *</Label>
                 <Textarea
                   id="course-description"
+                  className="admin-input admin-focus"
                   placeholder="Describe what learners will achieve in this course"
                   value={course.description}
                   onChange={(e) => updateCourseField('description', e.target.value)}
