@@ -35,6 +35,7 @@ import {
   SortDescending,
 } from '@phosphor-icons/react'
 import { CourseEditor } from './CourseEditor'
+import CoursePreview from './CoursePreview'
 import { 
   CourseManagementService, 
   Course, 
@@ -67,6 +68,7 @@ export function CourseManagement({ onBack }: CourseManagementProps) {
   const [selectedCourses, setSelectedCourses] = useState<Set<string>>(new Set())
   const [editingCourseId, setEditingCourseId] = useState<string | null>(null)
   const [isCreating, setIsCreating] = useState(false)
+  const [previewCourseId, setPreviewCourseId] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 12
 
@@ -573,6 +575,15 @@ export function CourseManagement({ onBack }: CourseManagementProps) {
                     <Button
                       size="sm"
                       variant="outline"
+                      onClick={() => setPreviewCourseId(course.id)}
+                      title="Preview Course"
+                    >
+                      <Eye className="mr-1" size={14} />
+                      Preview
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
                       className="flex-1"
                       onClick={() => setEditingCourseId(course.id)}
                     >
@@ -701,6 +712,14 @@ export function CourseManagement({ onBack }: CourseManagementProps) {
                         <Button
                           size="sm"
                           variant="ghost"
+                          onClick={() => setPreviewCourseId(course.id)}
+                          title="Preview Course"
+                        >
+                          <Eye size={14} className="text-blue-600" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
                           onClick={() => setEditingCourseId(course.id)}
                           title="Edit"
                         >
@@ -774,6 +793,13 @@ export function CourseManagement({ onBack }: CourseManagementProps) {
           )}
         </>
       )}
+
+      {/* Course Preview Modal */}
+      <CoursePreview
+        courseId={previewCourseId}
+        isOpen={previewCourseId !== null}
+        onClose={() => setPreviewCourseId(null)}
+      />
     </div>
   )
 }

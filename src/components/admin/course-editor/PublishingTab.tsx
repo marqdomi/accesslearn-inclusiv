@@ -4,8 +4,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
-import { CheckCircle, Warning, XCircle, Info } from '@phosphor-icons/react'
-import { Course, CourseVisibility } from '@/services/course-management-service'
+import { Button } from '@/components/ui/button'
+import { CheckCircle, Warning, XCircle, Info, Eye } from '@phosphor-icons/react'
+import { Course, CourseVisibility, CourseWithStructure } from '@/services/course-management-service'
+import { validateCourse } from '@/lib/course-validation'
+import CourseValidationReport from '../CourseValidationReport'
+import { useState } from 'react'
 
 interface PublishingTabProps {
   course: Partial<Course>
@@ -21,6 +25,12 @@ export function PublishingTab({
   validationWarnings 
 }: PublishingTabProps) {
   const isValid = validationErrors.length === 0
+  const [showAdvancedValidation, setShowAdvancedValidation] = useState(false)
+
+  // Ejecutar validación avanzada si tenemos estructura completa
+  const advancedValidation = (course as CourseWithStructure).modules 
+    ? validateCourse(course as CourseWithStructure)
+    : null
 
   return (
     <div className="space-y-6">
@@ -192,6 +202,36 @@ export function PublishingTab({
           </div>
         </CardContent>
       </Card>
+
+      {/* Advanced Validation Report */}
+      {advancedValidation && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Advanced Quality Analysis</CardTitle>
+                <CardDescription>
+                  Comprehensive course quality assessment with detailed recommendations
+                </CardDescription>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowAdvancedValidation(!showAdvancedValidation)}
+              >
+                <Eye className="mr-2" size={16} />
+                {showAdvancedValidation ? 'Hide Details' : 'Show Details'}
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <CourseValidationReport 
+              validation={advancedValidation} 
+              showDetails={showAdvancedValidation}
+            />
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }
