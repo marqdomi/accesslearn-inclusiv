@@ -25,6 +25,9 @@ import { StructureTab } from './course-editor/StructureTab'
 import { PublishingTab } from './course-editor/PublishingTab'
 import { ContentTab } from './course-editor/ContentTab'
 import { AdvancedSettingsTab } from './course-editor/AdvancedSettingsTab'
+import { ModuleDialog } from './course-editor/ModuleDialog'
+import { LessonDialog } from './course-editor/LessonDialog'
+import type { CourseModule, CourseLesson } from '@/services/course-management-service'
 
 interface CourseEditorProps {
   courseId?: string
@@ -52,6 +55,14 @@ export function CourseEditor({ courseId, onBack }: CourseEditorProps) {
   const [validationErrors, setValidationErrors] = useState<string[]>([])
   const [validationWarnings, setValidationWarnings] = useState<string[]>([])
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
+
+  // Dialog states
+  const [moduleDialogOpen, setModuleDialogOpen] = useState(false)
+  const [editingModule, setEditingModule] = useState<CourseModule | null>(null)
+  const [lessonDialogOpen, setLessonDialogOpen] = useState(false)
+  const [editingLesson, setEditingLesson] = useState<CourseLesson | null>(null)
+  const [selectedModuleId, setSelectedModuleId] = useState<string | null>(null)
+
   const [categories] = useState<string[]>([
     'Programming',
     'Design',
@@ -219,25 +230,42 @@ export function CourseEditor({ courseId, onBack }: CourseEditorProps) {
 
   // Structure tab handlers - IMPLEMENTED
   const handleAddModule = () => {
-    const title = prompt('Enter module title:')
-    if (!title?.trim()) return
+    setEditingModule(null)
+    setModuleDialogOpen(true)
+  }
 
-    const description = prompt('Enter module description (optional):') || ''
-    
-    const newModule = {
-      id: `module-${Date.now()}`,
-      courseId: courseId || '',
-      title: title.trim(),
-      description: description.trim(),
-      order: (course.modules?.length || 0) + 1,
-      lessons: [],
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
+  const handleSaveModule = (data: { title: string; description: string }) => {
+    if (editingModule) {
+      // Edit existing module
+      handleCourseChange({
+        modules: course.modules?.map((m) =>
+          m.id === editingModule.id
+            ? {
+                ...m,
+                title: data.title,
+                description: data.description,
+                updatedAt: Date.now(),
+              }
+            : m
+        ),
+      })
+    } else {
+      // Create new module
+      const newModule = {
+        id: `module-${Date.now()}`,
+        courseId: courseId || '',
+        title: data.title,
+        description: data.description,
+        order: (course.modules?.length || 0) + 1,
+        lessons: [],
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      }
+
+      handleCourseChange({
+        modules: [...(course.modules || []), newModule],
+      })
     }
-
-    handleCourseChange({
-      modules: [...(course.modules || []), newModule],
-    })
     
     setHasUnsavedChanges(true)
   }
@@ -246,25 +274,8 @@ export function CourseEditor({ courseId, onBack }: CourseEditorProps) {
     const module = course.modules?.find((m) => m.id === moduleId)
     if (!module) return
 
-    const title = prompt('Edit module title:', module.title)
-    if (title === null) return // User cancelled
-
-    const description = prompt('Edit module description:', module.description || '')
-    
-    handleCourseChange({
-      modules: course.modules?.map((m) =>
-        m.id === moduleId
-          ? {
-              ...m,
-              title: title?.trim() || m.title,
-              description: description?.trim() || '',
-              updatedAt: Date.now(),
-            }
-          : m
-      ),
-    })
-    
-    setHasUnsavedChanges(true)
+    setEditingModule(module)
+    setModuleDialogOpen(true)
   }
 
   const handleDeleteModule = (moduleId: string) => {
@@ -332,47 +343,73 @@ export function CourseEditor({ courseId, onBack }: CourseEditorProps) {
   }
 
   const handleAddLesson = (moduleId: string) => {
-    const title = prompt('Enter lesson title:')
-    if (!title?.trim()) return
+    setSelectedModuleId(moduleId)
+    setEditingLesson(null)
+    setLessonDialogOpen(true)
+  }
 
-    const typeOptions = ['video', 'text', 'quiz', 'interactive', 'exercise']
-    const type = prompt(
-      `Select lesson type:\n1. Video\n2. Text\n3. Quiz\n4. Interactive\n5. Exercise\n\nEnter number (1-5):`,
-      '2'
-    )
-    
-    const typeIndex = parseInt(type || '2') - 1
-    const lessonType = typeOptions[typeIndex] || 'text'
+  const handleSaveLesson = (data: {
+    title: string
+    description: string
+    type: 'video' | 'text' | 'quiz' | 'interactive' | 'exercise'
+  }) => {
+    if (!selectedModuleId) return
 
-    const module = course.modules?.find((m) => m.id === moduleId)
-    const lessonCount = module?.lessons?.length || 0
+    if (editingLesson) {
+      // Edit existing lesson
+      handleCourseChange({
+        modules: course.modules?.map((m) =>
+          m.id === selectedModuleId
+            ? {
+                ...m,
+                lessons: m.lessons?.map((l) =>
+                  l.id === editingLesson.id
+                    ? {
+                        ...l,
+                        title: data.title,
+                        description: data.description,
+                        type: data.type,
+                        updatedAt: Date.now(),
+                      }
+                    : l
+                ),
+                updatedAt: Date.now(),
+              }
+            : m
+        ),
+      })
+    } else {
+      // Create new lesson
+      const module = course.modules?.find((m) => m.id === selectedModuleId)
+      const lessonCount = module?.lessons?.length || 0
 
-    const newLesson = {
-      id: `lesson-${Date.now()}`,
-      moduleId,
-      title: title.trim(),
-      description: '',
-      type: lessonType as any,
-      content: '',
-      duration: 0,
-      order: lessonCount + 1,
-      xpReward: 10,
-      isOptional: false,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
+      const newLesson = {
+        id: `lesson-${Date.now()}`,
+        moduleId: selectedModuleId,
+        title: data.title,
+        description: data.description,
+        type: data.type,
+        content: '',
+        duration: 0,
+        order: lessonCount + 1,
+        xpReward: 10,
+        isOptional: false,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      }
+
+      handleCourseChange({
+        modules: course.modules?.map((m) =>
+          m.id === selectedModuleId
+            ? {
+                ...m,
+                lessons: [...(m.lessons || []), newLesson],
+                updatedAt: Date.now(),
+              }
+            : m
+        ),
+      })
     }
-
-    handleCourseChange({
-      modules: course.modules?.map((m) =>
-        m.id === moduleId
-          ? {
-              ...m,
-              lessons: [...(m.lessons || []), newLesson],
-              updatedAt: Date.now(),
-            }
-          : m
-      ),
-    })
     
     setHasUnsavedChanges(true)
   }
@@ -382,33 +419,9 @@ export function CourseEditor({ courseId, onBack }: CourseEditorProps) {
     const lesson = module?.lessons?.find((l) => l.id === lessonId)
     if (!lesson) return
 
-    const title = prompt('Edit lesson title:', lesson.title)
-    if (title === null) return
-
-    const description = prompt('Edit lesson description:', lesson.description || '')
-    
-    handleCourseChange({
-      modules: course.modules?.map((m) =>
-        m.id === moduleId
-          ? {
-              ...m,
-              lessons: m.lessons?.map((l) =>
-                l.id === lessonId
-                  ? {
-                      ...l,
-                      title: title?.trim() || l.title,
-                      description: description?.trim() || '',
-                      updatedAt: Date.now(),
-                    }
-                  : l
-              ),
-              updatedAt: Date.now(),
-            }
-          : m
-      ),
-    })
-    
-    setHasUnsavedChanges(true)
+    setSelectedModuleId(moduleId)
+    setEditingLesson(lesson)
+    setLessonDialogOpen(true)
   }
 
   const handleDeleteLesson = (moduleId: string, lessonId: string) => {
@@ -601,6 +614,23 @@ export function CourseEditor({ courseId, onBack }: CourseEditorProps) {
           />
         </TabsContent>
       </Tabs>
+
+      {/* Dialogs */}
+      <ModuleDialog
+        open={moduleDialogOpen}
+        onOpenChange={setModuleDialogOpen}
+        onSave={handleSaveModule}
+        module={editingModule}
+        title={editingModule ? 'Edit Module' : 'Create New Module'}
+      />
+
+      <LessonDialog
+        open={lessonDialogOpen}
+        onOpenChange={setLessonDialogOpen}
+        onSave={handleSaveLesson}
+        lesson={editingLesson}
+        title={editingLesson ? 'Edit Lesson' : 'Create New Lesson'}
+      />
     </div>
   )
 }
