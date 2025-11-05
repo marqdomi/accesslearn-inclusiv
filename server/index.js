@@ -584,6 +584,315 @@ function generateTemporaryPassword() {
   return `${adj}${noun}${num}${special}`
 }
 
+// ============================================
+// COURSE MANAGEMENT ENDPOINTS
+// ============================================
+
+// Obtener todos los cursos con información completa
+app.get('/api/courses/all', (req, res) => {
+  try {
+    const courses = getRecords('courses')
+    
+    // Enriquecer cursos con información adicional
+    const enrichedCourses = courses.map(course => {
+      const modules = getRecords('course-modules').filter(m => m.courseId === course.id)
+      const lessons = getRecords('course-lessons').filter(l => 
+        modules.some(m => m.id === l.moduleId)
+      )
+      
+      return {
+        ...course,
+        moduleCount: modules.length,
+        lessonCount: lessons.length,
+        totalXP: lessons.reduce((sum, l) => sum + (l.xpReward || 0), 0),
+        publishedAt: course.publishedAt || null,
+        lastEditedAt: course.updatedAt || course.createdAt
+      }
+    })
+    
+    res.json({ data: enrichedCourses })
+  } catch (error) {
+    console.error('Failed to get all courses:', error)
+    res.status(500).json({ error: 'Failed to retrieve courses' })
+  }
+})
+
+// Obtener un curso específico con toda su estructura
+app.get('/api/courses/:id/full', (req, res) => {
+  try {
+    const course = getRecord('courses', req.params.id)
+    if (!course) {
+      return res.status(404).json({ error: 'Course not found' })
+    }
+    
+    const modules = getRecords('course-modules')
+      .filter(m => m.courseId === course.id)
+      .sort((a, b) => a.order - b.order)
+    
+    const modulesWithLessons = modules.map(module => {
+      const lessons = getRecords('course-lessons')
+        .filter(l => l.moduleId === module.id)
+        .sort((a, b) => a.order - b.order)
+      
+      return {
+        ...module,
+        lessons
+      }
+    })
+    
+    res.json({
+      data: {
+        ...course,
+        modules: modulesWithLessons
+      }
+    })
+  } catch (error) {
+    console.error('Failed to get course:', error)
+    res.status(500).json({ error: 'Failed to retrieve course' })
+  }
+})
+
+// Crear un nuevo curso
+app.post('/api/courses', (req, res) => {
+  try {
+    const { title, description, category, difficulty, estimatedHours, ...rest } = req.body
+    
+    if (!title) {
+      return res.status(400).json({ error: 'Course title is required' })
+    }
+    
+    const courseId = crypto.randomUUID()
+    const timestamp = Date.now()
+    
+    const newCourse = {
+      id: courseId,
+      title: title.trim(),
+      description: description?.trim() || '',
+      category: category || 'General',
+      difficulty: difficulty || 'beginner',
+      estimatedHours: estimatedHours || 0,
+      status: 'draft',
+      visibility: 'private',
+      createdAt: timestamp,
+      updatedAt: timestamp,
+      publishedAt: null,
+      ...rest
+    }
+    
+    insertRecord('courses', newCourse)
+    res.status(201).json({ data: newCourse })
+  } catch (error) {
+    console.error('Failed to create course:', error)
+    res.status(500).json({ error: 'Failed to create course' })
+  }
+})
+
+// Actualizar un curso
+app.put('/api/courses/:id', (req, res) => {
+  try {
+    const course = getRecord('courses', req.params.id)
+    if (!course) {
+      return res.status(404).json({ error: 'Course not found' })
+    }
+    
+    const updates = req.body
+    const updatedCourse = {
+      ...course,
+      ...updates,
+      id: req.params.id,
+      updatedAt: Date.now()
+    }
+    
+    updateRecord('courses', updatedCourse)
+    res.json({ data: updatedCourse })
+  } catch (error) {
+    console.error('Failed to update course:', error)
+    res.status(500).json({ error: 'Failed to update course' })
+  }
+})
+
+// Publicar un curso
+app.post('/api/courses/:id/publish', (req, res) => {
+  try {
+    const course = getRecord('courses', req.params.id)
+    if (!course) {
+      return res.status(404).json({ error: 'Course not found' })
+    }
+    
+    // Validar que el curso tiene contenido
+    const modules = getRecords('course-modules').filter(m => m.courseId === course.id)
+    if (modules.length === 0) {
+      return res.status(400).json({ error: 'Cannot publish course without modules' })
+    }
+    
+    const hasLessons = modules.some(module => {
+      const lessons = getRecords('course-lessons').filter(l => l.moduleId === module.id)
+      return lessons.length > 0
+    })
+    
+    if (!hasLessons) {
+      return res.status(400).json({ error: 'Cannot publish course without lessons' })
+    }
+    
+    const publishedCourse = {
+      ...course,
+      status: 'published',
+      visibility: 'public',
+      publishedAt: Date.now(),
+      updatedAt: Date.now()
+    }
+    
+    updateRecord('courses', publishedCourse)
+    res.json({ data: publishedCourse })
+  } catch (error) {
+    console.error('Failed to publish course:', error)
+    res.status(500).json({ error: 'Failed to publish course' })
+  }
+})
+
+// Despublicar un curso
+app.post('/api/courses/:id/unpublish', (req, res) => {
+  try {
+    const course = getRecord('courses', req.params.id)
+    if (!course) {
+      return res.status(404).json({ error: 'Course not found' })
+    }
+    
+    const unpublishedCourse = {
+      ...course,
+      status: 'draft',
+      visibility: 'private',
+      updatedAt: Date.now()
+    }
+    
+    updateRecord('courses', unpublishedCourse)
+    res.json({ data: unpublishedCourse })
+  } catch (error) {
+    console.error('Failed to unpublish course:', error)
+    res.status(500).json({ error: 'Failed to unpublish course' })
+  }
+})
+
+// Archivar un curso
+app.post('/api/courses/:id/archive', (req, res) => {
+  try {
+    const course = getRecord('courses', req.params.id)
+    if (!course) {
+      return res.status(404).json({ error: 'Course not found' })
+    }
+    
+    const archivedCourse = {
+      ...course,
+      status: 'archived',
+      visibility: 'private',
+      archivedAt: Date.now(),
+      updatedAt: Date.now()
+    }
+    
+    updateRecord('courses', archivedCourse)
+    res.json({ data: archivedCourse })
+  } catch (error) {
+    console.error('Failed to archive course:', error)
+    res.status(500).json({ error: 'Failed to archive course' })
+  }
+})
+
+// Duplicar un curso
+app.post('/api/courses/:id/duplicate', (req, res) => {
+  try {
+    const originalCourse = getRecord('courses', req.params.id)
+    if (!originalCourse) {
+      return res.status(404).json({ error: 'Course not found' })
+    }
+    
+    const newCourseId = crypto.randomUUID()
+    const timestamp = Date.now()
+    
+    // Duplicar curso
+    const duplicatedCourse = {
+      ...originalCourse,
+      id: newCourseId,
+      title: `${originalCourse.title} (Copy)`,
+      status: 'draft',
+      visibility: 'private',
+      publishedAt: null,
+      createdAt: timestamp,
+      updatedAt: timestamp
+    }
+    
+    insertRecord('courses', duplicatedCourse)
+    
+    // Duplicar módulos y lecciones
+    const modules = getRecords('course-modules').filter(m => m.courseId === originalCourse.id)
+    
+    modules.forEach((module, moduleIndex) => {
+      const newModuleId = crypto.randomUUID()
+      const duplicatedModule = {
+        ...module,
+        id: newModuleId,
+        courseId: newCourseId,
+        createdAt: timestamp,
+        updatedAt: timestamp
+      }
+      
+      insertRecord('course-modules', duplicatedModule)
+      
+      // Duplicar lecciones del módulo
+      const lessons = getRecords('course-lessons').filter(l => l.moduleId === module.id)
+      lessons.forEach(lesson => {
+        const newLessonId = crypto.randomUUID()
+        const duplicatedLesson = {
+          ...lesson,
+          id: newLessonId,
+          moduleId: newModuleId,
+          createdAt: timestamp,
+          updatedAt: timestamp
+        }
+        
+        insertRecord('course-lessons', duplicatedLesson)
+      })
+    })
+    
+    res.status(201).json({ data: duplicatedCourse })
+  } catch (error) {
+    console.error('Failed to duplicate course:', error)
+    res.status(500).json({ error: 'Failed to duplicate course' })
+  }
+})
+
+// Eliminar un curso (solo si está en draft)
+app.delete('/api/courses/:id', (req, res) => {
+  try {
+    const course = getRecord('courses', req.params.id)
+    if (!course) {
+      return res.status(404).json({ error: 'Course not found' })
+    }
+    
+    if (course.status === 'published') {
+      return res.status(400).json({ 
+        error: 'Cannot delete published course. Archive it first.' 
+      })
+    }
+    
+    // Eliminar módulos y lecciones asociadas
+    const modules = getRecords('course-modules').filter(m => m.courseId === course.id)
+    modules.forEach(module => {
+      const lessons = getRecords('course-lessons').filter(l => l.moduleId === module.id)
+      lessons.forEach(lesson => {
+        deleteStmt.run('course-lessons', lesson.id)
+      })
+      deleteStmt.run('course-modules', module.id)
+    })
+    
+    // Eliminar el curso
+    deleteStmt.run('courses', req.params.id)
+    res.status(204).send()
+  } catch (error) {
+    console.error('Failed to delete course:', error)
+    res.status(500).json({ error: 'Failed to delete course' })
+  }
+})
+
 app.get('/api/:table', (req, res) => {
   if (SENSITIVE_TABLES.has(req.params.table)) {
     return res.status(403).json({ error: 'Access to this resource is restricted' })

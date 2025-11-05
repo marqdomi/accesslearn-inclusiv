@@ -151,14 +151,18 @@ export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
       value: totalEmployees,
       subtitle: t('adminDashboard.stats.pendingActivation', { count: String(pendingEmployees) }),
       icon: Users,
-      color: 'text-primary'
+      color: 'text-primary',
+      clickable: true,
+      onClick: () => onNavigate('employees')
     },
     {
       title: t('adminDashboard.stats.totalCourses'),
       value: totalCourses,
       subtitle: t('adminDashboard.stats.published', { count: String(publishedCourses) }),
       icon: BookOpen,
-      color: 'text-secondary'
+      color: 'text-secondary',
+      clickable: true,
+      onClick: () => onNavigate('courses')
     },
     {
       title: t('adminDashboard.stats.completionRate'),
@@ -187,9 +191,6 @@ export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat, index) => {
-          // Hacer la tarjeta de empleados clickeable
-          const isEmployeesCard = stat.title === t('adminDashboard.stats.totalEmployees')
-          
           return (
             <motion.div
               key={stat.title}
@@ -198,8 +199,8 @@ export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
               transition={{ delay: index * 0.1 }}
             >
               <Card 
-                className={isEmployeesCard ? "hover:shadow-lg transition-all cursor-pointer hover:border-primary" : ""}
-                onClick={isEmployeesCard ? () => onNavigate('employees') : undefined}
+                className={stat.clickable ? "hover:shadow-lg hover:border-primary cursor-pointer transition-all" : ""}
+                onClick={stat.clickable ? stat.onClick : undefined}
               >
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
@@ -208,7 +209,7 @@ export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
                 <CardContent>
                   <div className="text-2xl font-bold">{stat.value}</div>
                   <p className="text-xs text-muted-foreground mt-1">{stat.subtitle}</p>
-                  {isEmployeesCard && (
+                  {stat.clickable && (
                     <p className="text-xs text-primary mt-2 font-medium">
                       Click para gestionar →
                     </p>
