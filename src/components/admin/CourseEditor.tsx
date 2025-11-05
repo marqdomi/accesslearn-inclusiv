@@ -24,6 +24,7 @@ import { DetailsTab } from './course-editor/DetailsTab'
 import { StructureTab } from './course-editor/StructureTab'
 import { PublishingTab } from './course-editor/PublishingTab'
 import { ContentTab } from './course-editor/ContentTab'
+import { AdvancedSettingsTab } from './course-editor/AdvancedSettingsTab'
 
 interface CourseEditorProps {
   courseId?: string
@@ -316,7 +317,7 @@ export function CourseEditor({ courseId, onBack }: CourseEditorProps) {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="details" className="flex items-center gap-2">
             <Article size={16} />
             Details
@@ -337,6 +338,10 @@ export function CourseEditor({ courseId, onBack }: CourseEditorProps) {
             <GearSix size={16} />
             Publishing
             {validationErrors.length === 0 && <CheckCircle size={14} className="text-green-500" />}
+          </TabsTrigger>
+          <TabsTrigger value="advanced" className="flex items-center gap-2">
+            <GearSix size={16} />
+            Advanced
           </TabsTrigger>
         </TabsList>
 
@@ -376,6 +381,13 @@ export function CourseEditor({ courseId, onBack }: CourseEditorProps) {
             onChange={handleCourseChange}
             validationErrors={validationErrors}
             validationWarnings={validationWarnings}
+          />
+        </TabsContent>
+
+        <TabsContent value="advanced" className="mt-6">
+          <AdvancedSettingsTab
+            course={course as CourseWithStructure}
+            onCourseChange={handleCourseChange}
           />
         </TabsContent>
       </Tabs>

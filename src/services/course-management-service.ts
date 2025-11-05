@@ -61,8 +61,63 @@ export interface Course {
   lastEditedAt?: number
 }
 
+// Advanced Settings Types
+export interface AccessControl {
+  enrollmentType: 'open' | 'restricted' | 'invitation'
+  maxEnrollments: number | null
+  allowedGroups?: string[]
+  allowedDepartments?: string[]
+  prerequisiteCourses?: string[]
+}
+
+export interface Scheduling {
+  startDate: string | null
+  endDate: string | null
+  timezone: string
+  isScheduled: boolean
+  gracePeriodDays: number
+  availabilityWindows?: Array<{ start: string; end: string }>
+}
+
+export interface Gamification {
+  xpMultiplier: number
+  enableLeaderboard: boolean
+  leaderboardVisibility: 'course' | 'global' | 'team'
+  customBadges?: Array<{ id: string; name: string; criteria: any }>
+  bonusRewards?: Array<{ trigger: string; xp: number }>
+}
+
+export interface Certificates {
+  enabled: boolean
+  templateId: string | null
+  autoIssue: boolean
+  completionCriteria: {
+    minScore: number
+    requiredLessons: 'all' | 'required' | 'percentage'
+    requiredQuizzes: 'all' | 'required' | 'passing'
+  }
+  customFields?: Record<string, any>
+}
+
+export interface Analytics {
+  trackingEnabled: boolean
+  customEvents?: Array<{ name: string; trigger: string }>
+  dataRetentionDays: number
+  exportFormat: 'csv' | 'xlsx' | 'json' | 'pdf'
+  enableReports: boolean
+}
+
+export interface AdvancedSettings {
+  accessControl?: AccessControl
+  scheduling?: Scheduling
+  gamification?: Gamification
+  certificates?: Certificates
+  analytics?: Analytics
+}
+
 export interface CourseWithStructure extends Course {
   modules: CourseModule[]
+  advancedSettings?: AdvancedSettings
 }
 
 export interface CreateCoursePayload {
