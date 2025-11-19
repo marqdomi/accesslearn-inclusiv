@@ -39,7 +39,6 @@ function App() {
   const [isInitializing, setIsInitializing] = useState(true)
 
   useEffect(() => {
-    console.log('🎯 App.tsx mounted, hasAdminUser:', hasAdminUser)
     // Give a brief moment for KV to initialize
     const timer = setTimeout(() => {
       setIsInitializing(false)
@@ -50,8 +49,6 @@ function App() {
   const translatedCourses = useMemo(() => {
     return (courses || []).map(course => translateCourse(course, t))
   }, [courses, t])
-
-  console.log('🎯 App.tsx render - hasAdminUser:', hasAdminUser, 'isAuthenticated:', isAuthenticated, 'initializing:', isInitializing)
 
   // Show loading state briefly while initializing
   if (isInitializing) {
@@ -67,7 +64,6 @@ function App() {
 
   // CRITICAL: Check if initial setup is required
   if (hasAdminUser === false) {
-    console.log('🚀 Showing InitialSetupScreen')
     return (
       <>
         <InitialSetupScreen onSetupComplete={setupInitialAdmin} />

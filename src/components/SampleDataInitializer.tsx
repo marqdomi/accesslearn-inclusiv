@@ -418,7 +418,6 @@ export function SampleDataInitializer() {
   useEffect(() => {
     const initCourses = async () => {
       if (!courses || courses.length === 0) {
-        console.log('🎓 Initializing sample courses...')
         setCourses(SAMPLE_COURSES)
       }
     }
@@ -428,7 +427,6 @@ export function SampleDataInitializer() {
   useEffect(() => {
     const initLessons = async () => {
       if (!lessonModules || Object.keys(lessonModules).length === 0) {
-        console.log('📚 Initializing lesson modules...')
         setLessonModules({
           'web-dev-quest': htmlFundamentalsModule,
         })
@@ -440,13 +438,7 @@ export function SampleDataInitializer() {
   useEffect(() => {
     const initCredentials = async () => {
       if (!credentials || credentials.length === 0) {
-        console.log('🔧 Initializing sample credentials...', SAMPLE_CREDENTIALS)
         setCredentials(SAMPLE_CREDENTIALS)
-        console.log('✅ Sample credentials initialized successfully')
-      } else {
-        console.log('✅ Credentials already initialized:', credentials)
-        console.log('📊 Credential count:', credentials.length)
-        console.log('📧 Available emails:', credentials.map(c => c.email))
       }
     }
     initCredentials()
@@ -455,7 +447,6 @@ export function SampleDataInitializer() {
   useEffect(() => {
     const initChallenges = async () => {
       if (!challenges || challenges.length === 0) {
-        console.log('🏆 Initializing team challenges...')
         setChallenges(SAMPLE_TEAM_CHALLENGES)
       }
     }
@@ -465,7 +456,6 @@ export function SampleDataInitializer() {
   useEffect(() => {
     const initActivities = async () => {
       if (!activities || activities.length === 0) {
-        console.log('📰 Initializing activity feed...')
         setActivities(SAMPLE_ACTIVITIES)
       }
     }
