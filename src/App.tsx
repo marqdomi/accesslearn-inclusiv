@@ -2,6 +2,8 @@ import { useState, useMemo, useEffect } from 'react'
 import { useKV } from '@github/spark/hooks'
 import { useAuth } from '@/hooks/use-auth'
 import { useBranding } from '@/hooks/use-branding'
+import { useBackendCourses } from '@/hooks/use-backend-courses'
+import { useTenant } from '@/contexts/TenantContext'
 import { Course } from '@/lib/types'
 import { translateCourse } from '@/lib/translate-course'
 import { TenantProvider } from '@/contexts/TenantContext'
@@ -20,6 +22,8 @@ import { OnboardingScreen } from '@/components/auth/OnboardingScreen'
 import { InitialSetupScreen } from '@/components/auth/InitialSetupScreen'
 import { MissionLibrary } from '@/components/library/MissionLibrary'
 import { MyLibrary } from '@/components/library/MyLibrary'
+import { DataSourceIndicator } from '@/components/dashboard/DataSourceIndicator'
+import { TenantSelector } from '@/components/dashboard/TenantSelector'
 import { Button } from '@/components/ui/button'
 import { Trophy, GraduationCap, Lightning, ShieldCheck, SignOut, Users, BookmarksSimple, BookBookmark, Certificate } from '@phosphor-icons/react'
 import { Toaster } from '@/components/ui/sonner'
@@ -34,13 +38,21 @@ function App() {
   const { t } = useTranslation()
   const { session, login, changePassword, completeOnboarding, logout, setupInitialAdmin, hasAdminUser, isAuthenticated } = useAuth()
   const { branding } = useBranding()
-  const [courses] = useKV<Course[]>('courses', [])
+  const { currentTenant, isLoading: tenantLoading } = useTenant()
+  
+  // Use backend courses if tenant is available, fallback to KV for backward compatibility
+  const { courses: backendCourses, loading: coursesLoading } = useBackendCourses()
+  const [kvCourses] = useKV<Course[]>('courses', [])
+  
+  // Use backend courses if available, otherwise fallback to KV
+  const courses = backendCourses.length > 0 ? backendCourses : kvCourses
+  
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null)
   const [currentView, setCurrentView] = useState<View>('dashboard')
   const [isInitializing, setIsInitializing] = useState(true)
 
   useEffect(() => {
-    // Give a brief moment for KV to initialize
+    // Give a brief moment for KV and tenant to initialize
     const timer = setTimeout(() => {
       setIsInitializing(false)
     }, 100)
@@ -50,9 +62,11 @@ function App() {
   const translatedCourses = useMemo(() => {
     return (courses || []).map(course => translateCourse(course, t))
   }, [courses, t])
+  
+  const isLoading = isInitializing || tenantLoading || coursesLoading
 
-  // Show loading state briefly while initializing
-  if (isInitializing) {
+  // Show loading state while initializing
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
@@ -178,6 +192,10 @@ function App() {
                     </div>
                   )}
                 </motion.div>
+                <div className="flex items-center gap-3">
+                  <TenantSelector />
+                  <LanguageSwitcher />
+                </div>
                 <nav className="flex flex-wrap gap-2" aria-label="Main navigation">
                   <Button
                     variant={currentView === 'dashboard' && !selectedCourse ? 'default' : 'outline'}
@@ -274,6 +292,10 @@ function App() {
           </main>
 
           <AccessibilityPanel />
+          <DataSourceIndicator 
+            usingBackend={backendCourses.length > 0} 
+            coursesCount={courses.length}
+          />
         </div>
       )}
       <Toaster richColors position="top-center" />
