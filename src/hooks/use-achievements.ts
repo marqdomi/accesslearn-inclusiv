@@ -1,9 +1,5 @@
-import { useKV } from '@github/spark/hooks'
-import { UserStats, UserAchievement, MentorshipPairing } from '@/lib/types'
-import { ACHIEVEMENTS } from '@/lib/achievements'
-import { toast } from 'sonner'
-import { useActivityFeed } from './use-activity-feed'
-import { useTranslation } from '@/lib/i18n'
+import { useState } from 'react'
+import { UserStats, UserAchievement } from '@/lib/types'
 
 const DEFAULT_USER_STATS: UserStats = {
   totalCoursesCompleted: 0,
@@ -19,12 +15,10 @@ const DEFAULT_USER_STATS: UserStats = {
 }
 
 export function useAchievements(userId?: string) {
-  const { t } = useTranslation()
-  const userKey = userId || 'default-user'
-  const [userStats, setUserStats] = useKV<UserStats>(`user-stats-${userKey}`, DEFAULT_USER_STATS)
-  const [pairings] = useKV<MentorshipPairing[]>('mentorship-pairings', [])
-  const [correctAnswerCount] = useKV<number>(`qanda-correct-answers-${userKey}`, 0)
-  const { postAchievementUnlocked } = useActivityFeed()
+  const [userStats, setUserStats] = useState<UserStats>(DEFAULT_USER_STATS)
+  const pairings: any[] = []
+  const correctAnswerCount = 0
+  const postAchievementUnlocked = () => {}
 
   const checkAndUnlockAchievements = (stats: UserStats, setStats: (updater: (current?: UserStats) => UserStats) => void) => {
     const newUnlocks: UserAchievement[] = []

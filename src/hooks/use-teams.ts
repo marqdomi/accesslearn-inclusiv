@@ -1,10 +1,10 @@
-import { useKV } from '@github/spark/hooks'
+import { useState } from 'react'
 import { Team, UserProfile } from '@/lib/types'
 import { toast } from 'sonner'
 
 export function useTeams() {
-  const [teams, setTeams] = useKV<Team[]>('teams', [])
-  const [profiles] = useKV<UserProfile[]>('user-profiles', [])
+  const [teams, setTeams] = useState<Team[]>([])
+  const profiles: UserProfile[] = []
 
   const createTeam = (name: string, description: string, memberIds: string[], createdBy: string) => {
     if (!name.trim()) {

@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { useKV } from '@github/spark/hooks'
 import { UserProfile } from '@/lib/types'
 import { useMentorship } from '@/hooks/use-mentorship'
 import { useXP, getRankKey } from '@/hooks/use-xp'
@@ -22,7 +21,7 @@ interface MyMentorWidgetProps {
 export function MyMentorWidget({ menteeId }: MyMentorWidgetProps) {
   const { t } = useTranslation()
   const { getMenteePairing, getMentorProfile, sendMessage, getMessagesForPairing, markMessagesAsRead } = useMentorship()
-  const [profiles] = useKV<UserProfile[]>('user-profiles', [])
+  const profiles: any[] = []
   const [messageContent, setMessageContent] = useState('')
   const [isDialogOpen, setIsDialogOpen] = useState(false)
 

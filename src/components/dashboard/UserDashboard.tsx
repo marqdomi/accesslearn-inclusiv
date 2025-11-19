@@ -1,5 +1,4 @@
 import { useState, useMemo } from 'react'
-import { useKV } from '@github/spark/hooks'
 import { Course, UserProgress } from '@/lib/types'
 import { PlayerIdentity } from './PlayerIdentity'
 import { MainMission } from './MainMission'
@@ -18,8 +17,7 @@ interface UserDashboardProps {
 }
 
 export function UserDashboard({ courses, onSelectCourse, userId }: UserDashboardProps) {
-  const userKey = userId || 'default-user'
-  const [courseProgress] = useKV<Record<string, UserProgress>>(`course-progress-${userKey}`, {})
+  const courseProgress: Record<string, UserProgress> = {}
   const { getMentorPairings, getMenteePairing } = useMentorship()
 
   const isMentor = userId ? getMentorPairings(userId).length > 0 : false

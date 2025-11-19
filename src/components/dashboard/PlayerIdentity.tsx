@@ -1,4 +1,3 @@
-import { useKV } from '@github/spark/hooks'
 import { useXP } from '@/hooks/use-xp'
 import { UserProfile } from '@/lib/types'
 import { Card } from '@/components/ui/card'
@@ -12,7 +11,7 @@ import { useMemo } from 'react'
 export function PlayerIdentity({ userId }: { userId?: string }) {
   const { t } = useTranslation()
   const { totalXP, currentLevel, getRankName, getProgressToNextLevel } = useXP(userId)
-  const [profilesList] = useKV<UserProfile[]>('user-profiles', [])
+  const profilesList: any[] = []
   const progress = getProgressToNextLevel()
 
   const userProfile = useMemo(() => {

@@ -1,5 +1,4 @@
-import { useKV } from '@github/spark/hooks'
-import { useEffect } from 'react'
+import { useState, useEffect } from 'react'
 
 export interface BrandingSettings {
   logoUrl?: string
@@ -8,7 +7,7 @@ export interface BrandingSettings {
 }
 
 export function useBranding() {
-  const [branding, setBranding] = useKV<BrandingSettings>('branding-settings', {})
+  const [branding, setBranding] = useState<BrandingSettings>({})
 
   useEffect(() => {
     const applyBranding = () => {

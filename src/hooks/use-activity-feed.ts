@@ -1,9 +1,9 @@
-import { useKV } from '@github/spark/hooks'
+import { useState } from 'react'
 import { ActivityFeedItem, UserProfile } from '@/lib/types'
 
 export function useActivityFeed() {
-  const [activities, setActivities] = useKV<ActivityFeedItem[]>('activity-feed', [])
-  const [profiles] = useKV<UserProfile[]>('user-profiles', [])
+  const [activities, setActivities] = useState<ActivityFeedItem[]>([])
+  const profiles: UserProfile[] = []
 
   const postActivity = (
     userId: string,

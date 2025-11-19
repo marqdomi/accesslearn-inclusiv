@@ -1,14 +1,14 @@
-import { useKV } from '@github/spark/hooks'
+import { useState } from 'react'
 import { ForumQuestion, ForumAnswer, UserNotification } from '@/lib/types'
 import { useXP, XP_REWARDS } from './use-xp'
 import { ulid as generateId } from 'ulid'
 
 export function useQandA(courseId: string, userId?: string) {
   const userKey = userId || 'default-user'
-  const [questions, setQuestions] = useKV<ForumQuestion[]>(`qanda-questions-${courseId}`, [])
-  const [answers, setAnswers] = useKV<ForumAnswer[]>(`qanda-answers-${courseId}`, [])
-  const [notifications, setNotifications] = useKV<UserNotification[]>(`user-notifications-${userKey}`, [])
-  const [correctAnswerCount, setCorrectAnswerCount] = useKV<number>(`qanda-correct-answers-${userKey}`, 0)
+  const [questions, setQuestions] = useState<ForumQuestion[]>([])
+  const [answers, setAnswers] = useState<ForumAnswer[]>([])
+  const [notifications, setNotifications] = useState<UserNotification[]>([])
+  const [correctAnswerCount, setCorrectAnswerCount] = useState<number>(0)
   const { awardXP } = useXP(userId)
 
   const postQuestion = (

@@ -210,16 +210,25 @@ class ApiServiceClass {
   }
 
   // ============================================
-  // AUTHENTICATION (placeholder for future)
+  // AUTHENTICATION
   // ============================================
 
-  async login(email: string, password: string) {
+  async login(email: string, password: string, tenantId: string) {
     return this.fetchWithAuth<{
-      token: string
-      user: any
+      success: boolean
+      user?: {
+        id: string
+        email: string
+        firstName: string
+        lastName: string
+        role: string
+        tenantId: string
+      }
+      token?: string
+      error?: string
     }>(`/auth/login`, {
       method: 'POST',
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, tenantId }),
     })
   }
 

@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { useKV } from '@github/spark/hooks'
 import { UserProfile, UserProgress, Course, UserStats } from '@/lib/types'
 import { useMentorship } from '@/hooks/use-mentorship'
 import { useXP } from '@/hooks/use-xp'
@@ -24,10 +23,10 @@ interface MentorDashboardProps {
 export function MentorDashboard({ mentorId }: MentorDashboardProps) {
   const { t } = useTranslation()
   const { getMentorPairings, getMenteeProfile, sendMessage, getMessagesForPairing } = useMentorship()
-  const [courses] = useKV<Course[]>('courses', [])
+  const courses: any[] = []
   const [selectedMenteeId, setSelectedMenteeId] = useState<string | null>(null)
   const [messageContent, setMessageContent] = useState('')
-  const [profiles] = useKV<UserProfile[]>('user-profiles', [])
+  const profiles: any[] = []
 
   const pairings = getMentorPairings(mentorId)
   const mentorProfile = profiles?.find(p => p.id === mentorId)
@@ -105,7 +104,7 @@ function MenteeProgressCard({
 }: MenteeProgressCardProps) {
   const { t } = useTranslation()
   const { totalXP, currentLevel, getProgressToNextLevel } = useXP(menteeProfile.id)
-  const [userStats] = useKV<UserStats>(`user-stats-${menteeProfile.id}`, {
+  const userStats: UserStats = {
     totalCoursesCompleted: 0,
     totalModulesCompleted: 0,
     totalAssessmentsPassed: 0,
@@ -116,8 +115,8 @@ function MenteeProgressCard({
     achievementsUnlocked: [],
     totalXP: 0,
     level: 1,
-  })
-  const [progressList] = useKV<UserProgress[]>(`user-progress-${menteeProfile.id}`, [])
+  }
+  const progressList: UserProgress[] = []
   const { sendMessage, getMessagesForPairing } = useMentorship()
   const [messageContent, setMessageContent] = useState('')
   const [isDialogOpen, setIsDialogOpen] = useState(false)
