@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useTenant } from '@/contexts/TenantContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -15,41 +16,30 @@ import { Shield, Eye, EyeSlash, CheckCircle } from '@phosphor-icons/react';
  */
 export function TenantLoginPage() {
   const { currentTenant } = useTenant();
+  const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!currentTenant) {
-      alert('Error: No se ha seleccionado un tenant');
+      setError('Error: No se ha seleccionado un tenant');
       return;
     }
 
     setIsLoading(true);
+    setError('');
 
     try {
-      const { ApiService } = await import('@/services/api.service');
-      const result = await ApiService.login(email, password, currentTenant.id);
-
-      if (result.success && result.user && result.token) {
-        // Guardar sesión en localStorage
-        localStorage.setItem('auth-token', result.token);
-        localStorage.setItem('current-user', JSON.stringify(result.user));
-        
-        console.log('[Login] Éxito:', result.user);
-        
-        // Recargar página para que App.tsx detecte la sesión
-        window.location.reload();
-      } else {
-        alert(result.error || 'Error al iniciar sesión');
-        setIsLoading(false);
-      }
+      await login(email, password, currentTenant.id);
+      // El AuthContext maneja el resto (guardar en localStorage y actualizar estado)
     } catch (error: any) {
       console.error('[Login] Error:', error);
-      alert('Error al conectar con el servidor. Intenta de nuevo.');
+      setError(error.message || 'Error al iniciar sesión. Verifica tus credenciales.');
       setIsLoading(false);
     }
   };
@@ -140,6 +130,13 @@ export function TenantLoginPage() {
                 Plan: {currentTenant?.plan || 'Básico'}
               </p>
             </div>
+
+            {/* Error Message */}
+            {error && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-center">
+                <p className="text-sm text-red-800">{error}</p>
+              </div>
+            )}
 
             {/* Login Form */}
             <form onSubmit={handleLogin} className="space-y-4">
