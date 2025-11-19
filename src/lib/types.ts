@@ -64,6 +64,15 @@ export interface User {
   email: string
   role: 'employee' | 'admin' | 'mentor'
   assignedCourses: string[]
+  
+  // Campos específicos para mercado mexicano (compliance laboral)
+  curp?: string                    // Clave Única de Registro de Población (18 caracteres)
+  rfc?: string                     // Registro Federal de Contribuyentes (13 caracteres)
+  nss?: string                     // Número de Seguridad Social (11 dígitos)
+  puesto?: string                  // Puesto o cargo laboral del empleado
+  area?: string                    // Área o departamento organizacional
+  departamento?: string            // Departamento (alternativa a área, según estructura de empresa)
+  centroCostos?: string            // Centro de costos para control administrativo
 }
 
 export type AchievementTier = 'bronze' | 'silver' | 'gold' | 'platinum'
