@@ -20,11 +20,24 @@ export async function getCourses(query: CourseQuery): Promise<Course[]> {
 
   const container = getContainer("courses")
 
-  const sqlQuery = `SELECT * FROM c WHERE c.tenantId = "${query.tenantId}"`
+  const sqlQuery = {
+    query: "SELECT * FROM c WHERE c.tenantId = @tenantId",
+    parameters: [
+      {
+        name: "@tenantId",
+        value: query.tenantId
+      }
+    ]
+  }
 
-  const { resources } = await container.items
-    .query<Course>(sqlQuery)
-    .fetchAll()
+  try {
+    const { resources } = await container.items
+      .query<Course>(sqlQuery)
+      .fetchAll()
 
-  return resources
+    return resources
+  } catch (error: any) {
+    console.error('[GetCourses] Error querying courses:', error.message)
+    throw error
+  }
 }

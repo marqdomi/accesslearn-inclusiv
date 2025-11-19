@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { useTenant } from '@/contexts/TenantContext'
 import { ApiService } from '@/services/api.service'
+import { LevelBadge } from '@/components/gamification/LevelBadge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { BookOpen, Clock, CheckCircle2, LogOut } from 'lucide-react'
@@ -17,6 +19,7 @@ interface Course {
 }
 
 export function DashboardPage() {
+  const navigate = useNavigate()
   const { user, logout } = useAuth()
   const { currentTenant } = useTenant()
   const [courses, setCourses] = useState<Course[]>([])
@@ -76,7 +79,9 @@ export function DashboardPage() {
               </div>
             </div>
             
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-6">
+              <LevelBadge xp={0} size="md" />
+              
               <div className="text-right">
                 <p className="text-sm font-medium">{user?.firstName} {user?.lastName}</p>
                 <p className="text-xs text-muted-foreground">{user?.email}</p>
@@ -144,6 +149,7 @@ export function DashboardPage() {
 
                     <Button 
                       className="w-full mt-4"
+                      onClick={() => navigate(`/courses/${course.id}`)}
                       style={{
                         backgroundColor: currentTenant?.primaryColor,
                       }}

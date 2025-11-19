@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { initializeCosmos } from './services/cosmosdb.service';
+import { initializeCosmos, getContainer } from './services/cosmosdb.service';
 import {
   getTenantBySlug,
   getTenantById,
@@ -261,6 +261,129 @@ app.get('/api/courses/tenant/:tenantId', async (req, res) => {
   }
 });
 
+// GET /api/courses/:courseId - Get course by ID
+app.get('/api/courses/:courseId', async (req, res) => {
+  try {
+    const { courseId } = req.params;
+    const container = getContainer('courses');
+    
+    // Query for the course by ID (cross-partition query)
+    const querySpec = {
+      query: 'SELECT * FROM c WHERE c.id = @courseId',
+      parameters: [{ name: '@courseId', value: courseId }]
+    };
+    
+    const { resources } = await container.items.query(querySpec, { 
+      enableCrossPartitionQuery: true 
+    }).fetchAll();
+    
+    if (!resources || resources.length === 0) {
+      return res.status(404).json({ error: 'Course not found' });
+    }
+    
+    res.json(resources[0]);
+  } catch (error: any) {
+    console.error('[API] Error getting course by ID:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/users/:userId/progress/lessons/:lessonId/complete - Mark lesson as completed
+app.post('/api/users/:userId/progress/lessons/:lessonId/complete', async (req, res) => {
+  try {
+    const { userId, lessonId } = req.params;
+    const { courseId, moduleId, xpEarned } = req.body;
+
+    if (!courseId || !moduleId) {
+      return res.status(400).json({ error: 'courseId and moduleId are required' });
+    }
+
+    const container = getContainer('users');
+    
+    // Get user
+    const querySpec = {
+      query: 'SELECT * FROM c WHERE c.id = @userId',
+      parameters: [{ name: '@userId', value: userId }]
+    };
+    
+    const { resources } = await container.items.query(querySpec, { 
+      enableCrossPartitionQuery: true 
+    }).fetchAll();
+    
+    if (!resources || resources.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const user = resources[0];
+    
+    // Initialize progress structure if it doesn't exist
+    if (!user.progress) {
+      user.progress = {};
+    }
+    if (!user.progress[courseId]) {
+      user.progress[courseId] = {
+        completedLessons: [],
+        lastAccessedAt: new Date().toISOString(),
+        xpEarned: 0
+      };
+    }
+
+    // Add lesson to completed if not already there
+    if (!user.progress[courseId].completedLessons.includes(lessonId)) {
+      user.progress[courseId].completedLessons.push(lessonId);
+      user.progress[courseId].xpEarned = (user.progress[courseId].xpEarned || 0) + (xpEarned || 0);
+      user.xpPoints = (user.xpPoints || 0) + (xpEarned || 0);
+    }
+
+    user.progress[courseId].lastAccessedAt = new Date().toISOString();
+
+    // Update user in database
+    await container.item(user.id, user.tenantId).replace(user);
+
+    res.json({
+      success: true,
+      progress: user.progress[courseId],
+      totalXp: user.xpPoints
+    });
+  } catch (error: any) {
+    console.error('[API] Error marking lesson as complete:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/users/:userId/progress/:courseId - Get user progress for a course
+app.get('/api/users/:userId/progress/:courseId', async (req, res) => {
+  try {
+    const { userId, courseId } = req.params;
+    const container = getContainer('users');
+    
+    const querySpec = {
+      query: 'SELECT * FROM c WHERE c.id = @userId',
+      parameters: [{ name: '@userId', value: userId }]
+    };
+    
+    const { resources } = await container.items.query(querySpec, { 
+      enableCrossPartitionQuery: true 
+    }).fetchAll();
+    
+    if (!resources || resources.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const user = resources[0];
+    const courseProgress = user.progress?.[courseId] || {
+      completedLessons: [],
+      lastAccessedAt: null,
+      xpEarned: 0
+    };
+
+    res.json(courseProgress);
+  } catch (error: any) {
+    console.error('[API] Error getting course progress:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // ============================================
 // START SERVER
 // ============================================
@@ -290,7 +413,10 @@ async function startServer() {
       console.log('   POST /api/users/:id/enroll');
       console.log('   POST /api/users/:id/complete');
       console.log('   GET  /api/stats/tenant/:tenantId/users');
-      console.log('   GET  /api/courses/tenant/:tenantId\n');
+      console.log('   GET  /api/courses/tenant/:tenantId');
+      console.log('   GET  /api/courses/:courseId');
+      console.log('   POST /api/users/:userId/progress/lessons/:lessonId/complete');
+      console.log('   GET  /api/users/:userId/progress/:courseId\n');
       console.log('🎯 Presiona Ctrl+C para detener el servidor\n');
     });
   } catch (error) {

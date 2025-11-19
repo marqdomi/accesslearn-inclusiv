@@ -1,10 +1,13 @@
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { Toaster } from 'sonner'
 import { TenantProvider } from '@/contexts/TenantContext'
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import { TenantResolver } from '@/components/auth/TenantResolver'
 import { TenantLoginPage } from '@/components/auth/TenantLoginPage'
 import { DashboardPage } from '@/pages/DashboardPage'
+import { CourseViewerPage } from '@/pages/CourseViewerPage'
 
-function AppContent() {
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth()
 
   if (isLoading) {
@@ -19,21 +22,57 @@ function AppContent() {
   }
 
   if (!isAuthenticated) {
-    return <TenantLoginPage />
+    return <Navigate to="/login" replace />
   }
 
-  return <DashboardPage />
+  return <>{children}</>
+}
+
+function AppRoutes() {
+  const { isAuthenticated } = useAuth()
+
+  return (
+    <Routes>
+      <Route
+        path="/login"
+        element={
+          isAuthenticated ? <Navigate to="/dashboard" replace /> : <TenantLoginPage />
+        }
+      />
+      <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute>
+            <DashboardPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/courses/:courseId"
+        element={
+          <ProtectedRoute>
+            <CourseViewerPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+    </Routes>
+  )
 }
 
 function App() {
   return (
-    <TenantProvider>
-      <TenantResolver>
-        <AuthProvider>
-          <AppContent />
-        </AuthProvider>
-      </TenantResolver>
-    </TenantProvider>
+    <BrowserRouter>
+      <TenantProvider>
+        <TenantResolver>
+          <AuthProvider>
+            <AppRoutes />
+            <Toaster position="top-right" richColors />
+          </AuthProvider>
+        </TenantResolver>
+      </TenantProvider>
+    </BrowserRouter>
   )
 }
 

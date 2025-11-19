@@ -179,7 +179,9 @@ export function TenantResolver({ children }: TenantResolverProps) {
     try {
       setResolving(true);
       setError(null);
-      await loadTenantBySlug(selected.slug);
+      
+      // Redirigir a la raíz con el parámetro tenant
+      window.location.href = `${window.location.origin}/?tenant=${selected.slug}`;
     } catch (err) {
       setError('Error al cargar la organización seleccionada.');
       setResolving(false);

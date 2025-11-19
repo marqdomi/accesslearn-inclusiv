@@ -5,7 +5,7 @@
  * Handles authentication, error handling, and response parsing.
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:7071/api'
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'
 
 interface ApiError {
   message: string
@@ -174,11 +174,11 @@ class ApiServiceClass {
   // ============================================
 
   async getCourses(tenantId: string) {
-    return this.fetchWithAuth<any[]>(`/courses?tenantId=${tenantId}`)
+    return this.fetchWithAuth<any[]>(`/courses/tenant/${tenantId}`)
   }
 
-  async getCourseById(courseId: string, tenantId: string) {
-    return this.fetchWithAuth<any>(`/courses/${courseId}?tenantId=${tenantId}`)
+  async getCourseById(courseId: string) {
+    return this.fetchWithAuth<any>(`/courses/${courseId}`)
   }
 
   async createCourse(data: {
@@ -207,6 +207,37 @@ class ApiServiceClass {
     return this.fetchWithAuth<void>(`/courses/${courseId}?tenantId=${tenantId}`, {
       method: 'DELETE',
     })
+  }
+
+  // ============================================
+  // PROGRESS APIs
+  // ============================================
+
+  async completeLesson(userId: string, lessonId: string, data: {
+    courseId: string
+    moduleId: string
+    xpEarned: number
+  }) {
+    return this.fetchWithAuth<{
+      success: boolean
+      progress: {
+        completedLessons: string[]
+        lastAccessedAt: string
+        xpEarned: number
+      }
+      totalXp: number
+    }>(`/users/${userId}/progress/lessons/${lessonId}/complete`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async getCourseProgress(userId: string, courseId: string) {
+    return this.fetchWithAuth<{
+      completedLessons: string[]
+      lastAccessedAt: string | null
+      xpEarned: number
+    }>(`/users/${userId}/progress/${courseId}`)
   }
 
   // ============================================
