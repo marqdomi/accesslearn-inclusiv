@@ -61,13 +61,29 @@ src/
 
 ## 🔑 APIs Implementadas
 
-1. **GetCourses** ✅ - Obtener cursos de un tenant
-2. **CreateTenant** ✅ - Crear nuevo tenant (empresa cliente)
-3. **GetTenantBySlug** ✅ - Buscar tenant por slug
+### Tenant Management
+1. **CreateTenant** ✅ - Crear nuevo tenant (empresa cliente)
+2. **GetTenantBySlug** ✅ - Buscar tenant por slug
+3. **GetTenantById** ✅ - Buscar tenant por ID
 4. **ListTenants** ✅ - Listar todos los tenants
 5. **UpdateTenantStatus** ✅ - Activar/suspender/cancelar tenant
 
-## 📝 Crear Tenant desde CLI
+### User Management
+6. **CreateUser** ✅ - Crear nuevo usuario (con campos mexicanos CURP/RFC/NSS)
+7. **GetUserById** ✅ - Buscar usuario por ID
+8. **GetUsersByTenant** ✅ - Listar usuarios de un tenant (filtrar por rol)
+9. **UpdateUser** ✅ - Actualizar información de usuario
+10. **EnrollUserInCourse** ✅ - Inscribir usuario en curso
+11. **CompleteCourse** ✅ - Marcar curso como completado (con XP)
+12. **UpdateLastLogin** ✅ - Actualizar último login
+13. **GetTenantUserStats** ✅ - Estadísticas de usuarios por tenant
+
+### Course Management
+14. **GetCourses** ✅ - Obtener cursos de un tenant
+
+## 📝 CLI Tools
+
+### Crear Tenant
 
 ```bash
 # Sintaxis
@@ -80,12 +96,28 @@ npm run create-tenant acme "ACME Corporation" admin@acme.com demo
 npm run create-tenant techcorp "Tech Corp SA" tech@corp.com profesional
 ```
 
+### Crear Usuario
+
+```bash
+# Sintaxis
+npm run create-user <tenantId> <email> <firstName> <lastName> <role> [curp] [rfc] [nss]
+
+# Roles: admin, mentor, student
+
+# Ejemplo: Estudiante simple
+npm run create-user tenant-demo student@demo.com Juan "Pérez García" student
+
+# Ejemplo: Mentor con campos mexicanos
+npm run create-user tenant-kainet mentor@kainet.mx Ana "López Torres" mentor LOTA850315MDFPRN09 LOTA850315ABC 12345678901
+```
+
 ## 🔜 Próximas APIs
 
-1. **GetUsers** - Obtener usuarios de un tenant
-2. **CreateUser** - Crear nuevo usuario
-3. **UpdateProgress** - Actualizar progreso de usuario
+1. **CreateCourse** - Crear nuevo curso
+2. **UpdateCourse** - Actualizar curso existente
+3. **GetUserProgress** - Obtener progreso detallado de usuario
 4. **GetCertificates** - Obtener certificados de usuario
+5. **GetLeaderboard** - Ranking de usuarios por XP
 
 ## 📚 Documentación
 
