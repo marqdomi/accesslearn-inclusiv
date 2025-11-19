@@ -22,4 +22,20 @@ export default defineConfig({
       '@': resolve(projectRoot, 'src')
     }
   },
+  optimizeDeps: {
+    include: [
+      'react',
+      'react-dom',
+      'react-dom/client',
+      'react/jsx-runtime',
+      'react/jsx-dev-runtime',
+      'react-error-boundary',
+      '@github/spark/spark'
+    ]
+  },
+  server: {
+    fs: {
+      strict: false
+    }
+  }
 });

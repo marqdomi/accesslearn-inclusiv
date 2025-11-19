@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useKV } from '@github/spark/hooks'
 import { useAuth } from '@/hooks/use-auth'
 import { useBranding } from '@/hooks/use-branding'
@@ -36,13 +36,38 @@ function App() {
   const [courses] = useKV<Course[]>('courses', [])
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null)
   const [currentView, setCurrentView] = useState<View>('dashboard')
+  const [isInitializing, setIsInitializing] = useState(true)
+
+  useEffect(() => {
+    console.log('🎯 App.tsx mounted, hasAdminUser:', hasAdminUser)
+    // Give a brief moment for KV to initialize
+    const timer = setTimeout(() => {
+      setIsInitializing(false)
+    }, 100)
+    return () => clearTimeout(timer)
+  }, [])
 
   const translatedCourses = useMemo(() => {
     return (courses || []).map(course => translateCourse(course, t))
   }, [courses, t])
 
+  console.log('🎯 App.tsx render - hasAdminUser:', hasAdminUser, 'isAuthenticated:', isAuthenticated, 'initializing:', isInitializing)
+
+  // Show loading state briefly while initializing
+  if (isInitializing) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <Lightning size={48} className="animate-pulse mx-auto mb-4 text-primary" />
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
   // CRITICAL: Check if initial setup is required
-  if (!hasAdminUser) {
+  if (hasAdminUser === false) {
+    console.log('🚀 Showing InitialSetupScreen')
     return (
       <>
         <InitialSetupScreen onSetupComplete={setupInitialAdmin} />
