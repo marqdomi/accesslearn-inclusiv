@@ -1,5 +1,4 @@
 import { useState, useMemo } from 'react'
-import { useKV } from '@github/spark/hooks'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -22,7 +21,7 @@ interface SideMissionsProps {
 
 export function SideMissions({ courses, progress, onSelectCourse, excludeCourseId, userId }: SideMissionsProps) {
   const { t } = useTranslation()
-  const [allCourses] = useKV<CourseStructure[]>('courses', [])
+  const allCourses: CourseStructure[] = []
   const { library, removeFromLibrary } = useUserLibrary(userId || 'default-user')
   const [activeTab, setActiveTab] = useState('current')
   

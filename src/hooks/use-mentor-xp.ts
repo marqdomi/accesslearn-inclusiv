@@ -1,11 +1,8 @@
-import { useKV } from '@github/spark/hooks'
+import { useState } from 'react'
 import { MentorshipPairing } from '@/lib/types'
-import { toast } from 'sonner'
-import { useTranslation } from '@/lib/i18n'
 
 export function useMentorXP() {
-  const { t } = useTranslation()
-  const [pairings] = useKV<MentorshipPairing[]>('mentorship-pairings', [])
+  const pairings: MentorshipPairing[] = []
 
   const awardMentorBonus = (menteeId: string, xpEarned: number) => {
     const activePairing = (pairings || []).find(

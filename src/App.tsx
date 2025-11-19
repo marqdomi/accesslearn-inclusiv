@@ -1,25 +1,20 @@
 import { useState, useMemo, useEffect } from 'react'
-import { useKV } from '@github/spark/hooks'
-import { useAuth } from '@/hooks/use-auth'
 import { useBranding } from '@/hooks/use-branding'
 import { useBackendCourses } from '@/hooks/use-backend-courses'
 import { useTenant } from '@/contexts/TenantContext'
 import { Course } from '@/lib/types'
 import { translateCourse } from '@/lib/translate-course'
 import { TenantProvider } from '@/contexts/TenantContext'
+import { TenantResolver } from '@/components/auth/TenantResolver'
+import { TenantLoginPage } from '@/components/auth/TenantLoginPage'
 import { SkipLink } from '@/components/accessibility/SkipLink'
 import { AccessibilityPanel } from '@/components/accessibility/AccessibilityPanel'
-import { SampleDataInitializer } from '@/components/SampleDataInitializer'
 import { UserDashboard } from '@/components/dashboard/UserDashboard'
 import { CourseViewer } from '@/components/courses/CourseViewer'
 import { AchievementsDashboard } from '@/components/achievements/AchievementsDashboard'
 import { CommunityDashboard } from '@/components/community/CommunityDashboard'
 import { NotificationsViewer } from '@/components/community/NotificationsViewer'
 import { AdminPanel } from '@/components/admin/AdminPanel'
-import { LoginScreen } from '@/components/auth/LoginScreen'
-import { PasswordChangeScreen } from '@/components/auth/PasswordChangeScreen'
-import { OnboardingScreen } from '@/components/auth/OnboardingScreen'
-import { InitialSetupScreen } from '@/components/auth/InitialSetupScreen'
 import { MissionLibrary } from '@/components/library/MissionLibrary'
 import { MyLibrary } from '@/components/library/MyLibrary'
 import { DataSourceIndicator } from '@/components/dashboard/DataSourceIndicator'
@@ -36,20 +31,53 @@ type View = 'dashboard' | 'achievements' | 'community' | 'admin' | 'mission-libr
 
 function App() {
   const { t } = useTranslation()
-  const { session, login, changePassword, completeOnboarding, logout, setupInitialAdmin, hasAdminUser, isAuthenticated } = useAuth()
   const { branding } = useBranding()
   const { currentTenant, isLoading: tenantLoading } = useTenant()
   
-  // Use backend courses if tenant is available, fallback to KV for backward compatibility
-  const { courses: backendCourses, loading: coursesLoading } = useBackendCourses()
-  const [kvCourses] = useKV<Course[]>('courses', [])
+  // Backend authentication state
+  const [backendUser, setBackendUser] = useState<any>(null)
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true)
   
-  // Use backend courses if available, otherwise fallback to KV
-  const courses = backendCourses.length > 0 ? backendCourses : kvCourses
+  // Use backend courses only
+  const { courses: backendCourses, loading: coursesLoading } = useBackendCourses()
+  const courses = backendCourses
   
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null)
   const [currentView, setCurrentView] = useState<View>('dashboard')
   const [isInitializing, setIsInitializing] = useState(true)
+
+  // Check for backend authentication on mount
+  useEffect(() => {
+    const checkAuth = () => {
+      const token = localStorage.getItem('auth-token')
+      const userStr = localStorage.getItem('current-user')
+      
+      if (token && userStr) {
+        try {
+          const user = JSON.parse(userStr)
+          // Adapt backend user to session format
+          const adaptedSession = {
+            id: user.id,
+            email: user.email,
+            role: user.role,
+            name: `${user.firstName} ${user.lastName}`,
+            requiresPasswordChange: false,
+            requiresOnboarding: false,
+            tenantId: user.tenantId
+          }
+          setBackendUser(adaptedSession)
+          console.log('[Auth] Usuario autenticado:', adaptedSession)
+        } catch (error) {
+          console.error('[Auth] Error parsing user:', error)
+          localStorage.removeItem('auth-token')
+          localStorage.removeItem('current-user')
+        }
+      }
+      setIsCheckingAuth(false)
+    }
+
+    checkAuth()
+  }, [])
 
   useEffect(() => {
     // Give a brief moment for KV and tenant to initialize
@@ -63,7 +91,11 @@ function App() {
     return (courses || []).map(course => translateCourse(course, t))
   }, [courses, t])
   
-  const isLoading = isInitializing || tenantLoading || coursesLoading
+  const isLoading = isInitializing || tenantLoading || coursesLoading || isCheckingAuth
+
+  // User is authenticated if backendUser exists
+  const isAuthenticated = backendUser !== null
+  const currentSession = backendUser
 
   // Show loading state while initializing
   if (isLoading) {
@@ -71,59 +103,42 @@ function App() {
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
           <Lightning size={48} className="animate-pulse mx-auto mb-4 text-primary" />
-          <p className="text-muted-foreground">Loading...</p>
+          <p className="text-muted-foreground">Cargando...</p>
         </div>
       </div>
     )
   }
 
-  // CRITICAL: Check if initial setup is required
-  if (hasAdminUser === false) {
+  // Show tenant-aware login page if not authenticated
+  if (!isAuthenticated) {
     return (
       <>
-        <InitialSetupScreen onSetupComplete={setupInitialAdmin} />
+        <TenantLoginPage />
         <Toaster richColors position="top-center" />
       </>
     )
   }
 
-  if (!isAuthenticated || !session) {
-    return (
-      <>
-        <LoginScreen onLogin={login} />
-        <Toaster richColors position="top-center" />
-      </>
-    )
-  }
-
-  if (session.requiresPasswordChange) {
-    return (
-      <>
-        <PasswordChangeScreen onPasswordChange={changePassword} />
-        <Toaster richColors position="top-center" />
-      </>
-    )
-  }
-
-  if (session.requiresOnboarding) {
-    return (
-      <>
-        <OnboardingScreen userEmail={session.email} onComplete={completeOnboarding} />
-        <Toaster richColors position="top-center" />
-      </>
-    )
+  const handleLogout = () => {
+    // Logout from backend
+    localStorage.removeItem('auth-token')
+    localStorage.removeItem('current-user')
+    setBackendUser(null)
+    
+    // Reload to show login page
+    window.location.reload()
   }
 
   const handleViewChange = (view: View) => {
-    if (view === 'admin' && session?.role !== 'admin') {
+    if (view === 'admin' && currentSession?.role !== 'admin') {
       return
     }
     setCurrentView(view)
     setSelectedCourse(null)
   }
 
-  const isAdminView = currentView === 'admin' && session?.role === 'admin'
-  const isAdmin = session?.role === 'admin'
+  const isAdminView = currentView === 'admin' && currentSession?.role === 'admin'
+  const isAdmin = currentSession?.role === 'admin'
 
   const appTitle = branding?.companyName || t('app.title')
   const logoElement = branding?.logoUrl ? (
@@ -253,8 +268,8 @@ function App() {
                   <LanguageSwitcher />
                   <Button
                     variant="ghost"
-                    onClick={logout}
-                    className="gap-2"
+                    onClick={handleLogout}
+                    variant="ghost"
                     title={t('nav.signOut')}
                   >
                     <SignOut size={20} aria-hidden="true" />
@@ -306,7 +321,9 @@ function App() {
 function AppWithProviders() {
   return (
     <TenantProvider>
-      <App />
+      <TenantResolver>
+        <App />
+      </TenantResolver>
     </TenantProvider>
   )
 }

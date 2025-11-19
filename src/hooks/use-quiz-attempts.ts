@@ -1,8 +1,8 @@
-import { useKV } from '@github/spark/hooks'
+import { useState } from 'react'
 import { QuizAttempt } from '@/lib/types'
 
 export function useQuizAttempts() {
-  const [quizAttempts, setQuizAttempts] = useKV<QuizAttempt[]>('quiz-attempts', [])
+  const [quizAttempts, setQuizAttempts] = useState<QuizAttempt[]>([])
 
   const addQuizAttempt = async (attempt: QuizAttempt) => {
     setQuizAttempts((current) => [...(current || []), attempt])

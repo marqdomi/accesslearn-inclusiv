@@ -77,7 +77,15 @@ export async function createTenant(
 export async function getTenantBySlug(slug: string): Promise<Tenant | null> {
   const container = getContainer("tenants")
 
-  const query = `SELECT * FROM c WHERE c.slug = "${slug}"`
+  const query = {
+    query: "SELECT * FROM c WHERE c.slug = @slug",
+    parameters: [
+      {
+        name: "@slug",
+        value: slug
+      }
+    ]
+  }
 
   const { resources } = await container.items.query<Tenant>(query).fetchAll()
 

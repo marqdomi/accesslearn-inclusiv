@@ -1,8 +1,8 @@
-import { useKV } from '@github/spark/hooks'
+import { useState } from 'react'
 import { UserNotification } from '@/lib/types'
 
 export function useNotifications(userId: string) {
-  const [notifications, setNotifications] = useKV<UserNotification[]>('user-notifications', [])
+  const [notifications, setNotifications] = useState<UserNotification[]>([])
 
   const userNotifications = (notifications || []).filter((n) => n.userId === userId)
 

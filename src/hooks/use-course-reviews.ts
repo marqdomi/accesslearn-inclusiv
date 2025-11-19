@@ -1,10 +1,9 @@
-import { useKV } from '@github/spark/hooks'
+import { useState, useMemo } from 'react'
 import { CourseReview, CourseRatingSummary, UserProgress } from '@/lib/types'
-import { useMemo } from 'react'
 
 export function useCourseReviews(courseId: string, userId: string) {
-  const [reviews, setReviews] = useKV<CourseReview[]>(`course-reviews-${courseId}`, [])
-  const [allProgress] = useKV<Record<string, UserProgress>>(`course-progress-${userId}`, {})
+  const [reviews, setReviews] = useState<CourseReview[]>([])
+  const allProgress: Record<string, UserProgress> = {}
 
   const hasCompletedCourse = useMemo(() => {
     return allProgress?.[courseId]?.status === 'completed'

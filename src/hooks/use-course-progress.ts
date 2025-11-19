@@ -1,38 +1,25 @@
-import { useKV } from '@github/spark/hooks'
+import { useState } from 'react'
 import { UserProgress } from '@/lib/types'
-import { useAchievements } from './use-achievements'
-import { useActivityFeed } from './use-activity-feed'
-import { useEffect } from 'react'
 
 export function useCourseProgress(courseId: string, userId?: string, courseName?: string) {
-  const userKey = userId || 'default-user'
-  const [progress, setProgress] = useKV<UserProgress>(
-    `course-progress-${courseId}-${userKey}`,
-    {
-      courseId,
-      status: 'not-started',
-      completedModules: [],
-      lastAccessed: Date.now(),
-      assessmentAttempts: 0,
-    }
-  )
+  const [progress, setProgress] = useState<UserProgress>({
+    courseId,
+    status: 'not-started',
+    completedModules: [],
+    lastAccessed: Date.now(),
+    assessmentAttempts: 0,
+  })
   
-  const [globalProgress, setGlobalProgress] = useKV<Record<string, UserProgress>>(
-    `course-progress-${userKey}`,
-    {}
-  )
+  const [globalProgress, setGlobalProgress] = useState<Record<string, UserProgress>>({})
 
-  const { updateModuleCompletion, updateCourseCompletion, updateAssessmentCompletion, updateStreak } = useAchievements(userId)
-  const { postCourseCompleted } = useActivityFeed()
+  // Simplified hooks - no achievements for now
+  const updateModuleCompletion = () => {}
+  const updateCourseCompletion = () => {}
+  const updateAssessmentCompletion = () => {}
+  const updateStreak = () => {}
+  const postCourseCompleted = () => {}
 
-  useEffect(() => {
-    if (progress) {
-      setGlobalProgress((current) => ({
-        ...(current || {}),
-        [courseId]: progress,
-      }))
-    }
-  }, [progress, courseId, setGlobalProgress])
+  // Removed useEffect - simplified version
 
   const markModuleComplete = (moduleId: string) => {
     setProgress((current) => {

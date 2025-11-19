@@ -1,15 +1,13 @@
-import { useEffect } from 'react'
-import { useKV } from '@github/spark/hooks'
+import { useState, useEffect } from 'react'
 import { Team, UserStats, WeeklyChallengeSnapshot, UserProfile, UserNotification } from '@/lib/types'
-import { toast } from 'sonner'
 
 export function useWeeklyChallenge() {
-  const [teams] = useKV<Team[]>('teams', [])
-  const [allStats] = useKV<Record<string, UserStats>>('all-user-stats', {})
-  const [profiles] = useKV<UserProfile[]>('user-profiles', [])
-  const [currentChallenge, setCurrentChallenge] = useKV<WeeklyChallengeSnapshot | null>('current-weekly-challenge', null)
-  const [challengeHistory, setChallengeHistory] = useKV<WeeklyChallengeSnapshot[]>('weekly-challenge-history', [])
-  const [notifications, setNotifications] = useKV<UserNotification[]>('user-notifications', [])
+  const teams: Team[] = []
+  const allStats: Record<string, UserStats> = {}
+  const profiles: UserProfile[] = []
+  const [currentChallenge, setCurrentChallenge] = useState<WeeklyChallengeSnapshot | null>(null)
+  const [challengeHistory, setChallengeHistory] = useState<WeeklyChallengeSnapshot[]>([])
+  const [notifications, setNotifications] = useState<UserNotification[]>([])
 
   const getWeekBounds = (date: Date = new Date()) => {
     const day = date.getDay()

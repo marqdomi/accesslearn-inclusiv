@@ -1,9 +1,8 @@
-import { useKV } from '@github/spark/hooks'
-import { CourseReview } from '@/lib/types'
 import { useMemo } from 'react'
+import { CourseReview } from '@/lib/types'
 
 export function useCourseRatingSummary(courseId: string) {
-  const [reviews] = useKV<CourseReview[]>(`course-reviews-${courseId}`, [])
+  const reviews: CourseReview[] = []
 
   const summary = useMemo(() => {
     if (!reviews || reviews.length === 0) {

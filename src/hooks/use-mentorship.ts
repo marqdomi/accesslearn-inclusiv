@@ -1,11 +1,11 @@
-import { useKV } from '@github/spark/hooks'
+import { useState } from 'react'
 import { MentorshipPairing, MentorMessage, UserProfile } from '@/lib/types'
 import { toast } from 'sonner'
 
 export function useMentorship(currentUserId?: string) {
-  const [pairings, setPairings] = useKV<MentorshipPairing[]>('mentorship-pairings', [])
-  const [messages, setMessages] = useKV<MentorMessage[]>('mentorship-messages', [])
-  const [profiles] = useKV<UserProfile[]>('user-profiles', [])
+  const [pairings, setPairings] = useState<MentorshipPairing[]>([])
+  const [messages, setMessages] = useState<MentorMessage[]>([])
+  const profiles: UserProfile[] = []
 
   const getMentorPairings = (mentorId: string): MentorshipPairing[] => {
     return (pairings || []).filter(

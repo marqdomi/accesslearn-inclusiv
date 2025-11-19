@@ -1,13 +1,13 @@
-import { useKV } from '@github/spark/hooks'
+import { useState } from 'react'
 import { UserLibrary, EnrollmentRequest } from '@/lib/types'
 
 export function useUserLibrary(userId: string) {
-  const [library, setLibrary] = useKV<UserLibrary>(
-    `user-library-${userId}`,
-    { userId, courseIds: [], addedAt: {} }
-  )
-  const [enrollmentRequests, setEnrollmentRequests] = useKV<EnrollmentRequest[]>(
-    'enrollment-requests',
+  const [library, setLibrary] = useState<UserLibrary>({ 
+    userId, 
+    courseIds: [], 
+    addedAt: {} 
+  })
+  const [enrollmentRequests, setEnrollmentRequests] = useState<EnrollmentRequest[]>(
     []
   )
 
