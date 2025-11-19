@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/use-auth'
 import { useBranding } from '@/hooks/use-branding'
 import { Course } from '@/lib/types'
 import { translateCourse } from '@/lib/translate-course'
+import { TenantProvider } from '@/contexts/TenantContext'
 import { SkipLink } from '@/components/accessibility/SkipLink'
 import { AccessibilityPanel } from '@/components/accessibility/AccessibilityPanel'
 import { SampleDataInitializer } from '@/components/SampleDataInitializer'
@@ -280,4 +281,12 @@ function App() {
   )
 }
 
-export default App
+function AppWithProviders() {
+  return (
+    <TenantProvider>
+      <App />
+    </TenantProvider>
+  )
+}
+
+export default AppWithProviders
