@@ -59,14 +59,33 @@ src/
 └── index.ts            # Entry point
 ```
 
-## 🔑 Próximas APIs a Implementar
+## 🔑 APIs Implementadas
 
 1. **GetCourses** ✅ - Obtener cursos de un tenant
-2. **CreateTenant** - Crear nuevo tenant
-3. **GetUsers** - Obtener usuarios de un tenant
-4. **CreateUser** - Crear nuevo usuario
-5. **UpdateProgress** - Actualizar progreso de usuario
-6. **GetCertificates** - Obtener certificados de usuario
+2. **CreateTenant** ✅ - Crear nuevo tenant (empresa cliente)
+3. **GetTenantBySlug** ✅ - Buscar tenant por slug
+4. **ListTenants** ✅ - Listar todos los tenants
+5. **UpdateTenantStatus** ✅ - Activar/suspender/cancelar tenant
+
+## 📝 Crear Tenant desde CLI
+
+```bash
+# Sintaxis
+npm run create-tenant <slug> <nombre> <email> <plan>
+
+# Ejemplo: Crear tenant demo
+npm run create-tenant acme "ACME Corporation" admin@acme.com demo
+
+# Ejemplo: Crear tenant profesional
+npm run create-tenant techcorp "Tech Corp SA" tech@corp.com profesional
+```
+
+## 🔜 Próximas APIs
+
+1. **GetUsers** - Obtener usuarios de un tenant
+2. **CreateUser** - Crear nuevo usuario
+3. **UpdateProgress** - Actualizar progreso de usuario
+4. **GetCertificates** - Obtener certificados de usuario
 
 ## 📚 Documentación
 
