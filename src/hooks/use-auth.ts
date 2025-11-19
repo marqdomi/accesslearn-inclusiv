@@ -3,17 +3,10 @@ import { AuthSession, EmployeeCredentials, UserProfile, OnboardingPreferences } 
 import { createAuthSession, isSessionValid, validatePassword } from '@/lib/auth-utils'
 
 export function useAuth() {
-  console.log('🔵 useAuth hook initialized')
   const [session, setSession] = useKV<AuthSession | null>('auth-session', null)
   const [profilesList, setProfiles] = useKV<UserProfile[]>('user-profiles', [])
   const [credentialsList, setCredentialsList] = useKV<EmployeeCredentials[]>('employee-credentials', [])
   const [hasAdminUser, setHasAdminUser] = useKV<boolean>('has-admin-user', false)
-  
-  console.log('📊 useAuth state:', { 
-    hasAdminUser, 
-    sessionExists: !!session,
-    credentialsCount: credentialsList?.length || 0 
-  })
 
   const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     try {

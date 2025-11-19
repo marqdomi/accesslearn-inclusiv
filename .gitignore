@@ -13,6 +13,14 @@ dist-ssr
 *-dist
 *.local
 
+# Vite cache
+.vite
+node_modules/.vite
+
+# Test results
+test-results/
+playwright-report/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

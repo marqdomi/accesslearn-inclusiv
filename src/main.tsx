@@ -10,8 +10,6 @@ import "./main.css"
 import "./styles/theme.css"
 import "./index.css"
 
-console.log('🚀 Starting application...');
-
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ErrorBoundary FallbackComponent={ErrorFallback}>

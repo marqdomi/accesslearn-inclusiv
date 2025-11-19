@@ -82,16 +82,11 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
     },
   ]
 
-  useEffect(() => {
-    console.log('Login Screen - Current credentials in KV:', credentials)
-  }, [credentials])
-
   // Tiny seeding effect: in development, if there are no credentials yet, seed defaults for easier testing
   useEffect(() => {
     if (!isDev) return
     const count = credentials?.length || 0
     if (count === 0) {
-      console.log('🧪 Dev mode: Seeding default credentials for login testing...')
       setCredentials(SAMPLE_CREDS)
     }
     // We only want to run when the credentials list changes; isDev is stable in a session
