@@ -98,7 +98,7 @@ export type Permission =
  * Matriz de permisos por rol
  * Define qué permisos tiene cada rol por defecto
  */
-const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
+export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
   'super-admin': [
     // Acceso completo a todo
     'tenants:create',
