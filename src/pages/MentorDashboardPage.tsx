@@ -29,6 +29,7 @@ import { MentorshipRequest, MentorshipSession } from '@/lib/types'
 import { toast } from 'sonner'
 import { formatDistanceToNow, format } from 'date-fns'
 import { es } from 'date-fns/locale'
+import confetti from 'canvas-confetti'
 
 export function MentorDashboardPage() {
   const { user } = useAuth()
@@ -56,6 +57,10 @@ export function MentorDashboardPage() {
   // Estados para rechazo con razón
   const [rejectingRequestId, setRejectingRequestId] = useState<string | null>(null)
   const [rejectReason, setRejectReason] = useState('')
+
+  // Estados para completar sesión
+  const [completingSessionId, setCompletingSessionId] = useState<string | null>(null)
+  const [completionNotes, setCompletionNotes] = useState('')
 
   useEffect(() => {
     loadData()
@@ -148,6 +153,40 @@ export function MentorDashboardPage() {
     } catch (error) {
       console.error('Error rejecting request:', error)
       toast.error('Error al rechazar la solicitud')
+    }
+  }
+
+  const handleCompleteSession = async (session: MentorshipSession) => {
+    if (completingSessionId === session.id) {
+      // Confirmar completación
+      try {
+        await ApiService.completeMentorshipSession(
+          session.id,
+          currentTenant!.id,
+          completionNotes.trim() || undefined
+        )
+        
+        toast.success('¡Sesión completada!', {
+          description: 'El estudiante ya puede calificar la sesión'
+        })
+
+        confetti({
+          particleCount: 100,
+          spread: 70,
+          origin: { y: 0.6 }
+        })
+
+        setCompletingSessionId(null)
+        setCompletionNotes('')
+        loadData()
+      } catch (error) {
+        console.error('Error completing session:', error)
+        toast.error('Error al completar la sesión')
+      }
+    } else {
+      // Expandir formulario
+      setCompletingSessionId(session.id)
+      setCompletionNotes('')
     }
   }
 
@@ -562,11 +601,58 @@ export function MentorDashboardPage() {
                           <p className="text-sm">{session.notes}</p>
                         </div>
                       )}
+
+                      {completingSessionId === session.id && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }}
+                          className="mt-4 p-4 bg-green-50 dark:bg-green-950 border-2 border-green-500 rounded-lg space-y-3"
+                        >
+                          <label className="text-sm font-semibold text-green-900 dark:text-green-100">
+                            Notas de completación (opcional)
+                          </label>
+                          <Textarea
+                            value={completionNotes}
+                            onChange={(e) => setCompletionNotes(e.target.value)}
+                            placeholder="Ej: Revisamos los conceptos de React Hooks, el estudiante mostró buen entendimiento..."
+                            className="resize-none"
+                            rows={3}
+                          />
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              onClick={() => handleCompleteSession(session)}
+                              className="bg-green-600 hover:bg-green-700"
+                            >
+                              <CheckCircle className="h-4 w-4 mr-2" />
+                              Confirmar Completación
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setCompletingSessionId(null)
+                                setCompletionNotes('')
+                              }}
+                            >
+                              Cancelar
+                            </Button>
+                          </div>
+                        </motion.div>
+                      )}
                     </div>
 
-                    <Button size="sm">
-                      Iniciar Sesión →
-                    </Button>
+                    <div className="flex flex-col gap-2">
+                      <Button 
+                        size="sm"
+                        variant={completingSessionId === session.id ? "outline" : "default"}
+                        onClick={() => handleCompleteSession(session)}
+                      >
+                        <CheckCircle className="h-4 w-4 mr-2" />
+                        Completar Sesión
+                      </Button>
+                    </div>
                   </div>
                 </Card>
               </motion.div>

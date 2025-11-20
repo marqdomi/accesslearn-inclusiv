@@ -21,6 +21,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useTenant } from '@/contexts/TenantContext'
 import { ApiService } from '@/services/api.service'
 import { MentorshipRequest, MentorshipSession } from '@/lib/types'
+import { RateMentorshipModal } from '@/components/mentorship/RateMentorshipModal'
 import { toast } from 'sonner'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
@@ -33,6 +34,10 @@ export function MenteeMentorshipsPage() {
   const [loading, setLoading] = useState(true)
   const [requests, setRequests] = useState<MentorshipRequest[]>([])
   const [sessions, setSessions] = useState<MentorshipSession[]>([])
+  
+  // Rating modal state
+  const [ratingModalOpen, setRatingModalOpen] = useState(false)
+  const [sessionToRate, setSessionToRate] = useState<MentorshipSession | null>(null)
 
   useEffect(() => {
     loadData()
@@ -453,7 +458,15 @@ export function MenteeMentorshipsPage() {
 
                         {!session.rating && (
                           <div className="mt-4">
-                            <Button size="sm" variant="outline" className="gap-2">
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              className="gap-2"
+                              onClick={() => {
+                                setSessionToRate(session)
+                                setRatingModalOpen(true)
+                              }}
+                            >
                               <Star className="h-4 w-4" />
                               Calificar Sesión
                             </Button>
@@ -486,6 +499,17 @@ export function MenteeMentorshipsPage() {
           </div>
         </div>
       </Card>
+
+      {/* Rating Modal */}
+      {currentTenant && (
+        <RateMentorshipModal
+          session={sessionToRate}
+          open={ratingModalOpen}
+          onOpenChange={setRatingModalOpen}
+          onSuccess={loadData}
+          tenantId={currentTenant.id}
+        />
+      )}
     </div>
   )
 }
