@@ -5,6 +5,41 @@
 @import './styles/personas.css';
 @import './index.css';
 @import "tw-animate-css";
+
+/* Ajustes para el calendario de react-day-picker */
+.rdp {
+  --rdp-accent-color: hsl(var(--primary));
+}
+
+.rdp-month {
+  gap: 0.25rem;
+}
+
+.rdp-caption {
+  margin-bottom: 0.5rem;
+}
+
+.rdp-nav button {
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+}
+
+.rdp-nav svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.rdp-weekdays {
+  margin-top: 0.5rem;
+}
+
+.rdp-weekday {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: hsl(var(--muted-foreground));
+  padding: 0.25rem;
+}
 /*
   ---break---
 */
