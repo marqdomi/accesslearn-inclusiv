@@ -14,9 +14,10 @@ interface ApiError {
 }
 
 class ApiServiceClass {
-  private async fetchWithAuth<T>(
+  private async fetch<T>(
     endpoint: string,
-    options: RequestInit = {}
+    options: RequestInit = {},
+    includeAuth: boolean = true
   ): Promise<T> {
     const url = `${API_BASE_URL}${endpoint}`
     
@@ -25,11 +26,13 @@ class ApiServiceClass {
       ...options.headers,
     }
 
-    // TODO: Add JWT token when authentication is implemented
-    // const token = localStorage.getItem('auth-token')
-    // if (token) {
-    //   headers['Authorization'] = `Bearer ${token}`
-    // }
+    // Add JWT token for authenticated requests
+    if (includeAuth) {
+      const token = localStorage.getItem('auth-token')
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`
+      }
+    }
 
     try {
       const response = await fetch(url, {
@@ -63,6 +66,20 @@ class ApiServiceClass {
         status: 0,
       } as ApiError
     }
+  }
+
+  private async fetchWithAuth<T>(
+    endpoint: string,
+    options: RequestInit = {}
+  ): Promise<T> {
+    return this.fetch<T>(endpoint, options, true)
+  }
+
+  private async fetchWithoutAuth<T>(
+    endpoint: string,
+    options: RequestInit = {}
+  ): Promise<T> {
+    return this.fetch<T>(endpoint, options, false)
   }
 
   // ============================================
@@ -245,7 +262,7 @@ class ApiServiceClass {
   // ============================================
 
   async login(email: string, password: string, tenantId: string) {
-    return this.fetchWithAuth<{
+    return this.fetchWithoutAuth<{
       success: boolean
       user?: {
         id: string
