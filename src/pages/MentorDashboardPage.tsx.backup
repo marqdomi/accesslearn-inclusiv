@@ -1,13 +1,9 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { useNavigate } from 'react-router-dom'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Textarea } from '@/components/ui/textarea'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { Calendar as CalendarComponent } from '@/components/ui/calendar'
 import { 
   Users, 
   Calendar,
@@ -17,23 +13,19 @@ import {
   Bell,
   CheckCircle,
   XCircle,
-  MessageSquare,
-  ArrowLeft,
-  AlertCircle,
-  CalendarClock
+  MessageSquare
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useTenant } from '@/contexts/TenantContext'
 import { ApiService } from '@/services/api.service'
 import { MentorshipRequest, MentorshipSession } from '@/lib/types'
 import { toast } from 'sonner'
-import { formatDistanceToNow, format } from 'date-fns'
+import { formatDistanceToNow } from 'date-fns'
 import { es } from 'date-fns/locale'
 
 export function MentorDashboardPage() {
   const { user } = useAuth()
   const { currentTenant } = useTenant()
-  const navigate = useNavigate()
 
   const [loading, setLoading] = useState(true)
   const [pendingRequests, setPendingRequests] = useState<MentorshipRequest[]>([])
@@ -47,15 +39,6 @@ export function MentorDashboardPage() {
     averageRating: 0,
     pendingRequests: 0
   })
-
-  // Estados para manejar la aceptación de solicitudes
-  const [acceptingRequestId, setAcceptingRequestId] = useState<string | null>(null)
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined)
-  const [calendarOpen, setCalendarOpen] = useState(false)
-
-  // Estados para rechazo con razón
-  const [rejectingRequestId, setRejectingRequestId] = useState<string | null>(null)
-  const [rejectReason, setRejectReason] = useState('')
 
   useEffect(() => {
     loadData()
@@ -79,21 +62,9 @@ export function MentorDashboardPage() {
       setUpcomingSessions(scheduled)
       setCompletedSessions(completed)
 
-      // Calcular stats
-      const uniqueMentees = new Set(sessions.map(s => s.menteeId))
-      const completedWithRating = completed.filter(s => s.rating)
-      const avgRating = completedWithRating.length > 0
-        ? completedWithRating.reduce((sum, s) => sum + (s.rating || 0), 0) / completedWithRating.length
-        : 0
-
-      setStats({
-        totalSessions: sessions.length,
-        completedSessions: completed.length,
-        scheduledSessions: scheduled.length,
-        totalMentees: uniqueMentees.size,
-        averageRating: avgRating,
-        pendingRequests: requests.length
-      })
+      // Cargar stats
+      const statsData = await ApiService.getMentorStats(currentTenant.id, user.id)
+      setStats(statsData)
     } catch (error) {
       console.error('Error loading mentor data:', error)
       toast.error('Error al cargar datos de mentoría')
@@ -103,25 +74,23 @@ export function MentorDashboardPage() {
   }
 
   const handleAcceptRequest = async (request: MentorshipRequest) => {
-    if (!selectedDate) {
-      toast.error('Por favor selecciona una fecha para la sesión')
-      return
-    }
-
     try {
+      // Por ahora, programar para mañana a las 10am
+      const tomorrow = new Date()
+      tomorrow.setDate(tomorrow.getDate() + 1)
+      tomorrow.setHours(10, 0, 0, 0)
+
       await ApiService.acceptMentorshipRequest(
         request.id,
         currentTenant!.id,
-        selectedDate.getTime(),
-        60 // Duración por defecto: 60 minutos
+        tomorrow.getTime(),
+        60
       )
 
       toast.success('¡Solicitud aceptada!', {
-        description: `Sesión programada para ${format(selectedDate, 'PPP', { locale: es })}`
+        description: 'La sesión se programó exitosamente'
       })
 
-      setAcceptingRequestId(null)
-      setSelectedDate(undefined)
       loadData()
     } catch (error) {
       console.error('Error accepting request:', error)
@@ -130,20 +99,13 @@ export function MentorDashboardPage() {
   }
 
   const handleRejectRequest = async (request: MentorshipRequest) => {
-    if (!rejectReason.trim()) {
-      toast.error('Por favor proporciona una razón para el rechazo')
-      return
-    }
-
     try {
       await ApiService.rejectMentorshipRequest(request.id, currentTenant!.id)
       
       toast.info('Solicitud rechazada', {
-        description: 'Se notificó al estudiante con tu mensaje'
+        description: 'Se notificó al estudiante'
       })
 
-      setRejectingRequestId(null)
-      setRejectReason('')
       loadData()
     } catch (error) {
       console.error('Error rejecting request:', error)
@@ -164,25 +126,12 @@ export function MentorDashboardPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-8">
-      {/* Header with Navigation */}
-      <div className="flex items-center justify-between">
-        <div>
-          <div className="flex items-center gap-3 mb-2">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => navigate('/dashboard')}
-              className="gap-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Volver al Dashboard
-            </Button>
-          </div>
-          <h1 className="text-3xl font-bold mb-2">Dashboard de Mentor 🎓</h1>
-          <p className="text-muted-foreground">
-            Gestiona tus mentorados y sesiones programadas
-          </p>
-        </div>
+      {/* Header */}
+      <div>
+        <h1 className="text-3xl font-bold mb-2">Dashboard de Mentor 🎓</h1>
+        <p className="text-muted-foreground">
+          Gestiona tus mentorados y sesiones programadas
+        </p>
       </div>
 
       {/* Stats Grid */}
@@ -244,7 +193,7 @@ export function MentorDashboardPage() {
                 </p>
                 <div className="flex items-center gap-2">
                   <p className="text-3xl font-bold text-yellow-900 dark:text-yellow-100">
-                    {stats.averageRating > 0 ? stats.averageRating.toFixed(1) : '0.0'}
+                    {stats.averageRating.toFixed(1)}
                   </p>
                   <Star className="h-5 w-5 fill-yellow-500 text-yellow-500" />
                 </div>
@@ -304,181 +253,60 @@ export function MentorDashboardPage() {
                   transition={{ delay: 0.1 * idx }}
                 >
                   <Card className="p-4 border-l-4 border-l-orange-500">
-                    <div className="space-y-4">
-                      {/* Student Info */}
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
-                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                              <span className="text-lg">👤</span>
-                            </div>
-                            <div>
-                              <h3 className="font-semibold">{request.menteeName}</h3>
-                              <p className="text-sm text-muted-foreground">
-                                {request.menteeEmail}
-                              </p>
-                            </div>
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                            <span className="text-lg">👤</span>
+                          </div>
+                          <div>
+                            <h3 className="font-semibold">{request.menteeName}</h3>
+                            <p className="text-sm text-muted-foreground">
+                              {request.menteeEmail}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="ml-13 space-y-2">
+                          <div className="flex items-center gap-2 text-sm">
+                            <MessageSquare className="h-4 w-4 text-muted-foreground" />
+                            <span className="font-medium">Tema:</span>
+                            <span className="text-muted-foreground">{request.topic}</span>
                           </div>
 
-                          <div className="ml-13 space-y-2">
-                            <div className="flex items-center gap-2 text-sm">
-                              <MessageSquare className="h-4 w-4 text-muted-foreground" />
-                              <span className="font-medium">Tema:</span>
-                              <span className="text-muted-foreground">{request.topic}</span>
-                            </div>
+                          <div className="p-3 bg-muted/50 rounded-lg">
+                            <p className="text-sm italic">"{request.message}"</p>
+                          </div>
 
-                            <div className="p-3 bg-muted/50 rounded-lg">
-                              <p className="text-sm italic">"{request.message}"</p>
-                            </div>
-
-                            {request.preferredDate && (
-                              <div className="flex items-center gap-2 text-sm p-2 bg-blue-50 dark:bg-blue-950 rounded border border-blue-200 dark:border-blue-800">
-                                <CalendarClock className="h-4 w-4 text-blue-600" />
-                                <span className="text-blue-700 dark:text-blue-300">
-                                  Fecha preferida: {format(new Date(request.preferredDate), 'PPP', { locale: es })}
-                                </span>
-                              </div>
-                            )}
-
-                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                              <Clock className="h-3 w-3" />
-                              Solicitado {formatDistanceToNow(new Date(request.createdAt), { 
-                                addSuffix: true,
-                                locale: es 
-                              })}
-                            </div>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <Clock className="h-3 w-3" />
+                            Solicitado {formatDistanceToNow(request.createdAt, { 
+                              addSuffix: true,
+                              locale: es 
+                            })}
                           </div>
                         </div>
                       </div>
 
-                      {/* Action Buttons */}
-                      {acceptingRequestId === request.id ? (
-                        // Aceptar con selección de fecha
-                        <div className="ml-13 p-4 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800 space-y-3">
-                          <div className="flex items-center gap-2 text-sm font-medium text-green-700 dark:text-green-300">
-                            <CheckCircle className="h-4 w-4" />
-                            Programar sesión
-                          </div>
-                          
-                          <div className="space-y-2">
-                            <label className="text-sm text-muted-foreground">
-                              Selecciona fecha y hora para la sesión:
-                            </label>
-                            <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-                              <PopoverTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  className="w-full justify-start text-left font-normal"
-                                  type="button"
-                                >
-                                  <Calendar className="mr-2 h-4 w-4" />
-                                  {selectedDate ? format(selectedDate, 'PPP', { locale: es }) : 'Selecciona una fecha'}
-                                </Button>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-auto p-0" align="center">
-                                <CalendarComponent
-                                  mode="single"
-                                  selected={selectedDate}
-                                  onSelect={(date) => {
-                                    setSelectedDate(date)
-                                    setCalendarOpen(false)
-                                  }}
-                                  disabled={(date) => {
-                                    const today = new Date()
-                                    today.setHours(0, 0, 0, 0)
-                                    return date < today
-                                  }}
-                                  locale={es}
-                                />
-                              </PopoverContent>
-                            </Popover>
-                          </div>
-
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              onClick={() => handleAcceptRequest(request)}
-                              disabled={!selectedDate}
-                              className="flex-1"
-                            >
-                              Confirmar Sesión
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => {
-                                setAcceptingRequestId(null)
-                                setSelectedDate(undefined)
-                              }}
-                            >
-                              Cancelar
-                            </Button>
-                          </div>
-                        </div>
-                      ) : rejectingRequestId === request.id ? (
-                        // Rechazar con razón
-                        <div className="ml-13 p-4 bg-red-50 dark:bg-red-950 rounded-lg border border-red-200 dark:border-red-800 space-y-3">
-                          <div className="flex items-center gap-2 text-sm font-medium text-red-700 dark:text-red-300">
-                            <AlertCircle className="h-4 w-4" />
-                            Rechazar solicitud
-                          </div>
-                          
-                          <div className="space-y-2">
-                            <label className="text-sm text-muted-foreground">
-                              Explica por qué no puedes aceptar esta mentoría:
-                            </label>
-                            <Textarea
-                              placeholder="Ej: No tengo disponibilidad en esta fecha, mi especialidad es diferente, etc."
-                              value={rejectReason}
-                              onChange={(e) => setRejectReason(e.target.value)}
-                              className="min-h-[80px]"
-                            />
-                          </div>
-
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => handleRejectRequest(request)}
-                              disabled={!rejectReason.trim()}
-                              className="flex-1"
-                            >
-                              Confirmar Rechazo
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => {
-                                setRejectingRequestId(null)
-                                setRejectReason('')
-                              }}
-                            >
-                              Cancelar
-                            </Button>
-                          </div>
-                        </div>
-                      ) : (
-                        // Botones iniciales
-                        <div className="ml-13 flex gap-2">
-                          <Button
-                            size="sm"
-                            onClick={() => setAcceptingRequestId(request.id)}
-                            className="gap-2"
-                          >
-                            <CheckCircle className="h-4 w-4" />
-                            Aceptar
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => setRejectingRequestId(request.id)}
-                            className="gap-2"
-                          >
-                            <XCircle className="h-4 w-4" />
-                            Rechazar
-                          </Button>
-                        </div>
-                      )}
+                      <div className="flex gap-2 shrink-0">
+                        <Button
+                          size="sm"
+                          onClick={() => handleAcceptRequest(request)}
+                          className="gap-2"
+                        >
+                          <CheckCircle className="h-4 w-4" />
+                          Aceptar
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleRejectRequest(request)}
+                          className="gap-2"
+                        >
+                          <XCircle className="h-4 w-4" />
+                          Rechazar
+                        </Button>
+                      </div>
                     </div>
                   </Card>
                 </motion.div>
@@ -486,19 +314,6 @@ export function MentorDashboardPage() {
             </div>
           </Card>
         </motion.div>
-      )}
-
-      {/* Empty State for No Requests */}
-      {pendingRequests.length === 0 && (
-        <Card className="p-12 text-center">
-          <Bell className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-lg font-semibold mb-2">
-            No hay solicitudes pendientes
-          </h3>
-          <p className="text-muted-foreground">
-            Cuando recibas nuevas solicitudes de mentoría aparecerán aquí
-          </p>
-        </Card>
       )}
 
       {/* Sessions Tabs */}
@@ -548,7 +363,11 @@ export function MentorDashboardPage() {
                         <div className="flex items-center gap-2">
                           <Calendar className="h-4 w-4 text-muted-foreground" />
                           <span>
-                            {format(new Date(session.scheduledDate), 'PPP', { locale: es })}
+                            {new Date(session.scheduledDate).toLocaleDateString('es-MX', {
+                              weekday: 'long',
+                              day: 'numeric',
+                              month: 'long'
+                            })}
                           </span>
                         </div>
                         <div className="flex items-center gap-2">
@@ -556,12 +375,6 @@ export function MentorDashboardPage() {
                           <span>{session.duration} minutos</span>
                         </div>
                       </div>
-
-                      {session.notes && (
-                        <div className="mt-3 p-3 bg-muted/50 rounded-lg">
-                          <p className="text-sm">{session.notes}</p>
-                        </div>
-                      )}
                     </div>
 
                     <Button size="sm">
@@ -612,7 +425,7 @@ export function MentorDashboardPage() {
 
                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
                         <span>
-                          {format(new Date(session.completedAt!), 'PPP', { locale: es })}
+                          {new Date(session.completedAt!).toLocaleDateString('es-MX')}
                         </span>
                         {session.rating && (
                           <div className="flex items-center gap-1">
@@ -621,12 +434,6 @@ export function MentorDashboardPage() {
                           </div>
                         )}
                       </div>
-
-                      {session.feedback && (
-                        <div className="mt-3 p-3 bg-muted/50 rounded-lg">
-                          <p className="text-sm italic">"{session.feedback}"</p>
-                        </div>
-                      )}
                     </div>
                   </div>
                 </Card>
