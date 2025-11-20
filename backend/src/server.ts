@@ -3,6 +3,13 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import { initializeCosmos, getContainer } from './services/cosmosdb.service';
 import {
+  requireAuth,
+  requireRole,
+  requirePermission,
+  requireOwnershipOrAdmin,
+  requireActiveUser,
+} from './middleware/authorization';
+import {
   getTenantBySlug,
   getTenantById,
   listTenants,
@@ -109,7 +116,7 @@ app.get('/api/auth/validate', async (req, res) => {
 // ============================================
 
 // GET /api/tenants - List all tenants
-app.get('/api/tenants', async (req, res) => {
+app.get('/api/tenants', requireAuth, requirePermission('tenants:list-all'), async (req, res) => {
   try {
     const tenants = await listTenants();
     res.json(tenants);
@@ -154,7 +161,7 @@ app.get('/api/tenants/:id', async (req, res) => {
 });
 
 // POST /api/tenants - Create new tenant
-app.post('/api/tenants', async (req, res) => {
+app.post('/api/tenants', requireAuth, requirePermission('tenants:create'), async (req, res) => {
   try {
     const tenant = await createTenant(req.body);
     res.status(201).json(tenant);
@@ -169,7 +176,7 @@ app.post('/api/tenants', async (req, res) => {
 // ============================================
 
 // GET /api/users/tenant/:tenantId - Get users by tenant
-app.get('/api/users/tenant/:tenantId', async (req, res) => {
+app.get('/api/users/tenant/:tenantId', requireAuth, requirePermission('users:list'), async (req, res) => {
   try {
     const { tenantId } = req.params;
     const { role } = req.query;
@@ -183,7 +190,7 @@ app.get('/api/users/tenant/:tenantId', async (req, res) => {
 });
 
 // GET /api/users/:id - Get user by ID
-app.get('/api/users/:id', async (req, res) => {
+app.get('/api/users/:id', requireAuth, requireOwnershipOrAdmin('id'), async (req, res) => {
   try {
     const { id } = req.params;
     const { tenantId } = req.query;
@@ -206,7 +213,7 @@ app.get('/api/users/:id', async (req, res) => {
 });
 
 // POST /api/users - Create new user
-app.post('/api/users', async (req, res) => {
+app.post('/api/users', requireAuth, requirePermission('users:create'), async (req, res) => {
   try {
     const user = await createUser(req.body);
     res.status(201).json(user);
@@ -217,7 +224,7 @@ app.post('/api/users', async (req, res) => {
 });
 
 // POST /api/users/:id/enroll - Enroll user in course
-app.post('/api/users/:id/enroll', async (req, res) => {
+app.post('/api/users/:id/enroll', requireAuth, requirePermission('enrollment:assign-individual'), async (req, res) => {
   try {
     const { id } = req.params;
     const { tenantId, courseId } = req.body;
@@ -234,8 +241,8 @@ app.post('/api/users/:id/enroll', async (req, res) => {
   }
 });
 
-// POST /api/users/:id/complete - Mark course as completed
-app.post('/api/users/:id/complete', async (req, res) => {
+// POST /api/users/:id/complete - Mark course as complete
+app.post('/api/users/:id/complete', requireAuth, requireOwnershipOrAdmin('id'), async (req, res) => {
   try {
     const { id } = req.params;
     const { courseId, xpEarned } = req.body;
@@ -269,7 +276,7 @@ app.get('/api/stats/tenant/:tenantId/users', async (req, res) => {
 // ============================================
 
 // GET /api/courses/tenant/:tenantId - Get courses by tenant
-app.get('/api/courses/tenant/:tenantId', async (req, res) => {
+app.get('/api/courses/tenant/:tenantId', requireAuth, async (req, res) => {
   try {
     const { tenantId } = req.params;
     console.log('[API] GET /api/courses/tenant/:tenantId -', tenantId);
@@ -373,8 +380,8 @@ app.post('/api/users/:userId/progress/lessons/:lessonId/complete', async (req, r
   }
 });
 
-// GET /api/users/:userId/progress/:courseId - Get user progress for a course
-app.get('/api/users/:userId/progress/:courseId', async (req, res) => {
+// GET /api/users/:userId/progress/:courseId - Get user progress for course
+app.get('/api/users/:userId/progress/:courseId', requireAuth, requireOwnershipOrAdmin('userId'), async (req, res) => {
   try {
     const { userId, courseId } = req.params;
     const container = getContainer('users');
@@ -411,7 +418,7 @@ app.get('/api/users/:userId/progress/:courseId', async (req, res) => {
 // ============================================
 
 // POST /api/mentorship/requests - Create mentorship request
-app.post('/api/mentorship/requests', async (req, res) => {
+app.post('/api/mentorship/requests', requireAuth, async (req, res) => {
   try {
     const {
       tenantId,
@@ -447,7 +454,7 @@ app.post('/api/mentorship/requests', async (req, res) => {
 });
 
 // GET /api/mentorship/requests - Get mentorship requests (for mentor)
-app.get('/api/mentorship/requests', async (req, res) => {
+app.get('/api/mentorship/requests', requireAuth, requireRole('mentor', 'instructor', 'content-manager', 'tenant-admin', 'super-admin'), async (req, res) => {
   try {
     const { tenantId, mentorId, status } = req.query;
 
@@ -464,7 +471,7 @@ app.get('/api/mentorship/requests', async (req, res) => {
 });
 
 // GET /api/mentorship/my-requests - Get mentee's own requests
-app.get('/api/mentorship/my-requests', async (req, res) => {
+app.get('/api/mentorship/my-requests', requireAuth, async (req, res) => {
   try {
     const { tenantId, menteeId } = req.query;
 
@@ -481,7 +488,7 @@ app.get('/api/mentorship/my-requests', async (req, res) => {
 });
 
 // POST /api/mentorship/requests/:requestId/accept - Accept mentorship request
-app.post('/api/mentorship/requests/:requestId/accept', async (req, res) => {
+app.post('/api/mentorship/requests/:requestId/accept', requireAuth, requirePermission('mentorship:accept-requests'), async (req, res) => {
   try {
     const { requestId } = req.params;
     const { tenantId, scheduledDate, duration } = req.body;
@@ -499,7 +506,7 @@ app.post('/api/mentorship/requests/:requestId/accept', async (req, res) => {
 });
 
 // POST /api/mentorship/requests/:requestId/reject - Reject mentorship request
-app.post('/api/mentorship/requests/:requestId/reject', async (req, res) => {
+app.post('/api/mentorship/requests/:requestId/reject', requireAuth, requirePermission('mentorship:accept-requests'), async (req, res) => {
   try {
     const { requestId } = req.params;
     const { tenantId } = req.body;
@@ -517,7 +524,7 @@ app.post('/api/mentorship/requests/:requestId/reject', async (req, res) => {
 });
 
 // GET /api/mentorship/sessions - Get mentorship sessions
-app.get('/api/mentorship/sessions', async (req, res) => {
+app.get('/api/mentorship/sessions', requireAuth, async (req, res) => {
   try {
     const { tenantId, mentorId, menteeId, status } = req.query;
 
@@ -586,7 +593,7 @@ app.post('/api/mentorship/sessions/:sessionId/rate', async (req, res) => {
 });
 
 // GET /api/mentorship/mentors - Get available mentors
-app.get('/api/mentorship/mentors', async (req, res) => {
+app.get('/api/mentorship/mentors', requireAuth, async (req, res) => {
   try {
     const { tenantId } = req.query;
 
@@ -603,7 +610,7 @@ app.get('/api/mentorship/mentors', async (req, res) => {
 });
 
 // GET /api/mentorship/mentors/:mentorId/stats - Get mentor stats
-app.get('/api/mentorship/mentors/:mentorId/stats', async (req, res) => {
+app.get('/api/mentorship/mentors/:mentorId/stats', requireAuth, async (req, res) => {
   try {
     const { mentorId } = req.params;
     const { tenantId } = req.query;
@@ -625,7 +632,7 @@ app.get('/api/mentorship/mentors/:mentorId/stats', async (req, res) => {
 // ============================================
 
 // GET /api/library/:userId - Get user's course library
-app.get('/api/library/:userId', async (req, res) => {
+app.get('/api/library/:userId', requireAuth, requireOwnershipOrAdmin('userId'), async (req, res) => {
   try {
     const { userId } = req.params;
     const { tenantId } = req.query;
@@ -646,8 +653,8 @@ app.get('/api/library/:userId', async (req, res) => {
   }
 });
 
-// GET /api/courses/:courseId/attempts/:userId - Get course attempt history
-app.get('/api/courses/:courseId/attempts/:userId', async (req, res) => {
+// GET /api/courses/:courseId/attempts/:userId - Get course attempts for user
+app.get('/api/courses/:courseId/attempts/:userId', requireAuth, requireOwnershipOrAdmin('userId'), async (req, res) => {
   try {
     const { courseId, userId } = req.params;
     const { tenantId } = req.query;
@@ -664,8 +671,8 @@ app.get('/api/courses/:courseId/attempts/:userId', async (req, res) => {
   }
 });
 
-// POST /api/courses/:courseId/retake - Start a new course attempt
-app.post('/api/courses/:courseId/retake', async (req, res) => {
+// POST /api/courses/:courseId/retake - Start a new course retake
+app.post('/api/courses/:courseId/retake', requireAuth, async (req, res) => {
   try {
     const { courseId } = req.params;
     const { userId, tenantId } = req.body;
@@ -683,7 +690,7 @@ app.post('/api/courses/:courseId/retake', async (req, res) => {
 });
 
 // POST /api/courses/:courseId/complete-attempt - Complete a course attempt
-app.post('/api/courses/:courseId/complete-attempt', async (req, res) => {
+app.post('/api/courses/:courseId/complete-attempt', requireAuth, async (req, res) => {
   try {
     const { courseId } = req.params;
     const { userId, tenantId, finalScore, completedLessons, quizScores } = req.body;
