@@ -5,7 +5,7 @@ import {
   MentorProfile,
   MentorshipRequestStatus,
   MentorshipSessionStatus 
-} from '../../../src/lib/types'
+} from '../types/mentorship.types'
 
 const endpoint = process.env.COSMOS_ENDPOINT!
 const key = process.env.COSMOS_KEY!

@@ -6,7 +6,7 @@ import { ApiService } from '@/services/api.service'
 import { LevelBadge } from '@/components/gamification/LevelBadge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { BookOpen, Clock, CheckCircle2, LogOut } from 'lucide-react'
+import { BookOpen, Clock, CheckCircle2, LogOut, Users, Calendar } from 'lucide-react'
 
 interface Course {
   id: string
@@ -79,7 +79,19 @@ export function DashboardPage() {
               </div>
             </div>
             
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-4">
+              {/* Navigation Links */}
+              <Button variant="ghost" size="sm" onClick={() => navigate('/mentors')}>
+                <Users className="h-4 w-4 mr-2" />
+                Buscar Mentor
+              </Button>
+              {user?.role === 'mentor' && (
+                <Button variant="ghost" size="sm" onClick={() => navigate('/mentor/dashboard')}>
+                  <Calendar className="h-4 w-4 mr-2" />
+                  Mis Mentorados
+                </Button>
+              )}
+              
               <LevelBadge xp={0} size="md" />
               
               <div className="text-right">

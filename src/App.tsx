@@ -6,6 +6,8 @@ import { TenantResolver } from '@/components/auth/TenantResolver'
 import { TenantLoginPage } from '@/components/auth/TenantLoginPage'
 import { DashboardPage } from '@/pages/DashboardPage'
 import { CourseViewerPage } from '@/pages/CourseViewerPage'
+import { MentorDirectoryPage } from '@/pages/MentorDirectoryPage'
+import { MentorDashboardPage } from '@/pages/MentorDashboardPage'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth()
@@ -52,6 +54,22 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <CourseViewerPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/mentors"
+        element={
+          <ProtectedRoute>
+            <MentorDirectoryPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/mentor/dashboard"
+        element={
+          <ProtectedRoute>
+            <MentorDashboardPage />
           </ProtectedRoute>
         }
       />
