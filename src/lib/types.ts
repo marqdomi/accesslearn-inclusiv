@@ -77,12 +77,34 @@ export interface UserPreferences {
   reduceMotion: boolean
 }
 
+/**
+ * Sistema de Roles Granular v2.0
+ */
+export type UserRole = 
+  | 'super-admin'      // Platform-level admin (multi-tenant)
+  | 'tenant-admin'     // Organization admin
+  | 'content-manager'  // Course & content management
+  | 'user-manager'     // User & team management
+  | 'analytics-viewer' // Read-only analytics access
+  | 'instructor'       // Course creator (needs approval)
+  | 'mentor'           // Student guidance
+  | 'student'          // Learning experience
+  // Legacy compatibility
+  | 'employee'         // Alias for 'student'
+  | 'admin';           // Alias for 'tenant-admin'
+
 export interface User {
   id: string
   name: string
+  firstName: string
+  lastName: string
   email: string
-  role: 'employee' | 'admin' | 'mentor'
+  role: UserRole
+  tenantId: string
   assignedCourses: string[]
+  
+  // Custom Permissions (optional overrides)
+  customPermissions?: string[]
   
   // Campos específicos para mercado mexicano (compliance laboral)
   curp?: string                    // Clave Única de Registro de Población (18 caracteres)

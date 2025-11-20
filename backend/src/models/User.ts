@@ -7,7 +7,29 @@
  * - NSS: Número de Seguridad Social (11 dígitos)
  */
 
-export type UserRole = 'admin' | 'mentor' | 'student';
+/**
+ * Sistema de Roles Granular v2.0
+ * 
+ * Jerarquía:
+ * - super-admin: Acceso completo a nivel plataforma (multi-tenant)
+ * - tenant-admin: Administrador completo de una organización
+ * - content-manager: Gestión de cursos y contenido
+ * - user-manager: Gestión de usuarios y equipos
+ * - analytics-viewer: Acceso solo lectura a analytics
+ * - instructor: Creación de cursos (con aprobación)
+ * - mentor: Guía de estudiantes
+ * - student: Experiencia de aprendizaje
+ */
+export type UserRole = 
+  | 'super-admin'      // Platform-level admin (multi-tenant)
+  | 'tenant-admin'     // Organization admin
+  | 'content-manager'  // Course & content management
+  | 'user-manager'     // User & team management
+  | 'analytics-viewer' // Read-only analytics access
+  | 'instructor'       // Course creator (needs approval)
+  | 'mentor'           // Student guidance
+  | 'student';         // Learning experience
+
 export type UserStatus = 'active' | 'inactive' | 'suspended';
 
 export interface User {
@@ -18,6 +40,9 @@ export interface User {
   lastName: string;
   role: UserRole;
   status: UserStatus;
+  
+  // Custom Permissions (optional overrides)
+  customPermissions?: string[];  // Array of permission strings (e.g., ['courses:create', 'users:view'])
   
   // Mexican Compliance Fields
   curp?: string;                 // Clave Única de Registro de Población

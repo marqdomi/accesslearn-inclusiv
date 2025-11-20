@@ -7,7 +7,9 @@ import { LevelBadge } from '@/components/gamification/LevelBadge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { BookOpen, Clock, CheckCircle2, LogOut, Users, Calendar, ClipboardList, Library } from 'lucide-react'
+import { BookOpen, Clock, CheckCircle2, LogOut, Users, Calendar, ClipboardList, Library, Settings, BarChart3, UserCog } from 'lucide-react'
+import { RequireRole } from '@/components/auth/RequireRole'
+import { RequirePermission } from '@/components/auth/RequirePermission'
 
 interface Course {
   id: string
@@ -119,6 +121,28 @@ export function DashboardPage() {
                 <Users className="h-4 w-4 mr-2" />
                 Buscar Mentor
               </Button>
+              
+              {/* Admin Controls - Protected by Permissions */}
+              <RequirePermission permission="analytics:view-all">
+                <Button variant="ghost" size="sm" onClick={() => navigate('/admin/analytics')}>
+                  <BarChart3 className="h-4 w-4 mr-2" />
+                  Analytics
+                </Button>
+              </RequirePermission>
+              
+              <RequireRole roles={['super-admin', 'tenant-admin', 'user-manager']}>
+                <Button variant="ghost" size="sm" onClick={() => navigate('/admin/users')}>
+                  <UserCog className="h-4 w-4 mr-2" />
+                  Usuarios
+                </Button>
+              </RequireRole>
+              
+              <RequireRole roles={['super-admin', 'tenant-admin']}>
+                <Button variant="ghost" size="sm" onClick={() => navigate('/admin/settings')}>
+                  <Settings className="h-4 w-4 mr-2" />
+                  Configuración
+                </Button>
+              </RequireRole>
               
               {user?.role === 'mentor' ? (
                 <Button 

@@ -1,14 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import { ApiService } from '@/services/api.service'
-
-interface User {
-  id: string
-  email: string
-  firstName: string
-  lastName: string
-  role: 'student' | 'mentor' | 'admin'
-  tenantId: string
-}
+import { User, UserRole } from '@/lib/types'
 
 interface AuthContextType {
   user: User | null
@@ -51,13 +43,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const response = await ApiService.login(email, password, tenantId)
 
       if (response.success && response.user && response.token) {
+        // Construir objeto User completo desde response
+        const backendUser = response.user as any // Backend puede tener campos adicionales
         const userData: User = {
-          id: response.user.id,
-          email: response.user.email,
-          firstName: response.user.firstName,
-          lastName: response.user.lastName,
-          role: response.user.role as 'student' | 'mentor' | 'admin',
-          tenantId: response.user.tenantId,
+          id: backendUser.id,
+          name: `${backendUser.firstName} ${backendUser.lastName}`,
+          firstName: backendUser.firstName,
+          lastName: backendUser.lastName,
+          email: backendUser.email,
+          role: backendUser.role as UserRole,
+          tenantId: backendUser.tenantId,
+          assignedCourses: backendUser.assignedCourses || [],
+          customPermissions: backendUser.customPermissions,
+          // Mexican compliance fields (if present)
+          curp: backendUser.curp,
+          rfc: backendUser.rfc,
+          nss: backendUser.nss,
+          puesto: backendUser.puesto,
+          area: backendUser.area,
+          departamento: backendUser.departamento,
+          centroCostos: backendUser.centroCostos,
         }
 
         setUser(userData)
