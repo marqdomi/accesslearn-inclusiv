@@ -35,10 +35,12 @@ export function MentorDirectoryPage() {
   const [selectedSpecialty, setSelectedSpecialty] = useState<string>('all')
   const [selectedMentor, setSelectedMentor] = useState<MentorProfile | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
+  const [notificationCount, setNotificationCount] = useState(0)
 
   useEffect(() => {
     loadMentors()
-  }, [currentTenant])
+    loadNotifications()
+  }, [currentTenant, user])
 
   useEffect(() => {
     filterMentors()
@@ -57,6 +59,18 @@ export function MentorDirectoryPage() {
       toast.error('Error al cargar mentores')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadNotifications = async () => {
+    if (!currentTenant || !user) return
+
+    try {
+      // Load scheduled sessions for students
+      const scheduledSessions = await ApiService.getMenteeSessions(currentTenant.id, user.id, 'scheduled')
+      setNotificationCount(scheduledSessions.length)
+    } catch (error) {
+      console.error('Error loading notifications:', error)
     }
   }
 
@@ -141,10 +155,18 @@ export function MentorDirectoryPage() {
         <Button
           variant="outline"
           onClick={() => navigate('/my-mentorships')}
-          className="gap-2"
+          className="gap-2 relative"
         >
           <ClipboardList className="h-4 w-4" />
           Mis Solicitudes
+          {notificationCount > 0 && (
+            <Badge 
+              variant="default" 
+              className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs"
+            >
+              {notificationCount}
+            </Badge>
+          )}
         </Button>
       </div>
 

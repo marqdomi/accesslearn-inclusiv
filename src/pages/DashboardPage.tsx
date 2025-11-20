@@ -6,7 +6,8 @@ import { ApiService } from '@/services/api.service'
 import { LevelBadge } from '@/components/gamification/LevelBadge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { BookOpen, Clock, CheckCircle2, LogOut, Users, Calendar } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
+import { BookOpen, Clock, CheckCircle2, LogOut, Users, Calendar, ClipboardList } from 'lucide-react'
 
 interface Course {
   id: string
@@ -24,10 +25,16 @@ export function DashboardPage() {
   const { currentTenant } = useTenant()
   const [courses, setCourses] = useState<Course[]>([])
   const [loading, setLoading] = useState(true)
+  const [notificationCounts, setNotificationCounts] = useState({
+    pendingRequests: 0,
+    acceptedSessions: 0,
+    rejectedRequests: 0
+  })
 
   useEffect(() => {
     loadCourses()
-  }, [currentTenant])
+    loadNotifications()
+  }, [currentTenant, user])
 
   const loadCourses = async () => {
     if (!currentTenant) return
@@ -40,6 +47,28 @@ export function DashboardPage() {
       console.error('Error loading courses:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadNotifications = async () => {
+    if (!currentTenant || !user) return
+
+    try {
+      if (user.role === 'mentor') {
+        // Load pending requests for mentors
+        const requests = await ApiService.getMentorPendingRequests(currentTenant.id, user.id)
+        setNotificationCounts(prev => ({ ...prev, pendingRequests: requests.length }))
+      } else {
+        // Load session updates for students - check for new scheduled sessions
+        const scheduledSessions = await ApiService.getMenteeSessions(currentTenant.id, user.id, 'scheduled')
+        // For simplicity, show count of all scheduled sessions as "new"
+        setNotificationCounts(prev => ({ 
+          ...prev, 
+          acceptedSessions: scheduledSessions.length 
+        }))
+      }
+    } catch (error) {
+      console.error('Error loading notifications:', error)
     }
   }
 
@@ -85,10 +114,42 @@ export function DashboardPage() {
                 <Users className="h-4 w-4 mr-2" />
                 Buscar Mentor
               </Button>
-              {user?.role === 'mentor' && (
-                <Button variant="ghost" size="sm" onClick={() => navigate('/mentor/dashboard')}>
+              
+              {user?.role === 'mentor' ? (
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => navigate('/mentor/dashboard')}
+                  className="relative"
+                >
                   <Calendar className="h-4 w-4 mr-2" />
                   Mis Mentorados
+                  {notificationCounts.pendingRequests > 0 && (
+                    <Badge 
+                      variant="destructive" 
+                      className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
+                    >
+                      {notificationCounts.pendingRequests}
+                    </Badge>
+                  )}
+                </Button>
+              ) : (
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => navigate('/my-mentorships')}
+                  className="relative"
+                >
+                  <ClipboardList className="h-4 w-4 mr-2" />
+                  Mis Solicitudes
+                  {notificationCounts.acceptedSessions > 0 && (
+                    <Badge 
+                      variant="default" 
+                      className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
+                    >
+                      {notificationCounts.acceptedSessions}
+                    </Badge>
+                  )}
                 </Button>
               )}
               
