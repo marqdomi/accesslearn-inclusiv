@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -11,7 +12,9 @@ import {
   TrendingUp, 
   Users,
   MessageSquare,
-  Filter
+  Filter,
+  ArrowLeft,
+  ClipboardList
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useTenant } from '@/contexts/TenantContext'
@@ -21,6 +24,7 @@ import { RequestMentorshipModal } from '@/components/mentorship/RequestMentorshi
 import { toast } from 'sonner'
 
 export function MentorDirectoryPage() {
+  const navigate = useNavigate()
   const { user } = useAuth()
   const { currentTenant } = useTenant()
 
@@ -116,11 +120,32 @@ export function MentorDirectoryPage() {
   return (
     <div className="container mx-auto px-4 py-8 space-y-8">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold mb-2">Directorio de Mentores 🎓</h1>
-        <p className="text-muted-foreground">
-          Encuentra el mentor perfecto para tu desarrollo profesional
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="flex items-center gap-3 mb-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/dashboard')}
+              className="gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Volver
+            </Button>
+            <h1 className="text-3xl font-bold">Directorio de Mentores 🎓</h1>
+          </div>
+          <p className="text-muted-foreground">
+            Encuentra el mentor perfecto para tu desarrollo profesional
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          onClick={() => navigate('/my-mentorships')}
+          className="gap-2"
+        >
+          <ClipboardList className="h-4 w-4" />
+          Mis Solicitudes
+        </Button>
       </div>
 
       {/* Search and Filters */}

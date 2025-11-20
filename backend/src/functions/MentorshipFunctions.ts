@@ -96,6 +96,26 @@ export async function getMentorPendingRequests(
 }
 
 /**
+ * Obtener todas las solicitudes de un mentee (estudiante)
+ */
+export async function getMenteeRequests(
+  tenantId: string,
+  menteeId: string
+): Promise<MentorshipRequest[]> {
+  const query = {
+    query: 'SELECT * FROM c WHERE c.tenantId = @tenantId AND c.menteeId = @menteeId ORDER BY c.createdAt DESC',
+    parameters: [
+      { name: '@tenantId', value: tenantId },
+      { name: '@menteeId', value: menteeId }
+    ]
+  }
+
+  const requestsContainer = getRequestsContainer()
+  const { resources } = await requestsContainer.items.query<MentorshipRequest>(query).fetchAll()
+  return resources
+}
+
+/**
  * Aceptar una solicitud de mentoría
  */
 export async function acceptMentorshipRequest(

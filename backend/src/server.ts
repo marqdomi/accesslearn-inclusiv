@@ -21,6 +21,7 @@ import { login, validateToken } from './functions/AuthFunctions';
 import {
   createMentorshipRequest,
   getMentorPendingRequests,
+  getMenteeRequests,
   acceptMentorshipRequest,
   rejectMentorshipRequest,
   getMentorSessions,
@@ -432,7 +433,7 @@ app.post('/api/mentorship/requests', async (req, res) => {
   }
 });
 
-// GET /api/mentorship/requests - Get mentorship requests
+// GET /api/mentorship/requests - Get mentorship requests (for mentor)
 app.get('/api/mentorship/requests', async (req, res) => {
   try {
     const { tenantId, mentorId, status } = req.query;
@@ -445,6 +446,23 @@ app.get('/api/mentorship/requests', async (req, res) => {
     res.json(requests);
   } catch (error: any) {
     console.error('[API] Error getting mentorship requests:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/mentorship/my-requests - Get mentee's own requests
+app.get('/api/mentorship/my-requests', async (req, res) => {
+  try {
+    const { tenantId, menteeId } = req.query;
+
+    if (!tenantId || !menteeId) {
+      return res.status(400).json({ error: 'tenantId and menteeId are required' });
+    }
+
+    const requests = await getMenteeRequests(tenantId as string, menteeId as string);
+    res.json(requests);
+  } catch (error: any) {
+    console.error('[API] Error getting mentee requests:', error);
     res.status(500).json({ error: error.message });
   }
 });

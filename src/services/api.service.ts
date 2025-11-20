@@ -306,11 +306,20 @@ class ApiServiceClass {
   }
 
   /**
-   * Obtener solicitudes pendientes para un mentor
+   * Obtener solicitudes pendientes de un mentor
    */
   async getMentorPendingRequests(tenantId: string, mentorId: string) {
     return this.fetchWithAuth<any[]>(
       `/mentorship/requests?tenantId=${tenantId}&mentorId=${mentorId}&status=pending`
+    )
+  }
+
+  /**
+   * Obtener todas las solicitudes de un mentee (estudiante)
+   */
+  async getMenteeRequests(tenantId: string, menteeId: string) {
+    return this.fetchWithAuth<any[]>(
+      `/mentorship/my-requests?tenantId=${tenantId}&menteeId=${menteeId}`
     )
   }
 
