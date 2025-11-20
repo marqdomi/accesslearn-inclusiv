@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@import 'react-day-picker/style.css';
 
 @import './styles/theme.css';
 @import './styles/personas.css';

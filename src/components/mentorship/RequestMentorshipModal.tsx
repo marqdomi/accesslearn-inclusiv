@@ -65,6 +65,7 @@ export function RequestMentorshipModal({
   const [customTopic, setCustomTopic] = useState('')
   const [message, setMessage] = useState('')
   const [preferredDate, setPreferredDate] = useState<Date>()
+  const [calendarOpen, setCalendarOpen] = useState(false)
 
   const [errors, setErrors] = useState<{
     topic?: string
@@ -79,9 +80,15 @@ export function RequestMentorshipModal({
       setCustomTopic('')
       setMessage('')
       setPreferredDate(undefined)
+      setCalendarOpen(false)
       setErrors({})
       onClose()
     }
+  }
+
+  const handleDateSelect = (date: Date | undefined) => {
+    setPreferredDate(date)
+    setCalendarOpen(false)
   }
 
   const validate = () => {
@@ -278,10 +285,11 @@ export function RequestMentorshipModal({
           {/* Preferred Date (Optional) */}
           <div className="space-y-2">
             <Label>Fecha preferida (opcional)</Label>
-            <Popover>
+            <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
+                  type="button"
                   className="w-full justify-start text-left font-normal"
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
@@ -292,14 +300,17 @@ export function RequestMentorshipModal({
                   )}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
+              <PopoverContent className="w-auto p-0" align="center">
                 <Calendar
                   mode="single"
                   selected={preferredDate}
-                  onSelect={setPreferredDate}
-                  disabled={date => date < new Date()}
+                  onSelect={handleDateSelect}
+                  disabled={date => {
+                    const today = new Date()
+                    today.setHours(0, 0, 0, 0)
+                    return date < today
+                  }}
                   initialFocus
-                  locale={es}
                 />
               </PopoverContent>
             </Popover>

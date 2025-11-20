@@ -7,17 +7,40 @@ import {
   MentorshipSessionStatus 
 } from '../types/mentorship.types'
 
-const endpoint = process.env.COSMOS_ENDPOINT!
-const key = process.env.COSMOS_KEY!
-const databaseId = 'accesslearn-db'
+// Lazy initialization to avoid errors when env vars aren't loaded yet
+let client: CosmosClient | null = null
+let database: any = null
 
-const client = new CosmosClient({ endpoint, key })
-const database = client.database(databaseId)
+function getCosmosClient() {
+  if (!client) {
+    const endpoint = process.env.COSMOS_ENDPOINT
+    const key = process.env.COSMOS_KEY
+    
+    if (!endpoint || !key) {
+      throw new Error('COSMOS_ENDPOINT and COSMOS_KEY must be set in environment variables')
+    }
+    
+    client = new CosmosClient({ endpoint, key })
+    database = client.database('accesslearn-db')
+  }
+  return { client, database }
+}
 
-// Containers
-const requestsContainer: Container = database.container('mentorship-requests')
-const sessionsContainer: Container = database.container('mentorship-sessions')
-const usersContainer: Container = database.container('users')
+// Helper functions to get containers
+function getRequestsContainer(): Container {
+  const { database } = getCosmosClient()
+  return database.container('mentorship-requests')
+}
+
+function getSessionsContainer(): Container {
+  const { database } = getCosmosClient()
+  return database.container('mentorship-sessions')
+}
+
+function getUsersContainer(): Container {
+  const { database } = getCosmosClient()
+  return database.container('users')
+}
 
 /**
  * Crear una solicitud de mentoría
@@ -46,6 +69,7 @@ export async function createMentorshipRequest(
     createdAt: Date.now()
   }
 
+  const requestsContainer = getRequestsContainer()
   await requestsContainer.items.create(request)
   return request
 }
@@ -66,6 +90,7 @@ export async function getMentorPendingRequests(
     ]
   }
 
+  const requestsContainer = getRequestsContainer()
   const { resources } = await requestsContainer.items.query<MentorshipRequest>(query).fetchAll()
   return resources
 }
@@ -80,6 +105,7 @@ export async function acceptMentorshipRequest(
   duration: number = 60
 ): Promise<{ request: MentorshipRequest; session: MentorshipSession }> {
   // Actualizar request
+  const requestsContainer = getRequestsContainer()
   const { resource: request } = await requestsContainer.item(requestId, tenantId).read<MentorshipRequest>()
   
   if (!request) {
@@ -106,6 +132,7 @@ export async function acceptMentorshipRequest(
     createdAt: Date.now()
   }
 
+  const sessionsContainer = getSessionsContainer()
   await sessionsContainer.items.create(session)
 
   return { request, session }
@@ -118,6 +145,7 @@ export async function rejectMentorshipRequest(
   requestId: string,
   tenantId: string
 ): Promise<MentorshipRequest> {
+  const requestsContainer = getRequestsContainer()
   const { resource: request } = await requestsContainer.item(requestId, tenantId).read<MentorshipRequest>()
   
   if (!request) {
@@ -154,6 +182,7 @@ export async function getMentorSessions(
 
   query.query += ' ORDER BY c.scheduledDate DESC'
 
+  const sessionsContainer = getSessionsContainer()
   const { resources } = await sessionsContainer.items.query<MentorshipSession>(query).fetchAll()
   return resources
 }
@@ -181,6 +210,7 @@ export async function getMenteeSessions(
 
   query.query += ' ORDER BY c.scheduledDate DESC'
 
+  const sessionsContainer = getSessionsContainer()
   const { resources } = await sessionsContainer.items.query<MentorshipSession>(query).fetchAll()
   return resources
 }
@@ -193,6 +223,7 @@ export async function completeMentorshipSession(
   tenantId: string,
   notes?: string
 ): Promise<MentorshipSession> {
+  const sessionsContainer = getSessionsContainer()
   const { resource: session } = await sessionsContainer.item(sessionId, tenantId).read<MentorshipSession>()
   
   if (!session) {
@@ -219,6 +250,7 @@ export async function rateMentorshipSession(
   rating: number,
   feedback?: string
 ): Promise<MentorshipSession> {
+  const sessionsContainer = getSessionsContainer()
   const { resource: session } = await sessionsContainer.item(sessionId, tenantId).read<MentorshipSession>()
   
   if (!session) {
@@ -254,7 +286,7 @@ async function updateMentorRating(tenantId: string, mentorId: string): Promise<v
   
   if (resources.length === 0) return
 
-  const avgRating = resources.reduce((sum, s) => sum + s.rating, 0) / resources.length
+  const avgRating = resources.reduce((sum: number, s: { rating: number }) => sum + s.rating, 0) / resources.length
 
   // Actualizar el perfil del mentor (asumiendo que está en users container)
   try {
@@ -273,6 +305,8 @@ async function updateMentorRating(tenantId: string, mentorId: string): Promise<v
  * Obtener todos los mentores disponibles
  */
 export async function getAvailableMentors(tenantId: string): Promise<MentorProfile[]> {
+  const usersContainer = getUsersContainer()
+  
   const query = {
     query: 'SELECT * FROM c WHERE c.tenantId = @tenantId AND c.role = @role',
     parameters: [
@@ -283,7 +317,7 @@ export async function getAvailableMentors(tenantId: string): Promise<MentorProfi
 
   const { resources } = await usersContainer.items.query(query).fetchAll()
 
-  return resources.map(user => ({
+  return resources.map((user: any) => ({
     userId: user.id,
     name: `${user.firstName} ${user.lastName}`,
     email: user.email,
