@@ -18,6 +18,18 @@ import {
 } from './functions/UserFunctions';
 import { getCourses } from './functions/GetCourses';
 import { login, validateToken } from './functions/AuthFunctions';
+import {
+  createMentorshipRequest,
+  getMentorPendingRequests,
+  acceptMentorshipRequest,
+  rejectMentorshipRequest,
+  getMentorSessions,
+  getMenteeSessions,
+  completeMentorshipSession,
+  rateMentorshipSession,
+  getAvailableMentors,
+  getMentorStats
+} from './functions/MentorshipFunctions';
 
 dotenv.config();
 
@@ -380,6 +392,199 @@ app.get('/api/users/:userId/progress/:courseId', async (req, res) => {
     res.json(courseProgress);
   } catch (error: any) {
     console.error('[API] Error getting course progress:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ============================================
+// MENTORSHIP ENDPOINTS
+// ============================================
+
+// POST /api/mentorship/requests - Create mentorship request
+app.post('/api/mentorship/requests', async (req, res) => {
+  try {
+    const {
+      tenantId,
+      menteeId,
+      menteeName,
+      menteeEmail,
+      mentorId,
+      topic,
+      message,
+      preferredDate
+    } = req.body;
+
+    const request = await createMentorshipRequest(
+      tenantId,
+      menteeId,
+      menteeName,
+      menteeEmail,
+      mentorId,
+      topic,
+      message,
+      preferredDate
+    );
+
+    res.status(201).json(request);
+  } catch (error: any) {
+    console.error('[API] Error creating mentorship request:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/mentorship/requests - Get mentorship requests
+app.get('/api/mentorship/requests', async (req, res) => {
+  try {
+    const { tenantId, mentorId, status } = req.query;
+
+    if (!tenantId || !mentorId) {
+      return res.status(400).json({ error: 'tenantId and mentorId are required' });
+    }
+
+    const requests = await getMentorPendingRequests(tenantId as string, mentorId as string);
+    res.json(requests);
+  } catch (error: any) {
+    console.error('[API] Error getting mentorship requests:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/mentorship/requests/:requestId/accept - Accept mentorship request
+app.post('/api/mentorship/requests/:requestId/accept', async (req, res) => {
+  try {
+    const { requestId } = req.params;
+    const { tenantId, scheduledDate, duration } = req.body;
+
+    if (!tenantId || !scheduledDate) {
+      return res.status(400).json({ error: 'tenantId and scheduledDate are required' });
+    }
+
+    const result = await acceptMentorshipRequest(requestId, tenantId, scheduledDate, duration);
+    res.json(result);
+  } catch (error: any) {
+    console.error('[API] Error accepting mentorship request:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/mentorship/requests/:requestId/reject - Reject mentorship request
+app.post('/api/mentorship/requests/:requestId/reject', async (req, res) => {
+  try {
+    const { requestId } = req.params;
+    const { tenantId } = req.body;
+
+    if (!tenantId) {
+      return res.status(400).json({ error: 'tenantId is required' });
+    }
+
+    const request = await rejectMentorshipRequest(requestId, tenantId);
+    res.json(request);
+  } catch (error: any) {
+    console.error('[API] Error rejecting mentorship request:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/mentorship/sessions - Get mentorship sessions
+app.get('/api/mentorship/sessions', async (req, res) => {
+  try {
+    const { tenantId, mentorId, menteeId, status } = req.query;
+
+    if (!tenantId) {
+      return res.status(400).json({ error: 'tenantId is required' });
+    }
+
+    let sessions;
+    if (mentorId) {
+      sessions = await getMentorSessions(
+        tenantId as string,
+        mentorId as string,
+        status as any
+      );
+    } else if (menteeId) {
+      sessions = await getMenteeSessions(
+        tenantId as string,
+        menteeId as string,
+        status as any
+      );
+    } else {
+      return res.status(400).json({ error: 'mentorId or menteeId is required' });
+    }
+
+    res.json(sessions);
+  } catch (error: any) {
+    console.error('[API] Error getting mentorship sessions:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/mentorship/sessions/:sessionId/complete - Complete session
+app.post('/api/mentorship/sessions/:sessionId/complete', async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const { tenantId, notes } = req.body;
+
+    if (!tenantId) {
+      return res.status(400).json({ error: 'tenantId is required' });
+    }
+
+    const session = await completeMentorshipSession(sessionId, tenantId, notes);
+    res.json(session);
+  } catch (error: any) {
+    console.error('[API] Error completing mentorship session:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/mentorship/sessions/:sessionId/rate - Rate session
+app.post('/api/mentorship/sessions/:sessionId/rate', async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const { tenantId, rating, feedback } = req.body;
+
+    if (!tenantId || !rating) {
+      return res.status(400).json({ error: 'tenantId and rating are required' });
+    }
+
+    const session = await rateMentorshipSession(sessionId, tenantId, rating, feedback);
+    res.json(session);
+  } catch (error: any) {
+    console.error('[API] Error rating mentorship session:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/mentorship/mentors - Get available mentors
+app.get('/api/mentorship/mentors', async (req, res) => {
+  try {
+    const { tenantId } = req.query;
+
+    if (!tenantId) {
+      return res.status(400).json({ error: 'tenantId is required' });
+    }
+
+    const mentors = await getAvailableMentors(tenantId as string);
+    res.json(mentors);
+  } catch (error: any) {
+    console.error('[API] Error getting mentors:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/mentorship/mentors/:mentorId/stats - Get mentor stats
+app.get('/api/mentorship/mentors/:mentorId/stats', async (req, res) => {
+  try {
+    const { mentorId } = req.params;
+    const { tenantId } = req.query;
+
+    if (!tenantId) {
+      return res.status(400).json({ error: 'tenantId is required' });
+    }
+
+    const stats = await getMentorStats(tenantId as string, mentorId);
+    res.json(stats);
+  } catch (error: any) {
+    console.error('[API] Error getting mentor stats:', error);
     res.status(500).json({ error: error.message });
   }
 });

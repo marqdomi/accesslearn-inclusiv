@@ -272,6 +272,143 @@ class ApiServiceClass {
   async getCurrentUser() {
     return this.fetchWithAuth<any>(`/auth/me`)
   }
+
+  // ========================================
+  // Mentorship APIs
+  // ========================================
+
+  /**
+   * Crear una solicitud de mentoría
+   */
+  async createMentorshipRequest(
+    tenantId: string,
+    menteeId: string,
+    menteeName: string,
+    menteeEmail: string,
+    mentorId: string,
+    topic: string,
+    message: string,
+    preferredDate?: number
+  ) {
+    return this.fetchWithAuth<any>(`/mentorship/requests`, {
+      method: 'POST',
+      body: JSON.stringify({
+        tenantId,
+        menteeId,
+        menteeName,
+        menteeEmail,
+        mentorId,
+        topic,
+        message,
+        preferredDate
+      })
+    })
+  }
+
+  /**
+   * Obtener solicitudes pendientes para un mentor
+   */
+  async getMentorPendingRequests(tenantId: string, mentorId: string) {
+    return this.fetchWithAuth<any[]>(
+      `/mentorship/requests?tenantId=${tenantId}&mentorId=${mentorId}&status=pending`
+    )
+  }
+
+  /**
+   * Aceptar una solicitud de mentoría
+   */
+  async acceptMentorshipRequest(
+    requestId: string,
+    tenantId: string,
+    scheduledDate: number,
+    duration: number = 60
+  ) {
+    return this.fetchWithAuth<any>(`/mentorship/requests/${requestId}/accept`, {
+      method: 'POST',
+      body: JSON.stringify({ tenantId, scheduledDate, duration })
+    })
+  }
+
+  /**
+   * Rechazar una solicitud de mentoría
+   */
+  async rejectMentorshipRequest(requestId: string, tenantId: string) {
+    return this.fetchWithAuth<any>(`/mentorship/requests/${requestId}/reject`, {
+      method: 'POST',
+      body: JSON.stringify({ tenantId })
+    })
+  }
+
+  /**
+   * Obtener sesiones de un mentor
+   */
+  async getMentorSessions(
+    tenantId: string,
+    mentorId: string,
+    status?: string
+  ) {
+    let url = `/mentorship/sessions?tenantId=${tenantId}&mentorId=${mentorId}`
+    if (status) url += `&status=${status}`
+    return this.fetchWithAuth<any[]>(url)
+  }
+
+  /**
+   * Obtener sesiones de un aprendiz
+   */
+  async getMenteeSessions(
+    tenantId: string,
+    menteeId: string,
+    status?: string
+  ) {
+    let url = `/mentorship/sessions?tenantId=${tenantId}&menteeId=${menteeId}`
+    if (status) url += `&status=${status}`
+    return this.fetchWithAuth<any[]>(url)
+  }
+
+  /**
+   * Completar una sesión
+   */
+  async completeMentorshipSession(
+    sessionId: string,
+    tenantId: string,
+    notes?: string
+  ) {
+    return this.fetchWithAuth<any>(`/mentorship/sessions/${sessionId}/complete`, {
+      method: 'POST',
+      body: JSON.stringify({ tenantId, notes })
+    })
+  }
+
+  /**
+   * Calificar una sesión
+   */
+  async rateMentorshipSession(
+    sessionId: string,
+    tenantId: string,
+    rating: number,
+    feedback?: string
+  ) {
+    return this.fetchWithAuth<any>(`/mentorship/sessions/${sessionId}/rate`, {
+      method: 'POST',
+      body: JSON.stringify({ tenantId, rating, feedback })
+    })
+  }
+
+  /**
+   * Obtener mentores disponibles
+   */
+  async getAvailableMentors(tenantId: string) {
+    return this.fetchWithAuth<any[]>(`/mentorship/mentors?tenantId=${tenantId}`)
+  }
+
+  /**
+   * Obtener estadísticas de un mentor
+   */
+  async getMentorStats(tenantId: string, mentorId: string) {
+    return this.fetchWithAuth<any>(
+      `/mentorship/mentors/${mentorId}/stats?tenantId=${tenantId}`
+    )
+  }
 }
 
 export const ApiService = new ApiServiceClass()

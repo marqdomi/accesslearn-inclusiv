@@ -20,6 +20,12 @@ export async function initializeCosmos(): Promise<void> {
   database = cosmosClient.database(databaseName)
 
   console.log(`✅ Cosmos DB connected: ${databaseName}`)
+
+  // Crear containers necesarios para el sistema de mentorías
+  await createContainerIfNotExists('mentorship-requests', '/tenantId')
+  await createContainerIfNotExists('mentorship-sessions', '/tenantId')
+  
+  console.log(`✅ Mentorship containers initialized`)
 }
 
 export function getDatabase(): Database {
