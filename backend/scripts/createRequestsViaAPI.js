@@ -5,8 +5,8 @@
 
 const API_BASE_URL = 'http://localhost:3000/api'
 
-// Ana López Torres (mentora)
-const mentorId = 'user-mentor-angular-001'
+// Ana López Torres (mentora) - ID será obtenido dinámicamente
+let mentorId = null
 const mentorName = 'Ana López Torres'
 const mentorEmail = 'ana.lopez@kainet.mx'
 
@@ -49,8 +49,48 @@ const requests = [
   }
 ]
 
+async function getMentorId() {
+  console.log('🔍 Obteniendo ID de Ana López Torres...\n')
+  
+  try {
+    const response = await fetch(`${API_BASE_URL}/auth/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        tenantId: 'tenant-kainet',
+        email: mentorEmail,
+        password: 'demo123'
+      })
+    })
+
+    if (response.ok) {
+      const data = await response.json()
+      mentorId = data.user.id
+      console.log(`✅ ID encontrado: ${mentorId}\n`)
+      return true
+    } else {
+      console.error('❌ No se pudo obtener el ID del mentor')
+      return false
+    }
+  } catch (error) {
+    console.error('❌ Error obteniendo ID:', error.message)
+    return false
+  }
+}
+
 async function createRequests() {
+  // Primero obtener el ID correcto del mentor
+  if (!await getMentorId()) {
+    console.log('\n⚠️  No se pudo obtener el ID del mentor. Verifica que el backend esté corriendo.')
+    return
+  }
+
   console.log('🚀 Creando solicitudes de mentoría para Ana López Torres...\n')
+
+  // Actualizar mentorId en todas las solicitudes
+  requests.forEach(req => req.mentorId = mentorId)
 
   for (const request of requests) {
     try {

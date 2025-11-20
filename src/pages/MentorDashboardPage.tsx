@@ -375,7 +375,7 @@ export function MentorDashboardPage() {
                                   {selectedDate ? format(selectedDate, 'PPP', { locale: es }) : 'Selecciona una fecha'}
                                 </Button>
                               </PopoverTrigger>
-                              <PopoverContent className="w-auto p-0" align="center">
+                              <PopoverContent className="w-auto p-0" align="start" side="bottom">
                                 <CalendarComponent
                                   mode="single"
                                   selected={selectedDate}
