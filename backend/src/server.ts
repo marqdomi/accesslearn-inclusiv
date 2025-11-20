@@ -31,6 +31,12 @@ import {
   getAvailableMentors,
   getMentorStats
 } from './functions/MentorshipFunctions';
+import {
+  getUserLibrary,
+  getCourseAttempts,
+  startCourseRetake,
+  completeCourseAttempt
+} from './functions/LibraryFunctions';
 
 dotenv.config();
 
@@ -266,7 +272,10 @@ app.get('/api/stats/tenant/:tenantId/users', async (req, res) => {
 app.get('/api/courses/tenant/:tenantId', async (req, res) => {
   try {
     const { tenantId } = req.params;
+    console.log('[API] GET /api/courses/tenant/:tenantId -', tenantId);
     const courses = await getCourses({ tenantId });
+    console.log('[API] Found', courses.length, 'courses for tenant', tenantId);
+    courses.forEach(c => console.log('  -', c.title, '(', c.id, ')'));
     res.json(courses);
   } catch (error: any) {
     console.error('[API] Error getting courses:', error);
@@ -607,6 +616,96 @@ app.get('/api/mentorship/mentors/:mentorId/stats', async (req, res) => {
     res.json(stats);
   } catch (error: any) {
     console.error('[API] Error getting mentor stats:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ============================================
+// LIBRARY ENDPOINTS
+// ============================================
+
+// GET /api/library/:userId - Get user's course library
+app.get('/api/library/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { tenantId } = req.query;
+
+    console.log('[API] GET /api/library/:userId called with:', { userId, tenantId });
+
+    if (!tenantId) {
+      return res.status(400).json({ error: 'tenantId is required' });
+    }
+
+    const library = await getUserLibrary(userId, tenantId as string);
+    console.log('[API] Library retrieved successfully, count:', library.length);
+    res.json(library);
+  } catch (error: any) {
+    console.error('[API] Error getting user library:', error);
+    console.error('[API] Error stack:', error.stack);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/courses/:courseId/attempts/:userId - Get course attempt history
+app.get('/api/courses/:courseId/attempts/:userId', async (req, res) => {
+  try {
+    const { courseId, userId } = req.params;
+    const { tenantId } = req.query;
+
+    if (!tenantId) {
+      return res.status(400).json({ error: 'tenantId is required' });
+    }
+
+    const attempts = await getCourseAttempts(userId, tenantId as string, courseId);
+    res.json(attempts);
+  } catch (error: any) {
+    console.error('[API] Error getting course attempts:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/courses/:courseId/retake - Start a new course attempt
+app.post('/api/courses/:courseId/retake', async (req, res) => {
+  try {
+    const { courseId } = req.params;
+    const { userId, tenantId } = req.body;
+
+    if (!userId || !tenantId) {
+      return res.status(400).json({ error: 'userId and tenantId are required' });
+    }
+
+    const progress = await startCourseRetake(userId, tenantId, courseId);
+    res.json(progress);
+  } catch (error: any) {
+    console.error('[API] Error starting course retake:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/courses/:courseId/complete-attempt - Complete a course attempt
+app.post('/api/courses/:courseId/complete-attempt', async (req, res) => {
+  try {
+    const { courseId } = req.params;
+    const { userId, tenantId, finalScore, completedLessons, quizScores } = req.body;
+
+    if (!userId || !tenantId || finalScore === undefined) {
+      return res.status(400).json({ 
+        error: 'userId, tenantId, and finalScore are required' 
+      });
+    }
+
+    const result = await completeCourseAttempt(
+      userId,
+      tenantId,
+      courseId,
+      finalScore,
+      completedLessons || [],
+      quizScores || []
+    );
+
+    res.json(result);
+  } catch (error: any) {
+    console.error('[API] Error completing course attempt:', error);
     res.status(500).json({ error: error.message });
   }
 });

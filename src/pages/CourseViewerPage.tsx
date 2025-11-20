@@ -66,6 +66,10 @@ export function CourseViewerPage() {
   const [earnedXP, setEarnedXP] = useState(0)
   const [showConfetti, setShowConfetti] = useState(false)
   const [totalXP, setTotalXP] = useState(0)
+  
+  // Library/retake states
+  const [quizScores, setQuizScores] = useState<Map<string, number>>(new Map())
+  const [attemptStarted, setAttemptStarted] = useState(false)
 
   useEffect(() => {
     loadCourse()
@@ -89,10 +93,44 @@ export function CourseViewerPage() {
       if (user) {
         await loadProgress()
       }
+      
+      // Start course attempt (for library system)
+      if (user && currentTenant && !attemptStarted) {
+        await startCourseAttempt()
+      }
     } catch (error) {
       console.error('Error loading course:', error)
     } finally {
       setLoading(false)
+    }
+  }
+  
+  const startCourseAttempt = async () => {
+    if (!user || !courseId || !currentTenant || attemptStarted) return
+    
+    try {
+      // Verificar si ya hay un intento en progreso
+      const library = await ApiService.getUserLibrary(user.id, currentTenant.id)
+      const existingProgress = library.find(p => p.courseId === courseId)
+      
+      // Solo iniciar nuevo intento si:
+      // 1. No existe progreso previo, O
+      // 2. El último intento está completado (tiene completedAt)
+      const lastAttempt = existingProgress?.attempts?.[existingProgress.attempts.length - 1]
+      const needsNewAttempt = !existingProgress || (lastAttempt && lastAttempt.completedAt)
+      
+      if (needsNewAttempt) {
+        await ApiService.startCourseRetake(user.id, courseId, currentTenant.id)
+        console.log('New course attempt started for library system')
+      } else {
+        console.log('Continuing existing course attempt')
+      }
+      
+      setAttemptStarted(true)
+    } catch (error) {
+      console.error('Error starting course attempt:', error)
+      // Non-critical error, continue anyway
+      setAttemptStarted(true)
     }
   }
 
@@ -172,7 +210,7 @@ export function CourseViewerPage() {
 
           if (allCourseLessonsCompleted) {
             // Course is 100% complete!
-            setCourseCompleted(true)
+            await completeCourseAttempt()
             return // Don't auto-advance, show completion page
           }
         }
@@ -189,6 +227,84 @@ export function CourseViewerPage() {
       })
     } finally {
       setCompleting(false)
+    }
+  }
+  
+  const completeCourseAttempt = async () => {
+    if (!user || !courseId || !currentTenant || !course) return
+    
+    try {
+      // Calculate final score based on quiz scores
+      const allQuizzes = course.modules.flatMap(m => 
+        m.lessons.filter(l => l.type === 'quiz')
+      )
+      
+      let totalQuizScore = 0
+      let quizCount = 0
+      
+      allQuizzes.forEach(quiz => {
+        const score = quizScores.get(quiz.id)
+        if (score !== undefined) {
+          totalQuizScore += score
+          quizCount++
+        }
+      })
+      
+      // Calculate final score (average of quiz scores, or 100 if no quizzes)
+      const finalScore = quizCount > 0 
+        ? Math.round(totalQuizScore / quizCount) 
+        : 100
+      
+      // Convert quiz scores map to array format
+      const quizScoresArray = Array.from(quizScores.entries()).map(([quizId, score]) => ({
+        quizId,
+        score,
+        completedAt: new Date().toISOString()
+      }))
+      
+      // Complete the attempt and get XP breakdown
+      const result = await ApiService.completeCourseAttempt(
+        user.id,
+        courseId,
+        currentTenant.id,
+        finalScore,
+        Array.from(completedLessons),
+        quizScoresArray
+      )
+      
+      // Show XP breakdown
+      if (result.xpAwarded) {
+        const breakdown = result.xpAwarded.breakdown
+        const totalXpGained = result.xpAwarded.xpEarned
+        
+        if (breakdown.improvement > 0) {
+          toast.success('¡Curso completado con mejora!', {
+            description: `Mejoraste ${breakdown.improvement}% y ganaste ${totalXpGained} XP (${breakdown.improvementXP} XP por mejora + ${breakdown.persistenceBonus} XP bonus)`,
+            duration: 8000,
+            icon: <Trophy className="h-5 w-5 text-yellow-500" />
+          })
+        } else {
+          toast.success('¡Curso completado!', {
+            description: `Ganaste ${totalXpGained} XP. Calificación: ${finalScore}%`,
+            duration: 6000,
+            icon: <Trophy className="h-5 w-5 text-yellow-500" />
+          })
+        }
+        
+        setEarnedXP(totalXpGained)
+        setShowXPAnimation(true)
+      }
+      
+      setShowConfetti(true)
+      setCourseCompleted(true)
+      
+    } catch (error) {
+      console.error('Error completing course attempt:', error)
+      // Still mark as completed locally
+      setCourseCompleted(true)
+      toast.error('Error al registrar el intento', {
+        description: 'El curso se completó pero hubo un problema al guardar el progreso'
+      })
     }
   }
 
@@ -372,8 +488,11 @@ export function CourseViewerPage() {
                   <LessonContent 
                     lesson={currentLesson}
                     onQuizComplete={(results) => {
-                      // Guardar resultados del quiz
-                      console.log('Quiz completed:', results)
+                      // Guardar score del quiz para el cálculo final
+                      if (currentLessonId && results.score !== undefined) {
+                        setQuizScores(prev => new Map(prev).set(currentLessonId, results.score))
+                        console.log('Quiz completed:', results, 'Score:', results.score)
+                      }
                       // NO avanzar automáticamente - dejar que el usuario revise sus resultados
                       // y haga clic en "Marcar como Completado" cuando esté listo
                     }}

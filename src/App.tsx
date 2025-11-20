@@ -9,6 +9,7 @@ import { CourseViewerPage } from '@/pages/CourseViewerPage'
 import { MentorDirectoryPage } from '@/pages/MentorDirectoryPage'
 import { MentorDashboardPage } from '@/pages/MentorDashboardPage'
 import { MenteeMentorshipsPage } from '@/pages/MenteeMentorshipsPage'
+import { LibraryPage } from '@/pages/LibraryPage'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth()
@@ -79,6 +80,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <MenteeMentorshipsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/library"
+        element={
+          <ProtectedRoute>
+            <LibraryPage />
           </ProtectedRoute>
         }
       />

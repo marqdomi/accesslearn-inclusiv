@@ -439,6 +439,59 @@ class ApiServiceClass {
       `/mentorship/mentors/${mentorId}/stats?tenantId=${tenantId}`
     )
   }
+
+  // ==========================================
+  // LIBRARY / COURSE RETAKES
+  // ==========================================
+
+  /**
+   * Obtener biblioteca de cursos del usuario
+   */
+  async getUserLibrary(userId: string, tenantId: string) {
+    return this.fetchWithAuth<any[]>(`/library/${userId}?tenantId=${tenantId}`)
+  }
+
+  /**
+   * Obtener historial de intentos de un curso
+   */
+  async getCourseAttempts(userId: string, courseId: string, tenantId: string) {
+    return this.fetchWithAuth<any[]>(
+      `/courses/${courseId}/attempts/${userId}?tenantId=${tenantId}`
+    )
+  }
+
+  /**
+   * Iniciar un nuevo intento de curso
+   */
+  async startCourseRetake(userId: string, courseId: string, tenantId: string) {
+    return this.fetchWithAuth<any>(`/courses/${courseId}/retake`, {
+      method: 'POST',
+      body: JSON.stringify({ userId, tenantId })
+    })
+  }
+
+  /**
+   * Completar un intento de curso
+   */
+  async completeCourseAttempt(
+    userId: string,
+    courseId: string,
+    tenantId: string,
+    finalScore: number,
+    completedLessons: string[],
+    quizScores: { quizId: string; score: number; completedAt: string }[]
+  ) {
+    return this.fetchWithAuth<any>(`/courses/${courseId}/complete-attempt`, {
+      method: 'POST',
+      body: JSON.stringify({
+        userId,
+        tenantId,
+        finalScore,
+        completedLessons,
+        quizScores
+      })
+    })
+  }
 }
 
 export const ApiService = new ApiServiceClass()

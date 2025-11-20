@@ -305,7 +305,7 @@ export function QuizLesson({
         >
           {currentQuestion.type === 'multiple-choice' && (
             <MultipleChoiceQuiz
-              question={currentQuestion.question}
+              question={currentQuestion.question as any}
               onAnswer={handleAnswer}
               isAnswered={isAnswered}
               selectedAnswer={selectedAnswer}
@@ -314,10 +314,10 @@ export function QuizLesson({
 
           {currentQuestion.type === 'true-false' && (
             <TrueFalseQuiz
-              question={currentQuestion.question}
+              question={currentQuestion.question as any}
               onAnswer={handleAnswer}
               isAnswered={isAnswered}
-              selectedAnswer={selectedAnswer}
+              selectedAnswer={selectedAnswer as boolean | null}
             />
           )}
 

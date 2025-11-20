@@ -40,6 +40,20 @@ export interface Course {
   coverImage?: string
 }
 
+export interface CourseAttempt {
+  attemptNumber: number
+  startedAt: string
+  completedAt?: string
+  finalScore: number
+  xpEarned: number
+  completedLessons: string[]
+  quizScores: Array<{
+    quizId: string
+    score: number
+    completedAt: string
+  }>
+}
+
 export interface UserProgress {
   courseId: string
   status: CourseStatus
@@ -48,6 +62,11 @@ export interface UserProgress {
   lastAccessed: number
   assessmentScore?: number
   assessmentAttempts: number
+  // Library and retake fields
+  attempts?: CourseAttempt[]
+  bestScore?: number
+  totalXpEarned?: number
+  currentAttempt?: number
 }
 
 export interface UserPreferences {

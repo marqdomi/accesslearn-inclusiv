@@ -102,13 +102,29 @@ export interface UpdateUserRequest {
   };
 }
 
+export interface CourseAttempt {
+  attemptNumber: number;         // 1, 2, 3...
+  startedAt: string;             // ISO 8601
+  completedAt?: string;          // ISO 8601, undefined if in progress
+  finalScore: number;            // 0-100
+  xpEarned: number;              // XP ganado en este intento
+  completedLessons: string[];    // Lecciones completadas en este intento
+  quizScores: {
+    quizId: string;
+    score: number;
+    completedAt: string;
+  }[];
+}
+
 export interface UserProgress {
+  id?: string;                   // ID del documento en Cosmos DB
   userId: string;
   tenantId: string;
   courseId: string;
-  progress: number;              // 0-100 percentage
+  status?: 'not-started' | 'in-progress' | 'completed'; // Estado del curso
+  progress: number;              // 0-100 percentage (mejor score hasta ahora)
   lastAccessedAt: string;        // ISO 8601
-  completedLessons: string[];    // Array of lesson IDs
+  completedLessons: string[];    // Array of lesson IDs (acumulativo)
   quizScores: {
     quizId: string;
     score: number;
@@ -117,4 +133,10 @@ export interface UserProgress {
   }[];
   certificateEarned: boolean;
   certificateId?: string;
+  
+  // Sistema de re-intentos
+  attempts: CourseAttempt[];     // Historial completo de intentos
+  bestScore: number;             // Mejor puntuación obtenida (0-100)
+  totalXpEarned: number;         // XP total acumulado del curso
+  currentAttempt: number;        // Número de intento actual
 }

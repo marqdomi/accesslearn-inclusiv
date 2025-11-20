@@ -12,6 +12,15 @@ async function checkDatabase() {
 
     const database = client.database(process.env.COSMOS_DATABASE);
 
+    // Listar todos los contenedores disponibles
+    console.log('📦 CONTENEDORES DISPONIBLES:');
+    const { resources: containers } = await database.containers.readAll().fetchAll();
+    console.log(`Total: ${containers.length} contenedores\n`);
+    containers.forEach(container => {
+      console.log(`  • ${container.id}`);
+    });
+    console.log();
+
     // 1. Verificar usuarios
     console.log('📋 USUARIOS:');
     const usersContainer = database.container('users');

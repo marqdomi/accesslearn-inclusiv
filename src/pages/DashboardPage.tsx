@@ -7,7 +7,7 @@ import { LevelBadge } from '@/components/gamification/LevelBadge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { BookOpen, Clock, CheckCircle2, LogOut, Users, Calendar, ClipboardList } from 'lucide-react'
+import { BookOpen, Clock, CheckCircle2, LogOut, Users, Calendar, ClipboardList, Library } from 'lucide-react'
 
 interface Course {
   id: string
@@ -110,6 +110,11 @@ export function DashboardPage() {
             
             <div className="flex items-center gap-4">
               {/* Navigation Links */}
+              <Button variant="ghost" size="sm" onClick={() => navigate('/library')}>
+                <Library className="h-4 w-4 mr-2" />
+                Mi Biblioteca
+              </Button>
+              
               <Button variant="ghost" size="sm" onClick={() => navigate('/mentors')}>
                 <Users className="h-4 w-4 mr-2" />
                 Buscar Mentor
