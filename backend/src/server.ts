@@ -44,6 +44,12 @@ import {
   startCourseRetake,
   completeCourseAttempt
 } from './functions/LibraryFunctions';
+import {
+  getAuditLogs,
+  getAuditLogById,
+  getAuditStats,
+} from './functions/AuditFunctions';
+import { attachAuditMetadata, auditCreate, auditRoleChange } from './middleware/audit';
 
 dotenv.config();
 
@@ -53,6 +59,7 @@ const PORT = process.env.PORT || 7071;
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use(attachAuditMetadata); // Agregar metadata de auditoría a todos los requests
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -213,7 +220,7 @@ app.get('/api/users/:id', requireAuth, requireOwnershipOrAdmin('id'), async (req
 });
 
 // POST /api/users - Create new user
-app.post('/api/users', requireAuth, requirePermission('users:create'), async (req, res) => {
+app.post('/api/users', requireAuth, requirePermission('users:create'), auditCreate('user'), async (req, res) => {
   try {
     const user = await createUser(req.body);
     res.status(201).json(user);
@@ -713,6 +720,93 @@ app.post('/api/courses/:courseId/complete-attempt', requireAuth, async (req, res
     res.json(result);
   } catch (error: any) {
     console.error('[API] Error completing course attempt:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ============================================
+// AUDIT LOG ENDPOINTS
+// ============================================
+
+// GET /api/audit/logs - Get audit logs with filters
+app.get('/api/audit/logs', requireAuth, requirePermission('audit:view-logs'), async (req, res) => {
+  try {
+    const { tenantId } = req.query;
+    const {
+      action,
+      actorId,
+      resourceType,
+      resourceId,
+      severity,
+      status,
+      startDate,
+      endDate,
+      limit
+    } = req.query;
+
+    if (!tenantId) {
+      return res.status(400).json({ error: 'tenantId is required' });
+    }
+
+    const filters: any = {};
+    if (action) filters.action = action;
+    if (actorId) filters.actorId = actorId;
+    if (resourceType) filters.resourceType = resourceType;
+    if (resourceId) filters.resourceId = resourceId;
+    if (severity) filters.severity = severity;
+    if (status) filters.status = status;
+    if (startDate) filters.startDate = new Date(startDate as string);
+    if (endDate) filters.endDate = new Date(endDate as string);
+    if (limit) filters.limit = parseInt(limit as string);
+
+    const logs = await getAuditLogs(tenantId as string, filters);
+    res.json(logs);
+  } catch (error: any) {
+    console.error('[API] Error getting audit logs:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/audit/logs/:logId - Get specific audit log
+app.get('/api/audit/logs/:logId', requireAuth, requirePermission('audit:view-logs'), async (req, res) => {
+  try {
+    const { logId } = req.params;
+    const { tenantId } = req.query;
+
+    if (!tenantId) {
+      return res.status(400).json({ error: 'tenantId is required' });
+    }
+
+    const log = await getAuditLogById(logId, tenantId as string);
+
+    if (!log) {
+      return res.status(404).json({ error: `Audit log ${logId} not found` });
+    }
+
+    res.json(log);
+  } catch (error: any) {
+    console.error('[API] Error getting audit log:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/audit/stats - Get audit statistics
+app.get('/api/audit/stats', requireAuth, requirePermission('audit:view-logs'), async (req, res) => {
+  try {
+    const { tenantId, period } = req.query;
+
+    if (!tenantId) {
+      return res.status(400).json({ error: 'tenantId is required' });
+    }
+
+    const stats = await getAuditStats(
+      tenantId as string,
+      (period as 'day' | 'week' | 'month') || 'week'
+    );
+
+    res.json(stats);
+  } catch (error: any) {
+    console.error('[API] Error getting audit stats:', error);
     res.status(500).json({ error: error.message });
   }
 });
