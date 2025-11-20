@@ -1,5 +1,6 @@
 import { MarkdownLesson } from './MarkdownLesson'
 import { VideoLesson } from './VideoLesson'
+import { QuizLesson } from '../quiz/QuizLesson'
 
 interface LessonContentProps {
   lesson: {
@@ -11,11 +12,19 @@ interface LessonContentProps {
       videoProvider?: 'youtube' | 'vimeo' | 'url'
       videoId?: string
       videoUrl?: string
+      quiz?: {
+        description?: string
+        questions: any[]
+        maxLives?: number
+        showTimer?: boolean
+        passingScore?: number
+      }
     }
   }
+  onQuizComplete?: (results: any) => void
 }
 
-export function LessonContent({ lesson }: LessonContentProps) {
+export function LessonContent({ lesson, onQuizComplete }: LessonContentProps) {
   switch (lesson.type) {
     case 'markdown':
       return <MarkdownLesson content={lesson.content.markdown || ''} />
@@ -31,11 +40,24 @@ export function LessonContent({ lesson }: LessonContentProps) {
       )
     
     case 'quiz':
-      // TODO: Implementar en Phase 3
+      if (!lesson.content.quiz?.questions) {
+        return (
+          <div className="p-8 text-center text-muted-foreground">
+            Error: Quiz sin preguntas configuradas
+          </div>
+        )
+      }
+      
       return (
-        <div className="p-8 text-center text-muted-foreground">
-          Quiz component - Coming soon in Phase 3
-        </div>
+        <QuizLesson
+          title={lesson.title}
+          description={lesson.content.quiz.description}
+          questions={lesson.content.quiz.questions}
+          maxLives={lesson.content.quiz.maxLives}
+          showTimer={lesson.content.quiz.showTimer}
+          passingScore={lesson.content.quiz.passingScore}
+          onComplete={onQuizComplete}
+        />
       )
     
     default:

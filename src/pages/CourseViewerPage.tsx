@@ -340,7 +340,19 @@ export function CourseViewerPage() {
                 transition={{ duration: 0.3 }}
                 className="space-y-6"
               >
-                {currentLesson && <LessonContent lesson={currentLesson} />}
+                {currentLesson && (
+                  <LessonContent 
+                    lesson={currentLesson}
+                    onQuizComplete={(results) => {
+                      // Guardar resultados del quiz
+                      console.log('Quiz completed:', results)
+                      // Marcar lección como completada automáticamente
+                      if (results.accuracy >= 70) {
+                        handleCompleteLesson()
+                      }
+                    }}
+                  />
+                )}
 
                 {/* Navigation and Complete Button */}
                 <div className="flex items-center justify-between">
