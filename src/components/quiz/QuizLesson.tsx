@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { MultipleChoiceQuiz } from './MultipleChoiceQuiz'
 import { TrueFalseQuiz } from './TrueFalseQuiz'
 import { FillInTheBlankQuiz } from './FillInTheBlankQuiz'
+import { ScenarioSolverQuiz } from './ScenarioSolverQuiz'
 import { QuizResults } from './QuizContainer'
 import { QuizResultsPage } from './QuizResultsPage'
 import { Card } from '@/components/ui/card'
@@ -20,7 +21,7 @@ import { cn } from '@/lib/utils'
 
 interface QuizQuestion {
   id: string
-  type: 'multiple-choice' | 'true-false' | 'fill-blank'
+  type: 'multiple-choice' | 'true-false' | 'fill-blank' | 'scenario-solver'
   question: any
   xpReward: number
 }
@@ -55,14 +56,16 @@ export function QuizLesson({
   const [showResults, setShowResults] = useState(false)
   const [isAnswered, setIsAnswered] = useState(false)
   const [selectedAnswer, setSelectedAnswer] = useState<any>(null)
+  const [scenarioPerfectScore, setScenarioPerfectScore] = useState(0)
 
   const currentQuestion = questions[currentQuestionIndex]
   const progress = ((currentQuestionIndex + 1) / questions.length) * 100
   const isLastQuestion = currentQuestionIndex === questions.length - 1
+  const isScenario = currentQuestion.type === 'scenario-solver'
 
-  // Timer effect
+  // Timer effect - NO iniciar para scenarios (sin presión de tiempo)
   useState(() => {
-    if (!showTimer) return
+    if (!showTimer || isScenario) return
 
     const interval = setInterval(() => {
       setTimeElapsed((prev) => prev + 1)
@@ -71,32 +74,53 @@ export function QuizLesson({
     return () => clearInterval(interval)
   })
 
-  const handleAnswer = (isCorrect: boolean, answer: any) => {
+  const handleAnswer = (isCorrect: boolean, answerOrScore: any, perfectScore?: number) => {
     setIsAnswered(true)
-    setSelectedAnswer(answer)
-
-    if (isCorrect) {
-      setCorrectCount((prev) => prev + 1)
+    
+    // Para scenario-solver, answerOrScore es el score total y perfectScore viene como 3er parámetro
+    // Para otros tipos, answerOrScore es la respuesta del usuario
+    
+    if (isScenario) {
+      // El scenario solver ya terminó, usar su score directamente
+      const scenarioScore = answerOrScore
+      setEarnedXP(scenarioScore)
+      setScenarioPerfectScore(perfectScore || 100)
       
-      // Update combo
-      const newCombo = combo + 1
-      setCombo(newCombo)
-      setMaxCombo(Math.max(maxCombo, newCombo))
-
-      // Calculate XP with combo multiplier
-      const comboMultiplier = 1 + (combo * 0.1)
-      const questionXP = Math.floor(currentQuestion.xpReward * comboMultiplier)
-      setEarnedXP((prev) => prev + questionXP)
+      // Considerar correcto si pasó el 70% del perfect score
+      if (isCorrect) {
+        setCorrectCount(1)
+      } else {
+        setIncorrectCount(1)
+      }
+      
+      // No descontar vidas en scenarios
     } else {
-      setIncorrectCount((prev) => prev + 1)
-      setCombo(0)
-      setLives((prev) => Math.max(0, prev - 1))
+      // Lógica tradicional para otros tipos de quiz
+      setSelectedAnswer(answerOrScore)
 
-      // Check game over
-      if (lives === 1) {
-        setTimeout(() => {
-          finishQuiz()
-        }, 2000)
+      if (isCorrect) {
+        setCorrectCount((prev) => prev + 1)
+        
+        // Update combo
+        const newCombo = combo + 1
+        setCombo(newCombo)
+        setMaxCombo(Math.max(maxCombo, newCombo))
+
+        // Calculate XP with combo multiplier
+        const comboMultiplier = 1 + (combo * 0.1)
+        const questionXP = Math.floor(currentQuestion.xpReward * comboMultiplier)
+        setEarnedXP((prev) => prev + questionXP)
+      } else {
+        setIncorrectCount((prev) => prev + 1)
+        setCombo(0)
+        setLives((prev) => Math.max(0, prev - 1))
+
+        // Check game over
+        if (lives === 1) {
+          setTimeout(() => {
+            finishQuiz()
+          }, 2000)
+        }
       }
     }
   }
@@ -160,16 +184,20 @@ export function QuizLesson({
           totalQuestions: questions.length,
           correctAnswers: correctCount,
           incorrectAnswers: incorrectCount,
-          totalXP: Math.floor(earnedXP * 0.8), // -20% en retry
-          accuracy: (correctCount / questions.length) * 100,
-          timeTaken: timeElapsed,
-          isPerfectScore: correctCount === questions.length && lives === maxLives,
+          totalXP: isScenario ? earnedXP : Math.floor(earnedXP * 0.8), // Scenarios no tienen retry penalty
+          accuracy: isScenario 
+            ? (earnedXP / scenarioPerfectScore) * 100 // Calcular accuracy basado en score
+            : (correctCount / questions.length) * 100,
+          timeTaken: isScenario ? 0 : timeElapsed, // No mostrar tiempo en scenarios
+          isPerfectScore: isScenario 
+            ? earnedXP === scenarioPerfectScore // Perfect solo si obtuvo el 100% del score
+            : correctCount === questions.length && lives === maxLives,
           usedHints: 0,
-          livesRemaining: lives,
-          combo: maxCombo,
+          livesRemaining: isScenario ? maxLives : lives, // Scenarios no pierden vidas
+          combo: isScenario ? 0 : maxCombo, // Scenarios no tienen combo
         }}
         onRetry={handleRetry}
-        allowRetry={true}
+        allowRetry={!isScenario} // No permitir retry en scenarios (ya tienen su propio review interno)
       />
     )
   }
@@ -188,81 +216,83 @@ export function QuizLesson({
         )}
       </Card>
 
-      {/* Progress Header */}
-      <Card className="p-4">
-        <div className="space-y-4">
-          {/* Progress Bar */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium">
-                Pregunta {currentQuestionIndex + 1} de {questions.length}
-              </span>
-              <span className="text-sm text-muted-foreground">
-                {Math.round(progress)}%
-              </span>
-            </div>
-            <Progress value={progress} className="h-2" />
-          </div>
-
-          {/* Stats Row */}
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            {/* Lives */}
-            <div className="flex items-center gap-2">
-              <div className="flex gap-1">
-                {Array.from({ length: maxLives }).map((_, idx) => (
-                  <motion.div
-                    key={idx}
-                    initial={{ scale: 1 }}
-                    animate={
-                      idx >= lives
-                        ? { scale: [1, 1.2, 0.8], opacity: 0.3 }
-                        : { scale: 1 }
-                    }
-                    transition={{ duration: 0.3 }}
-                  >
-                    <Heart
-                      className={cn(
-                        'h-6 w-6',
-                        idx < lives
-                          ? 'fill-red-500 text-red-500'
-                          : 'fill-gray-300 text-gray-300'
-                      )}
-                    />
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-
-            {/* Combo */}
-            {combo > 1 && (
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                className="flex items-center gap-2 px-3 py-1 rounded-full bg-orange-100 dark:bg-orange-950"
-              >
-                <Flame className="h-4 w-4 text-orange-500" />
-                <span className="text-sm font-bold text-orange-700 dark:text-orange-300">
-                  Combo x{combo}
+      {/* Progress Header - Hide for scenario-solver */}
+      {currentQuestion.type !== 'scenario-solver' && (
+        <Card className="p-4">
+          <div className="space-y-4">
+            {/* Progress Bar */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium">
+                  Pregunta {currentQuestionIndex + 1} de {questions.length}
                 </span>
-              </motion.div>
-            )}
-
-            {/* Timer */}
-            {showTimer && (
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Timer className="h-4 w-4" />
-                <span className="text-sm font-mono">{formatTime(timeElapsed)}</span>
+                <span className="text-sm text-muted-foreground">
+                  {Math.round(progress)}%
+                </span>
               </div>
-            )}
+              <Progress value={progress} className="h-2" />
+            </div>
 
-            {/* Score */}
-            <Badge variant="secondary" className="text-sm font-mono gap-1">
-              <Trophy className="h-4 w-4" />
-              {earnedXP} XP
-            </Badge>
+            {/* Stats Row */}
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              {/* Lives */}
+              <div className="flex items-center gap-2">
+                <div className="flex gap-1">
+                  {Array.from({ length: maxLives }).map((_, idx) => (
+                    <motion.div
+                      key={idx}
+                      initial={{ scale: 1 }}
+                      animate={
+                        idx >= lives
+                          ? { scale: [1, 1.2, 0.8], opacity: 0.3 }
+                          : { scale: 1 }
+                      }
+                      transition={{ duration: 0.3 }}
+                    >
+                      <Heart
+                        className={cn(
+                          'h-6 w-6',
+                          idx < lives
+                            ? 'fill-red-500 text-red-500'
+                            : 'fill-gray-300 text-gray-300'
+                        )}
+                      />
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Combo */}
+              {combo > 1 && (
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  className="flex items-center gap-2 px-3 py-1 rounded-full bg-orange-100 dark:bg-orange-950"
+                >
+                  <Flame className="h-4 w-4 text-orange-500" />
+                  <span className="text-sm font-bold text-orange-700 dark:text-orange-300">
+                    Combo x{combo}
+                  </span>
+                </motion.div>
+              )}
+
+              {/* Timer */}
+              {showTimer && (
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Timer className="h-4 w-4" />
+                  <span className="text-sm font-mono">{formatTime(timeElapsed)}</span>
+                </div>
+              )}
+
+              {/* Score */}
+              <Badge variant="secondary" className="text-sm font-mono gap-1">
+                <Trophy className="h-4 w-4" />
+                {earnedXP} XP
+              </Badge>
+            </div>
           </div>
-        </div>
-      </Card>
+        </Card>
+      )}
 
       {/* Question */}
       <AnimatePresence mode="wait">
@@ -299,10 +329,22 @@ export function QuizLesson({
               selectedAnswers={selectedAnswer || []}
             />
           )}
+
+          {currentQuestion.type === 'scenario-solver' && (
+            <ScenarioSolverQuiz
+              question={currentQuestion.question}
+              onAnswer={(isCorrect, score, perfectScore) => {
+                // El scenario solver maneja su propio scoring
+                // score = puntos obtenidos, perfectScore = máximo posible
+                handleAnswer(isCorrect, score, perfectScore)
+              }}
+              isAnswered={isAnswered}
+            />
+          )}
         </motion.div>
       </AnimatePresence>
 
-      {/* Next Button */}
+      {/* Next/Finish Button */}
       <AnimatePresence>
         {isAnswered && (
           <motion.div

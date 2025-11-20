@@ -86,6 +86,9 @@ export function QuizResultsPage({
 
   const grade = getGrade()
 
+  // Detectar si es un scenario (no tiene tiempo ni combo)
+  const isScenario = results.timeTaken === 0 && results.combo === 0
+
   const stats = [
     {
       icon: Target,
@@ -101,20 +104,23 @@ export function QuizResultsPage({
       color: 'text-yellow-600',
       bgColor: 'bg-yellow-50 dark:bg-yellow-950',
     },
-    {
-      icon: Clock,
-      label: 'Tiempo',
-      value: `${Math.floor(results.timeTaken / 60)}:${(results.timeTaken % 60).toString().padStart(2, '0')}`,
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-50 dark:bg-purple-950',
-    },
-    {
-      icon: Flame,
-      label: 'Combo Máximo',
-      value: `x${results.combo}`,
-      color: 'text-orange-600',
-      bgColor: 'bg-orange-50 dark:bg-orange-950',
-    },
+    // Solo mostrar tiempo y combo para quizzes tradicionales
+    ...(!isScenario ? [
+      {
+        icon: Clock,
+        label: 'Tiempo',
+        value: `${Math.floor(results.timeTaken / 60)}:${(results.timeTaken % 60).toString().padStart(2, '0')}`,
+        color: 'text-purple-600',
+        bgColor: 'bg-purple-50 dark:bg-purple-950',
+      },
+      {
+        icon: Flame,
+        label: 'Combo Máximo',
+        value: `x${results.combo}`,
+        color: 'text-orange-600',
+        bgColor: 'bg-orange-50 dark:bg-orange-950',
+      },
+    ] : []),
   ]
 
   return (
@@ -252,20 +258,22 @@ export function QuizResultsPage({
               />
             </div>
 
-            {/* Additional Info */}
-            <div className="grid grid-cols-2 gap-4 pt-4 border-t">
-              <div className="flex items-center gap-2 text-sm">
-                <Heart className="h-4 w-4 text-red-500" />
-                <span>Vidas restantes: {results.livesRemaining}</span>
-              </div>
-              
-              {results.usedHints > 0 && (
+            {/* Additional Info - Solo para quizzes tradicionales */}
+            {!isScenario && (
+              <div className="grid grid-cols-2 gap-4 pt-4 border-t">
                 <div className="flex items-center gap-2 text-sm">
-                  <Lightbulb className="h-4 w-4 text-yellow-500" />
-                  <span>Pistas usadas: {results.usedHints}</span>
+                  <Heart className="h-4 w-4 text-red-500" />
+                  <span>Vidas restantes: {results.livesRemaining}</span>
                 </div>
-              )}
-            </div>
+                
+                {results.usedHints > 0 && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <Lightbulb className="h-4 w-4 text-yellow-500" />
+                    <span>Pistas usadas: {results.usedHints}</span>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </Card>
       </motion.div>

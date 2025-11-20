@@ -6,6 +6,7 @@ import { useTenant } from '@/contexts/TenantContext'
 import { ApiService } from '@/services/api.service'
 import { ModuleNavigation } from '@/components/course/ModuleNavigation'
 import { LessonContent } from '@/components/course/LessonContent'
+import { CourseCompletionPage } from '@/components/course/CourseCompletionPage'
 import { XPAnimation } from '@/components/gamification/XPAnimation'
 import { ConfettiEffect } from '@/components/gamification/ConfettiEffect'
 import { Button } from '@/components/ui/button'
@@ -58,6 +59,7 @@ export function CourseViewerPage() {
   const [completedLessons, setCompletedLessons] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
   const [completing, setCompleting] = useState(false)
+  const [courseCompleted, setCourseCompleted] = useState(false)
   
   // Gamification states
   const [showXPAnimation, setShowXPAnimation] = useState(false)
@@ -160,6 +162,19 @@ export function CourseViewerPage() {
             description: `Has completado "${currentModule.title}"`,
             duration: 5000
           })
+
+          // Check if ALL course modules are completed
+          const allCourseModules = course?.modules || []
+          const allCourseLessons = allCourseModules.flatMap(m => m.lessons)
+          const allCourseLessonsCompleted = allCourseLessons.every(l => 
+            moduleCompletedLessons.has(l.id)
+          )
+
+          if (allCourseLessonsCompleted) {
+            // Course is 100% complete!
+            setCourseCompleted(true)
+            return // Don't auto-advance, show completion page
+          }
         }
       }
 
@@ -260,6 +275,19 @@ export function CourseViewerPage() {
     ? isLessonCompleted(currentLessonId)
     : false
 
+  // Show completion page if course is finished
+  if (courseCompleted && course) {
+    const totalLessons = course.modules.reduce((acc, m) => acc + m.lessons.length, 0)
+    return (
+      <CourseCompletionPage
+        courseTitle={course.title}
+        totalXP={totalXP}
+        totalLessons={totalLessons}
+        totalModules={course.modules.length}
+      />
+    )
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -346,10 +374,8 @@ export function CourseViewerPage() {
                     onQuizComplete={(results) => {
                       // Guardar resultados del quiz
                       console.log('Quiz completed:', results)
-                      // Marcar lección como completada automáticamente
-                      if (results.accuracy >= 70) {
-                        handleCompleteLesson()
-                      }
+                      // NO avanzar automáticamente - dejar que el usuario revise sus resultados
+                      // y haga clic en "Marcar como Completado" cuando esté listo
                     }}
                   />
                 )}
