@@ -51,6 +51,8 @@ export async function createMentorshipRequest(
   menteeName: string,
   menteeEmail: string,
   mentorId: string,
+  mentorName: string,
+  mentorEmail: string,
   topic: string,
   message: string,
   preferredDate?: number
@@ -62,6 +64,8 @@ export async function createMentorshipRequest(
     menteeName,
     menteeEmail,
     mentorId,
+    mentorName,
+    mentorEmail,
     topic,
     message,
     preferredDate,
@@ -302,6 +306,7 @@ async function updateMentorRating(tenantId: string, mentorId: string): Promise<v
     ]
   }
 
+  const sessionsContainer = getSessionsContainer()
   const { resources } = await sessionsContainer.items.query<{ rating: number }>(query).fetchAll()
   
   if (resources.length === 0) return
@@ -310,6 +315,7 @@ async function updateMentorRating(tenantId: string, mentorId: string): Promise<v
 
   // Actualizar el perfil del mentor (asumiendo que está en users container)
   try {
+    const usersContainer = getUsersContainer()
     const { resource: user } = await usersContainer.item(mentorId, tenantId).read()
     if (user) {
       user.mentorRating = Math.round(avgRating * 10) / 10 // 1 decimal

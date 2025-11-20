@@ -138,6 +138,8 @@ export function RequestMentorshipModal({
         menteeName,
         menteeEmail,
         mentor.userId,
+        mentor.name,
+        mentor.email,
         topic,
         message.trim(),
         preferredDate ? preferredDate.getTime() : undefined

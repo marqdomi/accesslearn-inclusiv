@@ -410,6 +410,8 @@ app.post('/api/mentorship/requests', async (req, res) => {
       menteeName,
       menteeEmail,
       mentorId,
+      mentorName,
+      mentorEmail,
       topic,
       message,
       preferredDate
@@ -421,6 +423,8 @@ app.post('/api/mentorship/requests', async (req, res) => {
       menteeName,
       menteeEmail,
       mentorId,
+      mentorName,
+      mentorEmail,
       topic,
       message,
       preferredDate

@@ -286,6 +286,8 @@ class ApiServiceClass {
     menteeName: string,
     menteeEmail: string,
     mentorId: string,
+    mentorName: string,
+    mentorEmail: string,
     topic: string,
     message: string,
     preferredDate?: number
@@ -298,6 +300,8 @@ class ApiServiceClass {
         menteeName,
         menteeEmail,
         mentorId,
+        mentorName,
+        mentorEmail,
         topic,
         message,
         preferredDate

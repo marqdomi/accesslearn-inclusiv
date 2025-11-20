@@ -652,6 +652,8 @@ export interface MentorshipRequest {
   menteeName: string
   menteeEmail: string
   mentorId: string
+  mentorName: string
+  mentorEmail?: string
   topic: string
   message: string
   preferredDate?: number

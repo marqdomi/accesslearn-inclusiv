@@ -258,7 +258,7 @@ export function MenteeMentorshipsPage() {
                         <div className="flex items-start justify-between gap-4 mb-2">
                           <div>
                             <h3 className="font-semibold text-lg">
-                              Mentor ID: {request.mentorId}
+                              {request.mentorName}
                             </h3>
                             <p className="text-sm text-muted-foreground">
                               {request.topic}
