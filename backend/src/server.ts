@@ -23,6 +23,10 @@ import {
   getTenantUserStats,
   enrollUserInCourse,
   completeCourse,
+  updateUser,
+  deleteUser,
+  inviteUser,
+  acceptInvitation,
 } from './functions/UserFunctions';
 import { getCourses } from './functions/GetCourses';
 import {
@@ -290,6 +294,92 @@ app.get('/api/stats/tenant/:tenantId/users', async (req, res) => {
   } catch (error: any) {
     console.error('[API] Error getting user stats:', error);
     res.status(500).json({ error: error.message });
+  }
+});
+
+// PUT /api/users/:id - Update user
+app.put('/api/users/:id', requireAuth, requirePermission('users:edit'), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { tenantId, ...updates } = req.body;
+
+    if (!tenantId) {
+      return res.status(400).json({ error: 'tenantId is required' });
+    }
+
+    const user = await updateUser(id, tenantId, updates);
+    res.json(user);
+  } catch (error: any) {
+    console.error('[API] Error updating user:', error);
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// DELETE /api/users/:id - Delete user (soft delete)
+app.delete('/api/users/:id', requireAuth, requirePermission('users:delete'), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { tenantId } = req.body;
+
+    if (!tenantId) {
+      return res.status(400).json({ error: 'tenantId is required' });
+    }
+
+    await deleteUser(id, tenantId);
+    res.status(204).send();
+  } catch (error: any) {
+    console.error('[API] Error deleting user:', error);
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// POST /api/users/invite - Invite user
+app.post('/api/users/invite', requireAuth, requirePermission('users:create'), async (req, res) => {
+  try {
+    const { tenantId, email, firstName, lastName, role } = req.body;
+    const invitedBy = req.user?.id || 'system';
+
+    if (!tenantId || !email || !firstName || !lastName || !role) {
+      return res.status(400).json({ 
+        error: 'tenantId, email, firstName, lastName, and role are required' 
+      });
+    }
+
+    const result = await inviteUser({
+      tenantId,
+      email,
+      firstName,
+      lastName,
+      role,
+      invitedBy
+    });
+
+    res.status(201).json({
+      user: result.user,
+      invitationUrl: `${process.env.FRONTEND_URL || 'http://localhost:5000'}/accept-invitation?token=${result.invitationToken}`
+    });
+  } catch (error: any) {
+    console.error('[API] Error inviting user:', error);
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// POST /api/users/accept-invitation - Accept invitation
+app.post('/api/users/accept-invitation', async (req, res) => {
+  try {
+    const { invitationToken, password } = req.body;
+
+    if (!invitationToken || !password) {
+      return res.status(400).json({ 
+        error: 'invitationToken and password are required' 
+      });
+    }
+
+    const user = await acceptInvitation(invitationToken, password);
+    res.json(user);
+  } catch (error: any) {
+    console.error('[API] Error accepting invitation:', error);
+    res.status(400).json({ error: error.message });
   }
 });
 

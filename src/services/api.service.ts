@@ -186,6 +186,43 @@ class ApiServiceClass {
     }>(`/users/stats?tenantId=${tenantId}`)
   }
 
+  async updateUserFull(userId: string, tenantId: string, updates: any) {
+    return this.fetchWithAuth<any>(`/users/${userId}`, {
+      method: 'PUT',
+      body: JSON.stringify({ tenantId, ...updates }),
+    })
+  }
+
+  async deleteUser(userId: string, tenantId: string) {
+    return this.fetchWithAuth<void>(`/users/${userId}`, {
+      method: 'DELETE',
+      body: JSON.stringify({ tenantId }),
+    })
+  }
+
+  async inviteUser(data: {
+    tenantId: string
+    email: string
+    firstName: string
+    lastName: string
+    role: string
+  }) {
+    return this.fetchWithAuth<{
+      user: any
+      invitationUrl: string
+    }>(`/users/invite`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async acceptInvitation(invitationToken: string, password: string) {
+    return this.fetchWithoutAuth<any>(`/users/accept-invitation`, {
+      method: 'POST',
+      body: JSON.stringify({ invitationToken, password }),
+    })
+  }
+
   // ============================================
   // COURSE APIs
   // ============================================

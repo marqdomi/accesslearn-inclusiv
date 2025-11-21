@@ -288,3 +288,152 @@ export async function getTenantUserStats(tenantId: string) {
     totalCompletions: users.reduce((sum, u) => sum + u.completedCourses.length, 0)
   };
 }
+
+/**
+ * Delete user (soft delete - marks as inactive)
+ */
+export async function deleteUser(userId: string, tenantId: string): Promise<void> {
+  const usersContainer = getContainer('users');
+  
+  const user = await getUserById(userId, tenantId);
+  if (!user) {
+    throw new Error(`Usuario ${userId} no encontrado.`);
+  }
+  
+  // Soft delete - mark as inactive
+  user.status = 'inactive';
+  user.updatedAt = new Date().toISOString();
+  user.deletedAt = new Date().toISOString();
+  
+  await usersContainer.items.upsert(user);
+}
+
+/**
+ * Hard delete user (permanent deletion)
+ */
+export async function hardDeleteUser(userId: string, tenantId: string): Promise<void> {
+  const usersContainer = getContainer('users');
+  
+  const user = await getUserById(userId, tenantId);
+  if (!user) {
+    throw new Error(`Usuario ${userId} no encontrado.`);
+  }
+  
+  // Permanent deletion
+  await usersContainer.item(userId, tenantId).delete();
+}
+
+/**
+ * Invite user - Creates user with pending status and invitation token
+ */
+export async function inviteUser(request: {
+  tenantId: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: string;
+  invitedBy: string;
+}): Promise<{ user: User; invitationToken: string }> {
+  // Check if email already exists
+  const usersContainer = getContainer('users');
+  const { resources: existingUsers } = await usersContainer.items
+    .query({
+      query: 'SELECT * FROM c WHERE c.tenantId = @tenantId AND c.email = @email',
+      parameters: [
+        { name: '@tenantId', value: request.tenantId },
+        { name: '@email', value: request.email }
+      ]
+    })
+    .fetchAll();
+  
+  if (existingUsers.length > 0) {
+    throw new Error(`El email ${request.email} ya está registrado.`);
+  }
+  
+  // Generate invitation token
+  const invitationToken = `inv-${uuidv4()}`;
+  const now = new Date().toISOString();
+  const userId = `user-${uuidv4()}`;
+  
+  // Create user with pending status
+  const newUser: User = {
+    id: userId,
+    tenantId: request.tenantId,
+    email: request.email,
+    firstName: request.firstName,
+    lastName: request.lastName,
+    role: request.role,
+    status: 'pending', // Pending until they accept invitation
+    
+    // No password yet - will be set when they accept
+    password: '',
+    passwordResetRequired: true,
+    
+    // Invitation metadata
+    invitationToken,
+    invitedBy: request.invitedBy,
+    invitedAt: now,
+    invitationExpiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days
+    
+    // Initialize empty
+    enrolledCourses: [],
+    completedCourses: [],
+    totalXP: 0,
+    level: 1,
+    badges: [],
+    
+    createdAt: now,
+    updatedAt: now
+  };
+  
+  const { resource } = await usersContainer.items.create(newUser);
+  
+  return {
+    user: resource as unknown as User,
+    invitationToken
+  };
+}
+
+/**
+ * Accept invitation - User sets password and activates account
+ */
+export async function acceptInvitation(
+  invitationToken: string,
+  password: string
+): Promise<User> {
+  const usersContainer = getContainer('users');
+  
+  // Find user by invitation token
+  const { resources: users } = await usersContainer.items
+    .query({
+      query: 'SELECT * FROM c WHERE c.invitationToken = @token',
+      parameters: [{ name: '@token', value: invitationToken }]
+    })
+    .fetchAll();
+  
+  if (users.length === 0) {
+    throw new Error('Token de invitación inválido o expirado.');
+  }
+  
+  const user = users[0] as User;
+  
+  // Check if invitation expired
+  if (user.invitationExpiresAt && new Date(user.invitationExpiresAt) < new Date()) {
+    throw new Error('La invitación ha expirado.');
+  }
+  
+  // Check if already accepted
+  if (user.status === 'active') {
+    throw new Error('Esta invitación ya ha sido aceptada.');
+  }
+  
+  // Update user - set password and activate
+  user.password = password; // TODO: Hash password in production
+  user.status = 'active';
+  user.invitationToken = undefined;
+  user.invitationAcceptedAt = new Date().toISOString();
+  user.updatedAt = new Date().toISOString();
+  
+  const { resource } = await usersContainer.items.upsert(user);
+  return resource as unknown as User;
+}
