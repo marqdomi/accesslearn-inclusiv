@@ -297,9 +297,7 @@ export function TenantResolver({ children }: TenantResolverProps) {
           {/* Footer - Kainet branding */}
           <div className="pt-6 border-t border-gray-100">
             <div className="flex items-center justify-center space-x-2 text-gray-500">
-              <span className="text-sm">Desarrollado con</span>
-              <span className="text-red-500">❤️</span>
-              <span className="text-sm">por</span>
+              <span className="text-sm">Desarrollado por</span>
               <span className="text-sm font-semibold text-blue-600">Kainet</span>
             </div>
             <p className="text-xs text-center text-gray-400 mt-2">

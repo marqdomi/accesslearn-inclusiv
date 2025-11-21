@@ -22,11 +22,14 @@ export async function initializeCosmos(): Promise<void> {
   console.log(`✅ Cosmos DB connected: ${databaseName}`)
 
   // Create necessary containers
+  await createContainerIfNotExists('tenants', '/id')
+  await createContainerIfNotExists('users', '/tenantId')
   await createContainerIfNotExists('courses', '/tenantId')
   await createContainerIfNotExists('mentorship-requests', '/tenantId')
   await createContainerIfNotExists('mentorship-sessions', '/tenantId')
+  await createContainerIfNotExists('audit-logs', '/tenantId')
   
-  console.log(`✅ Containers initialized (courses, mentorship)`)
+  console.log(`✅ Containers initialized (tenants, users, courses, mentorship, audit-logs)`)
 }
 
 export function getDatabase(): Database {
