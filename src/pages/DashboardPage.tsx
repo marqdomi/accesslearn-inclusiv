@@ -298,6 +298,15 @@ export function DashboardPage() {
                   <Button 
                     variant="outline" 
                     className="h-auto py-4 flex flex-col items-center gap-2"
+                    onClick={() => navigate('/catalog')}
+                  >
+                    <BookOpen className="h-5 w-5" />
+                    <span className="text-xs">Catálogo de Cursos</span>
+                  </Button>
+
+                  <Button 
+                    variant="outline" 
+                    className="h-auto py-4 flex flex-col items-center gap-2"
                     onClick={() => navigate('/library')}
                   >
                     <Library className="h-5 w-5" />

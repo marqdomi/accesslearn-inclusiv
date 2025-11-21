@@ -30,12 +30,12 @@ interface User {
   id: string
   tenantId: string
   email: string
-  firstName: string
-  lastName: string
+  firstName?: string
+  lastName?: string
   role: string
-  status: 'active' | 'inactive' | 'pending'
-  totalXP: number
-  level: number
+  status?: 'active' | 'inactive' | 'pending'
+  totalXP?: number
+  level?: number
   createdAt: string
   lastLoginAt?: string
   invitedBy?: string
@@ -218,9 +218,9 @@ export function UserManagement({ onBack }: UserManagementProps) {
   // Filtering
   const filteredUsers = users.filter(user => {
     const matchesSearch = 
-      user.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchQuery.toLowerCase())
+      (user.firstName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (user.lastName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (user.email || '').toLowerCase().includes(searchQuery.toLowerCase())
     
     const matchesRole = roleFilter === 'all' || user.role === roleFilter
     const matchesStatus = statusFilter === 'all' || user.status === statusFilter
@@ -235,7 +235,7 @@ export function UserManagement({ onBack }: UserManagementProps) {
     pending: users.filter(u => u.status === 'pending').length,
     students: users.filter(u => u.role === 'student').length,
     instructors: users.filter(u => u.role === 'instructor').length,
-    admins: users.filter(u => ['super-admin', 'tenant-admin', 'content-manager'].includes(u.role)).length,
+    admins: users.filter(u => ['super-admin', 'tenant-admin', 'content-manager'].includes(u.role || '')).length,
   }
 
   if (loading) {
@@ -252,55 +252,75 @@ export function UserManagement({ onBack }: UserManagementProps) {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between border-b pb-4">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={onBack || (() => navigate('/dashboard'))}>
-            <ArrowLeft size={20} />
-          </Button>
-          <div>
-            <h2 className="text-3xl font-bold">Gestión de Usuarios</h2>
-            <p className="text-sm text-muted-foreground">
-              {stats.total} usuarios · {stats.active} activos · {stats.pending} pendientes
-            </p>
-          </div>
-        </div>
+      <div className="mb-6">
+        <Button variant="ghost" onClick={onBack || (() => navigate('/dashboard'))} className="gap-2 mb-4">
+          <ArrowLeft size={18} />
+          Volver al Dashboard
+        </Button>
+      </div>
+
+      <div className="space-y-2 mb-6">
+        <h2 className="text-3xl font-bold">Gestión de Usuarios</h2>
+        <p className="text-muted-foreground">
+          {stats.total} usuarios · {stats.active} activos · {stats.pending} pendientes
+        </p>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.total}</div>
+      <div className="grid gap-4 md:grid-cols-4">
+        <Card className="bg-blue-50/50 dark:bg-blue-950/20 border-blue-100 dark:border-blue-900">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Total</p>
+                <p className="text-2xl font-bold mt-1">{stats.total}</p>
+              </div>
+              <div className="h-12 w-12 rounded-lg bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center">
+                <UsersIcon className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+              </div>
+            </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Estudiantes</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.students}</div>
+        <Card className="bg-green-50/50 dark:bg-green-950/20 border-green-100 dark:border-green-900">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Estudiantes</p>
+                <p className="text-2xl font-bold mt-1">{stats.students}</p>
+              </div>
+              <div className="h-12 w-12 rounded-lg bg-green-100 dark:bg-green-900/50 flex items-center justify-center">
+                <UsersIcon className="h-6 w-6 text-green-600 dark:text-green-400" />
+              </div>
+            </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Instructores</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.instructors}</div>
+        <Card className="bg-purple-50/50 dark:bg-purple-950/20 border-purple-100 dark:border-purple-900">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Instructores</p>
+                <p className="text-2xl font-bold mt-1">{stats.instructors}</p>
+              </div>
+              <div className="h-12 w-12 rounded-lg bg-purple-100 dark:bg-purple-900/50 flex items-center justify-center">
+                <UserPlus className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+              </div>
+            </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Admins</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.admins}</div>
+        <Card className="bg-orange-50/50 dark:bg-orange-950/20 border-orange-100 dark:border-orange-900">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Admins</p>
+                <p className="text-2xl font-bold mt-1">{stats.admins}</p>
+              </div>
+              <div className="h-12 w-12 rounded-lg bg-orange-100 dark:bg-orange-900/50 flex items-center justify-center">
+                <UsersIcon className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -384,17 +404,17 @@ export function UserManagement({ onBack }: UserManagementProps) {
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-1">
                       <h4 className="font-semibold">
-                        {user.firstName} {user.lastName}
+                        {user.firstName || ''} {user.lastName || ''}
                       </h4>
                       <Badge className={getRoleBadgeColor(user.role)}>
                         {getRoleLabel(user.role)}
                       </Badge>
-                      {getStatusBadge(user.status)}
+                      {getStatusBadge(user.status || 'inactive')}
                     </div>
                     <p className="text-sm text-muted-foreground">{user.email}</p>
                     <div className="flex items-center gap-4 text-xs text-muted-foreground mt-2">
-                      <span>XP: {user.totalXP}</span>
-                      <span>Nivel: {user.level}</span>
+                      <span>XP: {user.totalXP || 0}</span>
+                      <span>Nivel: {user.level || 1}</span>
                       {user.lastLoginAt && (
                         <span>Último acceso: {new Date(user.lastLoginAt).toLocaleDateString()}</span>
                       )}

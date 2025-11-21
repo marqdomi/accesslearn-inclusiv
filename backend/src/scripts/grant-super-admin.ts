@@ -29,70 +29,94 @@ async function grantSuperAdmin() {
 
     console.log(`Found user: ${user.email}`);
 
-    // Update with super admin permissions
-    user.role = 'admin'; // Keep as admin (highest role)
-    user.permissions = [
+    // Update with super admin role and permissions
+    user.role = 'super-admin'; // Set to super-admin (highest role)
+    user.customPermissions = [
       // User management
-      'users:view',
+      'users:read',
       'users:create',
-      'users:edit',
+      'users:update',
       'users:delete',
-      'users:invite',
-      'users:manage-roles',
-      'users:impersonate',
+      'users:list',
+      'users:change-role',
+      'users:change-status',
       
       // Content management
-      'content:view',
       'content:create',
       'content:edit',
-      'content:delete',
       'content:archive',
-      'content:publish',
+      'content:delete',
+      'content:review',
       'content:approve',
       'content:reject',
+      'content:request-changes',
       
       // Course management
-      'courses:view-all',
       'courses:create',
-      'courses:edit-all',
-      'courses:delete-all',
+      'courses:read',
+      'courses:update',
+      'courses:delete',
       'courses:publish',
-      'courses:approve',
-      'courses:manage-enrollment',
+      'courses:archive',
+      'courses:list-all',
+      'courses:list-own',
+      
+      // Enrollment
+      'enrollment:assign-individual',
+      'enrollment:assign-bulk',
+      'enrollment:remove',
+      'enrollment:view',
+      
+      // Groups
+      'groups:create',
+      'groups:read',
+      'groups:update',
+      'groups:delete',
+      'groups:assign-users',
+      'groups:assign-courses',
       
       // Analytics and reporting
-      'analytics:view',
+      'analytics:view-all',
+      'analytics:view-own',
       'analytics:export',
-      'analytics:view-all-tenants',
+      'analytics:view-user-progress',
+      'analytics:view-course-stats',
+      'analytics:view-team-stats',
       
-      // Settings and configuration
-      'settings:manage',
-      'settings:manage-tenant',
-      'settings:manage-billing',
-      'settings:manage-integrations',
+      // Gamification
+      'gamification:configure-xp',
+      'gamification:create-badges',
+      'gamification:manage-leaderboards',
       
       // Mentorship
-      'mentorship:manage',
-      'mentorship:view-all',
-      'mentorship:assign',
+      'mentorship:configure',
+      'mentorship:view-all-sessions',
+      'mentorship:view-own-sessions',
+      'mentorship:accept-requests',
+      'mentorship:rate-sessions',
       
-      // Q&A and community
-      'qanda:moderate',
-      'qanda:delete-any',
-      'community:moderate',
+      // Settings and configuration
+      'settings:branding',
+      'settings:notifications',
+      'settings:integrations',
+      'settings:languages',
+      'settings:compliance',
       
-      // Certificates
-      'certificates:view-all',
-      'certificates:issue',
-      'certificates:revoke',
+      // Audit
+      'audit:view-logs',
+      'audit:export-logs',
       
-      // System
-      'system:admin',
-      'system:debug',
-      'tenants:list-all',
+      // Assets
+      'assets:upload',
+      'assets:manage',
+      'assets:delete',
+      
+      // Tenants
       'tenants:create',
-      'tenants:edit',
+      'tenants:read',
+      'tenants:update',
       'tenants:delete',
+      'tenants:list-all',
     ];
 
     // Update the user
@@ -102,7 +126,7 @@ async function grantSuperAdmin() {
     console.log('\n📋 Summary:');
     console.log(`   User: ${user.email}`);
     console.log(`   Role: ${user.role}`);
-    console.log(`   Permissions: ${user.permissions.length} total`);
+    console.log(`   Permissions: ${user.customPermissions.length} total`);
     console.log('\n🔓 User now has full access to all features');
 
   } catch (error) {

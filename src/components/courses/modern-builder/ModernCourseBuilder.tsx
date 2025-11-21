@@ -225,21 +225,23 @@ export function ModernCourseBuilder({ courseId, onBack }: ModernCourseBuilderPro
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="border-b bg-card">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <Button variant="ghost" size="icon" onClick={handleBack}>
-                <ArrowLeft size={20} />
-              </Button>
-              <div>
-                <h1 className="text-2xl font-bold">
-                  {courseId ? 'Editar Curso' : 'Crear Nuevo Curso'}
-                </h1>
-                <p className="text-sm text-muted-foreground">
-                  {course.title || 'Sin título'}
-                </p>
-              </div>
+      <div className="border-b bg-background">
+        <div className="container mx-auto px-4 py-6">
+          <div className="mb-4">
+            <Button variant="ghost" onClick={handleBack} className="gap-2">
+              <ArrowLeft size={18} />
+              Volver a Mis Cursos
+            </Button>
+          </div>
+          
+          <div className="flex items-center justify-between mb-6">
+            <div className="space-y-2">
+              <h1 className="text-3xl font-bold">
+                {courseId ? 'Editar Curso' : 'Crear Nuevo Curso'}
+              </h1>
+              <p className="text-muted-foreground">
+                {course.title || 'Completa los detalles del curso para comenzar'}
+              </p>
             </div>
             
             <div className="flex items-center gap-4">

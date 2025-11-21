@@ -145,18 +145,13 @@ export function CourseManagement({ onBack }: CourseManagementProps) {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={onBack}>
-            <ArrowLeft size={20} />
-          </Button>
-          <div>
-            <h2 className="text-2xl font-bold">Mis Cursos</h2>
-            <p className="text-sm text-muted-foreground">
-              {courses.length} {courses.length === 1 ? 'curso' : 'cursos'} totales
-            </p>
-          </div>
+        <div className="space-y-2">
+          <h2 className="text-3xl font-bold">Mis Cursos</h2>
+          <p className="text-muted-foreground">
+            {courses.length} {courses.length === 1 ? 'curso' : 'cursos'} totales
+          </p>
         </div>
-        <Button onClick={() => setIsCreating(true)} size="lg">
+        <Button onClick={() => setIsCreating(true)}>
           <Plus className="mr-2" size={20} />
           Crear Nuevo Curso
         </Button>
@@ -164,78 +159,80 @@ export function CourseManagement({ onBack }: CourseManagementProps) {
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-4">
-        <Card>
+        <Card className="bg-blue-50/50 dark:bg-blue-950/20 border-blue-100 dark:border-blue-900">
           <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-blue-100 dark:bg-blue-900 rounded-lg">
-                <Books size={24} className="text-blue-600 dark:text-blue-300" />
-              </div>
+            <div className="flex items-center justify-between">
               <div>
-                <p className="text-2xl font-bold">{courses.length}</p>
-                <p className="text-xs text-muted-foreground">Total Cursos</p>
+                <p className="text-sm font-medium text-muted-foreground">Total Cursos</p>
+                <p className="text-2xl font-bold mt-1">{courses.length}</p>
+              </div>
+              <div className="h-12 w-12 rounded-lg bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center">
+                <Books className="h-6 w-6 text-blue-600 dark:text-blue-400" />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-gray-50/50 dark:bg-gray-950/20 border-gray-100 dark:border-gray-900">
           <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-gray-100 dark:bg-gray-800 rounded-lg">
-                <FileText size={24} className="text-gray-600 dark:text-gray-300" />
-              </div>
+            <div className="flex items-center justify-between">
               <div>
-                <p className="text-2xl font-bold">{draftCount}</p>
-                <p className="text-xs text-muted-foreground">Borradores</p>
+                <p className="text-sm font-medium text-muted-foreground">Borradores</p>
+                <p className="text-2xl font-bold mt-1">{draftCount}</p>
+              </div>
+              <div className="h-12 w-12 rounded-lg bg-gray-100 dark:bg-gray-900/50 flex items-center justify-center">
+                <FileText className="h-6 w-6 text-gray-600 dark:text-gray-400" />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-yellow-50/50 dark:bg-yellow-950/20 border-yellow-100 dark:border-yellow-900">
           <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-yellow-100 dark:bg-yellow-900 rounded-lg">
-                <Clock size={24} className="text-yellow-600 dark:text-yellow-300" />
-              </div>
+            <div className="flex items-center justify-between">
               <div>
-                <p className="text-2xl font-bold">{pendingCount}</p>
-                <p className="text-xs text-muted-foreground">En Revisión</p>
+                <p className="text-sm font-medium text-muted-foreground">En Revisión</p>
+                <p className="text-2xl font-bold mt-1">{pendingCount}</p>
+              </div>
+              <div className="h-12 w-12 rounded-lg bg-yellow-100 dark:bg-yellow-900/50 flex items-center justify-center">
+                <Clock className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-green-50/50 dark:bg-green-950/20 border-green-100 dark:border-green-900">
           <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-green-100 dark:bg-green-900 rounded-lg">
-                <CheckCircle size={24} className="text-green-600 dark:text-green-300" weight="fill" />
-              </div>
+            <div className="flex items-center justify-between">
               <div>
-                <p className="text-2xl font-bold">{publishedCount}</p>
-                <p className="text-xs text-muted-foreground">Publicados</p>
+                <p className="text-sm font-medium text-muted-foreground">Publicados</p>
+                <p className="text-2xl font-bold mt-1">{publishedCount}</p>
+              </div>
+              <div className="h-12 w-12 rounded-lg bg-green-100 dark:bg-green-900/50 flex items-center justify-center">
+                <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400" weight="fill" />
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Search and Filters */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
-          <MagnifyingGlass
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-            size={18}
-          />
-          <Input
-            placeholder="Buscar por título, categoría o descripción..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-      </div>
+      {/* Search */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="relative">
+            <MagnifyingGlass
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+              size={18}
+            />
+            <Input
+              placeholder="Buscar por título, categoría o descripción..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>

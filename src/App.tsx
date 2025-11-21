@@ -11,6 +11,7 @@ import { MentorDirectoryPage } from '@/pages/MentorDirectoryPage'
 import { MentorDashboardPage } from '@/pages/MentorDashboardPage'
 import { MenteeMentorshipsPage } from '@/pages/MenteeMentorshipsPage'
 import { LibraryPage } from '@/pages/LibraryPage'
+import { CourseCatalogPage } from '@/pages/CourseCatalogPage'
 import CourseApprovalDemo from '@/pages/CourseApprovalDemo'
 import { ContentManagerDashboardPage } from '@/pages/ContentManagerDashboardPage'
 import { CourseManagementPage } from '@/pages/CourseManagementPage'
@@ -98,6 +99,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <LibraryPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/catalog"
+        element={
+          <ProtectedRoute>
+            <CourseCatalogPage />
           </ProtectedRoute>
         }
       />

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Input } from '@/components/ui/input'
@@ -17,8 +17,11 @@ import {
 } from '@phosphor-icons/react'
 import { StatusBadge } from '@/components/courses'
 import { useAuth } from '@/contexts/AuthContext'
+import { useTenant } from '@/contexts/TenantContext'
+import { ApiService } from '@/services/api.service'
 import { formatDistanceToNow } from 'date-fns'
 import { es } from 'date-fns/locale'
+import { toast } from 'sonner'
 
 type CourseStatus = 'draft' | 'pending-review' | 'published' | 'archived'
 
@@ -38,80 +41,7 @@ interface Course {
   requestedChanges?: string
 }
 
-// Mock data - In production, this would come from the backend
-const mockCourses: Course[] = [
-  {
-    id: 'course-1',
-    title: 'Advanced TypeScript Patterns',
-    description: 'Deep dive into advanced TypeScript patterns and best practices',
-    instructor: 'user-123',
-    instructorName: 'Carlos García',
-    status: 'pending-review',
-    category: 'Programming',
-    createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-    submittedForReviewAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: 'course-2',
-    title: 'React Performance Optimization',
-    description: 'Learn how to optimize React applications for maximum performance',
-    instructor: 'user-456',
-    instructorName: 'María Instructor',
-    status: 'pending-review',
-    category: 'Web Development',
-    createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-    submittedForReviewAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: 'course-3',
-    title: 'JavaScript Fundamentals',
-    description: 'Master the fundamentals of JavaScript programming',
-    instructor: 'user-789',
-    instructorName: 'Juan López',
-    status: 'published',
-    category: 'Programming',
-    createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-    submittedForReviewAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString(),
-    publishedAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
-    reviewComments: 'Excellent course! Well structured and comprehensive.',
-  },
-  {
-    id: 'course-4',
-    title: 'Node.js Backend Development',
-    description: 'Build scalable backend applications with Node.js',
-    instructor: 'user-123',
-    instructorName: 'Carlos García',
-    status: 'published',
-    category: 'Backend',
-    createdAt: new Date(Date.now() - 25 * 24 * 60 * 60 * 1000).toISOString(),
-    submittedForReviewAt: new Date(Date.now() - 18 * 24 * 60 * 60 * 1000).toISOString(),
-    publishedAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: 'course-5',
-    title: 'Legacy AngularJS Basics',
-    description: 'Introduction to AngularJS (outdated content)',
-    instructor: 'user-999',
-    instructorName: 'Pedro Antiguo',
-    status: 'archived',
-    category: 'Frontend',
-    createdAt: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString(),
-    submittedForReviewAt: new Date(Date.now() - 360 * 24 * 60 * 60 * 1000).toISOString(),
-    publishedAt: new Date(Date.now() - 350 * 24 * 60 * 60 * 1000).toISOString(),
-    archivedAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: 'course-6',
-    title: 'Python Web Scraping',
-    description: 'Learn web scraping techniques with Python',
-    instructor: 'user-456',
-    instructorName: 'María Instructor',
-    status: 'draft',
-    category: 'Python',
-    createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-    requestedChanges: 'Please add more examples in module 2 and fix typos in lesson 3',
-  },
-]
+
 
 interface ContentManagerDashboardProps {
   onReviewCourse?: (courseId: string) => void
@@ -119,57 +49,82 @@ interface ContentManagerDashboardProps {
 
 export function ContentManagerDashboard({ onReviewCourse }: ContentManagerDashboardProps) {
   const { user } = useAuth()
+  const { currentTenant } = useTenant()
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedTab, setSelectedTab] = useState('pending')
+  const [courses, setCourses] = useState<Course[]>([])
+  const [loading, setLoading] = useState(true)
 
   // Check permissions
   const canManageContent = user?.role === 'super-admin' || 
                           user?.role === 'tenant-admin' || 
                           user?.role === 'content-manager'
 
+  // Load courses from backend
+  useEffect(() => {
+    if (currentTenant) {
+      loadCourses()
+    }
+  }, [currentTenant])
+
+  const loadCourses = async () => {
+    if (!currentTenant) return
+
+    try {
+      setLoading(true)
+      const data = await ApiService.getCourses(currentTenant.id)
+      setCourses(data)
+    } catch (error: any) {
+      console.error('Error loading courses:', error)
+      toast.error('Error al cargar cursos')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   // Filter courses by status and search
   const filteredCourses = useMemo(() => {
-    let courses = mockCourses
+    let filteredList = courses
 
     // Filter by tab
     switch (selectedTab) {
       case 'pending':
-        courses = courses.filter(c => c.status === 'pending-review')
+        filteredList = filteredList.filter(c => c.status === 'pending-review')
         break
       case 'published':
-        courses = courses.filter(c => c.status === 'published')
+        filteredList = filteredList.filter(c => c.status === 'published')
         break
       case 'archived':
-        courses = courses.filter(c => c.status === 'archived')
+        filteredList = filteredList.filter(c => c.status === 'archived')
         break
       case 'draft':
-        courses = courses.filter(c => c.status === 'draft')
+        filteredList = filteredList.filter(c => c.status === 'draft')
         break
     }
 
     // Filter by search
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase()
-      courses = courses.filter(c => 
-        c.title.toLowerCase().includes(query) ||
-        c.description.toLowerCase().includes(query) ||
-        c.instructorName.toLowerCase().includes(query) ||
-        c.category.toLowerCase().includes(query)
+      filteredList = filteredList.filter(c => 
+        (c.title || '').toLowerCase().includes(query) ||
+        (c.description || '').toLowerCase().includes(query) ||
+        (c.instructorName || '').toLowerCase().includes(query) ||
+        (c.category || '').toLowerCase().includes(query)
       )
     }
 
-    return courses
-  }, [selectedTab, searchQuery])
+    return filteredList
+  }, [courses, selectedTab, searchQuery])
 
   // Calculate stats
   const stats = useMemo(() => {
     return {
-      pending: mockCourses.filter(c => c.status === 'pending-review').length,
-      published: mockCourses.filter(c => c.status === 'published').length,
-      archived: mockCourses.filter(c => c.status === 'archived').length,
-      draft: mockCourses.filter(c => c.status === 'draft').length,
+      pending: courses.filter(c => c.status === 'pending-review').length,
+      published: courses.filter(c => c.status === 'published').length,
+      archived: courses.filter(c => c.status === 'archived').length,
+      draft: courses.filter(c => c.status === 'draft').length,
     }
-  }, [])
+  }, [courses])
 
   if (!canManageContent) {
     return (
@@ -180,6 +135,17 @@ export function ContentManagerDashboard({ onReviewCourse }: ContentManagerDashbo
           Solo content managers y administradores pueden gestionar la aprobación de contenido.
         </AlertDescription>
       </Alert>
+    )
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Cargando cursos...</p>
+        </div>
+      </div>
     )
   }
 
@@ -194,74 +160,67 @@ export function ContentManagerDashboard({ onReviewCourse }: ContentManagerDashbo
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="pb-3">
+      <div className="grid gap-4 md:grid-cols-4">
+        <Card className="bg-orange-50/50 dark:bg-orange-950/20 border-orange-100 dark:border-orange-900">
+          <CardContent className="pt-6">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium">Pending Review</CardTitle>
-              <Clock className="h-4 w-4 text-orange-500" />
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Pending Review</p>
+                <p className="text-2xl font-bold mt-1">{stats.pending}</p>
+              </div>
+              <div className="h-12 w-12 rounded-lg bg-orange-100 dark:bg-orange-900/50 flex items-center justify-center">
+                <Clock className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+              </div>
             </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.pending}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Cursos esperando revisión
-            </p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-3">
+        <Card className="bg-green-50/50 dark:bg-green-950/20 border-green-100 dark:border-green-900">
+          <CardContent className="pt-6">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium">Published</CardTitle>
-              <CheckCircle className="h-4 w-4 text-green-500" />
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Published</p>
+                <p className="text-2xl font-bold mt-1">{stats.published}</p>
+              </div>
+              <div className="h-12 w-12 rounded-lg bg-green-100 dark:bg-green-900/50 flex items-center justify-center">
+                <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400" />
+              </div>
             </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.published}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Cursos publicados
-            </p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-3">
+        <Card className="bg-gray-50/50 dark:bg-gray-950/20 border-gray-100 dark:border-gray-900">
+          <CardContent className="pt-6">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium">Archived</CardTitle>
-              <ArchiveBox className="h-4 w-4 text-gray-500" />
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Archived</p>
+                <p className="text-2xl font-bold mt-1">{stats.archived}</p>
+              </div>
+              <div className="h-12 w-12 rounded-lg bg-gray-100 dark:bg-gray-900/50 flex items-center justify-center">
+                <ArchiveBox className="h-6 w-6 text-gray-600 dark:text-gray-400" />
+              </div>
             </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.archived}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Cursos archivados
-            </p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-3">
+        <Card className="bg-blue-50/50 dark:bg-blue-950/20 border-blue-100 dark:border-blue-900">
+          <CardContent className="pt-6">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium">Drafts</CardTitle>
-              <FileText className="h-4 w-4 text-blue-500" />
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Drafts</p>
+                <p className="text-2xl font-bold mt-1">{stats.draft}</p>
+              </div>
+              <div className="h-12 w-12 rounded-lg bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center">
+                <FileText className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+              </div>
             </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.draft}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Borradores (con cambios solicitados)
-            </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Filters */}
+      {/* Search */}
       <Card>
-        <CardHeader>
-          <CardTitle>Buscar Cursos</CardTitle>
-        </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           <div className="relative">
             <MagnifyingGlass className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={18} />
             <Input

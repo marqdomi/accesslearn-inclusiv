@@ -431,23 +431,37 @@ export function CourseViewerPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b bg-card sticky top-0 z-10">
+      <header className="border-b bg-background sticky top-0 z-10 shadow-sm">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Button
                 variant="ghost"
-                size="sm"
-                onClick={() => navigate('/dashboard')}
+                onClick={() => navigate('/library')}
+                className="gap-2"
               >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Volver
+                <ArrowLeft size={18} />
+                Mi Biblioteca
               </Button>
-              <div>
-                <h1 className="text-xl font-bold">{course.title}</h1>
+              <div className="border-l pl-4">
+                <h1 className="text-lg font-bold">{course.title}</h1>
                 <p className="text-sm text-muted-foreground">
-                  {course.modules.length} módulos • {course.estimatedHours} horas
+                  {completedLessons.size} de {totalLessons} lecciones completadas
                 </p>
+              </div>
+            </div>
+            
+            {/* Progress indicator */}
+            <div className="hidden md:flex items-center gap-3">
+              <div className="text-right">
+                <p className="text-sm font-medium">{Math.round((completedLessons.size / totalLessons) * 100)}%</p>
+                <p className="text-xs text-muted-foreground">Progreso</p>
+              </div>
+              <div className="w-32 h-2 bg-muted rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-primary transition-all duration-300"
+                  style={{ width: `${(completedLessons.size / totalLessons) * 100}%` }}
+                />
               </div>
             </div>
           </div>

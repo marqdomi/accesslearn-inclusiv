@@ -25,7 +25,6 @@ export type Permission =
   | 'users:update'
   | 'users:delete'
   | 'users:list'
-  | 'users:edit'
   | 'users:change-role'
   | 'users:change-status'
   

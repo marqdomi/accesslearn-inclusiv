@@ -212,7 +212,24 @@ app.post('/api/tenants', requireAuth, requirePermission('tenants:create'), async
 // USER ENDPOINTS
 // ============================================
 
-// GET /api/users/tenant/:tenantId - Get users by tenant
+// GET /api/users - Get users by tenant (query param)
+app.get('/api/users', requireAuth, requirePermission('users:list'), async (req, res) => {
+  try {
+    const { tenantId, role } = req.query;
+
+    if (!tenantId) {
+      return res.status(400).json({ error: 'tenantId query parameter is required' });
+    }
+
+    const users = await getUsersByTenant(tenantId as string, role as string);
+    res.json(users);
+  } catch (error: any) {
+    console.error('[API] Error getting users:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/users/tenant/:tenantId - Get users by tenant (path param)
 app.get('/api/users/tenant/:tenantId', requireAuth, requirePermission('users:list'), async (req, res) => {
   try {
     const { tenantId } = req.params;
@@ -309,7 +326,7 @@ app.get('/api/stats/tenant/:tenantId/users', async (req, res) => {
 });
 
 // PUT /api/users/:id - Update user
-app.put('/api/users/:id', requireAuth, requirePermission('users:edit'), async (req, res) => {
+app.put('/api/users/:id', requireAuth, requirePermission('users:update'), async (req, res) => {
   try {
     const { id } = req.params;
     const { tenantId, ...updates } = req.body;

@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -127,98 +126,73 @@ export function MenteeMentorshipsPage() {
   return (
     <div className="container mx-auto px-4 py-8 space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <div className="flex items-center gap-3 mb-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate('/mentors')}
-              className="gap-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Volver al Directorio
-            </Button>
-            <h1 className="text-3xl font-bold">Mis Mentorías 📚</h1>
-          </div>
-          <p className="text-muted-foreground">
-            Gestiona tus solicitudes y sesiones de mentoría
-          </p>
-        </div>
+      <div className="mb-6">
+        <Button
+          variant="ghost"
+          onClick={() => navigate('/mentors')}
+          className="gap-2 mb-4"
+        >
+          <ArrowLeft size={18} />
+          Volver al Directorio
+        </Button>
+      </div>
+
+      <div className="space-y-2 mb-6">
+        <h1 className="text-3xl font-bold">Mis Mentorías</h1>
+        <p className="text-muted-foreground">
+          Gestiona tus solicitudes y sesiones de mentoría
+        </p>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-6 md:grid-cols-3">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-        >
-          <Card className="p-6 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900">
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card className="bg-blue-50/50 dark:bg-blue-950/20 border-blue-100 dark:border-blue-900">
+          <div className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-blue-700 dark:text-blue-300">
-                  Sesiones Programadas
-                </p>
-                <p className="text-3xl font-bold text-blue-900 dark:text-blue-100 mt-2">
-                  {scheduledSessions.length}
-                </p>
+                <p className="text-sm font-medium text-muted-foreground">Sesiones Programadas</p>
+                <p className="text-2xl font-bold mt-1">{scheduledSessions.length}</p>
               </div>
-              <div className="p-3 bg-blue-200 dark:bg-blue-800 rounded-full">
-                <Calendar className="h-6 w-6 text-blue-700 dark:text-blue-300" />
+              <div className="h-12 w-12 rounded-lg bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center">
+                <Calendar className="h-6 w-6 text-blue-600 dark:text-blue-400" />
               </div>
             </div>
-          </Card>
-        </motion.div>
+          </div>
+        </Card>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-        >
-          <Card className="p-6 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950 dark:to-green-900">
+        <Card className="bg-green-50/50 dark:bg-green-950/20 border-green-100 dark:border-green-900">
+          <div className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-green-700 dark:text-green-300">
-                  Sesiones Completadas
-                </p>
-                <p className="text-3xl font-bold text-green-900 dark:text-green-100 mt-2">
-                  {completedSessions.length}
-                </p>
+                <p className="text-sm font-medium text-muted-foreground">Sesiones Completadas</p>
+                <p className="text-2xl font-bold mt-1">{completedSessions.length}</p>
               </div>
-              <div className="p-3 bg-green-200 dark:bg-green-800 rounded-full">
-                <CheckCircle2 className="h-6 w-6 text-green-700 dark:text-green-300" />
+              <div className="h-12 w-12 rounded-lg bg-green-100 dark:bg-green-900/50 flex items-center justify-center">
+                <CheckCircle2 className="h-6 w-6 text-green-600 dark:text-green-400" />
               </div>
             </div>
-          </Card>
-        </motion.div>
+          </div>
+        </Card>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-        >
-          <Card className="p-6 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950 dark:to-purple-900">
+        <Card className="bg-purple-50/50 dark:bg-purple-950/20 border-purple-100 dark:border-purple-900">
+          <div className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-purple-700 dark:text-purple-300">
-                  Total de Sesiones
-                </p>
-                <p className="text-3xl font-bold text-purple-900 dark:text-purple-100 mt-2">
-                  {sessions.length}
-                </p>
+                <p className="text-sm font-medium text-muted-foreground">Total de Sesiones</p>
+                <p className="text-2xl font-bold mt-1">{sessions.length}</p>
               </div>
-              <div className="p-3 bg-purple-200 dark:bg-purple-800 rounded-full">
-                <Users className="h-6 w-6 text-purple-700 dark:text-purple-300" />
+              <div className="h-12 w-12 rounded-lg bg-purple-100 dark:bg-purple-900/50 flex items-center justify-center">
+                <Users className="h-6 w-6 text-purple-600 dark:text-purple-400" />
               </div>
             </div>
-          </Card>
-        </motion.div>
+          </div>
+        </Card>
       </div>
 
       {/* Tabs */}
-      <Card className="p-6">
-        <Tabs defaultValue="requests" className="w-full">
+      <Card>
+        <div className="p-6">
+          <Tabs defaultValue="requests" className="w-full">
           <TabsList className="grid w-full max-w-2xl grid-cols-3">
             <TabsTrigger value="requests">
               Solicitudes ({pendingRequests.length})
@@ -480,6 +454,7 @@ export function MenteeMentorshipsPage() {
             )}
           </TabsContent>
         </Tabs>
+        </div>
       </Card>
 
       {/* Help Card */}

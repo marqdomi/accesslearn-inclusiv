@@ -21,6 +21,7 @@ export interface LoginResponse {
     lastName: string;
     role: string;
     tenantId: string;
+    customPermissions?: string[];
   };
   token?: string;
   error?: string;
@@ -111,6 +112,7 @@ export async function login(request: LoginRequest): Promise<LoginResponse> {
         lastName: user.lastName,
         role: user.role,
         tenantId: user.tenantId,
+        customPermissions: user.customPermissions,
       },
       token,
     };
@@ -159,6 +161,7 @@ export async function validateToken(token: string): Promise<LoginResponse> {
         lastName: resource.lastName,
         role: resource.role,
         tenantId: resource.tenantId,
+        customPermissions: resource.customPermissions,
       },
       token,
     };

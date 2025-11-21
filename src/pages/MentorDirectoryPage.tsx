@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -134,20 +133,20 @@ export function MentorDirectoryPage() {
   return (
     <div className="container mx-auto px-4 py-8 space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <div className="flex items-center gap-3 mb-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate('/dashboard')}
-              className="gap-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Volver
-            </Button>
-            <h1 className="text-3xl font-bold">Directorio de Mentores 🎓</h1>
-          </div>
+      <div className="mb-6">
+        <Button
+          variant="ghost"
+          onClick={() => navigate('/dashboard')}
+          className="gap-2 mb-4"
+        >
+          <ArrowLeft size={18} />
+          Volver al Dashboard
+        </Button>
+      </div>
+
+      <div className="flex items-center justify-between mb-6">
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold">Directorio de Mentores</h1>
           <p className="text-muted-foreground">
             Encuentra el mentor perfecto para tu desarrollo profesional
           </p>
@@ -171,26 +170,25 @@ export function MentorDirectoryPage() {
       </div>
 
       {/* Search and Filters */}
-      <Card className="p-6">
-        <div className="flex flex-col md:flex-row gap-4">
-          {/* Search Bar */}
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar por nombre, especialidad o tema..."
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
-          </div>
+      <Card>
+        <div className="p-6 space-y-4">
+          <div className="flex flex-col md:flex-row gap-4">
+            {/* Search Bar */}
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar por nombre, especialidad o tema..."
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
 
-          {/* Specialty Filter */}
-          <div className="flex items-center gap-2">
-            <Filter className="h-4 w-4 text-muted-foreground" />
+            {/* Specialty Filter */}
             <select
               value={selectedSpecialty}
               onChange={e => setSelectedSpecialty(e.target.value)}
-              className="px-4 py-2 rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground"
+              className="px-4 py-2 rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground w-[200px]"
               aria-label="Filtrar por especialidad"
               title="Filtrar por especialidad"
             >
@@ -202,11 +200,11 @@ export function MentorDirectoryPage() {
               ))}
             </select>
           </div>
-        </div>
 
-        {/* Results Count */}
-        <div className="mt-4 text-sm text-muted-foreground">
-          {filteredMentors.length} {filteredMentors.length === 1 ? 'mentor encontrado' : 'mentores encontrados'}
+          {/* Results Count */}
+          <div className="text-sm text-muted-foreground">
+            {filteredMentors.length} {filteredMentors.length === 1 ? 'mentor encontrado' : 'mentores encontrados'}
+          </div>
         </div>
       </Card>
 
@@ -223,14 +221,8 @@ export function MentorDirectoryPage() {
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredMentors.map((mentor, idx) => (
-            <motion.div
-              key={mentor.userId}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: idx * 0.1 }}
-            >
-              <Card className="p-6 h-full flex flex-col hover:shadow-lg transition-shadow">
+          {filteredMentors.map((mentor) => (
+            <Card key={mentor.userId} className="p-6 h-full flex flex-col hover:shadow-lg transition-shadow">
                 {/* Header with Avatar */}
                 <div className="flex items-start gap-4 mb-4">
                   <div className="relative shrink-0">
@@ -321,7 +313,6 @@ export function MentorDirectoryPage() {
                   </div>
                 )}
               </Card>
-            </motion.div>
           ))}
         </div>
       )}
