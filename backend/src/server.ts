@@ -81,12 +81,22 @@ app.use(express.json());
 app.use(authenticateToken); // Validate JWT and attach user to request
 app.use(attachAuditMetadata); // Agregar metadata de auditoría a todos los requests
 
-// Health check
+// Health check (both paths for compatibility)
+app.get('/health', (req, res) => {
+  res.json({
+    status: 'OK',
+    message: 'AccessLearn Backend API',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development',
+  });
+});
+
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'OK',
     message: 'AccessLearn Backend API',
     timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development',
   });
 });
 

@@ -1,0 +1,33 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "value": "eastus"
+    },
+    "environment": {
+      "value": "prod"
+    },
+    "appName": {
+      "value": "accesslearn"
+    },
+    "cosmosEndpoint": {
+      "value": "https://accesslearn-cosmos-prod.documents.azure.com:443/"
+    },
+    "cosmosKey": {
+      "value": "SET_FROM_ENV_OR_KEYVAULT"
+    },
+    "resendApiKey": {
+      "value": "SET_FROM_ENV_OR_KEYVAULT"
+    },
+    "emailFrom": {
+      "value": "newsletter@kainet.mx"
+    },
+    "jwtSecret": {
+      "value": "SET_FROM_ENV_OR_KEYVAULT"
+    },
+    "imageTag": {
+      "value": "latest"
+    }
+  }
+}
