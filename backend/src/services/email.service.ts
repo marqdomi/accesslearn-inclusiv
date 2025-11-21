@@ -1,4 +1,4 @@
-import sgMail from '@sendgrid/mail'
+import { Resend } from 'resend'
 
 interface EmailConfig {
   apiKey: string
@@ -32,17 +32,18 @@ interface WelcomeEmailData {
 
 export class EmailService {
   private config: EmailConfig
+  private resend: Resend | null = null
 
   constructor(config?: Partial<EmailConfig>) {
     this.config = {
-      apiKey: config?.apiKey || process.env.SENDGRID_API_KEY || '',
-      fromEmail: config?.fromEmail || process.env.FROM_EMAIL || 'noreply@kainet.mx',
-      fromName: config?.fromName || process.env.FROM_NAME || 'AccessLearn Inclusiv',
+      apiKey: config?.apiKey || process.env.RESEND_API_KEY || '',
+      fromEmail: config?.fromEmail || process.env.EMAIL_FROM || 'newsletter@kainet.mx',
+      fromName: config?.fromName || 'AccessLearn Inclusiv',
       frontendUrl: config?.frontendUrl || process.env.FRONTEND_URL || 'http://localhost:5173',
     }
 
     if (this.config.apiKey) {
-      sgMail.setApiKey(this.config.apiKey)
+      this.resend = new Resend(this.config.apiKey)
     }
   }
 
@@ -50,14 +51,14 @@ export class EmailService {
    * Check if email service is properly configured
    */
   isConfigured(): boolean {
-    return !!this.config.apiKey
+    return !!this.config.apiKey && !!this.resend
   }
 
   /**
    * Send invitation email to a new user
    */
   async sendInvitationEmail(data: InvitationEmailData): Promise<void> {
-    if (!this.isConfigured()) {
+    if (!this.isConfigured() || !this.resend) {
       console.warn('Email service not configured. Skipping invitation email.')
       return
     }
@@ -72,14 +73,12 @@ export class EmailService {
 
     const roleLabel = roleLabels[data.role] || data.role
 
-    const msg = {
-      to: data.recipientEmail,
-      from: {
-        email: this.config.fromEmail,
-        name: this.config.fromName,
-      },
-      subject: `Invitación a ${data.tenantName} - AccessLearn Inclusiv`,
-      html: `
+    try {
+      await this.resend.emails.send({
+        from: `${this.config.fromName} <${this.config.fromEmail}>`,
+        to: data.recipientEmail,
+        subject: `Invitación a ${data.tenantName} - AccessLearn Inclusiv`,
+        html: `
 <!DOCTYPE html>
 <html>
 <head>
@@ -191,16 +190,11 @@ Si no solicitaste esta invitación, puedes ignorar este mensaje.
 © ${new Date().getFullYear()} AccessLearn Inclusiv
 Powered by kainet.mx
       `,
-    }
+      })
 
-    try {
-      await sgMail.send(msg)
       console.log(`✅ Invitation email sent to ${data.recipientEmail}`)
     } catch (error: any) {
       console.error('❌ Error sending invitation email:', error)
-      if (error.response) {
-        console.error('SendGrid error response:', error.response.body)
-      }
       throw new Error('Failed to send invitation email')
     }
   }
@@ -209,19 +203,17 @@ Powered by kainet.mx
    * Send email verification link to a new registered user
    */
   async sendVerificationEmail(data: VerificationEmailData): Promise<void> {
-    if (!this.isConfigured()) {
+    if (!this.isConfigured() || !this.resend) {
       console.warn('Email service not configured. Skipping verification email.')
       return
     }
 
-    const msg = {
-      to: data.recipientEmail,
-      from: {
-        email: this.config.fromEmail,
-        name: this.config.fromName,
-      },
-      subject: `Verifica tu email - ${data.tenantName}`,
-      html: `
+    try {
+      await this.resend.emails.send({
+        from: `${this.config.fromName} <${this.config.fromEmail}>`,
+        to: data.recipientEmail,
+        subject: `Verifica tu email - ${data.tenantName}`,
+        html: `
 <!DOCTYPE html>
 <html>
 <head>
@@ -318,16 +310,11 @@ Si no creaste esta cuenta, puedes ignorar este mensaje.
 © ${new Date().getFullYear()} AccessLearn Inclusiv
 Powered by kainet.mx
       `,
-    }
+      })
 
-    try {
-      await sgMail.send(msg)
       console.log(`✅ Verification email sent to ${data.recipientEmail}`)
     } catch (error: any) {
       console.error('❌ Error sending verification email:', error)
-      if (error.response) {
-        console.error('SendGrid error response:', error.response.body)
-      }
       throw new Error('Failed to send verification email')
     }
   }
@@ -336,19 +323,17 @@ Powered by kainet.mx
    * Send welcome email after successful account activation
    */
   async sendWelcomeEmail(data: WelcomeEmailData): Promise<void> {
-    if (!this.isConfigured()) {
+    if (!this.isConfigured() || !this.resend) {
       console.warn('Email service not configured. Skipping welcome email.')
       return
     }
 
-    const msg = {
-      to: data.recipientEmail,
-      from: {
-        email: this.config.fromEmail,
-        name: this.config.fromName,
-      },
-      subject: `¡Bienvenido a ${data.tenantName}! 🎉`,
-      html: `
+    try {
+      await this.resend.emails.send({
+        from: `${this.config.fromName} <${this.config.fromEmail}>`,
+        to: data.recipientEmail,
+        subject: `¡Bienvenido a ${data.tenantName}! 🎉`,
+        html: `
 <!DOCTYPE html>
 <html>
 <head>
@@ -470,16 +455,11 @@ Si necesitas ayuda o tienes alguna pregunta, no dudes en contactar al administra
 © ${new Date().getFullYear()} AccessLearn Inclusiv
 Powered by kainet.mx
       `,
-    }
+      })
 
-    try {
-      await sgMail.send(msg)
       console.log(`✅ Welcome email sent to ${data.recipientEmail}`)
     } catch (error: any) {
       console.error('❌ Error sending welcome email:', error)
-      if (error.response) {
-        console.error('SendGrid error response:', error.response.body)
-      }
       // Don't throw error for welcome email - it's not critical
       console.warn('Welcome email failed but continuing...')
     }

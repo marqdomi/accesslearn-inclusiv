@@ -1,289 +1,322 @@
-# Guía de Configuración de Email con SendGrid y kainet.mx
+# Email Configuration Guide - Resend
 
-## 📧 Servicio de Email Integrado
+This guide explains how to configure email services for AccessLearn Inclusiv using **Resend**, a modern email API service.
 
-El sistema ahora envía emails automáticamente para:
-- ✅ **Invitaciones de usuarios** - Cuando un admin invita a alguien
-- ✅ **Bienvenida** - Cuando un usuario activa su cuenta
-- ⏳ **Verificación de email** - Para auto-registro (próximamente)
+## Table of Contents
 
----
+1. [Overview](#overview)
+2. [Why Resend?](#why-resend)
+3. [Quick Setup](#quick-setup)
+4. [Configuration](#configuration)
+5. [Testing Email Sending](#testing-email-sending)
+6. [Email Templates](#email-templates)
+7. [Troubleshooting](#troubleshooting)
+8. [Dashboard & Monitoring](#dashboard--monitoring)
 
-## 🚀 Configuración de SendGrid con kainet.mx
+## Overview
 
-### Paso 1: Crear Cuenta en SendGrid
+AccessLearn Inclusiv uses Resend to send:
+- **Invitation emails** when admins invite new users
+- **Verification emails** for email confirmation (future)
+- **Welcome emails** after account activation
 
-1. Ve a [sendgrid.com/pricing](https://sendgrid.com/pricing)
-2. Selecciona el plan **Free** (100 emails/día gratuitos)
-3. Regístrate con tu email
+**Resend Advantages:**
+- ✅ **3,000 free emails per month** (vs 100 with SendGrid)
+- ✅ **Modern, simple API** - easier to integrate
+- ✅ **Fast domain verification** - minutes, not hours
+- ✅ **Excellent deliverability** - professional email infrastructure
+- ✅ **kainet.mx domain already verified** for this project
 
-### Paso 2: Obtener API Key
+## Why Resend?
 
-1. Login a SendGrid
-2. Ve a **Settings** → **API Keys**
-3. Click **Create API Key**
-4. Nombre: `accesslearn-production`
-5. Permisos: **Full Access** (o al menos **Mail Send**)
-6. Click **Create & View**
-7. **¡IMPORTANTE!** Copia la API Key (solo se muestra una vez)
-8. Guárdala en `backend/.env`:
-   ```bash
-   SENDGRID_API_KEY=SG.xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-   ```
+| Feature | Resend | SendGrid |
+|---------|--------|----------|
+| **Free Tier** | 3,000 emails/month | 100 emails/day |
+| **Setup Time** | 5-10 minutes | 1-2 hours |
+| **API Complexity** | Simple, modern | More complex |
+| **Domain Verification** | Quick DNS records | Multiple DNS records |
+| **Dashboard** | Clean, intuitive | Feature-rich but complex |
 
-### Paso 3: Verificar Dominio kainet.mx
+For this project, **Resend is already configured** with the kainet.mx domain verified and ready to use.
 
-Para evitar que los emails lleguen a spam, debes verificar tu dominio.
+## Quick Setup
 
-#### Opción A: Single Sender (Rápido - Para Testing)
+### 1. Get Your API Key
 
-1. Ve a **Settings** → **Sender Authentication**
-2. Click **Verify a Single Sender**
-3. Completa el formulario:
-   - **From Name:** AccessLearn Inclusiv
-   - **From Email:** noreply@kainet.mx
-   - **Reply To:** (tu email personal)
-   - **Company:** AccessLearn / kainet.mx
-   - **Address, City, State, etc.**
-4. SendGrid enviará email de verificación a `noreply@kainet.mx`
-5. Verifica el email
+Your Resend API key is already configured:
+```
+RESEND_API_KEY=re_E8vrV4gy_5Qja2b86Q6K3p8kXuaj98V5K
+```
 
-#### Opción B: Domain Authentication (Recomendado - Para Producción)
+To get a new API key or manage existing ones:
+1. Go to [resend.com/api-keys](https://resend.com/api-keys)
+2. Click "Create API Key"
+3. Give it a name (e.g., "AccessLearn Production")
+4. Select permissions (usually "Sending access")
+5. Copy the key (starts with `re_`)
 
-1. Ve a **Settings** → **Sender Authentication**
-2. Click **Authenticate Your Domain**
-3. Selecciona tu DNS provider
-4. Ingresa dominio: `kainet.mx`
-5. SendGrid te dará 3 registros DNS tipo CNAME:
+⚠️ **Important:** Save the API key immediately - you won't be able to see it again!
 
-   ```
-   Ejemplo de registros DNS:
-   
-   em4567.kainet.mx    CNAME    u12345678.wl123.sendgrid.net
-   s1._domainkey.kainet.mx    CNAME    s1.domainkey.u12345678.wl123.sendgrid.net
-   s2._domainkey.kainet.mx    CNAME    s2.domainkey.u12345678.wl123.sendgrid.net
-   ```
+### 2. Configure Environment Variables
 
-6. **Agregar registros a tu DNS de kainet.mx:**
-   - Si usas Cloudflare, GoDaddy, etc., agrégalos ahí
-   - Puede tardar hasta 48 horas en propagar
-   - Verifica en SendGrid que estén activos (✅ verde)
-
-### Paso 4: Configurar Variables de Entorno
-
-Edita `backend/.env`:
+Add to your `backend/.env` file:
 
 ```bash
-# SendGrid Configuration
-SENDGRID_API_KEY=SG.tu-api-key-real-aqui
-FROM_EMAIL=noreply@kainet.mx
+# Resend Email Service
+RESEND_API_KEY=re_E8vrV4gy_5Qja2b86Q6K3p8kXuaj98V5K
+EMAIL_FROM=newsletter@kainet.mx
 FROM_NAME=AccessLearn Inclusiv
 
-# Frontend URL para links en emails
-FRONTEND_URL=https://app.kainet.mx  # O http://localhost:5173 para dev
+# Frontend URL (for email links)
+FRONTEND_URL=http://localhost:5173
 ```
 
-### Paso 5: Probar el Envío
-
-1. Inicia el backend:
-   ```bash
-   cd backend
-   npm run dev
-   ```
-
-2. Invita un usuario desde el admin panel
-3. Revisa la consola del backend:
-   ```
-   ✅ Invitation email sent to usuario@example.com
-   ```
-
-4. Verifica que llegó el email (revisa spam si no llega)
-
----
-
-## 🎨 Diseño de Emails
-
-Los emails tienen diseño profesional con:
-- ✅ Gradientes (morado para invitación, verde para verificación, naranja para bienvenida)
-- ✅ Botones call-to-action
-- ✅ Responsive (se ve bien en móvil)
-- ✅ Branding: "Powered by kainet.mx"
-- ✅ Links alternativos si el botón no funciona
-
-### Vista previa de email de invitación:
-
-```
-┌─────────────────────────────────────┐
-│   🎉 ¡Has sido invitado!            │ (Header morado)
-├─────────────────────────────────────┤
-│                                     │
-│  Hola Juan Pérez,                   │
-│                                     │
-│  Dr. Amayrani Gómez te ha invitado  │
-│  a unirte a Hospital Ejemplo.       │
-│                                     │
-│  ┌─────────────────────────────┐   │
-│  │ Rol: Estudiante             │   │
-│  │ Organización: Hospital      │   │
-│  └─────────────────────────────┘   │
-│                                     │
-│     [Activar mi cuenta] (botón)     │
-│                                     │
-│  ⏰ Esta invitación expira en 7     │
-│     días.                           │
-│                                     │
-├─────────────────────────────────────┤
-│  © 2024 AccessLearn Inclusiv        │
-│  Powered by kainet.mx               │
-└─────────────────────────────────────┘
-```
-
----
-
-## 🔧 Troubleshooting
-
-### ❌ Emails no llegan
-
-**1. Verifica API Key:**
+For **production**, update:
 ```bash
-# En backend/.env
-echo $SENDGRID_API_KEY
-# Debe empezar con SG.
+FRONTEND_URL=https://app.kainet.mx
 ```
 
-**2. Verifica logs del backend:**
+### 3. Verify Domain (Already Done)
+
+The kainet.mx domain is already verified in Resend. If you need to verify a new domain:
+
+1. Go to [resend.com/domains](https://resend.com/domains)
+2. Click "Add Domain"
+3. Enter your domain (e.g., `kainet.mx`)
+4. Add the DNS records provided by Resend:
+   - **SPF record** (TXT)
+   - **DKIM record** (TXT)
+   - **DMARC record** (TXT) - optional but recommended
+
+DNS propagation typically takes 5-30 minutes.
+
+## Configuration
+
+### Environment Variables
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `RESEND_API_KEY` | Your Resend API key | `re_E8vrV4gy_5Qja2b86Q6K3p8kXuaj98V5K` |
+| `EMAIL_FROM` | Sender email address | `newsletter@kainet.mx` |
+| `FROM_NAME` | Sender name | `AccessLearn Inclusiv` |
+| `FRONTEND_URL` | Frontend URL for email links | `https://app.kainet.mx` |
+
+### From Email Options
+
+You have multiple verified emails on kainet.mx:
+- **newsletter@kainet.mx** - For system emails (invitations, notifications) ✅ Recommended
+- **contacto@kainet.mx** - For support/contact emails
+- **marcdomi@kainet.mx** - Personal email
+
+**Current configuration uses:** `newsletter@kainet.mx`
+
+## Testing Email Sending
+
+### 1. Start Backend Server
+
 ```bash
 cd backend
 npm run dev
-# Deberías ver:
-# ✅ Invitation email sent to ...
-# O
-# ⚠️ Failed to send invitation email: ...
 ```
 
-**3. Revisa spam:**
-- Los emails pueden llegar a spam si el dominio no está verificado
-- Marca como "no es spam" en Gmail/Outlook
-
-**4. Verifica dominio en SendGrid:**
-- Settings → Sender Authentication
-- Debe tener ✅ verde
-
-**5. Revisa Activity Feed en SendGrid:**
-- Ve a Activity → Activity Feed
-- Verás todos los emails enviados y su estado
-- Si aparece "Delivered" pero no llega, está en spam
-- Si aparece "Bounced" o "Dropped", hay problema con el email receptor
-
-### ⚠️ API Key inválida
-
-Error:
+You should see:
 ```
-Failed to send invitation email: Unauthorized
+🔧 Email service configured with Resend
+   From: AccessLearn Inclusiv <newsletter@kainet.mx>
 ```
 
-Solución:
-- Verifica que el API Key esté correcto
-- Verifica que tenga permisos de "Mail Send"
-- Regenera el API Key en SendGrid si es necesario
+### 2. Test Invitation Email
 
-### 📊 Límites del Plan Gratuito
+1. Open frontend: `http://localhost:5173`
+2. Login as admin:
+   - Email: `dra.amayrani@hospital-ejemplo.com`
+   - Password: `Demo2024!`
+3. Navigate to **Admin Panel → Users**
+4. Click **"Invitar Usuario"**
+5. Fill in the form:
+   - First name: Test
+   - Last name: User
+   - Email: your-real-email@gmail.com
+   - Role: student
+   - Organization: Hospital de Ejemplo
+6. Click **"Enviar Invitación"**
 
-SendGrid Free Plan:
-- ✅ 100 emails/día
-- ✅ Suficiente para testing y demo
-- ❌ Límite bajo para producción con muchos usuarios
+### 3. Check Email Delivery
 
-Para producción real:
-- Upgrade a **Essentials** ($19.95/mes) = 50,000 emails/mes
-- O considera Azure Communication Services (integrado con Azure)
+**In backend logs:**
+```
+✅ Invitation email sent to your-real-email@gmail.com
+```
+
+**In your email inbox:**
+- Check inbox (and spam folder)
+- Email should arrive within 1-2 minutes
+- Subject: "Invitación a Hospital de Ejemplo - AccessLearn Inclusiv"
+
+### 4. Test Invitation Flow
+
+1. Click the invitation link in the email
+2. You should be redirected to: `http://localhost:5173/accept-invitation?token=...`
+3. Set your password
+4. Click "Activar Cuenta"
+5. Check for welcome email
+
+**Welcome email:**
+- Subject: "¡Bienvenido a Hospital de Ejemplo! 🎉"
+- Contains login link and platform features
+
+## Email Templates
+
+### Invitation Email
+- **Color:** Purple gradient (`#8b5cf6` → `#6d28d9`)
+- **Expiration:** 7 days
+- **Content:** Role assignment, organization info, accept button
+- **Call to action:** "Aceptar Invitación"
+
+### Welcome Email
+- **Color:** Orange gradient (`#f59e0b` → `#d97706`)
+- **Content:** Platform features, getting started guide
+- **Call to action:** "Iniciar Sesión"
+
+### Verification Email (Future)
+- **Color:** Green gradient (`#10b981` → `#059669`)
+- **Expiration:** 24 hours
+- **Content:** Email verification link
+- **Call to action:** "Verificar Email"
+
+All templates include:
+- ✅ **Responsive design** - Works on mobile and desktop
+- ✅ **Plain text fallback** - For email clients without HTML support
+- ✅ **Accessibility** - Proper semantic HTML
+- ✅ **Branding** - kainet.mx powered footer
+
+## Troubleshooting
+
+### Email Not Sending
+
+**Check backend logs:**
+```bash
+# Should see:
+✅ Invitation email sent to user@example.com
+
+# If error:
+❌ Error sending invitation email: [error details]
+```
+
+**Common issues:**
+
+1. **API Key Invalid**
+   ```
+   Error: Invalid API key
+   ```
+   **Solution:** Check `RESEND_API_KEY` in `.env` file
+
+2. **Email Address Not Verified**
+   ```
+   Error: Email address not verified
+   ```
+   **Solution:** Verify domain in Resend dashboard or use verified email
+
+3. **Rate Limit Exceeded**
+   ```
+   Error: Rate limit exceeded
+   ```
+   **Solution:** Resend free tier = 3,000 emails/month. Check usage in dashboard.
+
+4. **Service Not Configured**
+   ```
+   ⚠️ Email service not configured. Skipping email.
+   ```
+   **Solution:** Add `RESEND_API_KEY` to `.env` file and restart backend
+
+### Email Goes to Spam
+
+**Solutions:**
+
+1. **Verify Domain Records**
+   - Check SPF, DKIM, DMARC records in DNS
+   - Use [MXToolbox](https://mxtoolbox.com/) to verify
+
+2. **Avoid Spam Triggers**
+   - Don't use ALL CAPS in subject
+   - Avoid excessive exclamation marks!!!
+   - Include plain text version (already done)
+   - Use proper sender name (already done)
+
+3. **Warm Up Domain**
+   - Start with low volume (10-50 emails/day)
+   - Gradually increase over 2-3 weeks
+   - Monitor bounce rates in Resend dashboard
+
+### Email Not Arriving
+
+**Check in order:**
+
+1. **Backend logs** - Was email sent?
+2. **Spam folder** - Check recipient's spam
+3. **Email address** - Typo in recipient email?
+4. **Resend dashboard** - Check delivery status
+5. **DNS records** - Verify domain configuration
+
+## Dashboard & Monitoring
+
+### Resend Dashboard
+
+Access at: [resend.com/emails](https://resend.com/emails)
+
+**What you can see:**
+- 📊 **Email analytics** - Sent, delivered, opened, clicked
+- 📧 **Recent emails** - Last 100 emails sent
+- ⚠️ **Errors** - Failed deliveries and reasons
+- 📈 **Usage** - Monthly quota (3,000 free emails)
+- 🔑 **API keys** - Manage keys
+- 🌐 **Domains** - Domain verification status
+
+**Useful metrics:**
+- **Delivery rate** - Should be >95%
+- **Open rate** - Typical: 20-30% for transactional emails
+- **Bounce rate** - Should be <5%
+
+### Email Logs
+
+In your backend logs:
+```
+✅ Invitation email sent to user@example.com
+✅ Welcome email sent to user@example.com
+✅ Verification email sent to user@example.com
+```
+
+With errors:
+```
+❌ Error sending invitation email: Invalid recipient
+```
+
+### Monitoring Best Practices
+
+1. **Check daily** - Monitor delivery rates
+2. **Review bounces** - Remove invalid email addresses
+3. **Track quota** - Don't exceed 3,000/month on free tier
+4. **Test regularly** - Send test emails before important campaigns
+
+## Additional Resources
+
+- [Resend Documentation](https://resend.com/docs)
+- [Resend Node.js SDK](https://github.com/resendlabs/resend-node)
+- [Email Best Practices](https://resend.com/docs/knowledge-base/email-best-practices)
+- [Domain Verification Guide](https://resend.com/docs/dashboard/domains/introduction)
+
+## Need Help?
+
+1. **Resend Support:** [resend.com/support](https://resend.com/support)
+2. **Community:** [resend.com/community](https://resend.com/community)
+3. **Status Page:** [status.resend.com](https://status.resend.com)
 
 ---
 
-## 💰 Costos
+**✅ kainet.mx domain is verified and ready to use!**
 
-### SendGrid
-- **Free:** $0/mes (100 emails/día)
-- **Essentials:** $19.95/mes (50,000 emails/mes)
-- **Pro:** $89.95/mes (100,000 emails/mes)
-
-### Azure Communication Services (Alternativa)
-- **Email:** $0.0001 por email (muy barato)
-- **Ventaja:** Integrado con Azure, dominio propio fácil
-- **Desventaja:** Configuración más compleja
-
----
-
-## 📝 Next Steps
-
-Una vez configurado SendGrid:
-
-1. ✅ **Testing Local:**
-   - Invita usuarios de prueba
-   - Verifica que lleguen los emails
-   - Prueba links de invitación
-
-2. ✅ **Deploy a Azure:**
-   - Configura las mismas variables en Azure
-   - App Settings → Configuration
-   - Agrega SENDGRID_API_KEY, FROM_EMAIL, etc.
-
-3. ⏳ **Auto-registro:**
-   - Implementar página de registro
-   - Usar `emailService.sendVerificationEmail()`
-   - Crear endpoint `/verify-email`
-
-4. ⏳ **Password Reset (futuro):**
-   - Botón "Olvidé mi contraseña"
-   - Enviar email con token temporal
-   - Usuario resetea password
-
----
-
-## 🎯 URLs Configuradas
-
-Para **app.kainet.mx**:
-
-### Emails enviados contendrán links a:
-- Invitación: `https://app.kainet.mx/accept-invitation?token=...`
-- Login: `https://app.kainet.mx/login`
-- Verificación: `https://app.kainet.mx/verify-email?token=...` (futuro)
-
-### Configuración DNS sugerida:
-```
-Tipo    Nombre       Valor
-A       app          [IP de Azure Static Web App]
-A       api          [IP de Azure Functions/Container App]
-CNAME   @            kainet.mx.azurewebsites.net
-```
-
----
-
-## ✅ Checklist de Configuración
-
-- [ ] Crear cuenta SendGrid (Free)
-- [ ] Obtener API Key
-- [ ] Verificar Single Sender o Domain
-- [ ] Agregar API Key a backend/.env
-- [ ] Configurar FROM_EMAIL y FROM_NAME
-- [ ] Configurar FRONTEND_URL
-- [ ] Probar envío de invitación local
-- [ ] Verificar email llegó correctamente
-- [ ] Verificar links funcionan
-- [ ] (Producción) Agregar variables a Azure App Settings
-- [ ] (Producción) Configurar registros DNS CNAME
-
----
-
-## 📞 Soporte
-
-Si tienes problemas:
-1. Revisa los logs del backend
-2. Revisa Activity Feed en SendGrid
-3. Verifica que el dominio esté verificado
-4. Contacta soporte de SendGrid si es necesario
-
-**SendGrid Support:**
-- Docs: [docs.sendgrid.com](https://docs.sendgrid.com)
-- Support: support@sendgrid.com
-- Status: [status.sendgrid.com](https://status.sendgrid.com)
+Current configuration:
+- API Key: Configured ✅
+- Domain: kainet.mx (verified) ✅
+- From Email: newsletter@kainet.mx ✅
+- Monthly Limit: 3,000 emails ✅
