@@ -30,7 +30,7 @@ export type UserRole =
   | 'mentor'           // Student guidance
   | 'student';         // Learning experience
 
-export type UserStatus = 'active' | 'inactive' | 'suspended';
+export type UserStatus = 'active' | 'inactive' | 'suspended' | 'pending';
 
 export interface User {
   id: string;                    // user-{uuid}
@@ -75,11 +75,19 @@ export interface User {
   level: number;                 // User level (1-100)
   badges: string[];              // Array of earned badge IDs
   
+  // Email Invitations
+  invitationToken?: string;      // Invitation token for email verification
+  invitationExpiresAt?: string;  // ISO 8601 - When invitation expires
+  invitationAcceptedAt?: string; // ISO 8601 - When user accepted invitation
+  invitedBy?: string;            // User ID who sent the invitation
+  invitedAt?: string;            // ISO 8601 - When invitation was sent
+  
   // Metadata
   createdAt: string;             // ISO 8601
   updatedAt: string;             // ISO 8601
   lastLoginAt?: string;          // ISO 8601
   createdBy?: string;            // admin user ID who created this user
+  deletedAt?: string;            // ISO 8601 - Soft delete timestamp
 }
 
 export interface CreateUserRequest {

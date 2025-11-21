@@ -363,7 +363,7 @@ export async function inviteUser(request: {
     email: request.email,
     firstName: request.firstName,
     lastName: request.lastName,
-    role: request.role,
+    role: request.role as any,
     status: 'pending', // Pending until they accept invitation
     
     // No password yet - will be set when they accept

@@ -25,6 +25,7 @@ export type Permission =
   | 'users:update'
   | 'users:delete'
   | 'users:list'
+  | 'users:edit'
   | 'users:change-role'
   | 'users:change-status'
   
@@ -39,6 +40,10 @@ export type Permission =
   | 'courses:list-own'
   
   // Content Approval
+  | 'content:create'
+  | 'content:edit'
+  | 'content:archive'
+  | 'content:delete'
   | 'content:review'
   | 'content:approve'
   | 'content:reject'

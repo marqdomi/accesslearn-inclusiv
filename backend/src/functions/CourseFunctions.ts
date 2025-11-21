@@ -18,21 +18,25 @@ async function logCourseAudit(params: {
   resourceId: string
   metadata?: Record<string, any>
 }) {
-  await createAuditLog({
-    tenantId: params.tenantId,
-    actor: {
+  await createAuditLog(
+    params.tenantId,
+    params.action as any,
+    {
       userId: params.userId,
-      userRole: 'unknown' // Will be enriched by audit middleware if needed
+      email: 'unknown',
+      role: 'unknown',
+      name: 'unknown'
     },
-    action: params.action as any,
-    resource: {
+    {
       type: 'course',
       id: params.resourceId
     },
-    metadata: params.metadata || {},
-    severity: 'info',
-    status: 'success'
-  })
+    {
+      metadata: params.metadata || {},
+      severity: 'info',
+      status: 'success'
+    }
+  )
 }
 
 /**

@@ -52,10 +52,10 @@ export function auditCreate(
         setImmediate(async () => {
           try {
             if (req.user && req.user.tenantId) {
-              let resourceInfo = { id: body.id, name: body.name || body.title };
+              let resourceInfo = { id: body.id, name: body.name || body.title || body.id };
               
               if (getResourceInfo) {
-                resourceInfo = getResourceInfo(req, body);
+                resourceInfo = getResourceInfo(req, body) as any;
               }
               
               await createAuditLog(
@@ -70,8 +70,8 @@ export function auditCreate(
                 {
                   type: resourceType,
                   id: resourceInfo.id,
-                  name: resourceInfo.name,
-                },
+                  name: resourceInfo.name || resourceInfo.id,
+                } as any,
                 {
                   metadata: req.auditMetadata,
                   severity: 'info',
@@ -110,11 +110,11 @@ export function auditUpdate(
             if (req.user && req.user.tenantId) {
               let resourceInfo = { 
                 id: req.params.id || req.params.userId || req.params.courseId, 
-                name: body.name || body.title 
+                name: body.name || body.title || req.params.id || req.params.userId || req.params.courseId
               };
               
               if (getResourceInfo) {
-                resourceInfo = getResourceInfo(req);
+                resourceInfo = getResourceInfo(req) as any;
               }
               
               const changes = captureChanges ? captureChanges(req) : undefined;
@@ -131,8 +131,8 @@ export function auditUpdate(
                 {
                   type: resourceType,
                   id: resourceInfo.id,
-                  name: resourceInfo.name,
-                },
+                  name: resourceInfo.name || resourceInfo.id,
+                } as any,
                 {
                   changes,
                   metadata: req.auditMetadata,
@@ -175,7 +175,7 @@ export function auditDelete(
               };
               
               if (getResourceInfo) {
-                resourceInfo = getResourceInfo(req);
+                resourceInfo = getResourceInfo(req) as any;
               }
               
               await createAuditLog(
@@ -190,8 +190,8 @@ export function auditDelete(
                 {
                   type: resourceType,
                   id: resourceInfo.id,
-                  name: resourceInfo.name,
-                },
+                  name: resourceInfo.name || resourceInfo.id,
+                } as any,
                 {
                   metadata: req.auditMetadata,
                   severity: 'warning',

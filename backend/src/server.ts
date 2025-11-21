@@ -520,9 +520,7 @@ app.get('/api/courses/:courseId', async (req, res) => {
       parameters: [{ name: '@courseId', value: courseId }]
     };
     
-    const { resources } = await container.items.query(querySpec, { 
-      enableCrossPartitionQuery: true 
-    }).fetchAll();
+    const { resources } = await container.items.query(querySpec).fetchAll();
     
     if (!resources || resources.length === 0) {
       return res.status(404).json({ error: 'Course not found' });
@@ -553,9 +551,7 @@ app.post('/api/users/:userId/progress/lessons/:lessonId/complete', async (req, r
       parameters: [{ name: '@userId', value: userId }]
     };
     
-    const { resources } = await container.items.query(querySpec, { 
-      enableCrossPartitionQuery: true 
-    }).fetchAll();
+    const { resources } = await container.items.query(querySpec).fetchAll();
     
     if (!resources || resources.length === 0) {
       return res.status(404).json({ error: 'User not found' });
@@ -609,9 +605,7 @@ app.get('/api/users/:userId/progress/:courseId', requireAuth, requireOwnershipOr
       parameters: [{ name: '@userId', value: userId }]
     };
     
-    const { resources } = await container.items.query(querySpec, { 
-      enableCrossPartitionQuery: true 
-    }).fetchAll();
+    const { resources } = await container.items.query(querySpec).fetchAll();
     
     if (!resources || resources.length === 0) {
       return res.status(404).json({ error: 'User not found' });

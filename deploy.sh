@@ -24,12 +24,15 @@ ENVIRONMENT="prod"
 
 # Load secrets from .env files
 if [ -f "./backend/.env" ]; then
-    source <(grep -v '^#' ./backend/.env | sed 's/^/export /')
+    set -a  # Automatically export all variables
+    source ./backend/.env
+    set +a
 fi
 
 # Check if required secrets are set
 if [ -z "$COSMOS_KEY" ]; then
     echo -e "${RED}❌ Error: COSMOS_KEY not set in backend/.env${NC}"
+    echo -e "${YELLOW}Current COSMOS_KEY value: ${COSMOS_KEY:-NOT SET}${NC}"
     exit 1
 fi
 
@@ -57,52 +60,22 @@ else
 fi
 echo ""
 
-# Step 2: Validate deployment with what-if
-echo -e "${YELLOW}🔍 Step 2: Validating Bicep deployment (what-if)...${NC}"
-az deployment group what-if \
+# Step 2: Deploy Phase 1 - ACR and Log Analytics
+echo -e "${YELLOW}🔍 Step 2: Deploying Phase 1 (ACR + Log Analytics)...${NC}"
+PHASE1_OUTPUT=$(az deployment group create \
     --resource-group $RESOURCE_GROUP \
-    --template-file ./infra/main.bicep \
+    --template-file ./infra/phase1-acr.bicep \
     --parameters location=$LOCATION \
     --parameters environment=$ENVIRONMENT \
     --parameters appName=$APP_NAME \
-    --parameters cosmosEndpoint=$COSMOS_ENDPOINT \
-    --parameters cosmosKey=$COSMOS_KEY \
-    --parameters resendApiKey=$RESEND_API_KEY \
-    --parameters emailFrom=$EMAIL_FROM \
-    --parameters jwtSecret=$JWT_SECRET
-
-echo ""
-echo -e "${YELLOW}⚠️  Review the what-if output above.${NC}"
-read -p "Do you want to proceed with deployment? (y/n) " -n 1 -r
-echo ""
-if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-    echo -e "${RED}❌ Deployment cancelled${NC}"
-    exit 1
-fi
-echo ""
-
-# Step 3: Deploy infrastructure
-echo -e "${YELLOW}🚀 Step 3: Deploying Azure infrastructure...${NC}"
-DEPLOYMENT_OUTPUT=$(az deployment group create \
-    --resource-group $RESOURCE_GROUP \
-    --template-file ./infra/main.bicep \
-    --parameters location=$LOCATION \
-    --parameters environment=$ENVIRONMENT \
-    --parameters appName=$APP_NAME \
-    --parameters cosmosEndpoint=$COSMOS_ENDPOINT \
-    --parameters cosmosKey=$COSMOS_KEY \
-    --parameters resendApiKey=$RESEND_API_KEY \
-    --parameters emailFrom=$EMAIL_FROM \
-    --parameters jwtSecret=$JWT_SECRET \
     --output json)
 
-echo -e "${GREEN}✅ Infrastructure deployed${NC}"
+echo -e "${GREEN}✅ Phase 1 deployed${NC}"
 
-# Extract outputs
-ACR_NAME=$(echo $DEPLOYMENT_OUTPUT | jq -r '.properties.outputs.containerRegistryName.value')
-ACR_LOGIN_SERVER=$(echo $DEPLOYMENT_OUTPUT | jq -r '.properties.outputs.containerRegistryLoginServer.value')
-BACKEND_FQDN=$(echo $DEPLOYMENT_OUTPUT | jq -r '.properties.outputs.backendFqdn.value')
-FRONTEND_FQDN=$(echo $DEPLOYMENT_OUTPUT | jq -r '.properties.outputs.frontendFqdn.value')
+# Extract Phase 1 outputs
+ACR_NAME=$(echo $PHASE1_OUTPUT | jq -r '.properties.outputs.containerRegistryName.value')
+ACR_LOGIN_SERVER=$(echo $PHASE1_OUTPUT | jq -r '.properties.outputs.containerRegistryLoginServer.value')
+LOG_ANALYTICS_ID=$(echo $PHASE1_OUTPUT | jq -r '.properties.outputs.logAnalyticsId.value')
 
 echo ""
 echo -e "${BLUE}📋 Deployment Details:${NC}"
@@ -110,16 +83,20 @@ echo -e "  Registry: ${GREEN}$ACR_NAME${NC}"
 echo -e "  Backend URL: ${GREEN}https://$BACKEND_FQDN${NC}"
 echo -e "  Frontend URL: ${GREEN}https://$FRONTEND_FQDN${NC}"
 echo ""
+echo -e "${BLUE}📋 Phase 1 Complete:${NC}"
+echo -e "  Registry: ${GREEN}$ACR_NAME${NC}"
+echo -e "  Login Server: ${GREEN}$ACR_LOGIN_SERVER${NC}"
+echo ""
 
-# Step 4: Login to ACR
-echo -e "${YELLOW}🔐 Step 4: Logging into Azure Container Registry...${NC}"
+# Step 3: Login to ACR
+echo -e "${YELLOW}🔐 Step 3: Logging into Azure Container Registry...${NC}"
 az acr login --name $ACR_NAME
 echo -e "${GREEN}✅ Logged into ACR${NC}"
 echo ""
 
-# Step 5: Build and push backend image
-echo -e "${YELLOW}🐳 Step 5: Building backend Docker image...${NC}"
-docker build -t $ACR_LOGIN_SERVER/$APP_NAME-backend:latest ./backend
+# Step 4: Build and push backend image
+echo -e "${YELLOW}🐳 Step 4: Building backend Docker image (linux/amd64)...${NC}"
+docker build --platform linux/amd64 -t $ACR_LOGIN_SERVER/$APP_NAME-backend:latest ./backend
 echo -e "${GREEN}✅ Backend image built${NC}"
 
 echo -e "${YELLOW}📤 Pushing backend image to ACR...${NC}"
@@ -127,37 +104,68 @@ docker push $ACR_LOGIN_SERVER/$APP_NAME-backend:latest
 echo -e "${GREEN}✅ Backend image pushed${NC}"
 echo ""
 
-# Step 6: Build frontend with correct API URL
-echo -e "${YELLOW}🐳 Step 6: Building frontend Docker image...${NC}"
+# Step 5: Prepare for frontend build (will build after we know backend URL)
+echo -e "${YELLOW}⏭️  Step 5: Frontend build prepared (will build with actual backend URL after Phase 2)${NC}"
+echo ""
 
-# Create .env.production for frontend build
+# Step 6: Deploy Phase 2 - Container Apps
+echo -e "${YELLOW}🚀 Step 6: Deploying Phase 2 (Container Apps)...${NC}"
+PHASE2_OUTPUT=$(az deployment group create \
+    --resource-group $RESOURCE_GROUP \
+    --template-file ./infra/phase2-apps.bicep \
+    --parameters location=$LOCATION \
+    --parameters environment=$ENVIRONMENT \
+    --parameters appName=$APP_NAME \
+    --parameters containerRegistryName=$ACR_NAME \
+    --parameters containerRegistryLoginServer=$ACR_LOGIN_SERVER \
+    --parameters logAnalyticsId=$LOG_ANALYTICS_ID \
+    --parameters cosmosEndpoint=$COSMOS_ENDPOINT \
+    --parameters cosmosKey=$COSMOS_KEY \
+    --parameters resendApiKey=$RESEND_API_KEY \
+    --parameters emailFrom=$EMAIL_FROM \
+    --parameters jwtSecret=$JWT_SECRET \
+    --output json)
+
+echo -e "${GREEN}✅ Phase 2 deployed${NC}"
+
+# Extract Phase 2 outputs
+BACKEND_FQDN=$(echo $PHASE2_OUTPUT | jq -r '.properties.outputs.backendFqdn.value')
+FRONTEND_FQDN=$(echo $PHASE2_OUTPUT | jq -r '.properties.outputs.frontendFqdn.value')
+
+echo ""
+echo -e "${BLUE}📋 Phase 2 Complete:${NC}"
+echo -e "  Backend FQDN: ${GREEN}$BACKEND_FQDN${NC}"
+echo -e "  Frontend FQDN: ${GREEN}$FRONTEND_FQDN${NC}"
+echo ""
+
+# Step 7: Build and push frontend with actual backend URL
+echo -e "${YELLOW}🐳 Step 7: Building frontend Docker image with backend URL (linux/amd64)...${NC}"
+
+# Create .env.production with actual backend URL
 cat > .env.production << EOF
 VITE_API_URL=https://$BACKEND_FQDN
 EOF
 
-docker build -t $ACR_LOGIN_SERVER/$APP_NAME-frontend:latest .
-echo -e "${GREEN}✅ Frontend image built${NC}"
+docker build --platform linux/amd64 -t $ACR_LOGIN_SERVER/$APP_NAME-frontend:latest .
+echo -e "${GREEN}✅ Frontend image built with correct API URL${NC}"
 
 echo -e "${YELLOW}📤 Pushing frontend image to ACR...${NC}"
 docker push $ACR_LOGIN_SERVER/$APP_NAME-frontend:latest
 echo -e "${GREEN}✅ Frontend image pushed${NC}"
 echo ""
 
-# Step 7: Restart container apps to pull new images
-echo -e "${YELLOW}🔄 Step 7: Restarting container apps...${NC}"
-az containerapp revision restart \
-    --name ca-$APP_NAME-backend-$ENVIRONMENT \
-    --resource-group $RESOURCE_GROUP
-
-az containerapp revision restart \
+# Step 8: Restart frontend to use new image
+echo -e "${YELLOW}🔄 Step 8: Restarting frontend container app...${NC}"
+az containerapp update \
     --name ca-$APP_NAME-frontend-$ENVIRONMENT \
-    --resource-group $RESOURCE_GROUP
+    --resource-group $RESOURCE_GROUP \
+    --image $ACR_LOGIN_SERVER/$APP_NAME-frontend:latest
 
-echo -e "${GREEN}✅ Container apps restarted${NC}"
+echo -e "${GREEN}✅ Frontend restarted with correct API URL${NC}"
 echo ""
 
-# Step 8: Test deployments
-echo -e "${YELLOW}🧪 Step 8: Testing deployments...${NC}"
+# Step 9: Test deployments
+echo -e "${YELLOW}🧪 Step 9: Testing deployments...${NC}"
 
 echo -e "Testing backend health..."
 BACKEND_HEALTH=$(curl -s -o /dev/null -w "%{http_code}" https://$BACKEND_FQDN/health)

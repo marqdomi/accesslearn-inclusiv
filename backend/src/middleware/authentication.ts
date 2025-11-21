@@ -29,7 +29,7 @@ export async function authenticateToken(req: Request, res: Response, next: NextF
         tenantId: result.user.tenantId,
         role: result.user.role as any,
         email: result.user.email
-      };
+      } as any;
     }
 
     next();

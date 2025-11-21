@@ -4,7 +4,8 @@
   "description": "AccessLearn Backend - Multi-tenant SaaS LMS",
   "main": "dist/index.js",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc --project tsconfig.prod.json",
+    "build:strict": "tsc",
     "start": "node dist/index.js",
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
     "server": "ts-node-dev --respawn --transpile-only src/server.ts",
