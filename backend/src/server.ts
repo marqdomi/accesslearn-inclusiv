@@ -28,6 +28,7 @@ import {
   inviteUser,
   acceptInvitation,
 } from './functions/UserFunctions';
+import { emailService } from './services/email.service';
 import { getCourses } from './functions/GetCourses';
 import {
   getCourses as getCoursesNew,
@@ -354,9 +355,31 @@ app.post('/api/users/invite', requireAuth, requirePermission('users:create'), as
       invitedBy
     });
 
+    const invitationUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/accept-invitation?token=${result.invitationToken}`;
+
+    // Send invitation email
+    try {
+      const tenant = await getTenantById(tenantId);
+      const inviter = await getUserById(invitedBy, tenantId);
+      
+      await emailService.sendInvitationEmail({
+        recipientEmail: email,
+        recipientName: `${firstName} ${lastName}`,
+        inviterName: inviter ? `${inviter.firstName} ${inviter.lastName}` : 'Administrador',
+        tenantName: tenant?.name || 'AccessLearn',
+        role,
+        invitationUrl
+      });
+      
+      console.log(`✅ Invitation email sent to ${email}`);
+    } catch (emailError: any) {
+      console.error('⚠️ Failed to send invitation email:', emailError.message);
+      // Don't fail the request if email fails - user was created successfully
+    }
+
     res.status(201).json({
       user: result.user,
-      invitationUrl: `${process.env.FRONTEND_URL || 'http://localhost:5000'}/accept-invitation?token=${result.invitationToken}`
+      invitationUrl
     });
   } catch (error: any) {
     console.error('[API] Error inviting user:', error);
@@ -376,6 +399,25 @@ app.post('/api/users/accept-invitation', async (req, res) => {
     }
 
     const user = await acceptInvitation(invitationToken, password);
+    
+    // Send welcome email
+    try {
+      const tenant = await getTenantById(user.tenantId);
+      const loginUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/login`;
+      
+      await emailService.sendWelcomeEmail({
+        recipientEmail: user.email,
+        recipientName: `${user.firstName} ${user.lastName}`,
+        tenantName: tenant?.name || 'AccessLearn',
+        loginUrl
+      });
+      
+      console.log(`✅ Welcome email sent to ${user.email}`);
+    } catch (emailError: any) {
+      console.error('⚠️ Failed to send welcome email:', emailError.message);
+      // Don't fail the request if email fails
+    }
+    
     res.json(user);
   } catch (error: any) {
     console.error('[API] Error accepting invitation:', error);

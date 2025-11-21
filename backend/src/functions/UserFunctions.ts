@@ -6,6 +6,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import { getContainer } from '../services/cosmosdb.service';
 import { User, CreateUserRequest, UpdateUserRequest, UserProgress } from '../models/User';
+import { emailService } from '../services/email.service';
 
 /**
  * Validate Mexican CURP format (basic validation)
