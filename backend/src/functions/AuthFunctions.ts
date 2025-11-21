@@ -32,9 +32,27 @@ export interface LoginResponse {
  * In production, use Azure AD B2C or proper password hashing
  */
 export async function login(request: LoginRequest): Promise<LoginResponse> {
-  const { email, password, tenantId } = request;
+  let { email, password, tenantId } = request;
 
   try {
+    // If tenantId looks like a slug (no 'tenant-' prefix), resolve it to the full ID
+    if (tenantId && !tenantId.startsWith('tenant-')) {
+      const tenantContainer = getContainer('tenants');
+      const tenantQuery = {
+        query: 'SELECT c.id FROM c WHERE c.slug = @slug',
+        parameters: [{ name: '@slug', value: tenantId }],
+      };
+      
+      const { resources: tenants } = await tenantContainer.items.query(tenantQuery).fetchAll();
+      if (tenants.length === 0) {
+        return {
+          success: false,
+          error: 'Tenant no encontrado.',
+        };
+      }
+      tenantId = tenants[0].id;
+    }
+
     const container = getContainer('users');
 
     // Query user by email and tenantId

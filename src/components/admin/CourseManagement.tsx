@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { ArrowLeft, Plus, MagnifyingGlass, PencilSimple, Trash, Eye } from '@phosphor-icons/react'
-import { ProfessionalCourseBuilder } from './ProfessionalCourseBuilder'
+import { ModernCourseBuilder } from '../courses/modern-builder'
 
 interface CourseManagementProps {
   onBack: () => void
@@ -24,14 +24,14 @@ export function CourseManagement({ onBack }: CourseManagementProps) {
   )
 
   const deleteCourse = (courseId: string) => {
-    if (confirm('Are you sure you want to delete this course?')) {
+    if (confirm('¿Estás seguro de que quieres eliminar este curso?')) {
       setCourses((current) => (current || []).filter(c => c.id !== courseId))
     }
   }
 
   if (isCreating || editingCourseId) {
     return (
-      <ProfessionalCourseBuilder
+      <ModernCourseBuilder
         courseId={editingCourseId || undefined}
         onBack={() => {
           setIsCreating(false)
@@ -49,15 +49,15 @@ export function CourseManagement({ onBack }: CourseManagementProps) {
             <ArrowLeft size={20} />
           </Button>
           <div>
-            <h2 className="text-2xl font-bold">Course Management</h2>
+            <h2 className="text-2xl font-bold">Mis Cursos</h2>
             <p className="text-sm text-muted-foreground">
-              {courses?.length || 0} total courses
+              {courses?.length || 0} cursos totales
             </p>
           </div>
         </div>
         <Button onClick={() => setIsCreating(true)}>
           <Plus className="mr-2" size={18} />
-          Create New Course
+          Crear Nuevo Curso
         </Button>
       </div>
 
@@ -68,7 +68,7 @@ export function CourseManagement({ onBack }: CourseManagementProps) {
             size={18}
           />
           <Input
-            placeholder="Search courses..."
+            placeholder="Buscar cursos..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10"
@@ -80,12 +80,12 @@ export function CourseManagement({ onBack }: CourseManagementProps) {
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-16">
             <p className="text-muted-foreground mb-4">
-              {searchQuery ? 'No courses found matching your search' : 'No courses created yet'}
+              {searchQuery ? 'No se encontraron cursos que coincidan con tu búsqueda' : 'No hay cursos creados aún'}
             </p>
             {!searchQuery && (
               <Button onClick={() => setIsCreating(true)}>
                 <Plus className="mr-2" size={18} />
-                Create Your First Course
+                Crea Tu Primer Curso
               </Button>
             )}
           </CardContent>

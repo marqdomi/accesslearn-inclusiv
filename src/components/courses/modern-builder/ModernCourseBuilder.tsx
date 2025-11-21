@@ -1,0 +1,315 @@
+import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useAuth } from '@/contexts/AuthContext'
+import { CourseStructure } from '@/lib/types'
+import { Card, CardContent } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { ArrowLeft, ArrowRight, FloppyDisk } from '@phosphor-icons/react'
+import { StepperNavigation } from './shared/StepperNavigation'
+import { AutoSaveIndicator } from './shared/AutoSaveIndicator'
+import { useAutoSave } from './hooks/useAutoSave'
+import { toast } from 'sonner'
+import { useKV } from '@github/spark/hooks'
+
+// Import steps (we'll create these next)
+import { CourseDetailsStep } from './steps/CourseDetailsStep'
+import { CourseStructureStep } from './steps/CourseStructureStep'
+import { ContentEditorStep } from './steps/ContentEditorStep'
+import { QuizBuilderStep } from './steps/QuizBuilderStep'
+import { ReviewPublishStep } from './steps/ReviewPublishStep'
+
+interface ModernCourseBuilderProps {
+  courseId?: string
+  onBack: () => void
+}
+
+const STEPS = [
+  { id: 1, title: 'Detalles', description: 'Información básica' },
+  { id: 2, title: 'Estructura', description: 'Módulos y lecciones' },
+  { id: 3, title: 'Contenido', description: 'Bloques de aprendizaje' },
+  { id: 4, title: 'Quizzes', description: 'Evaluaciones' },
+  { id: 5, title: 'Revisar', description: 'Publicar curso' },
+]
+
+export function ModernCourseBuilder({ courseId, onBack }: ModernCourseBuilderProps) {
+  const navigate = useNavigate()
+  const { user } = useAuth()
+  const [courses, setCourses] = useKV<CourseStructure[]>('admin-courses', [])
+  
+  // Find existing course if editing
+  const existingCourse = courseId ? courses?.find(c => c.id === courseId) : null
+  
+  // Initialize course state
+  const [course, setCourse] = useState<CourseStructure>(existingCourse || {
+    id: `course-${Date.now()}`,
+    title: '',
+    description: '',
+    category: '',
+    modules: [],
+    estimatedHours: 0,
+    totalXP: 0,
+    published: false,
+    enrollmentMode: 'open',
+    difficulty: 'Novice',
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+    createdBy: user?.id || 'unknown',
+    status: 'draft',
+  })
+  
+  const [currentStep, setCurrentStep] = useState(1)
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
+  
+  // Auto-save hook
+  const autoSaveKey = `course-draft-${course.id}`
+  const {
+    lastSaved,
+    isSaving,
+    isDirty,
+    saveToBackend,
+    restoreFromLocalStorage,
+    clearLocalStorage,
+    forceSave,
+  } = useAutoSave({
+    key: autoSaveKey,
+    data: course,
+    onSave: async (courseData) => {
+      // Save to backend
+      setCourses((currentCourses) => {
+        const existing = currentCourses?.find(c => c.id === courseData.id)
+        if (existing) {
+          // Update existing
+          return currentCourses?.map(c => 
+            c.id === courseData.id ? { ...courseData, updatedAt: Date.now() } : c
+          )
+        } else {
+          // Add new
+          return [...(currentCourses || []), { ...courseData, createdAt: Date.now(), updatedAt: Date.now() }]
+        }
+      })
+    },
+    interval: 30000, // 30 seconds
+    enabled: true,
+  })
+  
+  // Restore draft on mount if newer than existing course
+  useEffect(() => {
+    if (!courseId) {
+      const draft = restoreFromLocalStorage()
+      if (draft) {
+        const shouldRestore = window.confirm(
+          '¿Deseas recuperar el borrador guardado? Tiene cambios más recientes que no fueron publicados.'
+        )
+        if (shouldRestore) {
+          setCourse(draft)
+          toast.info('Borrador restaurado')
+        }
+      }
+    }
+  }, [])
+  
+  // Warn before leaving with unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isDirty) {
+        e.preventDefault()
+        e.returnValue = ''
+      }
+    }
+    
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [isDirty])
+  
+  // Validation for each step
+  const canProceedToStep = (step: number): boolean => {
+    if (step === 1) return true // Can always go to first step
+    
+    switch (step) {
+      case 2:
+        // Need title, description, category
+        return !!(course.title?.trim() && course.description?.trim() && course.category)
+      case 3:
+        // Need at least one module with one lesson
+        return course.modules.length > 0 && course.modules.some(m => m.lessons.length > 0)
+      case 4:
+        // Content step not blocking
+        return true
+      case 5:
+        // Quiz step not blocking
+        return true
+      default:
+        return true
+    }
+  }
+  
+  const handleStepChange = (newStep: number) => {
+    if (!canProceedToStep(newStep)) {
+      toast.error('Completa los campos requeridos antes de continuar')
+      return
+    }
+    
+    // Save current progress before changing steps
+    forceSave()
+    setCurrentStep(newStep)
+  }
+  
+  const handleNext = () => {
+    if (currentStep < STEPS.length) {
+      handleStepChange(currentStep + 1)
+    }
+  }
+  
+  const handlePrevious = () => {
+    if (currentStep > 1) {
+      handleStepChange(currentStep - 1)
+    }
+  }
+  
+  const handleSaveDraft = async () => {
+    try {
+      await saveToBackend()
+      toast.success('Borrador guardado exitosamente')
+    } catch (error) {
+      toast.error('Error al guardar borrador')
+      console.error(error)
+    }
+  }
+  
+  const handleBack = () => {
+    if (isDirty) {
+      const shouldLeave = window.confirm(
+        '¿Estás seguro de salir? Tienes cambios sin guardar que se perderán.'
+      )
+      if (!shouldLeave) return
+    }
+    
+    onBack()
+  }
+  
+  // Update course handler (passed to steps)
+  const updateCourse = (updates: Partial<CourseStructure>) => {
+    setCourse(prev => ({ ...prev, ...updates }))
+    setHasUnsavedChanges(true)
+  }
+  
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <div className="border-b bg-card">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <Button variant="ghost" size="icon" onClick={handleBack}>
+                <ArrowLeft size={20} />
+              </Button>
+              <div>
+                <h1 className="text-2xl font-bold">
+                  {courseId ? 'Editar Curso' : 'Crear Nuevo Curso'}
+                </h1>
+                <p className="text-sm text-muted-foreground">
+                  {course.title || 'Sin título'}
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-4">
+              <AutoSaveIndicator 
+                lastSaved={lastSaved} 
+                isSaving={isSaving} 
+                isDirty={isDirty} 
+              />
+              
+              <Button 
+                variant="outline" 
+                onClick={handleSaveDraft}
+                disabled={isSaving || !isDirty}
+              >
+                <FloppyDisk className="mr-2" size={18} />
+                Guardar Borrador
+              </Button>
+            </div>
+          </div>
+          
+          {/* Stepper */}
+          <StepperNavigation 
+            steps={STEPS}
+            currentStep={currentStep}
+            onStepClick={handleStepChange}
+            canNavigate={canProceedToStep}
+          />
+        </div>
+      </div>
+      
+      {/* Main Content */}
+      <div className="container mx-auto px-4 py-8">
+        <Card>
+          <CardContent className="p-6">
+            {/* Render current step */}
+            {currentStep === 1 && (
+              <CourseDetailsStep 
+                course={course} 
+                updateCourse={updateCourse} 
+              />
+            )}
+            
+            {currentStep === 2 && (
+              <CourseStructureStep 
+                course={course} 
+                updateCourse={updateCourse} 
+              />
+            )}
+            
+            {currentStep === 3 && (
+              <ContentEditorStep 
+                course={course} 
+                updateCourse={updateCourse} 
+              />
+            )}
+            
+            {currentStep === 4 && (
+              <QuizBuilderStep 
+                course={course} 
+                updateCourse={updateCourse} 
+              />
+            )}
+            
+            {currentStep === 5 && (
+              <ReviewPublishStep 
+                course={course}
+                onSaveDraft={handleSaveDraft}
+                onPublish={() => {
+                  clearLocalStorage()
+                  navigate('/my-courses')
+                }}
+              />
+            )}
+          </CardContent>
+        </Card>
+        
+        {/* Navigation Buttons */}
+        <div className="flex items-center justify-between mt-6">
+          <Button
+            variant="outline"
+            onClick={handlePrevious}
+            disabled={currentStep === 1}
+          >
+            <ArrowLeft className="mr-2" size={18} />
+            Anterior
+          </Button>
+          
+          {currentStep < STEPS.length && (
+            <Button
+              onClick={handleNext}
+              disabled={!canProceedToStep(currentStep + 1)}
+            >
+              Siguiente
+              <ArrowRight className="ml-2" size={18} />
+            </Button>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}

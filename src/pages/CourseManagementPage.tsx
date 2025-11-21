@@ -48,14 +48,14 @@ export function CourseManagementPage() {
             onClick={() => navigate('/dashboard')}
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Dashboard
+            Volver al Dashboard
           </Button>
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground">
               {user?.firstName} {user?.lastName}
             </span>
             <Button variant="outline" size="sm" onClick={logout}>
-              Logout
+              Cerrar Sesión
             </Button>
           </div>
         </div>
