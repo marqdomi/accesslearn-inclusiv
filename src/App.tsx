@@ -10,6 +10,7 @@ import { MentorDirectoryPage } from '@/pages/MentorDirectoryPage'
 import { MentorDashboardPage } from '@/pages/MentorDashboardPage'
 import { MenteeMentorshipsPage } from '@/pages/MenteeMentorshipsPage'
 import { LibraryPage } from '@/pages/LibraryPage'
+import CourseApprovalDemo from '@/pages/CourseApprovalDemo'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth()
@@ -88,6 +89,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <LibraryPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/demo/course-approval"
+        element={
+          <ProtectedRoute>
+            <CourseApprovalDemo />
           </ProtectedRoute>
         }
       />
