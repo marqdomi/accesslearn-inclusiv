@@ -10,12 +10,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, FloppyDisk, Eye, Warning, CheckCircle, Plus, Tree } from '@phosphor-icons/react'
+import { ArrowLeft, FloppyDisk, Eye, Warning, CheckCircle, Plus, Tree, PaperPlaneTilt } from '@phosphor-icons/react'
 import { CourseStructureBuilder } from './CourseStructureBuilder'
 import { LessonEditor } from './LessonEditor'
 import { QuizBuilder } from './QuizBuilder'
+import { StatusBadge } from '@/components/courses'
+import { useAuth } from '@/contexts/AuthContext'
 import { toast } from 'sonner'
 import { useTranslation } from '@/lib/i18n'
+import { workflowNotifications } from '@/services/workflow-notifications.service'
 
 interface CourseBuilderProps {
   courseId?: string
@@ -24,6 +27,7 @@ interface CourseBuilderProps {
 
 export function CourseBuilder({ courseId, onBack }: CourseBuilderProps) {
   const { t } = useTranslation()
+  const { user } = useAuth()
   const [courses, setCourses] = useKV<CourseStructure[]>('admin-courses', [])
   
   const existingCourse = courseId ? courses?.find(c => c.id === courseId) : null
@@ -41,7 +45,8 @@ export function CourseBuilder({ courseId, onBack }: CourseBuilderProps) {
     difficulty: 'Novice',
     createdAt: Date.now(),
     updatedAt: Date.now(),
-    createdBy: 'admin'
+    createdBy: user?.id || 'admin',
+    status: (existingCourse as any)?.status || 'draft'
   })
 
   const [activeTab, setActiveTab] = useState('details')
@@ -108,7 +113,7 @@ export function CourseBuilder({ courseId, onBack }: CourseBuilderProps) {
   }
 
   const handleSaveDraft = () => {
-    const updatedCourse = { ...course, updatedAt: Date.now() }
+    const updatedCourse = { ...course, updatedAt: Date.now(), status: 'draft' as const }
     
     if (courseId) {
       setCourses((current) => 
@@ -119,6 +124,50 @@ export function CourseBuilder({ courseId, onBack }: CourseBuilderProps) {
     }
 
     toast.success('Course draft saved')
+  }
+
+  const handleSubmitForReview = () => {
+    const errors = validateCourse()
+    setValidationErrors(errors)
+
+    const criticalErrors = errors.filter(e => e.severity === 'error')
+    
+    if (criticalErrors.length > 0) {
+      toast.error(`Cannot submit: ${criticalErrors.length} error(s) must be fixed`, {
+        description: 'Check the validation section below'
+      })
+      return
+    }
+
+    const submittedCourse = { 
+      ...course, 
+      status: 'pending-review' as const,
+      submittedForReviewAt: new Date().toISOString(),
+      updatedAt: Date.now() 
+    }
+    
+    if (courseId) {
+      setCourses((current) => 
+        (current || []).map(c => c.id === courseId ? submittedCourse : c)
+      )
+    } else {
+      setCourses((current) => [...(current || []), submittedCourse])
+    }
+
+    // Send notifications to content managers
+    // In production, fetch actual content manager IDs from the backend
+    const mockContentManagerIds = ['content-manager-1', 'content-manager-2']
+    workflowNotifications.notifyCourseSubmitted({
+      courseId: course.id,
+      courseTitle: course.title,
+      instructorName: `${user?.firstName} ${user?.lastName}` || 'Instructor',
+      contentManagerIds: mockContentManagerIds
+    })
+
+    toast.success('Course submitted for review!', {
+      description: 'A content manager will review your course soon'
+    })
+    onBack()
   }
 
   const handlePublish = () => {
@@ -165,16 +214,9 @@ export function CourseBuilder({ courseId, onBack }: CourseBuilderProps) {
             <h2 className="text-2xl font-bold">
               {courseId ? 'Edit Course' : 'Create New Course'}
             </h2>
-            <p className="text-sm text-muted-foreground mt-1">
-              {course.published ? (
-                <Badge variant="default" className="gap-1">
-                  <CheckCircle size={14} weight="fill" />
-                  Published
-                </Badge>
-              ) : (
-                <Badge variant="secondary">Draft</Badge>
-              )}
-            </p>
+            <div className="mt-1">
+              <StatusBadge status={(course as any).status || (course.published ? 'published' : 'draft')} />
+            </div>
           </div>
         </div>
         <div className="flex gap-2">
@@ -182,10 +224,25 @@ export function CourseBuilder({ courseId, onBack }: CourseBuilderProps) {
             <FloppyDisk className="mr-2" size={18} />
             Save Draft
           </Button>
-          <Button onClick={handlePublish}>
-            <CheckCircle className="mr-2" size={18} weight="fill" />
-            Publish Course
-          </Button>
+          
+          {/* Submit for Review - Only for instructors with draft courses */}
+          {((course as any).status === 'draft' || !(course as any).status) && 
+           (user?.role === 'instructor' || user?.role === 'mentor') && (
+            <Button onClick={handleSubmitForReview} variant="default">
+              <PaperPlaneTilt className="mr-2" size={18} />
+              Submit for Review
+            </Button>
+          )}
+
+          {/* Publish - Only for content managers and admins */}
+          {(user?.role === 'super-admin' || 
+            user?.role === 'tenant-admin' || 
+            user?.role === 'content-manager') && (
+            <Button onClick={handlePublish}>
+              <CheckCircle className="mr-2" size={18} weight="fill" />
+              Publish Course
+            </Button>
+          )}
         </div>
       </div>
 

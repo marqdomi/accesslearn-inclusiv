@@ -44,6 +44,10 @@ export interface User {
   // Custom Permissions (optional overrides)
   customPermissions?: string[];  // Array of permission strings (e.g., ['courses:create', 'users:view'])
   
+  // Authentication
+  password?: string;             // Temporary password or hashed password
+  passwordResetRequired?: boolean; // Force password change on first login
+  
   // Mexican Compliance Fields
   curp?: string;                 // Clave Única de Registro de Población
   rfc?: string;                  // Registro Federal de Contribuyentes
@@ -84,6 +88,7 @@ export interface CreateUserRequest {
   firstName: string;
   lastName: string;
   role: UserRole;
+  temporaryPassword?: string; // Optional temporary password (defaults to 'Welcome123!' if not provided)
   
   // Optional Mexican Compliance
   curp?: string;

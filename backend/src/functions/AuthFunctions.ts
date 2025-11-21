@@ -32,7 +32,7 @@ export interface LoginResponse {
  * In production, use Azure AD B2C or proper password hashing
  */
 export async function login(request: LoginRequest): Promise<LoginResponse> {
-  const { email, tenantId } = request;
+  const { email, password, tenantId } = request;
 
   try {
     const container = getContainer('users');
@@ -56,6 +56,15 @@ export async function login(request: LoginRequest): Promise<LoginResponse> {
     }
 
     const user = resources[0];
+
+    // Validate password (simple string comparison for demo)
+    // In production, use bcrypt.compare(password, user.passwordHash)
+    if (user.password && password !== user.password) {
+      return {
+        success: false,
+        error: 'Usuario no encontrado o credenciales incorrectas.',
+      };
+    }
 
     // Check if user is active (could add more validations here)
     if (user.status === 'inactive') {

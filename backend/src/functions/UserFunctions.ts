@@ -80,6 +80,10 @@ export async function createUser(request: CreateUserRequest): Promise<User> {
     role: request.role,
     status: 'active',
     
+    // Authentication (for demo/testing - use temporaryPassword or default)
+    password: request.temporaryPassword || 'Welcome123!',
+    passwordResetRequired: true,
+    
     // Mexican compliance
     curp: request.curp,
     rfc: request.rfc,
@@ -278,7 +282,7 @@ export async function getTenantUserStats(tenantId: string) {
     activeUsers: users.filter(u => u.status === 'active').length,
     mentors: users.filter(u => u.role === 'mentor').length,
     students: users.filter(u => u.role === 'student').length,
-    admins: users.filter(u => u.role === 'admin').length,
+    admins: users.filter(u => ['super-admin', 'tenant-admin'].includes(u.role)).length,
     averageXP: users.reduce((sum, u) => sum + u.totalXP, 0) / users.length || 0,
     totalEnrollments: users.reduce((sum, u) => sum + u.enrolledCourses.length, 0),
     totalCompletions: users.reduce((sum, u) => sum + u.completedCourses.length, 0)

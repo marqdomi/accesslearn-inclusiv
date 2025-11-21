@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { initializeCosmos, getContainer } from './services/cosmosdb.service';
+import { authenticateToken } from './middleware/authentication';
 import {
   requireAuth,
   requireRole,
@@ -72,6 +73,7 @@ const PORT = process.env.PORT || 7071;
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use(authenticateToken); // Validate JWT and attach user to request
 app.use(attachAuditMetadata); // Agregar metadata de auditoría a todos los requests
 
 // Health check

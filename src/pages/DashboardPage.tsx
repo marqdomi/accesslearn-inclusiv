@@ -122,6 +122,22 @@ export function DashboardPage() {
                 Buscar Mentor
               </Button>
               
+              {/* Course Creation - For Instructors */}
+              <RequireRole roles={['super-admin', 'tenant-admin', 'content-manager', 'instructor']}>
+                <Button variant="ghost" size="sm" onClick={() => navigate('/my-courses')}>
+                  <BookOpen className="h-4 w-4 mr-2" />
+                  Mis Cursos
+                </Button>
+              </RequireRole>
+              
+              {/* Content Manager Dashboard */}
+              <RequireRole roles={['super-admin', 'tenant-admin', 'content-manager']}>
+                <Button variant="ghost" size="sm" onClick={() => navigate('/content-manager')}>
+                  <CheckCircle2 className="h-4 w-4 mr-2" />
+                  Aprobar Cursos
+                </Button>
+              </RequireRole>
+              
               {/* Admin Controls - Protected by Permissions */}
               <RequirePermission permission="analytics:view-all">
                 <Button variant="ghost" size="sm" onClick={() => navigate('/admin/analytics')}>

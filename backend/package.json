@@ -11,6 +11,9 @@
     "create-tenant": "ts-node src/scripts/create-tenant.ts",
     "create-user": "ts-node src/scripts/create-user.ts",
     "list-tenants": "ts-node src/scripts/list-tenants.ts",
+    "setup-demo": "ts-node src/scripts/setup-demo-data.ts",
+    "update-passwords": "ts-node src/scripts/update-passwords.ts",
+    "update-ana-role": "ts-node src/scripts/update-ana-role.ts",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage"
