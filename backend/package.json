@@ -16,6 +16,9 @@
     "setup-dra-amayrani": "ts-node src/scripts/setup-dra-amayrani.ts",
     "update-passwords": "ts-node src/scripts/update-passwords.ts",
     "update-ana-role": "ts-node src/scripts/update-ana-role.ts",
+    "clean": "ts-node src/scripts/clean-database.ts",
+    "seed": "ts-node src/scripts/seed-data.ts",
+    "reset-db": "npm run clean && npm run seed",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage"

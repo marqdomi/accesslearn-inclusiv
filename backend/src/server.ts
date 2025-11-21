@@ -152,8 +152,8 @@ app.get('/api/auth/validate', async (req, res) => {
 // TENANT ENDPOINTS
 // ============================================
 
-// GET /api/tenants - List all tenants
-app.get('/api/tenants', requireAuth, requirePermission('tenants:list-all'), async (req, res) => {
+// GET /api/tenants - List all tenants (public endpoint for tenant selection)
+app.get('/api/tenants', async (req, res) => {
   try {
     const tenants = await listTenants();
     res.json(tenants);

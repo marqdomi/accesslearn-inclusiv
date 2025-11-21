@@ -75,9 +75,12 @@ export async function login(request: LoginRequest): Promise<LoginResponse> {
 
     const user = resources[0];
 
-    // Validate password (simple string comparison for demo)
+    // Validate password (using SHA-256 hash)
     // In production, use bcrypt.compare(password, user.passwordHash)
-    if (user.password && password !== user.password) {
+    const crypto = require('crypto');
+    const hashedPassword = crypto.createHash('sha256').update(password).digest('hex');
+    
+    if (user.password && hashedPassword !== user.password) {
       return {
         success: false,
         error: 'Usuario no encontrado o credenciales incorrectas.',
