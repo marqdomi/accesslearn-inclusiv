@@ -38,6 +38,14 @@ export interface Course {
   modules: ContentModule[]
   assessment?: Assessment[]
   coverImage?: string
+  // Approval workflow fields
+  status?: 'draft' | 'pending-review' | 'published' | 'archived'
+  reviewerId?: string
+  reviewComments?: string
+  requestedChanges?: string
+  publishedAt?: string
+  archivedAt?: string
+  submittedForReviewAt?: string
 }
 
 export interface CourseAttempt {

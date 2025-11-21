@@ -24,6 +24,19 @@ import {
   completeCourse,
 } from './functions/UserFunctions';
 import { getCourses } from './functions/GetCourses';
+import {
+  getCourses as getCoursesNew,
+  getCourseById,
+  createCourse,
+  updateCourse,
+  submitCourseForReview,
+  approveCourse,
+  rejectCourse,
+  requestCourseChanges,
+  archiveCourse,
+  unarchiveCourse,
+  deleteCourse
+} from './functions/CourseFunctions';
 import { login, validateToken } from './functions/AuthFunctions';
 import {
   createMentorshipRequest,
@@ -282,7 +295,61 @@ app.get('/api/stats/tenant/:tenantId/users', async (req, res) => {
 // COURSE ENDPOINTS
 // ============================================
 
-// GET /api/courses/tenant/:tenantId - Get courses by tenant
+// GET /api/courses - Get courses with role-based filtering
+// Supports query parameters: ?status=draft|pending-review|published|archived
+app.get('/api/courses', requireAuth, async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const { status, createdBy } = req.query;
+
+    // Role-based filtering logic:
+    // - Students: only published courses
+    // - Instructors: own courses (all statuses) + published courses
+    // - Content managers/admins: all courses, all statuses
+
+    let courses;
+
+    if (user.role === 'student') {
+      // Students can only see published courses
+      courses = await getCoursesNew(user.tenantId, { status: 'published' });
+    } else if (user.role === 'instructor') {
+      // Instructors see their own courses + all published courses
+      const ownCourses = await getCoursesNew(user.tenantId, { 
+        createdBy: user.id 
+      });
+      const publishedCourses = await getCoursesNew(user.tenantId, { 
+        status: 'published' 
+      });
+      
+      // Merge and deduplicate
+      const courseMap = new Map();
+      [...ownCourses, ...publishedCourses].forEach(course => {
+        courseMap.set(course.id, course);
+      });
+      courses = Array.from(courseMap.values());
+      
+      // Apply status filter if provided
+      if (status) {
+        courses = courses.filter(c => c.status === status);
+      }
+    } else {
+      // Content managers, admins, and other roles see all courses
+      const options: any = {};
+      if (status) options.status = status as any;
+      if (createdBy) options.createdBy = createdBy as string;
+      
+      courses = await getCoursesNew(user.tenantId, options);
+    }
+
+    console.log('[API] GET /api/courses - Found', courses.length, 'courses');
+    res.json(courses);
+  } catch (error: any) {
+    console.error('[API] Error getting courses:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/courses/tenant/:tenantId - Legacy endpoint (kept for backward compatibility)
 app.get('/api/courses/tenant/:tenantId', requireAuth, async (req, res) => {
   try {
     const { tenantId } = req.params;
@@ -419,6 +486,202 @@ app.get('/api/users/:userId/progress/:courseId', requireAuth, requireOwnershipOr
     res.status(500).json({ error: error.message });
   }
 });
+
+// ============================================
+// COURSE APPROVAL WORKFLOW ENDPOINTS
+// ============================================
+
+// POST /api/courses - Create new course (draft status)
+app.post('/api/courses', 
+  requireAuth, 
+  requirePermission('content:create'),
+  async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const { title, description, category, estimatedTime, coverImage } = req.body;
+
+      if (!title || !description || !category) {
+        return res.status(400).json({ 
+          error: 'title, description, and category are required' 
+        });
+      }
+
+      const course = await createCourse(
+        { title, description, category, estimatedTime: estimatedTime || 60, coverImage },
+        user.tenantId,
+        user.id
+      );
+
+      res.status(201).json(course);
+    } catch (error: any) {
+      console.error('[API] Error creating course:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+);
+
+// PUT /api/courses/:courseId - Update course
+app.put('/api/courses/:courseId',
+  requireAuth,
+  requirePermission('content:edit'),
+  async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const { courseId } = req.params;
+      const updates = req.body;
+
+      const course = await updateCourse(courseId, user.tenantId, user.id, updates);
+      res.json(course);
+    } catch (error: any) {
+      console.error('[API] Error updating course:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+);
+
+// POST /api/courses/:courseId/submit-review - Submit course for review
+app.post('/api/courses/:courseId/submit-review',
+  requireAuth,
+  requirePermission('content:review'),
+  async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const { courseId } = req.params;
+
+      const course = await submitCourseForReview(courseId, user.tenantId, user.id);
+      res.json(course);
+    } catch (error: any) {
+      console.error('[API] Error submitting course for review:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+);
+
+// POST /api/courses/:courseId/approve - Approve course
+app.post('/api/courses/:courseId/approve',
+  requireAuth,
+  requirePermission('content:approve'),
+  async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const { courseId } = req.params;
+      const { comments } = req.body;
+
+      const course = await approveCourse(courseId, user.tenantId, user.id, comments);
+      res.json(course);
+    } catch (error: any) {
+      console.error('[API] Error approving course:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+);
+
+// POST /api/courses/:courseId/reject - Reject course
+app.post('/api/courses/:courseId/reject',
+  requireAuth,
+  requirePermission('content:reject'),
+  async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const { courseId } = req.params;
+      const { comments } = req.body;
+
+      if (!comments) {
+        return res.status(400).json({ error: 'comments are required when rejecting' });
+      }
+
+      const course = await rejectCourse(courseId, user.tenantId, user.id, comments);
+      res.json(course);
+    } catch (error: any) {
+      console.error('[API] Error rejecting course:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+);
+
+// POST /api/courses/:courseId/request-changes - Request changes on course
+app.post('/api/courses/:courseId/request-changes',
+  requireAuth,
+  requirePermission('content:request-changes'),
+  async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const { courseId } = req.params;
+      const { requestedChanges } = req.body;
+
+      if (!requestedChanges) {
+        return res.status(400).json({ 
+          error: 'requestedChanges is required' 
+        });
+      }
+
+      const course = await requestCourseChanges(
+        courseId, 
+        user.tenantId, 
+        user.id, 
+        requestedChanges
+      );
+      res.json(course);
+    } catch (error: any) {
+      console.error('[API] Error requesting changes:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+);
+
+// POST /api/courses/:courseId/archive - Archive course
+app.post('/api/courses/:courseId/archive',
+  requireAuth,
+  requirePermission('content:archive'),
+  async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const { courseId } = req.params;
+
+      const course = await archiveCourse(courseId, user.tenantId, user.id);
+      res.json(course);
+    } catch (error: any) {
+      console.error('[API] Error archiving course:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+);
+
+// POST /api/courses/:courseId/unarchive - Unarchive course
+app.post('/api/courses/:courseId/unarchive',
+  requireAuth,
+  requirePermission('content:archive'),
+  async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const { courseId } = req.params;
+
+      const course = await unarchiveCourse(courseId, user.tenantId, user.id);
+      res.json(course);
+    } catch (error: any) {
+      console.error('[API] Error unarchiving course:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+);
+
+// DELETE /api/courses/:courseId - Delete course (soft delete)
+app.delete('/api/courses/:courseId',
+  requireAuth,
+  requirePermission('content:delete'),
+  async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const { courseId } = req.params;
+
+      await deleteCourse(courseId, user.tenantId, user.id);
+      res.status(204).send();
+    } catch (error: any) {
+      console.error('[API] Error deleting course:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+);
 
 // ============================================
 // MENTORSHIP ENDPOINTS
