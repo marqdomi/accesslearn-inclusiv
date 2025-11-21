@@ -1,4 +1,4 @@
-import { CourseStructure, Quiz, QuizQuestion } from '@/lib/types'
+import { CourseStructure, Quiz, QuizQuestion, ScenarioQuestion, ScenarioStep, ScenarioOption } from '@/lib/types'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -24,6 +24,8 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { Separator } from '@/components/ui/separator'
 import {
   Plus,
   PencilSimple,
@@ -34,6 +36,9 @@ import {
   ListChecks,
   TextT,
   SortAscending,
+  FlowArrow,
+  GitBranch,
+  Target,
 } from '@phosphor-icons/react'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -49,6 +54,7 @@ const QUESTION_TYPES = [
   { value: 'true-false', label: 'Verdadero/Falso', icon: CheckCircle, description: 'Pregunta binaria' },
   { value: 'short-answer', label: 'Respuesta Corta', icon: TextT, description: 'Respuesta de texto' },
   { value: 'ordering', label: 'Ordenamiento', icon: SortAscending, description: 'Ordenar elementos' },
+  { value: 'scenario-solver', label: 'Árbol de Decisiones', icon: GitBranch, description: 'Escenario interactivo ramificado' },
 ] as const
 
 export function QuizBuilderStep({ course, updateCourse }: QuizBuilderStepProps) {
@@ -77,6 +83,17 @@ export function QuizBuilderStep({ course, updateCourse }: QuizBuilderStepProps) 
     incorrectFeedback: 'Incorrecto. Inténtalo de nuevo.',
     xpValue: 10,
   })
+
+  // Scenario form states
+  const [scenarioForm, setScenarioForm] = useState<ScenarioQuestion>({
+    title: '',
+    description: '',
+    steps: [],
+    startStepId: 'step-1',
+    perfectScore: 100,
+  })
+  const [editingStepIndex, setEditingStepIndex] = useState<number | null>(null)
+  const [isStepDialogOpen, setIsStepDialogOpen] = useState(false)
 
   // Parse selected lesson path
   const getSelectedLesson = () => {
@@ -163,6 +180,13 @@ export function QuizBuilderStep({ course, updateCourse }: QuizBuilderStepProps) 
       incorrectFeedback: 'Incorrecto. Inténtalo de nuevo.',
       xpValue: 10,
     })
+    setScenarioForm({
+      title: '',
+      description: '',
+      steps: [],
+      startStepId: 'step-1',
+      perfectScore: 100,
+    })
     setIsQuestionDialogOpen(true)
   }
 
@@ -173,9 +197,19 @@ export function QuizBuilderStep({ course, updateCourse }: QuizBuilderStepProps) 
     const question = currentQuiz.questions[questionIndex]
     setEditingQuestion({ questionIndex, data: question })
     
+    if (question.type === 'scenario-solver') {
+      setScenarioForm(typeof question.question === 'object' ? question.question as ScenarioQuestion : {
+        title: '',
+        description: '',
+        steps: [],
+        startStepId: 'step-1',
+        perfectScore: 100,
+      })
+    }
+    
     setQuestionForm({
       type: question.type,
-      question: question.question,
+      question: typeof question.question === 'string' ? question.question : '',
       options: Array.isArray(question.options) ? question.options : ['', '', '', ''],
       correctAnswer: typeof question.correctAnswer === 'number' ? question.correctAnswer : 0,
       correctAnswers: Array.isArray(question.correctAnswer) ? question.correctAnswer : [],
@@ -189,24 +223,42 @@ export function QuizBuilderStep({ course, updateCourse }: QuizBuilderStepProps) 
 
   // Save question
   const handleSaveQuestion = () => {
-    if (!selectedLesson || !currentQuiz || !questionForm.question.trim()) return
+    if (!selectedLesson || !currentQuiz) return
+
+    // Validación específica por tipo
+    if (questionForm.type === 'scenario-solver') {
+      if (!scenarioForm.title.trim() || scenarioForm.steps.length === 0) {
+        alert('El escenario debe tener un título y al menos un paso.')
+        return
+      }
+    } else {
+      if (!questionForm.question.trim()) return
+    }
 
     let correctAnswer: number | number[] | string
+    let questionText: string | ScenarioQuestion
     
-    if (questionForm.type === 'multiple-choice') {
+    if (questionForm.type === 'scenario-solver') {
+      questionText = scenarioForm
+      correctAnswer = 0 // No aplica para scenarios
+    } else if (questionForm.type === 'multiple-choice') {
+      questionText = questionForm.question
       correctAnswer = questionForm.correctAnswer
     } else if (questionForm.type === 'multiple-select') {
+      questionText = questionForm.question
       correctAnswer = questionForm.correctAnswers
     } else if (questionForm.type === 'true-false') {
+      questionText = questionForm.question
       correctAnswer = questionForm.correctAnswer
     } else {
+      questionText = questionForm.question
       correctAnswer = questionForm.shortAnswer
     }
 
     const newQuestion: QuizQuestion = {
       id: editingQuestion ? editingQuestion.data.id : `question-${Date.now()}`,
       type: questionForm.type,
-      question: questionForm.question,
+      question: questionText,
       options: ['multiple-choice', 'multiple-select', 'true-false', 'ordering'].includes(questionForm.type) 
         ? questionForm.options.filter(o => o.trim()) 
         : [],
@@ -243,6 +295,57 @@ export function QuizBuilderStep({ course, updateCourse }: QuizBuilderStepProps) 
     quiz.totalXP = quiz.questions.reduce((acc, q) => acc + q.xpValue, 0)
 
     updateCourse({ modules: updatedModules })
+  }
+
+  // Scenario step management
+  const handleAddStep = () => {
+    const newStep: ScenarioStep = {
+      id: `step-${scenarioForm.steps.length + 1}`,
+      situation: '',
+      context: '',
+      options: [],
+    }
+    setScenarioForm({ ...scenarioForm, steps: [...scenarioForm.steps, newStep] })
+  }
+
+  const handleDeleteStep = (stepIndex: number) => {
+    if (!confirm('¿Eliminar este paso del escenario?')) return
+    const updatedSteps = scenarioForm.steps.filter((_, i) => i !== stepIndex)
+    setScenarioForm({ ...scenarioForm, steps: updatedSteps })
+  }
+
+  const handleUpdateStep = (stepIndex: number, field: keyof ScenarioStep, value: any) => {
+    const updatedSteps = [...scenarioForm.steps]
+    updatedSteps[stepIndex] = { ...updatedSteps[stepIndex], [field]: value }
+    setScenarioForm({ ...scenarioForm, steps: updatedSteps })
+  }
+
+  const handleAddOption = (stepIndex: number) => {
+    const newOption: ScenarioOption = {
+      id: `opt-${stepIndex}-${scenarioForm.steps[stepIndex].options.length + 1}`,
+      text: '',
+      consequence: '',
+      isCorrect: false,
+      score: 0,
+    }
+    const updatedSteps = [...scenarioForm.steps]
+    updatedSteps[stepIndex].options.push(newOption)
+    setScenarioForm({ ...scenarioForm, steps: updatedSteps })
+  }
+
+  const handleDeleteOption = (stepIndex: number, optionIndex: number) => {
+    const updatedSteps = [...scenarioForm.steps]
+    updatedSteps[stepIndex].options = updatedSteps[stepIndex].options.filter((_, i) => i !== optionIndex)
+    setScenarioForm({ ...scenarioForm, steps: updatedSteps })
+  }
+
+  const handleUpdateOption = (stepIndex: number, optionIndex: number, field: keyof ScenarioOption, value: any) => {
+    const updatedSteps = [...scenarioForm.steps]
+    updatedSteps[stepIndex].options[optionIndex] = {
+      ...updatedSteps[stepIndex].options[optionIndex],
+      [field]: value
+    }
+    setScenarioForm({ ...scenarioForm, steps: updatedSteps })
   }
 
   // Get question type label
@@ -398,22 +501,45 @@ export function QuizBuilderStep({ course, updateCourse }: QuizBuilderStepProps) 
                             <Badge variant="outline">{getQuestionTypeLabel(question.type)}</Badge>
                             <Badge variant="secondary">{question.xpValue} XP</Badge>
                           </div>
-                          <p className="font-medium mb-2">{question.question}</p>
-                          {question.options.length > 0 && (
-                            <ul className="text-sm text-muted-foreground space-y-1">
-                              {question.options.map((option, i) => (
-                                <li key={i} className="flex items-center gap-2">
-                                  <span className="w-5 h-5 rounded-full border flex items-center justify-center text-xs">
-                                    {String.fromCharCode(65 + i)}
-                                  </span>
-                                  {option}
-                                  {(question.correctAnswer === i || 
-                                    (Array.isArray(question.correctAnswer) && question.correctAnswer.includes(i))) && (
-                                    <CheckCircle size={14} className="text-green-600" weight="fill" />
-                                  )}
-                                </li>
-                              ))}
-                            </ul>
+                          {question.type === 'scenario-solver' ? (
+                            <div>
+                              <p className="font-medium mb-1">
+                                {typeof question.question === 'object' ? question.question.title : 'Escenario sin título'}
+                              </p>
+                              {typeof question.question === 'object' && (
+                                <p className="text-sm text-muted-foreground mb-2">{question.question.description}</p>
+                              )}
+                              <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                                <span className="flex items-center gap-1">
+                                  <FlowArrow size={14} />
+                                  {typeof question.question === 'object' ? question.question.steps.length : 0} pasos
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <Target size={14} />
+                                  {typeof question.question === 'object' ? question.question.perfectScore : 0} puntos máx.
+                                </span>
+                              </div>
+                            </div>
+                          ) : (
+                            <>
+                              <p className="font-medium mb-2">{typeof question.question === 'string' ? question.question : ''}</p>
+                              {question.options.length > 0 && (
+                                <ul className="text-sm text-muted-foreground space-y-1">
+                                  {question.options.map((option, i) => (
+                                    <li key={i} className="flex items-center gap-2">
+                                      <span className="w-5 h-5 rounded-full border flex items-center justify-center text-xs">
+                                        {String.fromCharCode(65 + i)}
+                                      </span>
+                                      {option}
+                                      {(question.correctAnswer === i || 
+                                        (Array.isArray(question.correctAnswer) && question.correctAnswer.includes(i))) && (
+                                        <CheckCircle size={14} className="text-green-600" weight="fill" />
+                                      )}
+                                    </li>
+                                  ))}
+                                </ul>
+                              )}
+                            </>
                           )}
                         </div>
                         <div className="flex gap-1 flex-shrink-0">
@@ -552,20 +678,238 @@ export function QuizBuilderStep({ course, updateCourse }: QuizBuilderStepProps) 
               </Select>
             </div>
 
-            {/* Question Text */}
-            <div className="space-y-2">
-              <Label htmlFor="question-text">Pregunta *</Label>
-              <Textarea
-                id="question-text"
-                placeholder="Escribe la pregunta..."
-                value={questionForm.question}
-                onChange={(e) => setQuestionForm({ ...questionForm, question: e.target.value })}
-                rows={3}
-                maxLength={500}
-              />
-            </div>
+            {/* Scenario Solver Editor */}
+            {questionForm.type === 'scenario-solver' ? (
+              <div className="space-y-4">
+                {/* Scenario Metadata */}
+                <div className="space-y-2">
+                  <Label htmlFor="scenario-title">Título del Escenario *</Label>
+                  <Input
+                    id="scenario-title"
+                    placeholder="ej. Cliente Frustrado por Retraso"
+                    value={scenarioForm.title}
+                    onChange={(e) => setScenarioForm({ ...scenarioForm, title: e.target.value })}
+                    maxLength={100}
+                  />
+                </div>
 
-            {/* Options (for multiple-choice, multiple-select, true-false, ordering) */}
+                <div className="space-y-2">
+                  <Label htmlFor="scenario-description">Descripción *</Label>
+                  <Textarea
+                    id="scenario-description"
+                    placeholder="Describe el escenario interactivo..."
+                    value={scenarioForm.description}
+                    onChange={(e) => setScenarioForm({ ...scenarioForm, description: e.target.value })}
+                    rows={2}
+                    maxLength={300}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="start-step">ID de Paso Inicial *</Label>
+                    <Input
+                      id="start-step"
+                      placeholder="step-1"
+                      value={scenarioForm.startStepId}
+                      onChange={(e) => setScenarioForm({ ...scenarioForm, startStepId: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="perfect-score">Puntaje Perfecto *</Label>
+                    <Input
+                      id="perfect-score"
+                      type="number"
+                      min={0}
+                      max={200}
+                      value={scenarioForm.perfectScore}
+                      onChange={(e) => setScenarioForm({ ...scenarioForm, perfectScore: parseInt(e.target.value) || 100 })}
+                    />
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Steps Editor */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-base font-semibold flex items-center gap-2">
+                      <FlowArrow size={18} />
+                      Pasos del Escenario ({scenarioForm.steps.length})
+                    </Label>
+                    <Button onClick={handleAddStep} size="sm" variant="outline">
+                      <Plus className="mr-1" size={14} />
+                      Agregar Paso
+                    </Button>
+                  </div>
+
+                  {scenarioForm.steps.length === 0 ? (
+                    <Alert>
+                      <Info className="h-4 w-4" />
+                      <AlertDescription>
+                        Agrega al menos un paso con opciones para crear el árbol de decisiones.
+                      </AlertDescription>
+                    </Alert>
+                  ) : (
+                    <ScrollArea className="h-[400px] border rounded-lg p-4">
+                      <div className="space-y-4">
+                        {scenarioForm.steps.map((step, stepIndex) => (
+                          <Card key={step.id} className="p-4">
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between">
+                                <Badge variant="outline" className="flex items-center gap-1">
+                                  <Target size={14} />
+                                  {step.id}
+                                </Badge>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-destructive h-7 w-7 p-0"
+                                  onClick={() => handleDeleteStep(stepIndex)}
+                                >
+                                  <Trash size={14} />
+                                </Button>
+                              </div>
+
+                              <div className="space-y-2">
+                                <Label className="text-xs">Situación *</Label>
+                                <Input
+                                  placeholder="Título de este paso..."
+                                  value={step.situation}
+                                  onChange={(e) => handleUpdateStep(stepIndex, 'situation', e.target.value)}
+                                  maxLength={100}
+                                />
+                              </div>
+
+                              <div className="space-y-2">
+                                <Label className="text-xs">Contexto</Label>
+                                <Textarea
+                                  placeholder="Descripción del escenario en este punto..."
+                                  value={step.context || ''}
+                                  onChange={(e) => handleUpdateStep(stepIndex, 'context', e.target.value)}
+                                  rows={2}
+                                  maxLength={500}
+                                />
+                              </div>
+
+                              {/* Options for this step */}
+                              <div className="space-y-2 pl-3 border-l-2">
+                                <Label className="text-xs font-semibold">Opciones de Decisión ({step.options.length})</Label>
+                                {step.options.map((option, optionIndex) => (
+                                  <Card key={option.id} className="p-3 bg-muted/30">
+                                    <div className="space-y-2">
+                                      <div className="flex items-center justify-between mb-1">
+                                        <span className="text-xs font-mono text-muted-foreground">{option.id}</span>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          className="h-6 w-6 p-0 text-destructive"
+                                          onClick={() => handleDeleteOption(stepIndex, optionIndex)}
+                                        >
+                                          <Trash size={12} />
+                                        </Button>
+                                      </div>
+
+                                      <Input
+                                        placeholder="Texto de la opción..."
+                                        value={option.text}
+                                        onChange={(e) => handleUpdateOption(stepIndex, optionIndex, 'text', e.target.value)}
+                                        className="text-sm"
+                                        maxLength={200}
+                                      />
+
+                                      <Textarea
+                                        placeholder="Consecuencia de elegir esta opción..."
+                                        value={option.consequence}
+                                        onChange={(e) => handleUpdateOption(stepIndex, optionIndex, 'consequence', e.target.value)}
+                                        rows={2}
+                                        className="text-sm"
+                                        maxLength={300}
+                                      />
+
+                                      <div className="grid grid-cols-3 gap-2">
+                                        <div className="flex items-center gap-2">
+                                          <Checkbox
+                                            id={`correct-${stepIndex}-${optionIndex}`}
+                                            checked={option.isCorrect}
+                                            onCheckedChange={(checked) => 
+                                              handleUpdateOption(stepIndex, optionIndex, 'isCorrect', checked)
+                                            }
+                                          />
+                                          <Label htmlFor={`correct-${stepIndex}-${optionIndex}`} className="text-xs">
+                                            Correcta
+                                          </Label>
+                                        </div>
+
+                                        <div className="space-y-1">
+                                          <Label className="text-xs">Puntos</Label>
+                                          <Input
+                                            type="number"
+                                            min={-20}
+                                            max={50}
+                                            value={option.score}
+                                            onChange={(e) => handleUpdateOption(stepIndex, optionIndex, 'score', parseInt(e.target.value) || 0)}
+                                            className="h-7 text-xs"
+                                          />
+                                        </div>
+
+                                        <div className="space-y-1">
+                                          <Label className="text-xs">Siguiente</Label>
+                                          <Select
+                                            value={option.nextScenarioId || ''}
+                                            onValueChange={(value) => 
+                                              handleUpdateOption(stepIndex, optionIndex, 'nextScenarioId', value || undefined)
+                                            }
+                                          >
+                                            <SelectTrigger className="h-7 text-xs">
+                                              <SelectValue placeholder="Fin" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                              <SelectItem value="">Sin siguiente (Fin)</SelectItem>
+                                              {scenarioForm.steps.map(s => (
+                                                <SelectItem key={s.id} value={s.id}>{s.id}</SelectItem>
+                                              ))}
+                                            </SelectContent>
+                                          </Select>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </Card>
+                                ))}
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="w-full h-7 text-xs"
+                                  onClick={() => handleAddOption(stepIndex)}
+                                >
+                                  <Plus className="mr-1" size={12} />
+                                  Agregar Opción
+                                </Button>
+                              </div>
+                            </div>
+                          </Card>
+                        ))}
+                      </div>
+                    </ScrollArea>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <>
+                {/* Question Text */}
+                <div className="space-y-2">
+                  <Label htmlFor="question-text">Pregunta *</Label>
+                  <Textarea
+                    id="question-text"
+                    placeholder="Escribe la pregunta..."
+                    value={questionForm.question}
+                    onChange={(e) => setQuestionForm({ ...questionForm, question: e.target.value })}
+                    rows={3}
+                    maxLength={500}
+                  />
+                </div>
+
+                {/* Options (for multiple-choice, multiple-select, true-false, ordering) */}
             {['multiple-choice', 'multiple-select', 'true-false', 'ordering'].includes(questionForm.type) && (
               <div className="space-y-2">
                 <Label>Opciones de Respuesta *</Label>
@@ -630,61 +974,70 @@ export function QuizBuilderStep({ course, updateCourse }: QuizBuilderStepProps) 
               </div>
             )}
 
-            {/* Short Answer */}
-            {questionForm.type === 'short-answer' && (
-              <div className="space-y-2">
-                <Label htmlFor="short-answer">Respuesta Correcta *</Label>
-                <Input
-                  id="short-answer"
-                  placeholder="Escribe la respuesta correcta..."
-                  value={questionForm.shortAnswer}
-                  onChange={(e) => setQuestionForm({ ...questionForm, shortAnswer: e.target.value })}
-                />
-              </div>
+                {/* Short Answer */}
+                {questionForm.type === 'short-answer' && (
+                  <div className="space-y-2">
+                    <Label htmlFor="short-answer">Respuesta Correcta *</Label>
+                    <Input
+                      id="short-answer"
+                      placeholder="Escribe la respuesta correcta..."
+                      value={questionForm.shortAnswer}
+                      onChange={(e) => setQuestionForm({ ...questionForm, shortAnswer: e.target.value })}
+                    />
+                  </div>
+                )}
+
+                {/* XP Value */}
+                <div className="space-y-2">
+                  <Label htmlFor="question-xp">Puntos XP *</Label>
+                  <Input
+                    id="question-xp"
+                    type="number"
+                    min={0}
+                    max={100}
+                    value={questionForm.xpValue}
+                    onChange={(e) => setQuestionForm({ ...questionForm, xpValue: parseInt(e.target.value) || 10 })}
+                  />
+                </div>
+
+                {/* Feedback */}
+                <div className="space-y-2">
+                  <Label htmlFor="correct-feedback">Retroalimentación Correcta</Label>
+                  <Textarea
+                    id="correct-feedback"
+                    placeholder="Mensaje cuando responden correctamente..."
+                    value={questionForm.correctFeedback}
+                    onChange={(e) => setQuestionForm({ ...questionForm, correctFeedback: e.target.value })}
+                    rows={2}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="incorrect-feedback">Retroalimentación Incorrecta</Label>
+                  <Textarea
+                    id="incorrect-feedback"
+                    placeholder="Mensaje cuando responden incorrectamente..."
+                    value={questionForm.incorrectFeedback}
+                    onChange={(e) => setQuestionForm({ ...questionForm, incorrectFeedback: e.target.value })}
+                    rows={2}
+                  />
+                </div>
+              </>
             )}
-
-            {/* XP Value */}
-            <div className="space-y-2">
-              <Label htmlFor="question-xp">Puntos XP *</Label>
-              <Input
-                id="question-xp"
-                type="number"
-                min={0}
-                max={100}
-                value={questionForm.xpValue}
-                onChange={(e) => setQuestionForm({ ...questionForm, xpValue: parseInt(e.target.value) || 10 })}
-              />
-            </div>
-
-            {/* Feedback */}
-            <div className="space-y-2">
-              <Label htmlFor="correct-feedback">Retroalimentación Correcta</Label>
-              <Textarea
-                id="correct-feedback"
-                placeholder="Mensaje cuando responden correctamente..."
-                value={questionForm.correctFeedback}
-                onChange={(e) => setQuestionForm({ ...questionForm, correctFeedback: e.target.value })}
-                rows={2}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="incorrect-feedback">Retroalimentación Incorrecta</Label>
-              <Textarea
-                id="incorrect-feedback"
-                placeholder="Mensaje cuando responden incorrectamente..."
-                value={questionForm.incorrectFeedback}
-                onChange={(e) => setQuestionForm({ ...questionForm, incorrectFeedback: e.target.value })}
-                rows={2}
-              />
-            </div>
           </div>
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsQuestionDialogOpen(false)}>
               Cancelar
             </Button>
-            <Button onClick={handleSaveQuestion} disabled={!questionForm.question.trim()}>
+            <Button 
+              onClick={handleSaveQuestion} 
+              disabled={
+                questionForm.type === 'scenario-solver' 
+                  ? !scenarioForm.title.trim() || scenarioForm.steps.length === 0
+                  : !questionForm.question.trim()
+              }
+            >
               {editingQuestion ? 'Actualizar' : 'Crear'} Pregunta
             </Button>
           </DialogFooter>

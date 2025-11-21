@@ -198,10 +198,36 @@ export interface Badge {
   createdAt: number
 }
 
+export interface ScenarioOption {
+  id: string
+  text: string
+  consequence: string
+  isCorrect: boolean
+  score: number
+  nextScenarioId?: string
+}
+
+export interface ScenarioStep {
+  id: string
+  situation: string
+  context?: string
+  image?: string
+  options: ScenarioOption[]
+  isEndpoint?: boolean
+}
+
+export interface ScenarioQuestion {
+  title: string
+  description: string
+  steps: ScenarioStep[]
+  startStepId: string
+  perfectScore: number
+}
+
 export interface QuizQuestion {
   id: string
-  type: 'multiple-choice' | 'multiple-select' | 'true-false' | 'short-answer' | 'ordering'
-  question: string
+  type: 'multiple-choice' | 'multiple-select' | 'true-false' | 'short-answer' | 'ordering' | 'scenario-solver'
+  question: string | ScenarioQuestion
   options: string[]
   correctAnswer: number | number[] | string
   correctFeedback: string
