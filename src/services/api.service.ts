@@ -226,6 +226,26 @@ class ApiServiceClass {
     })
   }
 
+  async submitCourseForReview(courseId: string) {
+    return this.fetchWithAuth<any>(`/courses/${courseId}/submit-review`, {
+      method: 'POST',
+    })
+  }
+
+  async approveCourse(courseId: string, comments?: string) {
+    return this.fetchWithAuth<any>(`/courses/${courseId}/approve`, {
+      method: 'POST',
+      body: JSON.stringify({ comments }),
+    })
+  }
+
+  async rejectCourse(courseId: string, comments: string) {
+    return this.fetchWithAuth<any>(`/courses/${courseId}/reject`, {
+      method: 'POST',
+      body: JSON.stringify({ comments }),
+    })
+  }
+
   // ============================================
   // PROGRESS APIs
   // ============================================

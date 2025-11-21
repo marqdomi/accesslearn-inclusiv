@@ -11,6 +11,7 @@ import { AutoSaveIndicator } from './shared/AutoSaveIndicator'
 import { useAutoSave } from './hooks/useAutoSave'
 import { toast } from 'sonner'
 import { useKV } from '@github/spark/hooks'
+import { ApiService } from '@/services/api.service'
 
 // Import steps (we'll create these next)
 import { CourseDetailsStep } from './steps/CourseDetailsStep'
@@ -55,7 +56,6 @@ export function ModernCourseBuilder({ courseId, onBack }: ModernCourseBuilderPro
     createdAt: Date.now(),
     updatedAt: Date.now(),
     createdBy: user?.id || 'unknown',
-    status: 'draft',
   })
   
   const [currentStep, setCurrentStep] = useState(1)
@@ -82,7 +82,7 @@ export function ModernCourseBuilder({ courseId, onBack }: ModernCourseBuilderPro
           // Update existing
           return currentCourses?.map(c => 
             c.id === courseData.id ? { ...courseData, updatedAt: Date.now() } : c
-          )
+          ) || []
         } else {
           // Add new
           return [...(currentCourses || []), { ...courseData, createdAt: Date.now(), updatedAt: Date.now() }]
@@ -193,6 +193,34 @@ export function ModernCourseBuilder({ courseId, onBack }: ModernCourseBuilderPro
     setCourse(prev => ({ ...prev, ...updates }))
     setHasUnsavedChanges(true)
   }
+
+  // Submit for review (for instructors)
+  const handleSubmitForReview = async () => {
+    try {
+      await saveToBackend() // Save first
+      await ApiService.submitCourseForReview(course.id)
+      clearLocalStorage()
+      toast.success('Curso enviado para revisión')
+      navigate('/my-courses')
+    } catch (error) {
+      console.error('Error submitting course:', error)
+      toast.error('Error al enviar el curso para revisión')
+    }
+  }
+
+  // Publish directly (for content managers/admins)
+  const handlePublishCourse = async () => {
+    try {
+      await saveToBackend() // Save first
+      await ApiService.approveCourse(course.id)
+      clearLocalStorage()
+      toast.success('Curso publicado exitosamente')
+      navigate('/my-courses')
+    } catch (error) {
+      console.error('Error publishing course:', error)
+      toast.error('Error al publicar el curso')
+    }
+  }
   
   return (
     <div className="min-h-screen bg-background">
@@ -279,10 +307,8 @@ export function ModernCourseBuilder({ courseId, onBack }: ModernCourseBuilderPro
               <ReviewPublishStep 
                 course={course}
                 onSaveDraft={handleSaveDraft}
-                onPublish={() => {
-                  clearLocalStorage()
-                  navigate('/my-courses')
-                }}
+                onSubmitForReview={handleSubmitForReview}
+                onPublish={handlePublishCourse}
               />
             )}
           </CardContent>

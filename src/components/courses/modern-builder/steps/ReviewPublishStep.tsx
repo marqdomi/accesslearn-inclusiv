@@ -32,6 +32,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 interface ReviewPublishStepProps {
   course: CourseStructure
   onSaveDraft: () => void
+  onSubmitForReview: () => void
   onPublish: () => void
 }
 
@@ -43,7 +44,7 @@ interface ValidationItem {
   required: boolean
 }
 
-export function ReviewPublishStep({ course, onSaveDraft, onPublish }: ReviewPublishStepProps) {
+export function ReviewPublishStep({ course, onSaveDraft, onSubmitForReview, onPublish }: ReviewPublishStepProps) {
   const { user } = useAuth()
   const [isPreviewOpen, setIsPreviewOpen] = useState(false)
   
@@ -328,7 +329,7 @@ export function ReviewPublishStep({ course, onSaveDraft, onPublish }: ReviewPubl
           <Button 
             size="lg" 
             className="w-full"
-            onClick={onPublish}
+            onClick={onSubmitForReview}
             disabled={!canPublish}
           >
             <PaperPlaneTilt className="mr-2" size={20} />
