@@ -12,6 +12,7 @@
     "create-user": "ts-node src/scripts/create-user.ts",
     "list-tenants": "ts-node src/scripts/list-tenants.ts",
     "setup-demo": "ts-node src/scripts/setup-demo-data.ts",
+    "setup-dra-amayrani": "ts-node src/scripts/setup-dra-amayrani.ts",
     "update-passwords": "ts-node src/scripts/update-passwords.ts",
     "update-ana-role": "ts-node src/scripts/update-ana-role.ts",
     "test": "jest",
