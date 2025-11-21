@@ -24,6 +24,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   Plus,
   PencilSimple,
@@ -37,7 +38,15 @@ import {
   Lightning,
   Code,
   DotsSixVertical,
+  TextB,
+  TextItalic,
+  ListBullets,
+  ListNumbers,
+  Link as LinkIcon,
+  Quotes,
+  Eye,
 } from '@phosphor-icons/react'
+import ReactMarkdown from 'react-markdown'
 
 interface ContentEditorStepProps {
   course: CourseStructure
@@ -80,6 +89,40 @@ export function ContentEditorStep({ course, updateCourse }: ContentEditorStepPro
   }
 
   const selectedLesson = getSelectedLesson()
+
+  // Markdown toolbar helpers
+  const insertMarkdown = (before: string, after: string = '') => {
+    const textarea = document.getElementById('block-content') as HTMLTextAreaElement
+    if (!textarea) return
+
+    const start = textarea.selectionStart
+    const end = textarea.selectionEnd
+    const selectedText = blockForm.content.substring(start, end)
+    const newText = blockForm.content.substring(0, start) + before + selectedText + after + blockForm.content.substring(end)
+    
+    setBlockForm({ ...blockForm, content: newText })
+    
+    // Restore cursor position
+    setTimeout(() => {
+      textarea.focus()
+      textarea.setSelectionRange(start + before.length, end + before.length)
+    }, 0)
+  }
+
+  const insertAtCursor = (text: string) => {
+    const textarea = document.getElementById('block-content') as HTMLTextAreaElement
+    if (!textarea) return
+
+    const start = textarea.selectionStart
+    const newText = blockForm.content.substring(0, start) + text + blockForm.content.substring(start)
+    
+    setBlockForm({ ...blockForm, content: newText })
+    
+    setTimeout(() => {
+      textarea.focus()
+      textarea.setSelectionRange(start + text.length, start + text.length)
+    }, 0)
+  }
 
   // Add new block
   const handleAddBlock = () => {
@@ -374,26 +417,164 @@ export function ContentEditorStep({ course, updateCourse }: ContentEditorStepPro
               </Select>
             </div>
 
-            {/* Content */}
+            {/* Content - Rich Markdown Editor */}
             <div className="space-y-2">
               <Label htmlFor="block-content">Contenido *</Label>
-              <Textarea
-                id="block-content"
-                placeholder={
-                  blockForm.type === 'welcome' ? 'Mensaje de bienvenida...' :
-                  blockForm.type === 'text' ? 'Escribe el contenido de texto...' :
-                  blockForm.type === 'challenge' ? 'Describe el desafío...' :
-                  blockForm.type === 'code' ? 'Pega el código aquí...' :
-                  'Escribe el contenido...'
-                }
-                value={blockForm.content}
-                onChange={(e) => setBlockForm({ ...blockForm, content: e.target.value })}
-                rows={6}
-                maxLength={2000}
-              />
-              <p className="text-xs text-muted-foreground">
-                {blockForm.content.length}/2000 caracteres
-              </p>
+              
+              <Tabs defaultValue="edit" className="w-full">
+                <div className="flex items-center justify-between mb-2">
+                  <TabsList>
+                    <TabsTrigger value="edit" className="flex items-center gap-1">
+                      <PencilSimple size={14} />
+                      Editar
+                    </TabsTrigger>
+                    <TabsTrigger value="preview" className="flex items-center gap-1">
+                      <Eye size={14} />
+                      Vista Previa
+                    </TabsTrigger>
+                  </TabsList>
+                  <p className="text-xs text-muted-foreground">
+                    {blockForm.content.length}/5000 caracteres
+                  </p>
+                </div>
+
+                <TabsContent value="edit" className="mt-0">
+                  {/* Markdown Toolbar */}
+                  <div className="flex flex-wrap gap-1 mb-2 p-2 bg-muted/30 rounded-t-lg border border-b-0">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0"
+                      onClick={() => insertMarkdown('**', '**')}
+                      title="Negrita"
+                    >
+                      <TextB size={16} weight="bold" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0"
+                      onClick={() => insertMarkdown('*', '*')}
+                      title="Cursiva"
+                    >
+                      <TextItalic size={16} />
+                    </Button>
+                    <div className="w-px h-6 bg-border my-auto mx-1" />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 px-2"
+                      onClick={() => insertAtCursor('\n## ')}
+                      title="Título"
+                    >
+                      H2
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 px-2"
+                      onClick={() => insertAtCursor('\n### ')}
+                      title="Subtítulo"
+                    >
+                      H3
+                    </Button>
+                    <div className="w-px h-6 bg-border my-auto mx-1" />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0"
+                      onClick={() => insertAtCursor('\n- ')}
+                      title="Lista con viñetas"
+                    >
+                      <ListBullets size={16} />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0"
+                      onClick={() => insertAtCursor('\n1. ')}
+                      title="Lista numerada"
+                    >
+                      <ListNumbers size={16} />
+                    </Button>
+                    <div className="w-px h-6 bg-border my-auto mx-1" />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0"
+                      onClick={() => insertMarkdown('[', '](url)')}
+                      title="Enlace"
+                    >
+                      <LinkIcon size={16} />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0"
+                      onClick={() => insertAtCursor('\n> ')}
+                      title="Cita"
+                    >
+                      <Quotes size={16} />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 px-2"
+                      onClick={() => insertMarkdown('\n```\n', '\n```\n')}
+                      title="Bloque de código"
+                    >
+                      {'{}'}
+                    </Button>
+                  </div>
+
+                  {/* Expandable Textarea */}
+                  <Textarea
+                    id="block-content"
+                    placeholder={
+                      blockForm.type === 'welcome' ? '# Bienvenida\n\nEscribe un mensaje de bienvenida usando **Markdown**...' :
+                      blockForm.type === 'text' ? '## Título de la Sección\n\nEscribe el contenido usando **Markdown**. Puedes usar:\n\n- Listas con viñetas\n- **Negrita** y *cursiva*\n- [Enlaces](url)\n- Bloques de código\n\n¡Y mucho más!' :
+                      blockForm.type === 'challenge' ? '## Desafío\n\nDescribe el desafío que los estudiantes deben completar...' :
+                      blockForm.type === 'code' ? '```javascript\n// Escribe o pega tu código aquí\nfunction ejemplo() {\n  return "Hola Mundo"\n}\n```' :
+                      'Escribe el contenido usando Markdown...'
+                    }
+                    value={blockForm.content}
+                    onChange={(e) => setBlockForm({ ...blockForm, content: e.target.value })}
+                    className="min-h-[300px] max-h-[600px] resize-y rounded-t-none font-mono text-sm"
+                    maxLength={5000}
+                  />
+                </TabsContent>
+
+                <TabsContent value="preview" className="mt-0">
+                  <div className="min-h-[300px] max-h-[600px] overflow-y-auto p-4 border rounded-lg bg-background">
+                    {blockForm.content ? (
+                      <div className="prose prose-sm dark:prose-invert max-w-none">
+                        <ReactMarkdown>{blockForm.content}</ReactMarkdown>
+                      </div>
+                    ) : (
+                      <p className="text-muted-foreground text-center py-8">
+                        Escribe algo en la pestaña "Editar" para ver la vista previa aquí
+                      </p>
+                    )}
+                  </div>
+                </TabsContent>
+              </Tabs>
+
+              <div className="flex items-start gap-2 p-3 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
+                <Info className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 shrink-0" />
+                <div className="text-xs text-blue-900 dark:text-blue-100">
+                  <strong>Formatea con Markdown:</strong> Usa **negrita**, *cursiva*, ## títulos, - listas, [enlaces](url), y bloques de código. 
+                  La vista previa muestra cómo se verá el contenido para los estudiantes.
+                </div>
+              </div>
             </div>
 
             {/* Video URL (only for video blocks) */}
