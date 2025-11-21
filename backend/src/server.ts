@@ -78,8 +78,7 @@ const PORT = process.env.PORT || 7071;
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use(authenticateToken); // Validate JWT and attach user to request
-app.use(attachAuditMetadata); // Agregar metadata de auditoría a todos los requests
+// Note: authenticateToken is NOT applied globally - it's applied selectively to protected routes
 
 // Health check (both paths for compatibility)
 app.get('/health', (req, res) => {
@@ -101,7 +100,7 @@ app.get('/api/health', (req, res) => {
 });
 
 // ============================================
-// AUTH ENDPOINTS
+// AUTH ENDPOINTS (Public)
 // ============================================
 
 // POST /api/auth/login - Login user
@@ -207,6 +206,14 @@ app.post('/api/tenants', requireAuth, requirePermission('tenants:create'), async
     res.status(400).json({ error: error.message });
   }
 });
+
+// ============================================
+// PROTECTED ENDPOINTS (Apply auth middleware)
+// ============================================
+
+// Apply authentication and audit middleware to all routes below
+app.use(authenticateToken); // Validate JWT and attach user to request
+app.use(attachAuditMetadata); // Add audit metadata to all requests
 
 // ============================================
 // USER ENDPOINTS

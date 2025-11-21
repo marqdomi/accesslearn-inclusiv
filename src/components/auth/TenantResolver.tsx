@@ -91,6 +91,7 @@ export function TenantResolver({ children }: TenantResolverProps) {
    * - kainet.lms.kainet.mx → "kainet"
    * - demo.lms.kainet.mx → "demo"
    * - localhost → null
+   * - Azure Container Apps → null (ca-accesslearn-frontend-prod.gentlerock...azurecontainerapps.io)
    */
   const getSubdomain = (): string | null => {
     const hostname = window.location.hostname;
@@ -100,12 +101,17 @@ export function TenantResolver({ children }: TenantResolverProps) {
       return null;
     }
 
+    // Azure Container Apps (ignorar estos hostnames)
+    if (hostname.includes('azurecontainerapps.io') || hostname.includes('gentlerock')) {
+      return null;
+    }
+
     // Producción: extraer primer segmento
     // kainet.lms.kainet.mx → ["kainet", "lms", "kainet", "mx"]
     const parts = hostname.split('.');
     
-    // Si tiene al menos 3 partes (subdomain.domain.tld)
-    if (parts.length >= 3) {
+    // Si tiene al menos 3 partes (subdomain.domain.tld) y no es Azure
+    if (parts.length >= 3 && !parts[0].startsWith('ca-')) {
       return parts[0];
     }
 
