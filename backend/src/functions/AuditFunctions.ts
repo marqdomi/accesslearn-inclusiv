@@ -5,7 +5,8 @@
  */
 
 import { getContainer } from '../services/cosmosdb.service';
-import { v4 as uuidv4 } from 'uuid';
+// Use require for uuid to avoid ESM issues in Jest
+const { v4: uuidv4 } = require('uuid');
 
 /**
  * Tipos de eventos auditables

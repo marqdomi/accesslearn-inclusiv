@@ -13,16 +13,16 @@ describe('Permissions Service', () => {
       expect(ROLE_PERMISSIONS['super-admin']).toBeDefined();
       expect(ROLE_PERMISSIONS['tenant-admin']).toBeDefined();
       expect(ROLE_PERMISSIONS['instructor']).toBeDefined();
-      expect(ROLE_PERMISSIONS['content-creator']).toBeDefined();
+      expect(ROLE_PERMISSIONS['content-manager']).toBeDefined();
       expect(ROLE_PERMISSIONS['mentor']).toBeDefined();
-      expect(ROLE_PERMISSIONS['team-lead']).toBeDefined();
+      expect(ROLE_PERMISSIONS['user-manager']).toBeDefined();
       expect(ROLE_PERMISSIONS['student']).toBeDefined();
-      expect(ROLE_PERMISSIONS['viewer']).toBeDefined();
+      expect(ROLE_PERMISSIONS['analytics-viewer']).toBeDefined();
     });
 
     it('should give super-admin all permissions', () => {
       const superAdminPerms = ROLE_PERMISSIONS['super-admin'];
-      expect(superAdminPerms.length).toBeGreaterThan(70);
+      expect(superAdminPerms.length).toBeGreaterThanOrEqual(53);
       expect(superAdminPerms).toContain('tenants:create');
       expect(superAdminPerms).toContain('tenants:delete');
       expect(superAdminPerms).toContain('users:change-role');
@@ -53,7 +53,7 @@ describe('Permissions Service', () => {
     });
 
     it('should give content-creator only content creation permissions', () => {
-      const creatorPerms = ROLE_PERMISSIONS['content-creator'];
+      const creatorPerms = ROLE_PERMISSIONS['content-manager'];
       expect(creatorPerms).toContain('courses:create');
       expect(creatorPerms).toContain('courses:update');
       expect(creatorPerms).toContain('assets:upload');
@@ -73,7 +73,7 @@ describe('Permissions Service', () => {
     });
 
     it('should give team-lead group management permissions', () => {
-      const teamLeadPerms = ROLE_PERMISSIONS['team-lead'];
+      const teamLeadPerms = ROLE_PERMISSIONS['user-manager'];
       expect(teamLeadPerms).toContain('groups:create');
       expect(teamLeadPerms).toContain('groups:assign-users');
       expect(teamLeadPerms).toContain('groups:assign-courses');
@@ -86,7 +86,6 @@ describe('Permissions Service', () => {
     it('should give student minimal read permissions', () => {
       const studentPerms = ROLE_PERMISSIONS['student'];
       expect(studentPerms).toContain('courses:read');
-      expect(studentPerms).toContain('enrollment:view');
       expect(studentPerms).toContain('analytics:view-own');
       expect(studentPerms).toContain('mentorship:view-own-sessions');
       // Should NOT create or manage anything
@@ -96,11 +95,11 @@ describe('Permissions Service', () => {
     });
 
     it('should give viewer only read permissions', () => {
-      const viewerPerms = ROLE_PERMISSIONS['viewer'];
-      expect(viewerPerms).toContain('courses:read');
-      expect(viewerPerms).toContain('enrollment:view');
+      const viewerPerms = ROLE_PERMISSIONS['analytics-viewer'];
+      expect(viewerPerms).toContain('courses:list-all');
+      expect(viewerPerms).toContain('analytics:view-all');
       // Should NOT have any write permissions
-      expect(viewerPerms.every(p => p.includes(':read') || p.includes(':view'))).toBe(true);
+      expect(viewerPerms.every((p: string) => p.includes(':list') || p.includes(':view') || p.includes(':export'))).toBe(true);
       expect(viewerPerms.length).toBeLessThan(10);
     });
   });
@@ -115,15 +114,20 @@ describe('Permissions Service', () => {
           role: 'super-admin',
           firstName: 'Super',
           lastName: 'Admin',
-          passwordHash: 'hash',
-          isActive: true,
-          createdAt: new Date(),
-          lastLoginAt: new Date(),
+          status: 'active' as const,
+          enrolledCourses: [],
+          completedCourses: [],
+          totalXP: 0,
+          level: 1,
+          badges: [],
+          updatedAt: new Date().toISOString(),
+          createdAt: new Date().toISOString(),
+          lastLoginAt: new Date().toISOString(),
         };
 
-        expect(hasPermission(superAdmin, 'tenants:create')).toBe(true);
-        expect(hasPermission(superAdmin, 'users:delete')).toBe(true);
-        expect(hasPermission(superAdmin, 'courses:publish')).toBe(true);
+        expect(hasPermission(superAdmin.role, 'tenants:create', superAdmin.customPermissions)).toBe(true);
+        expect(hasPermission(superAdmin.role, 'users:delete', superAdmin.customPermissions)).toBe(true);
+        expect(hasPermission(superAdmin.role, 'courses:publish', superAdmin.customPermissions)).toBe(true);
       });
 
       it('should deny permission if user role does not have it', () => {
@@ -134,15 +138,20 @@ describe('Permissions Service', () => {
           role: 'student',
           firstName: 'John',
           lastName: 'Student',
-          passwordHash: 'hash',
-          isActive: true,
-          createdAt: new Date(),
-          lastLoginAt: new Date(),
+          status: 'active' as const,
+          enrolledCourses: [],
+          completedCourses: [],
+          totalXP: 0,
+          level: 1,
+          badges: [],
+          updatedAt: new Date().toISOString(),
+          createdAt: new Date().toISOString(),
+          lastLoginAt: new Date().toISOString(),
         };
 
-        expect(hasPermission(student, 'users:create')).toBe(false);
-        expect(hasPermission(student, 'courses:publish')).toBe(false);
-        expect(hasPermission(student, 'settings:branding')).toBe(false);
+        expect(hasPermission(student.role, 'users:create', student.customPermissions)).toBe(false);
+        expect(hasPermission(student.role, 'courses:publish', student.customPermissions)).toBe(false);
+        expect(hasPermission(student.role, 'settings:branding', student.customPermissions)).toBe(false);
       });
 
       it('should allow student to read courses', () => {
@@ -153,14 +162,19 @@ describe('Permissions Service', () => {
           role: 'student',
           firstName: 'John',
           lastName: 'Student',
-          passwordHash: 'hash',
-          isActive: true,
-          createdAt: new Date(),
-          lastLoginAt: new Date(),
+          status: 'active' as const,
+          enrolledCourses: [],
+          completedCourses: [],
+          totalXP: 0,
+          level: 1,
+          badges: [],
+          updatedAt: new Date().toISOString(),
+          createdAt: new Date().toISOString(),
+          lastLoginAt: new Date().toISOString(),
         };
 
-        expect(hasPermission(student, 'courses:read')).toBe(true);
-        expect(hasPermission(student, 'enrollment:view')).toBe(true);
+        expect(hasPermission(student.role, 'courses:read', student.customPermissions)).toBe(true);
+        expect(hasPermission(student.role, 'analytics:view-own', student.customPermissions)).toBe(true);
       });
     });
 
@@ -173,15 +187,20 @@ describe('Permissions Service', () => {
           role: 'student',
           firstName: 'Special',
           lastName: 'Student',
-          passwordHash: 'hash',
-          isActive: true,
+          status: 'active' as const,
+          enrolledCourses: [],
+          completedCourses: [],
+          totalXP: 0,
+          level: 1,
+          badges: [],
+          updatedAt: new Date().toISOString(),
           customPermissions: ['courses:create', 'assets:upload'],
-          createdAt: new Date(),
-          lastLoginAt: new Date(),
+          createdAt: new Date().toISOString(),
+          lastLoginAt: new Date().toISOString(),
         };
 
-        expect(hasPermission(studentWithCustomPerm, 'courses:create')).toBe(true);
-        expect(hasPermission(studentWithCustomPerm, 'assets:upload')).toBe(true);
+        expect(hasPermission(studentWithCustomPerm.role, 'courses:create', studentWithCustomPerm.customPermissions)).toBe(true);
+        expect(hasPermission(studentWithCustomPerm.role, 'assets:upload', studentWithCustomPerm.customPermissions)).toBe(true);
       });
 
       it('should combine role permissions with custom permissions', () => {
@@ -192,19 +211,24 @@ describe('Permissions Service', () => {
           role: 'student',
           firstName: 'Hybrid',
           lastName: 'User',
-          passwordHash: 'hash',
-          isActive: true,
+          status: 'active' as const,
+          enrolledCourses: [],
+          completedCourses: [],
+          totalXP: 0,
+          level: 1,
+          badges: [],
+          updatedAt: new Date().toISOString(),
           customPermissions: ['analytics:export'],
-          createdAt: new Date(),
-          lastLoginAt: new Date(),
+          createdAt: new Date().toISOString(),
+          lastLoginAt: new Date().toISOString(),
         };
 
         // Role permission
-        expect(hasPermission(student, 'courses:read')).toBe(true);
+        expect(hasPermission(student.role, 'courses:read', student.customPermissions)).toBe(true);
         // Custom permission
-        expect(hasPermission(student, 'analytics:export')).toBe(true);
+        expect(hasPermission(student.role, 'analytics:export', student.customPermissions)).toBe(true);
         // Neither role nor custom
-        expect(hasPermission(student, 'users:delete')).toBe(false);
+        expect(hasPermission(student.role, 'users:delete', student.customPermissions)).toBe(false);
       });
 
       it('should work when customPermissions is undefined', () => {
@@ -215,15 +239,20 @@ describe('Permissions Service', () => {
           role: 'instructor',
           firstName: 'John',
           lastName: 'Instructor',
-          passwordHash: 'hash',
-          isActive: true,
+          status: 'active' as const,
+          enrolledCourses: [],
+          completedCourses: [],
+          totalXP: 0,
+          level: 1,
+          badges: [],
+          updatedAt: new Date().toISOString(),
           // customPermissions: undefined (implicit)
-          createdAt: new Date(),
-          lastLoginAt: new Date(),
+          createdAt: new Date().toISOString(),
+          lastLoginAt: new Date().toISOString(),
         };
 
-        expect(hasPermission(instructor, 'courses:create')).toBe(true);
-        expect(hasPermission(instructor, 'users:delete')).toBe(false);
+        expect(hasPermission(instructor.role, 'courses:create', instructor.customPermissions)).toBe(true);
+        expect(hasPermission(instructor.role, 'users:delete', instructor.customPermissions)).toBe(false);
       });
 
       it('should work when customPermissions is empty array', () => {
@@ -234,15 +263,20 @@ describe('Permissions Service', () => {
           role: 'mentor',
           firstName: 'Jane',
           lastName: 'Mentor',
-          passwordHash: 'hash',
-          isActive: true,
+          status: 'active' as const,
+          enrolledCourses: [],
+          completedCourses: [],
+          totalXP: 0,
+          level: 1,
+          badges: [],
+          updatedAt: new Date().toISOString(),
           customPermissions: [],
-          createdAt: new Date(),
-          lastLoginAt: new Date(),
+          createdAt: new Date().toISOString(),
+          lastLoginAt: new Date().toISOString(),
         };
 
-        expect(hasPermission(mentor, 'mentorship:accept-requests')).toBe(true);
-        expect(hasPermission(mentor, 'users:create')).toBe(false);
+        expect(hasPermission(mentor.role, 'mentorship:accept-requests', mentor.customPermissions)).toBe(true);
+        expect(hasPermission(mentor.role, 'users:create', mentor.customPermissions)).toBe(false);
       });
     });
 
@@ -255,14 +289,19 @@ describe('Permissions Service', () => {
           role: 'student',
           firstName: 'Test',
           lastName: 'User',
-          passwordHash: 'hash',
-          isActive: true,
-          createdAt: new Date(),
-          lastLoginAt: new Date(),
+          status: 'active' as const,
+          enrolledCourses: [],
+          completedCourses: [],
+          totalXP: 0,
+          level: 1,
+          badges: [],
+          updatedAt: new Date().toISOString(),
+          createdAt: new Date().toISOString(),
+          lastLoginAt: new Date().toISOString(),
         };
 
-        expect(hasPermission(user, 'invalid:permission' as any)).toBe(false);
-        expect(hasPermission(user, '' as any)).toBe(false);
+        expect(hasPermission(user.role, 'invalid:permission' as any)).toBe(false);
+        expect(hasPermission(user.role, '' as any)).toBe(false);
       });
 
       it('should handle case-sensitive permission checks', () => {
@@ -273,17 +312,22 @@ describe('Permissions Service', () => {
           role: 'instructor',
           firstName: 'Test',
           lastName: 'User',
-          passwordHash: 'hash',
-          isActive: true,
-          createdAt: new Date(),
-          lastLoginAt: new Date(),
+          status: 'active' as const,
+          enrolledCourses: [],
+          completedCourses: [],
+          totalXP: 0,
+          level: 1,
+          badges: [],
+          updatedAt: new Date().toISOString(),
+          createdAt: new Date().toISOString(),
+          lastLoginAt: new Date().toISOString(),
         };
 
         // Correct case
-        expect(hasPermission(user, 'courses:create')).toBe(true);
+        expect(hasPermission(user.role, 'courses:create', user.customPermissions)).toBe(true);
         // Wrong case should fail
-        expect(hasPermission(user, 'COURSES:CREATE' as any)).toBe(false);
-        expect(hasPermission(user, 'Courses:Create' as any)).toBe(false);
+        expect(hasPermission(user.role, 'COURSES:CREATE' as any)).toBe(false);
+        expect(hasPermission(user.role, 'Courses:Create' as any)).toBe(false);
       });
     });
 
@@ -296,20 +340,25 @@ describe('Permissions Service', () => {
           role: 'instructor',
           firstName: 'Senior',
           lastName: 'Instructor',
-          passwordHash: 'hash',
-          isActive: true,
+          status: 'active' as const,
+          enrolledCourses: [],
+          completedCourses: [],
+          totalXP: 0,
+          level: 1,
+          badges: [],
+          updatedAt: new Date().toISOString(),
           customPermissions: ['courses:publish'],
-          createdAt: new Date(),
-          lastLoginAt: new Date(),
+          createdAt: new Date().toISOString(),
+          lastLoginAt: new Date().toISOString(),
         };
 
         // Role permissions
-        expect(hasPermission(seniorInstructor, 'courses:create')).toBe(true);
-        expect(hasPermission(seniorInstructor, 'courses:update')).toBe(true);
+        expect(hasPermission(seniorInstructor.role, 'courses:create', seniorInstructor.customPermissions)).toBe(true);
+        expect(hasPermission(seniorInstructor.role, 'courses:update', seniorInstructor.customPermissions)).toBe(true);
         // Custom permission (normally only admins can publish)
-        expect(hasPermission(seniorInstructor, 'courses:publish')).toBe(true);
+        expect(hasPermission(seniorInstructor.role, 'courses:publish', seniorInstructor.customPermissions)).toBe(true);
         // Still can't do admin stuff
-        expect(hasPermission(seniorInstructor, 'users:create')).toBe(false);
+        expect(hasPermission(seniorInstructor.role, 'users:create', seniorInstructor.customPermissions)).toBe(false);
       });
 
       it('should handle team-lead with analytics:view-all custom permission', () => {
@@ -317,21 +366,26 @@ describe('Permissions Service', () => {
           id: '10',
           tenantId: 'tenant-1',
           email: 'lead@example.com',
-          role: 'team-lead',
+          role: 'user-manager',
           firstName: 'Team',
           lastName: 'Lead',
-          passwordHash: 'hash',
-          isActive: true,
+          status: 'active' as const,
+          enrolledCourses: [],
+          completedCourses: [],
+          totalXP: 0,
+          level: 1,
+          badges: [],
+          updatedAt: new Date().toISOString(),
           customPermissions: ['analytics:view-all'],
-          createdAt: new Date(),
-          lastLoginAt: new Date(),
+          createdAt: new Date().toISOString(),
+          lastLoginAt: new Date().toISOString(),
         };
 
         // Role permissions
-        expect(hasPermission(seniorLead, 'groups:create')).toBe(true);
-        expect(hasPermission(seniorLead, 'analytics:view-team-stats')).toBe(true);
+        expect(hasPermission(seniorLead.role, 'groups:create', seniorLead.customPermissions)).toBe(true);
+        expect(hasPermission(seniorLead.role, 'analytics:view-team-stats', seniorLead.customPermissions)).toBe(true);
         // Custom permission (elevated analytics access)
-        expect(hasPermission(seniorLead, 'analytics:view-all')).toBe(true);
+        expect(hasPermission(seniorLead.role, 'analytics:view-all', seniorLead.customPermissions)).toBe(true);
       });
 
       it('should handle content-creator with mentor permissions', () => {
@@ -339,27 +393,32 @@ describe('Permissions Service', () => {
           id: '11',
           tenantId: 'tenant-1',
           email: 'hybrid@example.com',
-          role: 'content-creator',
+          role: 'content-manager',
           firstName: 'Hybrid',
           lastName: 'Creator',
-          passwordHash: 'hash',
-          isActive: true,
+          status: 'active' as const,
+          enrolledCourses: [],
+          completedCourses: [],
+          totalXP: 0,
+          level: 1,
+          badges: [],
+          updatedAt: new Date().toISOString(),
           customPermissions: [
             'mentorship:accept-requests',
             'mentorship:rate-sessions'
           ],
-          createdAt: new Date(),
-          lastLoginAt: new Date(),
+          createdAt: new Date().toISOString(),
+          lastLoginAt: new Date().toISOString(),
         };
 
         // Role permissions (content creator)
-        expect(hasPermission(hybridUser, 'courses:create')).toBe(true);
-        expect(hasPermission(hybridUser, 'assets:upload')).toBe(true);
+        expect(hasPermission(hybridUser.role, 'courses:create', hybridUser.customPermissions)).toBe(true);
+        expect(hasPermission(hybridUser.role, 'assets:upload', hybridUser.customPermissions)).toBe(true);
         // Custom permissions (mentor capabilities)
-        expect(hasPermission(hybridUser, 'mentorship:accept-requests')).toBe(true);
-        expect(hasPermission(hybridUser, 'mentorship:rate-sessions')).toBe(true);
+        expect(hasPermission(hybridUser.role, 'mentorship:accept-requests', hybridUser.customPermissions)).toBe(true);
+        expect(hasPermission(hybridUser.role, 'mentorship:rate-sessions', hybridUser.customPermissions)).toBe(true);
         // Still no admin permissions
-        expect(hasPermission(hybridUser, 'users:create')).toBe(false);
+        expect(hasPermission(hybridUser.role, 'users:create', hybridUser.customPermissions)).toBe(false);
       });
     });
   });

@@ -39,8 +39,8 @@ describe('usePermissions Hook', () => {
         firstName: 'Super',
         lastName: 'Admin',
         isActive: true,
-        createdAt: new Date(),
-        lastLoginAt: new Date(),
+        createdAt: new Date().toISOString(),
+        lastLoginAt: new Date().toISOString(),
       };
 
       const { result } = renderHook(() => usePermissions());
@@ -60,8 +60,8 @@ describe('usePermissions Hook', () => {
         firstName: 'Tenant',
         lastName: 'Admin',
         isActive: true,
-        createdAt: new Date(),
-        lastLoginAt: new Date(),
+        createdAt: new Date().toISOString(),
+        lastLoginAt: new Date().toISOString(),
       };
 
       const { result } = renderHook(() => usePermissions());
@@ -82,8 +82,8 @@ describe('usePermissions Hook', () => {
         firstName: 'John',
         lastName: 'Instructor',
         isActive: true,
-        createdAt: new Date(),
-        lastLoginAt: new Date(),
+        createdAt: new Date().toISOString(),
+        lastLoginAt: new Date().toISOString(),
       };
 
       const { result } = renderHook(() => usePermissions());
@@ -104,8 +104,8 @@ describe('usePermissions Hook', () => {
         firstName: 'Jane',
         lastName: 'Student',
         isActive: true,
-        createdAt: new Date(),
-        lastLoginAt: new Date(),
+        createdAt: new Date().toISOString(),
+        lastLoginAt: new Date().toISOString(),
       };
 
       const { result } = renderHook(() => usePermissions());
@@ -127,8 +127,8 @@ describe('usePermissions Hook', () => {
         lastName: 'Student',
         customPermissions: ['courses:create', 'analytics:export'],
         isActive: true,
-        createdAt: new Date(),
-        lastLoginAt: new Date(),
+        createdAt: new Date().toISOString(),
+        lastLoginAt: new Date().toISOString(),
       };
 
       const { result } = renderHook(() => usePermissions());
@@ -152,8 +152,8 @@ describe('usePermissions Hook', () => {
         lastName: 'Mentor',
         // customPermissions: undefined
         isActive: true,
-        createdAt: new Date(),
-        lastLoginAt: new Date(),
+        createdAt: new Date().toISOString(),
+        lastLoginAt: new Date().toISOString(),
       };
 
       const { result } = renderHook(() => usePermissions());
@@ -173,8 +173,8 @@ describe('usePermissions Hook', () => {
         firstName: 'John',
         lastName: 'Instructor',
         isActive: true,
-        createdAt: new Date(),
-        lastLoginAt: new Date(),
+        createdAt: new Date().toISOString(),
+        lastLoginAt: new Date().toISOString(),
       };
 
       const { result } = renderHook(() => usePermissions());
@@ -193,8 +193,8 @@ describe('usePermissions Hook', () => {
         firstName: 'Jane',
         lastName: 'Student',
         isActive: true,
-        createdAt: new Date(),
-        lastLoginAt: new Date(),
+        createdAt: new Date().toISOString(),
+        lastLoginAt: new Date().toISOString(),
       };
 
       const { result } = renderHook(() => usePermissions());
@@ -215,8 +215,8 @@ describe('usePermissions Hook', () => {
         firstName: 'Admin',
         lastName: 'User',
         isActive: true,
-        createdAt: new Date(),
-        lastLoginAt: new Date(),
+        createdAt: new Date().toISOString(),
+        lastLoginAt: new Date().toISOString(),
       };
 
       const { result } = renderHook(() => usePermissions());
@@ -235,8 +235,8 @@ describe('usePermissions Hook', () => {
         firstName: 'John',
         lastName: 'Instructor',
         isActive: true,
-        createdAt: new Date(),
-        lastLoginAt: new Date(),
+        createdAt: new Date().toISOString(),
+        lastLoginAt: new Date().toISOString(),
       };
 
       const { result } = renderHook(() => usePermissions());
@@ -257,8 +257,8 @@ describe('usePermissions Hook', () => {
         firstName: 'Super',
         lastName: 'Admin',
         isActive: true,
-        createdAt: new Date(),
-        lastLoginAt: new Date(),
+        createdAt: new Date().toISOString(),
+        lastLoginAt: new Date().toISOString(),
       };
 
       const { result } = renderHook(() => usePermissions());
@@ -275,8 +275,8 @@ describe('usePermissions Hook', () => {
         firstName: 'Admin',
         lastName: 'User',
         isActive: true,
-        createdAt: new Date(),
-        lastLoginAt: new Date(),
+        createdAt: new Date().toISOString(),
+        lastLoginAt: new Date().toISOString(),
       };
 
       const { result } = renderHook(() => usePermissions());
@@ -293,8 +293,8 @@ describe('usePermissions Hook', () => {
         firstName: 'Admin',
         lastName: 'User',
         isActive: true,
-        createdAt: new Date(),
-        lastLoginAt: new Date(),
+        createdAt: new Date().toISOString(),
+        lastLoginAt: new Date().toISOString(),
       };
 
       const { result } = renderHook(() => usePermissions());
@@ -318,8 +318,8 @@ describe('useHasRole Hook', () => {
       firstName: 'Admin',
       lastName: 'User',
       isActive: true,
-      createdAt: new Date(),
-      lastLoginAt: new Date(),
+      createdAt: new Date().toISOString(),
+      lastLoginAt: new Date().toISOString(),
     };
 
     const { result } = renderHook(() => useHasRole('tenant-admin'));
@@ -336,8 +336,8 @@ describe('useHasRole Hook', () => {
       firstName: 'Jane',
       lastName: 'Student',
       isActive: true,
-      createdAt: new Date(),
-      lastLoginAt: new Date(),
+      createdAt: new Date().toISOString(),
+      lastLoginAt: new Date().toISOString(),
     };
 
     const { result } = renderHook(() => useHasRole('tenant-admin'));
@@ -362,8 +362,8 @@ describe('useHasRole Hook', () => {
       firstName: 'John',
       lastName: 'Instructor',
       isActive: true,
-      createdAt: new Date(),
-      lastLoginAt: new Date(),
+      createdAt: new Date().toISOString(),
+      lastLoginAt: new Date().toISOString(),
     };
 
     const { result } = renderHook(() =>
@@ -388,8 +388,8 @@ describe('useCanAccess Hook', () => {
       firstName: 'John',
       lastName: 'Instructor',
       isActive: true,
-      createdAt: new Date(),
-      lastLoginAt: new Date(),
+      createdAt: new Date().toISOString(),
+      lastLoginAt: new Date().toISOString(),
     };
 
     const { result } = renderHook(() => useCanAccess('courses:create'));
@@ -406,8 +406,8 @@ describe('useCanAccess Hook', () => {
       firstName: 'Jane',
       lastName: 'Student',
       isActive: true,
-      createdAt: new Date(),
-      lastLoginAt: new Date(),
+      createdAt: new Date().toISOString(),
+      lastLoginAt: new Date().toISOString(),
     };
 
     const { result } = renderHook(() => useCanAccess('courses:publish'));
