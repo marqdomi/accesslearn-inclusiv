@@ -203,23 +203,11 @@ export function TenantLoginPage() {
               ¿No tienes una cuenta?{' '}
               <button
                 className="text-blue-600 hover:text-blue-700 font-medium"
-                onClick={() => alert('🚧 Registro en desarrollo')}
+                onClick={() => alert('Contacta a tu administrador para solicitar acceso')}
               >
                 Solicita acceso
               </button>
             </div>
-
-            {/* Dev Info */}
-            {import.meta.env.DEV && (
-              <div className="border-t pt-4 mt-4">
-                <p className="text-xs text-gray-500 text-center">
-                  🔧 <strong>Modo desarrollo</strong>
-                </p>
-                <p className="text-xs text-gray-400 text-center mt-1">
-                  Tenant ID: <code className="bg-gray-100 px-1 rounded">{currentTenant?.id}</code>
-                </p>
-              </div>
-            )}
           </div>
 
           {/* Mobile branding */}

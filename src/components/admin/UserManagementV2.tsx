@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useTenant } from '@/contexts/TenantContext'
 import { useAuth } from '@/contexts/AuthContext'
 import { ApiService } from '@/services/api.service'
@@ -42,10 +43,11 @@ interface User {
 }
 
 interface UserManagementProps {
-  onBack: () => void
+  onBack?: () => void
 }
 
 export function UserManagement({ onBack }: UserManagementProps) {
+  const navigate = useNavigate()
   const { currentTenant } = useTenant()
   const { user: currentUser } = useAuth()
   const [users, setUsers] = useState<User[]>([])
@@ -252,7 +254,7 @@ export function UserManagement({ onBack }: UserManagementProps) {
       {/* Header */}
       <div className="flex items-center justify-between border-b pb-4">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={onBack}>
+          <Button variant="ghost" size="icon" onClick={onBack || (() => navigate('/dashboard'))}>
             <ArrowLeft size={20} />
           </Button>
           <div>
@@ -582,3 +584,6 @@ export function UserManagement({ onBack }: UserManagementProps) {
     </div>
   )
 }
+
+// Export also as UserManagementV2 for convenience
+export const UserManagementV2 = UserManagement

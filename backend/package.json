@@ -19,6 +19,7 @@
     "clean": "ts-node src/scripts/clean-database.ts",
     "seed": "ts-node src/scripts/seed-data.ts",
     "reset-db": "npm run clean && npm run seed",
+    "grant-super-admin": "ts-node src/scripts/grant-super-admin.ts",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage"

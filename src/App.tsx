@@ -14,6 +14,8 @@ import { LibraryPage } from '@/pages/LibraryPage'
 import CourseApprovalDemo from '@/pages/CourseApprovalDemo'
 import { ContentManagerDashboardPage } from '@/pages/ContentManagerDashboardPage'
 import { CourseManagementPage } from '@/pages/CourseManagementPage'
+import { AdminUsersPage } from '@/pages/AdminUsersPage'
+import { AdminSettingsPage } from '@/pages/AdminSettingsPage'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth()
@@ -120,6 +122,22 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <CourseManagementPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/users"
+        element={
+          <ProtectedRoute>
+            <AdminUsersPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/settings"
+        element={
+          <ProtectedRoute>
+            <AdminSettingsPage />
           </ProtectedRoute>
         }
       />

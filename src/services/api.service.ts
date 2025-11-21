@@ -87,7 +87,7 @@ class ApiServiceClass {
   // ============================================
 
   async getTenantBySlug(slug: string) {
-    return this.fetchWithAuth<any>(`/tenants/slug/${slug}`)
+    return this.fetchWithoutAuth<any>(`/tenants/slug/${slug}`)
   }
 
   async getTenantById(tenantId: string) {
@@ -95,7 +95,7 @@ class ApiServiceClass {
   }
 
   async listTenants() {
-    return this.fetchWithAuth<any[]>(`/tenants`)
+    return this.fetchWithoutAuth<any[]>(`/tenants`)
   }
 
   async createTenant(data: {

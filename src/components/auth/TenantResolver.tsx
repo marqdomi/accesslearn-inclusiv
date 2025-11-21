@@ -219,48 +219,86 @@ export function TenantResolver({ children }: TenantResolverProps) {
   // Selector manual
   if (showSelector) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
-        <div className="bg-white rounded-xl shadow-xl p-8 max-w-md w-full space-y-6">
-          <div className="text-center space-y-2">
-            <Building2 className="w-16 h-16 text-blue-600 mx-auto" />
-            <h2 className="text-2xl font-bold text-gray-900">
-              Selecciona tu Organización
-            </h2>
-            <p className="text-gray-600">
-              Elige la empresa u organización a la que quieres acceder
-            </p>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900">
+        {/* Background pattern */}
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMzLjMxNCAwIDYgMi42ODYgNiA2cy0yLjY4NiA2LTYgNi02LTIuNjg2LTYtNiAyLjY4Ni02IDYtNnptMCA0YzEuMTA1IDAgMiAuODk1IDIgMnMtLjg5NSAyLTIgMi0yLS44OTUtMi0yIC44OTUtMiAyLTJ6IiBmaWxsPSIjZmZmIiBmaWxsLW9wYWNpdHk9Ii4wNSIvPjwvZz48L3N2Zz4=')] opacity-20"></div>
+
+        <div className="relative bg-white rounded-2xl shadow-2xl p-10 max-w-lg w-full mx-4 space-y-8">
+          {/* Logo y header */}
+          <div className="text-center space-y-4">
+            <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg">
+              <span className="text-4xl">📚</span>
+            </div>
+            <div className="space-y-2">
+              <h1 className="text-3xl font-bold text-gray-900">
+                AccessLearn
+              </h1>
+              <p className="text-sm text-blue-600 font-medium">
+                Plataforma de Capacitación y Desarrollo
+              </p>
+            </div>
+          </div>
+
+          {/* Divider */}
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-200"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-4 bg-white text-gray-500">Selecciona tu organización</span>
+            </div>
           </div>
 
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-start space-x-2">
+            <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start space-x-3">
               <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
               <p className="text-sm text-red-800">{error}</p>
             </div>
           )}
 
-          <div className="space-y-4">
-            <Select onValueChange={handleTenantSelect}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Selecciona una organización" />
-              </SelectTrigger>
-              <SelectContent>
-                {availableTenants.map((tenant) => (
-                  <SelectItem key={tenant.id} value={tenant.id}>
-                    {tenant.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="space-y-6">
+            <div className="space-y-3">
+              <label className="text-sm font-medium text-gray-700">
+                Organización
+              </label>
+              <Select onValueChange={handleTenantSelect}>
+                <SelectTrigger className="w-full h-12 border-gray-300 focus:ring-2 focus:ring-blue-500">
+                  <SelectValue placeholder="Selecciona tu organización..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableTenants.map((tenant) => (
+                    <SelectItem key={tenant.id} value={tenant.id} className="py-3">
+                      <div className="flex items-center space-x-3">
+                        <Building2 className="w-5 h-5 text-gray-400" />
+                        <span className="font-medium">{tenant.name}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-            <div className="text-center">
-              <p className="text-sm text-gray-500">
-                💡 <strong>Tip de desarrollo:</strong> Usa{' '}
-                <code className="bg-gray-100 px-2 py-1 rounded text-xs">
-                  ?tenant=kainet
-                </code>{' '}
-                en la URL
+            {/* Help text */}
+            <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
+              <p className="text-sm text-blue-900">
+                <strong className="font-semibold">💡 ¿No encuentras tu organización?</strong>
+                <br />
+                Contacta a tu administrador para obtener acceso.
               </p>
             </div>
+          </div>
+
+          {/* Footer - Kainet branding */}
+          <div className="pt-6 border-t border-gray-100">
+            <div className="flex items-center justify-center space-x-2 text-gray-500">
+              <span className="text-sm">Desarrollado con</span>
+              <span className="text-red-500">❤️</span>
+              <span className="text-sm">por</span>
+              <span className="text-sm font-semibold text-blue-600">Kainet</span>
+            </div>
+            <p className="text-xs text-center text-gray-400 mt-2">
+              © {new Date().getFullYear()} Kainet. Todos los derechos reservados.
+            </p>
           </div>
         </div>
       </div>
