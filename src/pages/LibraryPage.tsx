@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
-import { BookOpen, Trophy, History, RotateCcw, TrendingUp, Award } from 'lucide-react'
+import { BookOpen, Trophy, History, RotateCcw, TrendingUp, Award, ArrowLeft } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
 interface LibraryItem {
@@ -110,6 +110,15 @@ export function LibraryPage() {
   return (
     <div className="container mx-auto p-6">
       <div className="mb-8">
+        <Button 
+          variant="ghost" 
+          size="sm"
+          onClick={() => navigate('/dashboard')}
+          className="mb-4"
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Volver al Dashboard
+        </Button>
         <h1 className="text-3xl font-bold mb-2">Mi Biblioteca</h1>
         <p className="text-muted-foreground">
           Gestiona tus cursos y realiza seguimiento de tu progreso
