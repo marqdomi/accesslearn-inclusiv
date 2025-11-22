@@ -179,14 +179,31 @@ export function TenantResolver({ children }: TenantResolverProps) {
    */
   const loadAvailableTenants = async () => {
     try {
+      console.log('[TenantResolver] Cargando lista de tenants disponibles...');
       const tenants = await ApiService.listTenants();
-      setAvailableTenants(tenants.map(t => ({
+      console.log('[TenantResolver] Tenants obtenidos del API:', tenants);
+      
+      const mappedTenants = tenants.map(t => ({
         id: t.id,
         name: t.name,
         slug: t.slug,
-      })));
-    } catch (err) {
+      }));
+      
+      console.log('[TenantResolver] Tenants mapeados:', mappedTenants);
+      setAvailableTenants(mappedTenants);
+      
+      if (mappedTenants.length === 0) {
+        console.warn('[TenantResolver] No se encontraron tenants, usando fallback');
+        // Fallback a tenants hardcoded para desarrollo
+        setAvailableTenants([
+          { id: 'tenant-demo', name: 'Empresa Demo', slug: 'demo' },
+          { id: 'tenant-kainet', name: 'Kainet', slug: 'kainet' },
+          { id: 'tenant-socia', name: 'Socia Partner', slug: 'socia' },
+        ]);
+      }
+    } catch (err: any) {
       console.error('[TenantResolver] Error cargando tenants:', err);
+      console.error('[TenantResolver] Error details:', err.message, err.stack);
       // Fallback a tenants hardcoded para desarrollo
       setAvailableTenants([
         { id: 'tenant-demo', name: 'Empresa Demo', slug: 'demo' },
@@ -200,27 +217,45 @@ export function TenantResolver({ children }: TenantResolverProps) {
    * Maneja selección manual de tenant
    */
   const handleTenantSelect = async (tenantId: string) => {
+    console.log('[TenantResolver] handleTenantSelect llamado con tenantId:', tenantId);
+    
     const selected = availableTenants.find(t => t.id === tenantId);
-    if (!selected) return;
+    if (!selected) {
+      console.error('[TenantResolver] Tenant no encontrado en availableTenants:', tenantId);
+      console.log('[TenantResolver] Available tenants:', availableTenants);
+      setError(`Organización "${tenantId}" no encontrada. Por favor, intenta de nuevo.`);
+      return;
+    }
+
+    console.log('[TenantResolver] Tenant seleccionado:', selected);
 
     try {
       setResolving(true);
       setError(null);
       
       // Intentar cargar el tenant directamente primero
+      console.log('[TenantResolver] Intentando cargar tenant por slug:', selected.slug);
       const loaded = await loadTenantBySlug(selected.slug);
       
       if (loaded) {
+        console.log('[TenantResolver] Tenant cargado exitosamente');
         // Si se carga exitosamente, guardar en localStorage para futuras visitas
         localStorage.setItem('current-tenant-id', selected.id);
+        // Asegurar que showSelector se oculte
+        setShowSelector(false);
       } else {
+        console.warn('[TenantResolver] No se pudo cargar tenant, usando redirección con query param');
         // Si falla, redirigir con query param como fallback
         window.location.href = `${window.location.origin}/?tenant=${selected.slug}`;
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('[TenantResolver] Error en handleTenantSelect:', err);
-      // Si falla, redirigir con query param como fallback
-      window.location.href = `${window.location.origin}/?tenant=${selected.slug}`;
+      setError(err.message || 'Error al cargar la organización. Por favor, intenta de nuevo.');
+      setResolving(false);
+      // Intentar redirigir con query param como último recurso
+      setTimeout(() => {
+        window.location.href = `${window.location.origin}/?tenant=${selected.slug}`;
+      }, 2000);
     }
   };
 
