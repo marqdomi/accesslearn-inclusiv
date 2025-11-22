@@ -332,19 +332,34 @@ export function TenantResolver({ children }: TenantResolverProps) {
               <label className="text-sm font-medium text-gray-700">
                 Organización
               </label>
-              <Select onValueChange={handleTenantSelect}>
+              <Select 
+                value={availableTenants.find(t => t.id === localStorage.getItem('current-tenant-id'))?.id || ''}
+                onValueChange={(value) => {
+                  console.log('[TenantResolver] Select onValueChange triggered with value:', value);
+                  handleTenantSelect(value);
+                }}
+              >
                 <SelectTrigger className="w-full h-12 border-gray-300 focus:ring-2 focus:ring-blue-500">
                   <SelectValue placeholder="Selecciona tu organización..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {availableTenants.map((tenant) => (
-                    <SelectItem key={tenant.id} value={tenant.id} className="py-3">
+                  {availableTenants.length > 0 ? (
+                    availableTenants.map((tenant) => (
+                      <SelectItem key={tenant.id} value={tenant.id} className="py-3">
+                        <div className="flex items-center space-x-3">
+                          <Building2 className="w-5 h-5 text-gray-400" />
+                          <span className="font-medium">{tenant.name}</span>
+                        </div>
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="loading" disabled>
                       <div className="flex items-center space-x-3">
-                        <Building2 className="w-5 h-5 text-gray-400" />
-                        <span className="font-medium">{tenant.name}</span>
+                        <Loader2 className="w-5 h-5 text-gray-400 animate-spin" />
+                        <span className="font-medium">Cargando organizaciones...</span>
                       </div>
                     </SelectItem>
-                  ))}
+                  )}
                 </SelectContent>
               </Select>
             </div>
