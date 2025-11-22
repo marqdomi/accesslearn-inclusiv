@@ -1,0 +1,172 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/**'
+      - 'frontend/**'
+      - 'infra/**'
+      - '.github/workflows/**'
+  workflow_dispatch: # Permite deploy manual desde GitHub UI
+
+env:
+  AZURE_WEBAPP_NAME_BACKEND: ca-accesslearn-backend-prod
+  AZURE_WEBAPP_NAME_FRONTEND: ca-accesslearn-frontend-prod
+  RESOURCE_GROUP: rg-accesslearn-prod
+  REGISTRY_NAME: craccesslearnprodheqnzemqhoxru
+  LOCATION: eastus
+
+jobs:
+  build-and-deploy-backend:
+    name: Build and Deploy Backend
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # Para OIDC con Azure
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Login to Azure Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY_NAME }}.azurecr.io
+        username: ${{ secrets.ACR_USERNAME }}
+        password: ${{ secrets.ACR_PASSWORD }}
+
+    - name: Build and push backend image
+      uses: docker/build-push-action@v5
+      with:
+        context: ./backend
+        push: true
+        tags: |
+          ${{ env.REGISTRY_NAME }}.azurecr.io/backend:latest
+          ${{ env.REGISTRY_NAME }}.azurecr.io/backend:${{ github.sha }}
+        cache-from: type=registry,ref=${{ env.REGISTRY_NAME }}.azurecr.io/backend:buildcache
+        cache-to: type=registry,ref=${{ env.REGISTRY_NAME }}.azurecr.io/backend:buildcache,mode=max
+
+    - name: Azure Login
+      uses: azure/login@v2
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: Deploy to Azure Container Apps - Backend
+      uses: azure/container-apps-deploy-action@v1
+      with:
+        acrName: ${{ env.REGISTRY_NAME }}
+        containerAppName: ${{ env.AZURE_WEBAPP_NAME_BACKEND }}
+        resourceGroup: ${{ env.RESOURCE_GROUP }}
+        imageToDeploy: ${{ env.REGISTRY_NAME }}.azurecr.io/backend:${{ github.sha }}
+
+    - name: Health check backend
+      run: |
+        echo "Waiting for backend to be ready..."
+        sleep 30
+        BACKEND_URL=$(az containerapp show \
+          --name ${{ env.AZURE_WEBAPP_NAME_BACKEND }} \
+          --resource-group ${{ env.RESOURCE_GROUP }} \
+          --query "properties.configuration.ingress.fqdn" -o tsv)
+        
+        for i in {1..10}; do
+          if curl -f https://${BACKEND_URL}/api/health; then
+            echo "✅ Backend health check passed"
+            exit 0
+          fi
+          echo "Attempt $i failed, retrying in 10 seconds..."
+          sleep 10
+        done
+        echo "❌ Backend health check failed"
+        exit 1
+
+  build-and-deploy-frontend:
+    name: Build and Deploy Frontend
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Login to Azure Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY_NAME }}.azurecr.io
+        username: ${{ secrets.ACR_USERNAME }}
+        password: ${{ secrets.ACR_PASSWORD }}
+
+    - name: Build and push frontend image
+      uses: docker/build-push-action@v5
+      with:
+        context: ./frontend
+        push: true
+        tags: |
+          ${{ env.REGISTRY_NAME }}.azurecr.io/frontend:latest
+          ${{ env.REGISTRY_NAME }}.azurecr.io/frontend:${{ github.sha }}
+        cache-from: type=registry,ref=${{ env.REGISTRY_NAME }}.azurecr.io/frontend:buildcache
+        cache-to: type=registry,ref=${{ env.REGISTRY_NAME }}.azurecr.io/frontend:buildcache,mode=max
+
+    - name: Azure Login
+      uses: azure/login@v2
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: Deploy to Azure Container Apps - Frontend
+      uses: azure/container-apps-deploy-action@v1
+      with:
+        acrName: ${{ env.REGISTRY_NAME }}
+        containerAppName: ${{ env.AZURE_WEBAPP_NAME_FRONTEND }}
+        resourceGroup: ${{ env.RESOURCE_GROUP }}
+        imageToDeploy: ${{ env.REGISTRY_NAME }}.azurecr.io/frontend:${{ github.sha }}
+
+    - name: Health check frontend
+      run: |
+        echo "Waiting for frontend to be ready..."
+        sleep 30
+        FRONTEND_URL=$(az containerapp show \
+          --name ${{ env.AZURE_WEBAPP_NAME_FRONTEND }} \
+          --resource-group ${{ env.RESOURCE_GROUP }} \
+          --query "properties.configuration.ingress.fqdn" -o tsv)
+        
+        for i in {1..10}; do
+          if curl -f https://${FRONTEND_URL}/health; then
+            echo "✅ Frontend health check passed"
+            exit 0
+          fi
+          echo "Attempt $i failed, retrying in 10 seconds..."
+          sleep 10
+        done
+        echo "❌ Frontend health check failed"
+        exit 1
+
+  notify:
+    name: Notify Deployment Status
+    runs-on: ubuntu-latest
+    needs: [build-and-deploy-backend, build-and-deploy-frontend]
+    if: always()
+
+    steps:
+    - name: Deployment Summary
+      run: |
+        echo "## 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Branch:** ${{ github.ref }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Author:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Backend" >> $GITHUB_STEP_SUMMARY
+        echo "- Status: ${{ needs.build-and-deploy-backend.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Frontend" >> $GITHUB_STEP_SUMMARY
+        echo "- Status: ${{ needs.build-and-deploy-frontend.result }}" >> $GITHUB_STEP_SUMMARY
+
