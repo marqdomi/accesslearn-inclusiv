@@ -4,9 +4,18 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
+import * as crypto from 'crypto';
 import { getContainer } from '../services/cosmosdb.service';
 import { User, CreateUserRequest, UpdateUserRequest, UserProgress } from '../models/User';
 import { emailService } from '../services/email.service';
+
+/**
+ * Hash password using SHA-256
+ * In production, consider using bcrypt or Argon2 for better security
+ */
+function hashPassword(password: string): string {
+  return crypto.createHash('sha256').update(password).digest('hex');
+}
 
 /**
  * Validate Mexican CURP format (basic validation)
@@ -396,6 +405,27 @@ export async function inviteUser(request: {
 }
 
 /**
+ * Get user by invitation token (for validation)
+ * Returns user info without sensitive data
+ */
+export async function getUserByInvitationToken(invitationToken: string): Promise<User | null> {
+  const usersContainer = getContainer('users');
+  
+  const { resources: users } = await usersContainer.items
+    .query({
+      query: 'SELECT * FROM c WHERE c.invitationToken = @token',
+      parameters: [{ name: '@token', value: invitationToken }]
+    })
+    .fetchAll();
+  
+  if (users.length === 0) {
+    return null;
+  }
+  
+  return users[0] as User;
+}
+
+/**
  * Accept invitation - User sets password and activates account
  */
 export async function acceptInvitation(
@@ -405,18 +435,11 @@ export async function acceptInvitation(
   const usersContainer = getContainer('users');
   
   // Find user by invitation token
-  const { resources: users } = await usersContainer.items
-    .query({
-      query: 'SELECT * FROM c WHERE c.invitationToken = @token',
-      parameters: [{ name: '@token', value: invitationToken }]
-    })
-    .fetchAll();
+  const user = await getUserByInvitationToken(invitationToken);
   
-  if (users.length === 0) {
+  if (!user) {
     throw new Error('Token de invitación inválido o expirado.');
   }
-  
-  const user = users[0] as User;
   
   // Check if invitation expired
   if (user.invitationExpiresAt && new Date(user.invitationExpiresAt) < new Date()) {
@@ -428,8 +451,8 @@ export async function acceptInvitation(
     throw new Error('Esta invitación ya ha sido aceptada.');
   }
   
-  // Update user - set password and activate
-  user.password = password; // TODO: Hash password in production
+  // Update user - set password (hashed) and activate
+  user.password = hashPassword(password); // Hash password for security
   user.status = 'active';
   user.invitationToken = undefined;
   user.invitationAcceptedAt = new Date().toISOString();

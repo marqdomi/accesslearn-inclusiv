@@ -45,10 +45,15 @@ export function CourseManagement({ onBack }: CourseManagementProps) {
   const fetchCourses = async () => {
     setLoading(true)
     try {
-      const fetchedCourses = await ApiService.getCourses()
-      // Filter by current user (only show their courses)
-      const userCourses = fetchedCourses.filter(course => 
-        course.instructorId === user?.id || 
+      const backendCourses = await ApiService.getCourses()
+      
+      // Convert backend courses to frontend format
+      const { adaptBackendCourseToFrontend } = await import('@/lib/course-adapter')
+      const frontendCourses = backendCourses.map(adaptBackendCourseToFrontend)
+      
+      // Filter by current user (only show their courses) unless admin
+      const userCourses = frontendCourses.filter(course => 
+        course.createdBy === user?.id || 
         user?.role === 'super-admin' || 
         user?.role === 'tenant-admin' ||
         user?.role === 'content-manager'
@@ -74,18 +79,18 @@ export function CourseManagement({ onBack }: CourseManagementProps) {
     
     const matchesTab = 
       activeTab === 'all' ? true :
-      activeTab === 'drafts' ? !course.published && course.status !== 'pending-review' :
+      activeTab === 'drafts' ? (course.status === 'draft' || (!course.status && !course.published)) :
       activeTab === 'pending' ? course.status === 'pending-review' :
-      activeTab === 'published' ? course.published :
+      activeTab === 'published' ? (course.published || course.status === 'published') :
       true
 
     return matchesSearch && matchesTab
   })
 
   // Get counts for tabs
-  const draftCount = courses.filter(c => !c.published && c.status !== 'pending-review').length
+  const draftCount = courses.filter(c => c.status === 'draft' || (!c.status && !c.published)).length
   const pendingCount = courses.filter(c => c.status === 'pending-review').length
-  const publishedCount = courses.filter(c => c.published).length
+  const publishedCount = courses.filter(c => c.published || c.status === 'published').length
 
   const deleteCourse = async (courseId: string) => {
     if (confirm('¿Estás seguro de que quieres eliminar este curso? Esta acción no se puede deshacer.')) {

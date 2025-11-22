@@ -49,20 +49,29 @@ export function TenantResolver({ children }: TenantResolverProps) {
       setResolving(true);
       setError(null);
 
-      // 1. Intentar desde subdomain (producción)
-      const subdomain = getSubdomain();
-      if (subdomain) {
-        console.log('[TenantResolver] Detectado subdomain:', subdomain);
-        await loadTenantBySlug(subdomain);
-        return;
-      }
-
-      // 2. Intentar desde query param (desarrollo)
+      // 1. Intentar desde query param PRIMERO (tiene prioridad sobre subdomain)
+      // Esto permite usar ?tenant=xxx incluso en app.kainet.mx
       const queryTenant = getQueryParam('tenant');
       if (queryTenant) {
         console.log('[TenantResolver] Detectado query param tenant:', queryTenant);
-        await loadTenantBySlug(queryTenant);
-        return;
+        const loaded = await loadTenantBySlug(queryTenant);
+        if (loaded) {
+          return; // Tenant cargado exitosamente
+        }
+        // Si falla, continuar con otros métodos
+        console.warn('[TenantResolver] No se pudo cargar tenant del query param, continuando...');
+      }
+
+      // 2. Intentar desde subdomain (producción)
+      const subdomain = getSubdomain();
+      if (subdomain) {
+        console.log('[TenantResolver] Detectado subdomain:', subdomain);
+        const loaded = await loadTenantBySlug(subdomain);
+        if (loaded) {
+          return; // Tenant cargado exitosamente
+        }
+        // Si falla, continuar con otros métodos
+        console.warn('[TenantResolver] No se pudo cargar tenant del subdomain, continuando...');
       }
 
       // 3. Intentar desde localStorage
@@ -81,6 +90,8 @@ export function TenantResolver({ children }: TenantResolverProps) {
     } catch (err) {
       console.error('[TenantResolver] Error:', err);
       setError('Error al cargar la configuración. Por favor, intenta de nuevo.');
+      await loadAvailableTenants();
+      setShowSelector(true);
       setResolving(false);
     }
   };
@@ -138,28 +149,24 @@ export function TenantResolver({ children }: TenantResolverProps) {
 
   /**
    * Carga tenant por slug y lo establece como actual
+   * Retorna true si se cargó exitosamente, false si falló
    */
-  const loadTenantBySlug = async (slug: string) => {
+  const loadTenantBySlug = async (slug: string): Promise<boolean> => {
     try {
       const tenant = await ApiService.getTenantBySlug(slug);
       
       if (!tenant) {
-        setError(`No se encontró la organización "${slug}". Verifica la URL.`);
-        await loadAvailableTenants();
-        setShowSelector(true);
-        setResolving(false);
-        return;
+        console.warn(`[TenantResolver] Tenant "${slug}" no encontrado`);
+        return false;
       }
 
       console.log('[TenantResolver] Tenant encontrado:', tenant);
       setCurrentTenant(tenant);
       setResolving(false);
+      return true;
     } catch (err) {
       console.error('[TenantResolver] Error cargando tenant:', err);
-      setError(`No se pudo cargar la organización "${slug}".`);
-      await loadAvailableTenants();
-      setShowSelector(true);
-      setResolving(false);
+      return false;
     }
   };
 
@@ -197,13 +204,17 @@ export function TenantResolver({ children }: TenantResolverProps) {
       setError(null);
       
       // Intentar cargar el tenant directamente primero
-      await loadTenantBySlug(selected.slug);
+      const loaded = await loadTenantBySlug(selected.slug);
       
-      // Si se carga exitosamente, guardar en localStorage para futuras visitas
-      if (selected) {
+      if (loaded) {
+        // Si se carga exitosamente, guardar en localStorage para futuras visitas
         localStorage.setItem('current-tenant-id', selected.id);
+      } else {
+        // Si falla, redirigir con query param como fallback
+        window.location.href = `${window.location.origin}/?tenant=${selected.slug}`;
       }
     } catch (err) {
+      console.error('[TenantResolver] Error en handleTenantSelect:', err);
       // Si falla, redirigir con query param como fallback
       window.location.href = `${window.location.origin}/?tenant=${selected.slug}`;
     }

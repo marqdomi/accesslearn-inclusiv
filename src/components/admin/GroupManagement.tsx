@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react'
-import { useKV } from '@github/spark/hooks'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -9,94 +8,151 @@ import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Checkbox } from '@/components/ui/checkbox'
-import { UserGroup, EmployeeCredentials } from '@/lib/types'
+import { UserGroup } from '@/lib/types'
 import { UsersThree, Plus, Trash, PencilSimple, X, Broom } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { GroupSuggestions } from './GroupSuggestions'
 import { useTranslation } from '@/lib/i18n'
+import { ApiService } from '@/services/api.service'
+import { useAuth } from '@/contexts/AuthContext'
+import { useTenant } from '@/contexts/TenantContext'
+
+interface BackendGroup {
+  id: string
+  tenantId: string
+  name: string
+  description?: string
+  memberIds: string[]
+  createdBy: string
+  createdAt: string
+  updatedAt: string
+}
 
 export function GroupManagement() {
   const { t } = useTranslation()
-  const [groups, setGroups] = useKV<UserGroup[]>('user-groups', [])
-  const [employees] = useKV<EmployeeCredentials[]>('employee-credentials', [])
+  const { user } = useAuth()
+  const { currentTenant } = useTenant()
+  const [groups, setGroups] = useState<BackendGroup[]>([])
+  const [users, setUsers] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
   
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
-  const [editingGroup, setEditingGroup] = useState<UserGroup | null>(null)
+  const [editingGroup, setEditingGroup] = useState<BackendGroup | null>(null)
   const [groupName, setGroupName] = useState('')
   const [groupDescription, setGroupDescription] = useState('')
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([])
   const [searchTerm, setSearchTerm] = useState('')
 
-  const handleCreateGroup = () => {
-    if (!groupName.trim()) {
+  // Load groups and users from Cosmos DB
+  useEffect(() => {
+    if (currentTenant) {
+      loadGroups()
+      loadUsers()
+    }
+  }, [currentTenant])
+
+  const loadGroups = async () => {
+    try {
+      setLoading(true)
+      const data = await ApiService.getGroups()
+      setGroups(data)
+    } catch (error) {
+      console.error('Error loading groups:', error)
+      toast.error('Error al cargar grupos')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const loadUsers = async () => {
+    if (!currentTenant) return
+    try {
+      const data = await ApiService.getUsersByTenant(currentTenant.id)
+      setUsers(data)
+    } catch (error) {
+      console.error('Error loading users:', error)
+    }
+  }
+
+  const handleCreateGroup = async () => {
+    if (!groupName.trim() || !currentTenant || !user) {
       toast.error(t('groups.nameRequired', 'Group name is required'))
       return
     }
 
-    const newGroup: UserGroup = {
-      id: `group_${Date.now()}`,
-      name: groupName.trim(),
-      description: groupDescription.trim(),
-      userIds: selectedUserIds,
-      courseIds: [],
-      createdAt: Date.now()
+    try {
+      const newGroup = await ApiService.createGroup({
+        name: groupName.trim(),
+        description: groupDescription.trim() || undefined,
+        memberIds: selectedUserIds
+      })
+      
+      setGroups([...groups, newGroup])
+      toast.success(`${t('groups.createGroup', 'Create Group')}: "${groupName}" - ${selectedUserIds.length} ${t('groups.members', 'members')}`)
+
+      setGroupName('')
+      setGroupDescription('')
+      setSelectedUserIds([])
+      setIsCreateDialogOpen(false)
+    } catch (error: any) {
+      console.error('Error creating group:', error)
+      toast.error(error.message || 'Error al crear grupo')
     }
-
-    setGroups((current) => [...(current || []), newGroup])
-    toast.success(`${t('groups.createGroup', 'Create Group')}: "${groupName}" - ${selectedUserIds.length} ${t('groups.members', 'members')}`)
-
-    setGroupName('')
-    setGroupDescription('')
-    setSelectedUserIds([])
-    setIsCreateDialogOpen(false)
   }
 
-  const handleEditGroup = (group: UserGroup) => {
+  const handleEditGroup = (group: BackendGroup) => {
     setEditingGroup(group)
     setGroupName(group.name)
     setGroupDescription(group.description || '')
-    setSelectedUserIds(getValidUserIds(group.userIds))
+    setSelectedUserIds(group.memberIds || [])
     setSearchTerm('')
     setIsEditDialogOpen(true)
   }
 
-  const handleUpdateGroup = () => {
-    if (!editingGroup) return
+  const handleUpdateGroup = async () => {
+    if (!editingGroup || !currentTenant) return
     
     if (!groupName.trim()) {
       toast.error(t('groups.nameRequired', 'Group name is required'))
       return
     }
 
-    const updatedGroup: UserGroup = {
-      ...editingGroup,
-      name: groupName.trim(),
-      description: groupDescription.trim(),
-      userIds: selectedUserIds
+    try {
+      const updatedGroup = await ApiService.updateGroup(editingGroup.id, {
+        name: groupName.trim(),
+        description: groupDescription.trim() || undefined,
+        memberIds: selectedUserIds
+      })
+      
+      setGroups(groups.map(g => g.id === editingGroup.id ? updatedGroup : g))
+      toast.success(t('groups.updated', 'Group updated successfully'))
+      
+      setEditingGroup(null)
+      setGroupName('')
+      setGroupDescription('')
+      setSelectedUserIds([])
+      setSearchTerm('')
+      setIsEditDialogOpen(false)
+    } catch (error: any) {
+      console.error('Error updating group:', error)
+      toast.error(error.message || 'Error al actualizar grupo')
     }
-
-    setGroups((current) => 
-      (current || []).map(g => g.id === editingGroup.id ? updatedGroup : g)
-    )
-    
-    toast.success(t('groups.updated', 'Group updated successfully'))
-    
-    setEditingGroup(null)
-    setGroupName('')
-    setGroupDescription('')
-    setSelectedUserIds([])
-    setSearchTerm('')
-    setIsEditDialogOpen(false)
   }
 
-  const handleDeleteGroup = (groupId: string) => {
-    const group = groups?.find(g => g.id === groupId)
-    if (!group) return
+  const handleDeleteGroup = async (groupId: string) => {
+    const group = groups.find(g => g.id === groupId)
+    if (!group || !currentTenant) return
 
     if (confirm(`${t('groups.confirmDelete', 'Are you sure you want to delete this group?')} "${group.name}"?`)) {
-      setGroups((current) => (current || []).filter(g => g.id !== groupId))
-      toast.success(t('groups.deleted', 'Group deleted'))
+      try {
+        await ApiService.deleteGroup(groupId)
+        setGroups(groups.filter(g => g.id !== groupId))
+        toast.success(t('groups.deleted', 'Group deleted'))
+      } catch (error: any) {
+        console.error('Error deleting group:', error)
+        toast.error(error.message || 'Error al eliminar grupo')
+      }
     }
   }
 
@@ -113,37 +169,48 @@ export function GroupManagement() {
   }
 
   const getUserName = (userId: string) => {
-    const employee = (employees || []).find(e => e.id === userId)
-    return employee ? `${employee.firstName} ${employee.lastName}` : null
+    const user = users.find(u => u.id === userId)
+    return user ? `${user.firstName} ${user.lastName}` : null
   }
 
   const getValidUserIds = (userIds: string[]): string[] => {
-    const validEmployeeIds = new Set((employees || []).map(e => e.id))
-    return userIds.filter(id => validEmployeeIds.has(id))
+    const validUserIds = new Set(users.map(u => u.id))
+    return userIds.filter(id => validUserIds.has(id))
   }
 
-  const cleanupGhostUsers = () => {
-    const validEmployeeIds = new Set((employees || []).map(e => e.id))
+  const cleanupGhostUsers = async () => {
+    const validUserIds = new Set(users.map(u => u.id))
     let ghostCount = 0
     let affectedGroups = 0
 
-    const cleanedGroups = (groups || []).map(group => {
-      const validUserIds = group.userIds.filter(id => validEmployeeIds.has(id))
-      const removedCount = group.userIds.length - validUserIds.length
+    const cleanupPromises = groups.map(async (group) => {
+      const validMemberIds = group.memberIds.filter(id => validUserIds.has(id))
+      const removedCount = group.memberIds.length - validMemberIds.length
       
       if (removedCount > 0) {
         ghostCount += removedCount
         affectedGroups++
+        
+        // Update group in backend
+        try {
+          await ApiService.updateGroup(group.id, {
+            memberIds: validMemberIds
+          })
+        } catch (error) {
+          console.error('Error cleaning up group:', error)
+        }
       }
 
       return {
         ...group,
-        userIds: validUserIds
+        memberIds: validMemberIds
       }
     })
 
+    await Promise.all(cleanupPromises)
+    
     if (ghostCount > 0) {
-      setGroups(cleanedGroups)
+      await loadGroups() // Reload groups
       toast.success(
         `${t('groups.cleanupComplete', 'Cleanup complete')}: ${ghostCount} ${t('groups.ghostUsersRemoved', 'ghost users removed from')} ${affectedGroups} ${affectedGroups === 1 ? t('groups.groupName', 'group') : t('groups.members', 'groups')}`
       )
@@ -153,28 +220,28 @@ export function GroupManagement() {
   }
 
   useEffect(() => {
-    const validEmployeeIds = new Set((employees || []).map(e => e.id))
+    const validUserIds = new Set(users.map(u => u.id))
     let hasGhosts = false
 
-    for (const group of (groups || [])) {
-      if (group.userIds.some(id => !validEmployeeIds.has(id))) {
+    for (const group of groups) {
+      if (group.memberIds.some(id => !validUserIds.has(id))) {
         hasGhosts = true
         break
       }
     }
 
-    if (hasGhosts && (groups || []).length > 0) {
+    if (hasGhosts && groups.length > 0) {
       console.warn('Ghost users detected in groups. Use the cleanup button to remove them.')
     }
-  }, [groups, employees])
+  }, [groups, users])
 
   const getAvailableEmployees = () => {
     const search = searchTerm.toLowerCase()
-    return (employees || []).filter(emp => {
-      if (selectedUserIds.includes(emp.id)) return false
+    return users.filter(user => {
+      if (selectedUserIds.includes(user.id)) return false
       if (!search) return true
-      const fullName = `${emp.firstName} ${emp.lastName}`.toLowerCase()
-      return fullName.includes(search) || emp.email.toLowerCase().includes(search)
+      const fullName = `${user.firstName} ${user.lastName}`.toLowerCase()
+      return fullName.includes(search) || user.email.toLowerCase().includes(search)
     })
   }
 
@@ -246,28 +313,28 @@ export function GroupManagement() {
                       {t('groups.selectMembers', 'Select Members')} ({selectedUserIds.length} {t('groups.selected', 'selected')})
                     </Label>
                     <div className="border rounded-lg max-h-64 overflow-y-auto">
-                      {(employees || []).length === 0 ? (
+                      {users.length === 0 ? (
                         <div className="p-4 text-center text-muted-foreground">
-                          {t('groups.noEmployees', 'No employees available. Upload employees first.')}
+                          {t('groups.noEmployees', 'No employees available. Invite users first.')}
                         </div>
                       ) : (
                         <div className="divide-y">
-                          {(employees || []).map((employee) => (
-                            <div key={employee.id} className="flex items-center gap-3 p-3 hover:bg-muted/50">
+                          {users.map((user) => (
+                            <div key={user.id} className="flex items-center gap-3 p-3 hover:bg-muted/50">
                               <Checkbox
-                                id={`user-${employee.id}`}
-                                checked={selectedUserIds.includes(employee.id)}
-                                onCheckedChange={() => handleToggleUser(employee.id)}
+                                id={`user-${user.id}`}
+                                checked={selectedUserIds.includes(user.id)}
+                                onCheckedChange={() => handleToggleUser(user.id)}
                               />
                               <Label
-                                htmlFor={`user-${employee.id}`}
+                                htmlFor={`user-${user.id}`}
                                 className="flex-1 cursor-pointer"
                               >
-                                <div className="font-medium">{employee.firstName} {employee.lastName}</div>
-                                <div className="text-sm text-muted-foreground">{employee.email}</div>
+                                <div className="font-medium">{user.firstName} {user.lastName}</div>
+                                <div className="text-sm text-muted-foreground">{user.email}</div>
                               </Label>
-                              {employee.department && (
-                                <Badge variant="outline">{employee.department}</Badge>
+                              {user.departamento && (
+                                <Badge variant="outline">{user.departamento}</Badge>
                               )}
                             </div>
                           ))}
@@ -291,7 +358,11 @@ export function GroupManagement() {
           </div>
         </CardHeader>
         <CardContent>
-          {(groups || []).length === 0 ? (
+          {loading ? (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">Cargando grupos...</p>
+            </div>
+          ) : groups.length === 0 ? (
             <div className="text-center py-12">
               <UsersThree size={64} className="mx-auto text-muted-foreground mb-4" aria-hidden="true" />
               <h3 className="text-lg font-semibold mb-2">{t('groups.noGroups', 'No Groups Yet')}</h3>
@@ -303,8 +374,8 @@ export function GroupManagement() {
             </div>
           ) : (
             <div className="space-y-4">
-              {(groups || []).map((group) => {
-                const validUserIds = getValidUserIds(group.userIds)
+              {groups.map((group) => {
+                const validUserIds = getValidUserIds(group.memberIds || [])
                 const validCount = validUserIds.length
                 return (
                   <Card key={group.id} className="bg-card">
@@ -314,9 +385,9 @@ export function GroupManagement() {
                           <div className="flex items-center gap-3 mb-2">
                             <h3 className="text-lg font-semibold">{group.name}</h3>
                             <Badge variant="secondary">{validCount} {t('groups.members', 'members')}</Badge>
-                            {validCount !== group.userIds.length && (
+                            {validCount !== (group.memberIds?.length || 0) && (
                               <Badge variant="destructive" className="text-xs">
-                                {group.userIds.length - validCount} {t('groups.invalid', 'invalid')}
+                                {(group.memberIds?.length || 0) - validCount} {t('groups.invalid', 'invalid')}
                               </Badge>
                             )}
                           </div>
@@ -410,16 +481,16 @@ export function GroupManagement() {
                 ) : (
                   <div className="divide-y">
                     {selectedUserIds.map((userId) => {
-                      const employee = (employees || []).find(e => e.id === userId)
-                      if (!employee) return null
+                      const user = users.find(u => u.id === userId)
+                      if (!user) return null
                       return (
                         <div key={userId} className="flex items-center justify-between gap-3 p-3 hover:bg-muted/50">
                           <div className="flex-1">
-                            <div className="font-medium">{employee.firstName} {employee.lastName}</div>
-                            <div className="text-sm text-muted-foreground">{employee.email}</div>
+                            <div className="font-medium">{user.firstName} {user.lastName}</div>
+                            <div className="text-sm text-muted-foreground">{user.email}</div>
                           </div>
-                          {employee.department && (
-                            <Badge variant="outline">{employee.department}</Badge>
+                          {user.departamento && (
+                            <Badge variant="outline">{user.departamento}</Badge>
                           )}
                           <Button
                             variant="ghost"
@@ -454,21 +525,21 @@ export function GroupManagement() {
                   </div>
                 ) : (
                   <div className="divide-y">
-                    {getAvailableEmployees().map((employee) => (
-                      <div key={employee.id} className="flex items-center gap-3 p-3 hover:bg-muted/50 cursor-pointer" onClick={() => handleToggleUser(employee.id)}>
+                    {getAvailableEmployees().map((user) => (
+                      <div key={user.id} className="flex items-center gap-3 p-3 hover:bg-muted/50 cursor-pointer" onClick={() => handleToggleUser(user.id)}>
                         <div className="flex-1">
-                          <div className="font-medium">{employee.firstName} {employee.lastName}</div>
-                          <div className="text-sm text-muted-foreground">{employee.email}</div>
+                          <div className="font-medium">{user.firstName} {user.lastName}</div>
+                          <div className="text-sm text-muted-foreground">{user.email}</div>
                         </div>
-                        {employee.department && (
-                          <Badge variant="outline">{employee.department}</Badge>
+                        {user.departamento && (
+                          <Badge variant="outline">{user.departamento}</Badge>
                         )}
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={(e) => {
                             e.stopPropagation()
-                            handleToggleUser(employee.id)
+                            handleToggleUser(user.id)
                           }}
                           className="gap-2"
                         >
@@ -505,7 +576,7 @@ export function GroupManagement() {
         </DialogContent>
       </Dialog>
 
-      {(groups || []).length > 0 && (
+      {groups.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle>{t('groups.overview', 'Group Overview')}</CardTitle>
@@ -519,13 +590,12 @@ export function GroupManagement() {
                     <TableHead>{t('groups.groupName', 'Group Name')}</TableHead>
                     <TableHead>{t('groups.description', 'Description')}</TableHead>
                     <TableHead className="text-right">{t('groups.members', 'Members')}</TableHead>
-                    <TableHead className="text-right">{t('groups.coursesAssigned', 'Courses Assigned')}</TableHead>
                     <TableHead>{t('common.created', 'Created')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {(groups || []).map((group) => {
-                    const validCount = getValidUserIds(group.userIds).length
+                  {groups.map((group) => {
+                    const validCount = getValidUserIds(group.memberIds || []).length
                     return (
                       <TableRow key={group.id}>
                         <TableCell className="font-medium">{group.name}</TableCell>
@@ -534,9 +604,6 @@ export function GroupManagement() {
                         </TableCell>
                         <TableCell className="text-right">
                           <Badge variant="secondary">{validCount}</Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Badge variant="outline">{group.courseIds.length}</Badge>
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">
                           {new Date(group.createdAt).toLocaleDateString()}

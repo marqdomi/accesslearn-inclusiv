@@ -1,5 +1,4 @@
-import { useState, useMemo } from 'react'
-import { useKV } from '@github/spark/hooks'
+import { useState, useMemo, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -7,30 +6,78 @@ import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Separator } from '@/components/ui/separator'
-import { UserGroup, Course, CourseAssignment, EmployeeCredentials } from '@/lib/types'
 import { Target, Users, GraduationCap, CalendarBlank, CheckCircle } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { motion } from 'framer-motion'
 import { useTranslation } from '@/lib/i18n'
 import { translateCourse } from '@/lib/translate-course'
+import { ApiService } from '@/services/api.service'
+import { useTenant } from '@/contexts/TenantContext'
+import { adaptBackendCourseToFrontend } from '@/lib/course-adapter'
+
+interface BackendAssignment {
+  id: string
+  tenantId: string
+  courseId: string
+  assignedToType: 'user' | 'group'
+  assignedToId: string
+  assignedBy: string
+  dueDate?: string
+  status: 'pending' | 'in-progress' | 'completed'
+  createdAt: string
+  updatedAt: string
+}
 
 export function CourseAssignmentManager() {
   const { t } = useTranslation()
-  const [courses] = useKV<Course[]>('courses', [])
-  const [groups] = useKV<UserGroup[]>('user-groups', [])
-  const [employees] = useKV<EmployeeCredentials[]>('employee-credentials', [])
-  const [assignments, setAssignments] = useKV<CourseAssignment[]>('course-assignments', [])
+  const { currentTenant } = useTenant()
+  const [courses, setCourses] = useState<any[]>([])
+  const [groups, setGroups] = useState<any[]>([])
+  const [users, setUsers] = useState<any[]>([])
+  const [assignments, setAssignments] = useState<BackendAssignment[]>([])
+  const [loading, setLoading] = useState(true)
   
   const [selectedCourse, setSelectedCourse] = useState<string>('')
   const [selectedGroup, setSelectedGroup] = useState<string>('')
   const [selectedUser, setSelectedUser] = useState<string>('')
   const [assignmentType, setAssignmentType] = useState<'group' | 'individual'>('group')
 
+  // Load data from Cosmos DB
+  useEffect(() => {
+    if (currentTenant) {
+      loadData()
+    }
+  }, [currentTenant])
+
+  const loadData = async () => {
+    try {
+      setLoading(true)
+      const [coursesData, groupsData, usersData, assignmentsData] = await Promise.all([
+        ApiService.getCourses(),
+        ApiService.getGroups(),
+        currentTenant ? ApiService.getUsersByTenant(currentTenant.id) : Promise.resolve([]),
+        ApiService.getCourseAssignments()
+      ])
+      
+      // Convert backend courses to frontend format
+      const frontendCourses = coursesData.map(adaptBackendCourseToFrontend)
+      setCourses(frontendCourses)
+      setGroups(groupsData)
+      setUsers(usersData)
+      setAssignments(assignmentsData)
+    } catch (error) {
+      console.error('Error loading data:', error)
+      toast.error('Error al cargar datos')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const translatedCourses = useMemo(() => {
-    return (courses || []).map(course => translateCourse(course, t))
+    return courses.map(course => translateCourse(course, t))
   }, [courses, t])
 
-  const handleAssignment = () => {
+  const handleAssignment = async () => {
     if (!selectedCourse) {
       toast.error(t('courseAssignment.selectCourse'))
       return
@@ -46,32 +93,33 @@ export function CourseAssignmentManager() {
       return
     }
 
-    const newAssignment: CourseAssignment = {
-      id: `assign_${Date.now()}`,
-      courseId: selectedCourse,
-      userId: assignmentType === 'individual' ? selectedUser : undefined,
-      groupId: assignmentType === 'group' ? selectedGroup : undefined,
-      assignedAt: Date.now(),
-      assignedBy: 'admin',
-      dueDate: undefined
+    try {
+      const newAssignment = await ApiService.createCourseAssignment({
+        courseId: selectedCourse,
+        assignedToType: assignmentType === 'group' ? 'group' : 'user',
+        assignedToId: assignmentType === 'group' ? selectedGroup : selectedUser
+      })
+
+      setAssignments([...assignments, newAssignment])
+
+      const courseName = getCourseTitle(selectedCourse)
+      const targetName = assignmentType === 'group'
+        ? getGroupName(selectedGroup)
+        : getUserEmail(selectedUser)
+
+      toast.success(t('courseAssignment.assignSuccess', { course: courseName, target: targetName }))
+      
+      setSelectedCourse('')
+      setSelectedGroup('')
+      setSelectedUser('')
+    } catch (error: any) {
+      console.error('Error creating assignment:', error)
+      toast.error(error.message || 'Error al crear asignación')
     }
-
-    setAssignments((current) => [...(current || []), newAssignment])
-
-    const courseName = getCourseTitle(selectedCourse)
-    const targetName = assignmentType === 'group'
-      ? getGroupName(selectedGroup)
-      : getUserEmail(selectedUser)
-
-    toast.success(t('courseAssignment.assignSuccess', { course: courseName, target: targetName }))
-    
-    setSelectedCourse('')
-    setSelectedGroup('')
-    setSelectedUser('')
   }
 
-  const groupAssignments = (assignments || []).filter(a => a.groupId)
-  const individualAssignments = (assignments || []).filter(a => a.userId)
+  const groupAssignments = assignments.filter(a => a.assignedToType === 'group')
+  const individualAssignments = assignments.filter(a => a.assignedToType === 'user')
 
   const getCourseTitle = (courseId: string) => {
     const course = translatedCourses?.find(c => c.id === courseId)
@@ -79,16 +127,16 @@ export function CourseAssignmentManager() {
   }
 
   const getGroupName = (groupId: string) => {
-    return groups?.find(g => g.id === groupId)?.name || t('courseAssignment.unknownGroup')
+    return groups.find(g => g.id === groupId)?.name || t('courseAssignment.unknownGroup')
   }
 
   const getUserEmail = (userId: string) => {
-    const employee = employees?.find(e => e.id === userId)
-    return employee ? `${employee.firstName} ${employee.lastName} - ${employee.email}` : t('courseAssignment.unknownUser')
+    const user = users.find(u => u.id === userId)
+    return user ? `${user.firstName} ${user.lastName} - ${user.email}` : t('courseAssignment.unknownUser')
   }
 
   const getGroupMemberCount = (groupId: string) => {
-    return groups?.find(g => g.id === groupId)?.userIds.length || 0
+    return groups.find(g => g.id === groupId)?.memberIds?.length || 0
   }
 
   return (
@@ -150,9 +198,9 @@ export function CourseAssignmentManager() {
                     <SelectValue placeholder={t('courseAssignment.selectGroupPlaceholder')} />
                   </SelectTrigger>
                   <SelectContent>
-                    {(groups || []).map((group) => (
+                    {groups.map((group) => (
                       <SelectItem key={group.id} value={group.id}>
-                        {group.name} ({group.userIds.length} {t('courseAssignment.members')})
+                        {group.name} ({group.memberIds?.length || 0} {t('courseAssignment.members')})
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -168,9 +216,9 @@ export function CourseAssignmentManager() {
                     <SelectValue placeholder={t('courseAssignment.selectEmployeePlaceholder')} />
                   </SelectTrigger>
                   <SelectContent>
-                    {(employees || []).map((employee) => (
-                      <SelectItem key={employee.id} value={employee.id}>
-                        {employee.firstName} {employee.lastName} - {employee.email}
+                    {users.map((user) => (
+                      <SelectItem key={user.id} value={user.id}>
+                        {user.firstName} {user.lastName} - {user.email}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -213,15 +261,19 @@ export function CourseAssignmentManager() {
                   {groupAssignments.map((assignment) => (
                     <TableRow key={assignment.id}>
                       <TableCell className="font-medium">{getCourseTitle(assignment.courseId)}</TableCell>
-                      <TableCell>{getGroupName(assignment.groupId!)}</TableCell>
+                      <TableCell>{getGroupName(assignment.assignedToId)}</TableCell>
                       <TableCell className="text-right">
-                        <Badge variant="secondary">{getGroupMemberCount(assignment.groupId!)} {t('courseAssignment.users')}</Badge>
+                        <Badge variant="secondary">{getGroupMemberCount(assignment.assignedToId)} {t('courseAssignment.users')}</Badge>
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
-                        {new Date(assignment.assignedAt).toLocaleDateString()}
+                        {new Date(assignment.createdAt).toLocaleDateString()}
                       </TableCell>
                       <TableCell>
-                        <Badge variant="default">{t('courseAssignment.active')}</Badge>
+                        <Badge variant={assignment.status === 'completed' ? 'default' : assignment.status === 'in-progress' ? 'secondary' : 'outline'}>
+                          {assignment.status === 'completed' ? t('courseAssignment.completed') : 
+                           assignment.status === 'in-progress' ? t('courseAssignment.inProgress') : 
+                           t('courseAssignment.pending')}
+                        </Badge>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -258,12 +310,16 @@ export function CourseAssignmentManager() {
                   {individualAssignments.slice(0, 20).map((assignment) => (
                     <TableRow key={assignment.id}>
                       <TableCell className="font-medium">{getCourseTitle(assignment.courseId)}</TableCell>
-                      <TableCell>{getUserEmail(assignment.userId!)}</TableCell>
+                      <TableCell>{getUserEmail(assignment.assignedToId)}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">
-                        {new Date(assignment.assignedAt).toLocaleDateString()}
+                        {new Date(assignment.createdAt).toLocaleDateString()}
                       </TableCell>
                       <TableCell>
-                        <Badge variant="default">{t('courseAssignment.active')}</Badge>
+                        <Badge variant={assignment.status === 'completed' ? 'default' : assignment.status === 'in-progress' ? 'secondary' : 'outline'}>
+                          {assignment.status === 'completed' ? t('courseAssignment.completed') : 
+                           assignment.status === 'in-progress' ? t('courseAssignment.inProgress') : 
+                           t('courseAssignment.pending')}
+                        </Badge>
                       </TableCell>
                     </TableRow>
                   ))}

@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { CourseStructure } from '@/lib/types'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -5,25 +6,15 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Info } from '@phosphor-icons/react'
+import { Button } from '@/components/ui/button'
+import { Info, Plus, X } from '@phosphor-icons/react'
+import { useCustomCategories } from '@/hooks/use-custom-categories'
+import { toast } from 'sonner'
 
 interface CourseDetailsStepProps {
   course: CourseStructure
   updateCourse: (updates: Partial<CourseStructure>) => void
 }
-
-const CATEGORIES = [
-  'Programación',
-  'Ciencia de Datos',
-  'Diseño',
-  'Negocios',
-  'Marketing',
-  'Desarrollo Personal',
-  'Idiomas',
-  'Salud y Bienestar',
-  'Tecnología',
-  'Arte y Creatividad',
-]
 
 const DIFFICULTIES = [
   { value: 'Novice', label: 'Novato', description: 'Sin conocimientos previos' },
@@ -33,6 +24,27 @@ const DIFFICULTIES = [
 ]
 
 export function CourseDetailsStep({ course, updateCourse }: CourseDetailsStepProps) {
+  const { categories, addCategory, loading: categoriesLoading } = useCustomCategories()
+  const [showAddCategory, setShowAddCategory] = useState(false)
+  const [newCategory, setNewCategory] = useState('')
+  const [addingCategory, setAddingCategory] = useState(false)
+
+  const handleAddCategory = async () => {
+    if (!newCategory.trim()) return
+    
+    setAddingCategory(true)
+    try {
+      const success = await addCategory(newCategory.trim())
+      if (success) {
+        updateCourse({ category: newCategory.trim() })
+        setNewCategory('')
+        setShowAddCategory(false)
+      }
+    } finally {
+      setAddingCategory(false)
+    }
+  }
+
   return (
     <div className="space-y-8">
       <div>
@@ -85,21 +97,61 @@ export function CourseDetailsStep({ course, updateCourse }: CourseDetailsStepPro
         <Label htmlFor="course-category" className="required">
           Categoría
         </Label>
-        <Select 
-          value={course.category} 
-          onValueChange={(value) => updateCourse({ category: value })}
-        >
-          <SelectTrigger id="course-category">
-            <SelectValue placeholder="Selecciona una categoría" />
-          </SelectTrigger>
-          <SelectContent>
-            {CATEGORIES.map((category) => (
-              <SelectItem key={category} value={category}>
-                {category}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="flex gap-2">
+          <Select 
+            value={course.category} 
+            onValueChange={(value) => updateCourse({ category: value })}
+            className="flex-1"
+            disabled={categoriesLoading}
+          >
+            <SelectTrigger id="course-category">
+              <SelectValue placeholder={categoriesLoading ? "Cargando categorías..." : "Selecciona una categoría"} />
+            </SelectTrigger>
+            <SelectContent>
+              {categories.map((category) => (
+                <SelectItem key={category} value={category}>
+                  {category}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            onClick={() => setShowAddCategory(!showAddCategory)}
+            title="Agregar nueva categoría"
+            disabled={categoriesLoading}
+          >
+            {showAddCategory ? <X size={20} /> : <Plus size={20} />}
+          </Button>
+        </div>
+        {showAddCategory && (
+          <div className="flex gap-2 mt-2">
+            <Input
+              placeholder="Nombre de la nueva categoría"
+              value={newCategory}
+              onChange={(e) => setNewCategory(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !addingCategory) {
+                  handleAddCategory()
+                } else if (e.key === 'Escape') {
+                  setShowAddCategory(false)
+                  setNewCategory('')
+                }
+              }}
+              autoFocus
+              disabled={addingCategory}
+            />
+            <Button
+              type="button"
+              onClick={handleAddCategory}
+              disabled={!newCategory.trim() || addingCategory}
+            >
+              {addingCategory ? 'Agregando...' : 'Agregar'}
+            </Button>
+          </div>
+        )}
       </div>
       
       {/* Difficulty */}

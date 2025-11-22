@@ -79,7 +79,8 @@ export async function login(request: LoginRequest): Promise<LoginResponse> {
     // Validate password (using SHA-256 hash)
     // In production, use bcrypt.compare(password, user.passwordHash)
     const crypto = require('crypto');
-    const hashedPassword = crypto.createHash('sha256').update(password).digest('hex');
+    const hashPassword = (pwd: string) => crypto.createHash('sha256').update(pwd).digest('hex');
+    const hashedPassword = hashPassword(password);
     
     if (user.password && hashedPassword !== user.password) {
       return {

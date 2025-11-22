@@ -76,7 +76,7 @@ export function DashboardPage() {
   }, [currentTenant, user])
 
   const loadDashboard = async () => {
-    if (!currentTenant) return
+    if (!currentTenant || !user) return
 
     try {
       setLoading(true)
@@ -84,13 +84,47 @@ export function DashboardPage() {
       const activeCourses = data.filter((c: Course) => c.status === 'active')
       setCourses(activeCourses)
 
+      // Calculate real progress from user's enrolled courses
+      let totalProgress = 0
+      let enrolledCount = 0
+      let completedCount = 0
+      
+      for (const course of activeCourses) {
+        try {
+          const progress = await ApiService.getCourseProgress(user.id, course.id)
+          if (progress && progress.completedLessons) {
+            enrolledCount++
+            // Calculate progress percentage based on completed lessons
+            const totalLessons = course.modules?.reduce((sum: number, m: any) => 
+              sum + (m.lessons?.length || 0), 0) || 0
+            const completedLessons = progress.completedLessons?.length || 0
+            const courseProgress = totalLessons > 0 
+              ? Math.round((completedLessons / totalLessons) * 100) 
+              : 0
+            totalProgress += courseProgress
+            
+            // Consider completed if 100% or all lessons completed
+            if (courseProgress === 100 || completedLessons >= totalLessons) {
+              completedCount++
+            }
+          }
+        } catch (err) {
+          // Course not enrolled or no progress, skip
+          console.debug(`No progress found for course ${course.id}`)
+        }
+      }
+
+      const averageProgress = enrolledCount > 0 
+        ? Math.round(totalProgress / enrolledCount) 
+        : 0
+
       // Calculate stats
       setStats({
         totalCourses: activeCourses.length,
-        enrolledCourses: Math.floor(activeCourses.length * 0.6), // Mock data
-        completedCourses: Math.floor(activeCourses.length * 0.3), // Mock data
+        enrolledCourses: enrolledCount,
+        completedCourses: completedCount,
         totalXP: activeCourses.reduce((sum, c) => sum + (c.totalXP || 0), 0),
-        averageProgress: 45, // Mock data
+        averageProgress,
       })
 
       loadNotifications()

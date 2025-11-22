@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
+import { useTenant } from '@/contexts/TenantContext'
 import { CourseStructure } from '@/lib/types'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -10,8 +11,8 @@ import { StepperNavigation } from './shared/StepperNavigation'
 import { AutoSaveIndicator } from './shared/AutoSaveIndicator'
 import { useAutoSave } from './hooks/useAutoSave'
 import { toast } from 'sonner'
-import { useKV } from '@github/spark/hooks'
 import { ApiService } from '@/services/api.service'
+import { adaptBackendCourseToFrontend, adaptFrontendCourseToBackend } from '@/lib/course-adapter'
 
 // Import steps (we'll create these next)
 import { CourseDetailsStep } from './steps/CourseDetailsStep'
@@ -36,14 +37,12 @@ const STEPS = [
 export function ModernCourseBuilder({ courseId, onBack }: ModernCourseBuilderProps) {
   const navigate = useNavigate()
   const { user } = useAuth()
-  const [courses, setCourses] = useKV<CourseStructure[]>('admin-courses', [])
-  
-  // Find existing course if editing
-  const existingCourse = courseId ? courses?.find(c => c.id === courseId) : null
+  const { currentTenant } = useTenant()
+  const [loading, setLoading] = useState(false)
   
   // Initialize course state
-  const [course, setCourse] = useState<CourseStructure>(existingCourse || {
-    id: `course-${Date.now()}`,
+  const [course, setCourse] = useState<CourseStructure>({
+    id: courseId || `course-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
     title: '',
     description: '',
     category: '',
@@ -56,12 +55,34 @@ export function ModernCourseBuilder({ courseId, onBack }: ModernCourseBuilderPro
     createdAt: Date.now(),
     updatedAt: Date.now(),
     createdBy: user?.id || 'unknown',
+    status: 'draft' as const,
   })
+  
+  // Load existing course if editing
+  useEffect(() => {
+    const loadCourse = async () => {
+      if (!courseId || !currentTenant) return
+      
+      try {
+        setLoading(true)
+        const backendCourse = await ApiService.getCourseById(courseId)
+        const frontendCourse = adaptBackendCourseToFrontend(backendCourse)
+        setCourse(frontendCourse)
+      } catch (error) {
+        console.error('Error loading course:', error)
+        toast.error('Error al cargar el curso')
+      } finally {
+        setLoading(false)
+      }
+    }
+    
+    loadCourse()
+  }, [courseId, currentTenant])
   
   const [currentStep, setCurrentStep] = useState(1)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   
-  // Auto-save hook
+  // Auto-save hook - saves to Cosmos DB via API
   const autoSaveKey = `course-draft-${course.id}`
   const {
     lastSaved,
@@ -75,31 +96,59 @@ export function ModernCourseBuilder({ courseId, onBack }: ModernCourseBuilderPro
     key: autoSaveKey,
     data: course,
     onSave: async (courseData) => {
-      // Save to backend
-      setCourses((currentCourses) => {
-        const existing = currentCourses?.find(c => c.id === courseData.id)
-        if (existing) {
-          // Update existing
-          return currentCourses?.map(c => 
-            c.id === courseData.id ? { ...courseData, updatedAt: Date.now() } : c
-          ) || []
+      if (!currentTenant || !user) {
+        throw new Error('Tenant or user not available')
+      }
+      
+      // Ensure course has draft status if not published
+      const courseToSave = {
+        ...courseData,
+        status: courseData.published ? 'published' : ('draft' as const),
+        updatedAt: Date.now(),
+      }
+      
+      try {
+        // Convert to backend format
+        const backendData = adaptFrontendCourseToBackend(courseToSave, currentTenant.id)
+        
+        if (courseId || course.id.startsWith('course-')) {
+          // Update existing course
+          await ApiService.updateCourse(course.id, backendData)
         } else {
-          // Add new
-          return [...(currentCourses || []), { ...courseData, createdAt: Date.now(), updatedAt: Date.now() }]
+          // Create new course
+          const newCourse = await ApiService.createCourse({
+            title: courseToSave.title || 'Nuevo Curso',
+            description: courseToSave.description || '',
+            category: courseToSave.category || '',
+            estimatedTime: (courseToSave.estimatedHours || 0) * 60,
+            modules: courseToSave.modules || [],
+            coverImage: courseToSave.coverImage,
+          })
+          
+          // Update course ID with the one from backend
+          setCourse(prev => ({
+            ...prev,
+            id: newCourse.id,
+            createdAt: new Date(newCourse.createdAt).getTime(),
+          }))
         }
-      })
+      } catch (error) {
+        console.error('Error saving course to backend:', error)
+        throw error
+      }
     },
     interval: 30000, // 30 seconds
     enabled: true,
   })
   
-  // Restore draft on mount if newer than existing course
+  // Restore draft from localStorage only if no courseId (new course)
+  // For existing courses, we load from backend
   useEffect(() => {
-    if (!courseId) {
+    if (!courseId && !loading) {
       const draft = restoreFromLocalStorage()
-      if (draft) {
+      if (draft && draft.title) {
         const shouldRestore = window.confirm(
-          '¿Deseas recuperar el borrador guardado? Tiene cambios más recientes que no fueron publicados.'
+          '¿Deseas recuperar el borrador guardado localmente?'
         )
         if (shouldRestore) {
           setCourse(draft)
@@ -107,7 +156,7 @@ export function ModernCourseBuilder({ courseId, onBack }: ModernCourseBuilderPro
         }
       }
     }
-  }, [])
+  }, [courseId, loading])
   
   // Warn before leaving with unsaved changes
   useEffect(() => {
@@ -168,9 +217,55 @@ export function ModernCourseBuilder({ courseId, onBack }: ModernCourseBuilderPro
   }
   
   const handleSaveDraft = async () => {
+    if (!currentTenant || !user) {
+      toast.error('No se puede guardar: falta información de tenant o usuario')
+      return
+    }
+    
     try {
-      await saveToBackend()
-      toast.success('Borrador guardado exitosamente')
+      // Ensure course has draft status and is not published
+      const draftCourse = {
+        ...course,
+        status: 'draft' as const,
+        published: false,
+        updatedAt: Date.now(),
+      }
+      
+      // Update state first
+      setCourse(draftCourse)
+      
+      // Convert to backend format
+      const backendData = adaptFrontendCourseToBackend(draftCourse, currentTenant.id)
+      
+      if (courseId || course.id.startsWith('course-')) {
+        // Update existing course in Cosmos DB
+        await ApiService.updateCourse(course.id, {
+          ...backendData,
+          status: 'draft',
+        })
+      } else {
+        // Create new course in Cosmos DB
+        const newCourse = await ApiService.createCourse({
+          title: draftCourse.title || 'Nuevo Curso',
+          description: draftCourse.description || '',
+          category: draftCourse.category || '',
+          estimatedTime: (draftCourse.estimatedHours || 0) * 60,
+          modules: draftCourse.modules || [],
+          coverImage: draftCourse.coverImage,
+        })
+        
+        // Update course ID with the one from backend
+        setCourse(prev => ({
+          ...prev,
+          id: newCourse.id,
+          createdAt: new Date(newCourse.createdAt).getTime(),
+        }))
+      }
+      
+      // Also save to localStorage as backup
+      forceSave()
+      
+      toast.success('Borrador guardado exitosamente en Cosmos DB')
     } catch (error) {
       toast.error('Error al guardar borrador')
       console.error(error)

@@ -42,14 +42,28 @@ export function AcceptInvitationPage() {
   }, [token])
 
   const validateToken = async () => {
+    if (!token) {
+      setIsValid(false)
+      setValidating(false)
+      return
+    }
+
     try {
       setValidating(true)
-      // Try to fetch user info by token
-      // Since we don't have a dedicated endpoint, we'll just check when accepting
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/users/validate-invitation/${token}`)
+      
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Token inválido')
+      }
+      
+      const userData = await response.json()
+      setUserInfo(userData)
       setIsValid(true)
-    } catch (error) {
+    } catch (error: any) {
       setIsValid(false)
-      toast.error('Token de invitación inválido o expirado')
+      console.error('Error validating token:', error)
+      toast.error(error.message || 'Token de invitación inválido o expirado')
     } finally {
       setValidating(false)
     }
@@ -171,7 +185,14 @@ export function AcceptInvitationPage() {
           </div>
           <CardTitle>Activa tu Cuenta</CardTitle>
           <CardDescription>
-            Has sido invitado a unirte a la plataforma. Configura tu contraseña para continuar.
+            {userInfo ? (
+              <>
+                Hola <strong>{userInfo.firstName} {userInfo.lastName}</strong>,<br />
+                has sido invitado a unirte a la plataforma. Configura tu contraseña para continuar.
+              </>
+            ) : (
+              'Has sido invitado a unirte a la plataforma. Configura tu contraseña para continuar.'
+            )}
           </CardDescription>
         </CardHeader>
 

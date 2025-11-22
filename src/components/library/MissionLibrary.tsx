@@ -1,6 +1,5 @@
-import { useState, useMemo } from 'react'
-import { useKV } from '@github/spark/hooks'
-import { Course, CourseStructure, UserProgress, CourseAssignment } from '@/lib/types'
+import { useState, useMemo, useEffect } from 'react'
+import { Course, CourseStructure, UserProgress } from '@/lib/types'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -12,6 +11,9 @@ import { CourseRatingDisplay } from '@/components/courses/CourseRatingDisplay'
 import { motion } from 'framer-motion'
 import {  MagnifyingGlass, BookmarkSimple, BookmarksSimple, Play, Clock, Star, Bookmark, LockKey } from '@phosphor-icons/react'
 import { toast } from 'sonner'
+import { ApiService } from '@/services/api.service'
+import { useTenant } from '@/contexts/TenantContext'
+import { adaptBackendCourseToFrontend } from '@/lib/course-adapter'
 
 interface MissionLibraryProps {
   userId: string
@@ -20,10 +22,48 @@ interface MissionLibraryProps {
 
 export function MissionLibrary({ userId, onSelectCourse }: MissionLibraryProps) {
   const { t } = useTranslation()
-  const [courses] = useKV<CourseStructure[]>('courses', [])
-  const [courseProgress] = useKV<Record<string, UserProgress>>(`course-progress-${userId}`, {})
-  const [courseAssignments] = useKV<CourseAssignment[]>('course-assignments', [])
+  const { currentTenant } = useTenant()
+  const [courses, setCourses] = useState<CourseStructure[]>([])
+  const [courseProgress, setCourseProgress] = useState<Record<string, UserProgress>>({})
+  const [courseAssignments, setCourseAssignments] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
   const { isInLibrary, addToLibrary, removeFromLibrary, requestAccess, hasRequestedAccess } = useUserLibrary(userId)
+
+  // Load data from Cosmos DB
+  useEffect(() => {
+    if (currentTenant) {
+      loadData()
+    }
+  }, [currentTenant, userId])
+
+  const loadData = async () => {
+    try {
+      setLoading(true)
+      const [coursesData, progressData, assignmentsData] = await Promise.all([
+        ApiService.getCourses(),
+        ApiService.getUserProgress(userId),
+        ApiService.getCourseAssignments(undefined, userId)
+      ])
+      
+      // Convert backend courses to frontend format
+      const frontendCourses = coursesData.map(adaptBackendCourseToFrontend)
+      setCourses(frontendCourses)
+      
+      // Convert progress array to record
+      const progressRecord: Record<string, UserProgress> = {}
+      progressData.forEach((p: UserProgress) => {
+        progressRecord[p.courseId] = p
+      })
+      setCourseProgress(progressRecord)
+      
+      setCourseAssignments(assignmentsData)
+    } catch (error) {
+      console.error('Error loading library data:', error)
+      toast.error('Error al cargar la biblioteca')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const [searchQuery, setSearchQuery] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('all')
@@ -31,12 +71,12 @@ export function MissionLibrary({ userId, onSelectCourse }: MissionLibraryProps) 
   const [timeFilter, setTimeFilter] = useState('all')
 
   const categories = useMemo(() => {
-    const cats = new Set(courses?.map(c => c.category) || [])
+    const cats = new Set(courses.map(c => c.category))
     return Array.from(cats)
   }, [courses])
 
   const filteredCourses = useMemo(() => {
-    if (!courses) return []
+    if (loading || courses.length === 0) return []
 
     return courses.filter(course => {
       if (!course.published) return false
@@ -68,12 +108,12 @@ export function MissionLibrary({ userId, onSelectCourse }: MissionLibraryProps) 
   }, [courses, searchQuery, categoryFilter, difficultyFilter, timeFilter])
 
   const isEnrolled = (courseId: string) => {
-    const assigned = courseAssignments?.some(a => a.courseId === courseId && a.userId === userId)
-    const hasProgress = courseProgress?.[courseId]?.status !== 'not-started'
+    const assigned = courseAssignments.some(a => a.courseId === courseId && a.assignedToId === userId)
+    const hasProgress = courseProgress[courseId]?.status && courseProgress[courseId].status !== 'not-started'
     return assigned || hasProgress
   }
 
-  const handleStartMission = (course: CourseStructure) => {
+  const handleStartMission = async (course: CourseStructure) => {
     const courseData: Course = {
       id: course.id,
       title: course.title,
@@ -84,20 +124,22 @@ export function MissionLibrary({ userId, onSelectCourse }: MissionLibraryProps) 
       coverImage: course.coverImage
     }
 
-    const newAssignment: CourseAssignment = {
-      id: `assign-${userId}-${course.id}-${Date.now()}`,
-      courseId: course.id,
-      userId,
-      assignedAt: Date.now(),
-      assignedBy: userId
-    }
-
-    const currentAssignments = courseAssignments || []
-    const assignmentExists = currentAssignments.some(a => a.courseId === course.id && a.userId === userId)
+    // Check if assignment already exists
+    const assignmentExists = courseAssignments.some(a => a.courseId === course.id && a.assignedToId === userId)
     
     if (!assignmentExists) {
-      currentAssignments.push(newAssignment)
-      toast.success(t('missionLibrary.enrollSuccess'))
+      try {
+        const newAssignment = await ApiService.createCourseAssignment({
+          courseId: course.id,
+          assignedToType: 'user',
+          assignedToId: userId
+        })
+        setCourseAssignments([...courseAssignments, newAssignment])
+        toast.success(t('missionLibrary.enrollSuccess'))
+      } catch (error) {
+        console.error('Error creating assignment:', error)
+        // Continue anyway - user can still access the course
+      }
     }
 
     if (isInLibrary(course.id)) {
@@ -204,7 +246,13 @@ export function MissionLibrary({ userId, onSelectCourse }: MissionLibraryProps) 
         </CardContent>
       </Card>
 
-      {filteredCourses.length === 0 ? (
+      {loading ? (
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+            <p className="text-muted-foreground">Cargando cursos...</p>
+          </CardContent>
+        </Card>
+      ) : filteredCourses.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12 text-center">
             <BookmarksSimple size={64} className="mb-4 text-muted-foreground" weight="thin" />

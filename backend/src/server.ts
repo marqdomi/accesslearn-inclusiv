@@ -64,6 +64,30 @@ import {
   completeCourseAttempt
 } from './functions/LibraryFunctions';
 import {
+  getUserProgress,
+  getAllUserProgress,
+  getCourseProgress,
+  upsertUserProgress,
+  updateProgress
+} from './functions/UserProgressFunctions';
+import {
+  getGroups,
+  getGroupById,
+  createGroup,
+  updateGroup,
+  deleteGroup,
+  addMemberToGroup,
+  removeMemberFromGroup
+} from './functions/UserGroupFunctions';
+import {
+  getAssignments,
+  getUserAssignments,
+  getCourseAssignments,
+  createAssignment,
+  updateAssignmentStatus,
+  deleteAssignment
+} from './functions/CourseAssignmentFunctions';
+import {
   getAuditLogs,
   getAuditLogById,
   getAuditStats,
@@ -76,7 +100,19 @@ const app = express();
 const PORT = process.env.PORT || 7071;
 
 // Middleware
-app.use(cors());
+// CORS configuration - allow specific origins in production
+const corsOptions = {
+  origin: process.env.NODE_ENV === 'production' 
+    ? [
+        'https://app.kainet.mx',
+        'https://api.kainet.mx',
+        process.env.FRONTEND_URL || 'https://app.kainet.mx'
+      ]
+    : true, // Allow all origins in development
+  credentials: true,
+  optionsSuccessStatus: 200
+};
+app.use(cors(corsOptions));
 app.use(express.json());
 // Note: authenticateToken is NOT applied globally - it's applied selectively to protected routes
 
@@ -418,6 +454,42 @@ app.post('/api/users/invite', requireAuth, requirePermission('users:create'), as
   } catch (error: any) {
     console.error('[API] Error inviting user:', error);
     res.status(400).json({ error: error.message });
+  }
+});
+
+// GET /api/users/validate-invitation/:token - Validate invitation token and get user info
+app.get('/api/users/validate-invitation/:token', async (req, res) => {
+  try {
+    const { token } = req.params;
+    const { getUserByInvitationToken } = await import('./functions/UserFunctions');
+    
+    const user = await getUserByInvitationToken(token);
+    
+    if (!user) {
+      return res.status(404).json({ error: 'Token de invitación inválido o expirado' });
+    }
+    
+    // Check if invitation expired
+    if (user.invitationExpiresAt && new Date(user.invitationExpiresAt) < new Date()) {
+      return res.status(400).json({ error: 'La invitación ha expirado' });
+    }
+    
+    // Check if already accepted
+    if (user.status === 'active') {
+      return res.status(400).json({ error: 'Esta invitación ya ha sido aceptada' });
+    }
+    
+    // Return safe user info (no password, no sensitive data)
+    res.json({
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      role: user.role,
+      tenantId: user.tenantId,
+    });
+  } catch (error: any) {
+    console.error('[API] Error validating invitation:', error);
+    res.status(400).json({ error: error.message || 'Error al validar la invitación' });
   }
 });
 
@@ -786,6 +858,68 @@ app.post('/api/courses/:courseId/request-changes',
       res.json(course);
     } catch (error: any) {
       console.error('[API] Error requesting changes:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+);
+
+// ============================================
+// CATEGORY ENDPOINTS
+// ============================================
+
+// GET /api/categories - Get all categories for tenant
+app.get('/api/categories', requireAuth, async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const { getCategories } = await import('./functions/CategoryFunctions');
+    const categories = await getCategories(user.tenantId);
+    res.json(categories);
+  } catch (error: any) {
+    console.error('[API] Error getting categories:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/categories - Create new category
+app.post('/api/categories',
+  requireAuth,
+  requirePermission('content:create'),
+  async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const { name } = req.body;
+
+      if (!name || !name.trim()) {
+        return res.status(400).json({ error: 'Category name is required' });
+      }
+
+      const { createCategory } = await import('./functions/CategoryFunctions');
+      const category = await createCategory(user.tenantId, name.trim(), user.id);
+      res.status(201).json(category);
+    } catch (error: any) {
+      console.error('[API] Error creating category:', error);
+      if (error.message === 'Category already exists') {
+        return res.status(409).json({ error: error.message });
+      }
+      res.status(500).json({ error: error.message });
+    }
+  }
+);
+
+// DELETE /api/categories/:categoryId - Delete category
+app.delete('/api/categories/:categoryId',
+  requireAuth,
+  requirePermission('content:delete'),
+  async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const { categoryId } = req.params;
+
+      const { deleteCategory } = await import('./functions/CategoryFunctions');
+      await deleteCategory(categoryId, user.tenantId);
+      res.status(204).send();
+    } catch (error: any) {
+      console.error('[API] Error deleting category:', error);
       res.status(500).json({ error: error.message });
     }
   }
@@ -1232,6 +1366,290 @@ app.get('/api/audit/stats', requireAuth, requirePermission('audit:view-logs'), a
     res.json(stats);
   } catch (error: any) {
     console.error('[API] Error getting audit stats:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ============================================
+// USER PROGRESS ENDPOINTS
+// ============================================
+
+// GET /api/user-progress/:userId - Get all progress for a user
+app.get('/api/user-progress/:userId', requireAuth, requireOwnershipOrAdmin('userId'), async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const { userId } = req.params;
+    const progress = await getAllUserProgress(userId, user.tenantId);
+    res.json(progress);
+  } catch (error: any) {
+    console.error('[API] Error getting user progress:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/user-progress/:userId/course/:courseId - Get progress for specific course
+app.get('/api/user-progress/:userId/course/:courseId', requireAuth, requireOwnershipOrAdmin('userId'), async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const { userId, courseId } = req.params;
+    const progress = await getUserProgress(userId, user.tenantId, courseId);
+    if (!progress) {
+      return res.status(404).json({ error: 'Progress not found' });
+    }
+    res.json(progress);
+  } catch (error: any) {
+    console.error('[API] Error getting course progress:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/courses/:courseId/progress - Get all progress for a course
+app.get('/api/courses/:courseId/progress', requireAuth, requirePermission('analytics:view-user-progress'), async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const { courseId } = req.params;
+    const progress = await getCourseProgress(courseId, user.tenantId);
+    res.json(progress);
+  } catch (error: any) {
+    console.error('[API] Error getting course progress:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// PUT /api/user-progress/:userId/course/:courseId - Update user progress
+app.put('/api/user-progress/:userId/course/:courseId', requireAuth, requireOwnershipOrAdmin('userId'), async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const { userId, courseId } = req.params;
+    const { progress, completedLessons } = req.body;
+    
+    const updated = await updateProgress(userId, user.tenantId, courseId, progress, completedLessons);
+    res.json(updated);
+  } catch (error: any) {
+    console.error('[API] Error updating progress:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/user-progress - Create or update progress
+app.post('/api/user-progress', requireAuth, async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const progressData = req.body;
+    
+    // Ensure tenantId and userId match authenticated user
+    if (progressData.userId !== user.id && user.role !== 'super-admin' && user.role !== 'tenant-admin') {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+    
+    progressData.tenantId = user.tenantId;
+    const progress = await upsertUserProgress(progressData);
+    res.json(progress);
+  } catch (error: any) {
+    console.error('[API] Error creating/updating progress:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ============================================
+// USER GROUPS ENDPOINTS
+// ============================================
+
+// GET /api/groups - Get all groups for tenant
+app.get('/api/groups', requireAuth, async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const groups = await getGroups(user.tenantId);
+    res.json(groups);
+  } catch (error: any) {
+    console.error('[API] Error getting groups:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/groups/:groupId - Get group by ID
+app.get('/api/groups/:groupId', requireAuth, async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const { groupId } = req.params;
+    const group = await getGroupById(groupId, user.tenantId);
+    if (!group) {
+      return res.status(404).json({ error: 'Group not found' });
+    }
+    res.json(group);
+  } catch (error: any) {
+    console.error('[API] Error getting group:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/groups - Create new group
+app.post('/api/groups', requireAuth, requirePermission('users:create'), async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const { name, description, memberIds } = req.body;
+    
+    if (!name) {
+      return res.status(400).json({ error: 'Group name is required' });
+    }
+    
+    const group = await createGroup(user.tenantId, name, description, user.id, memberIds || []);
+    res.status(201).json(group);
+  } catch (error: any) {
+    console.error('[API] Error creating group:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// PUT /api/groups/:groupId - Update group
+app.put('/api/groups/:groupId', requireAuth, requirePermission('groups:update'), async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const { groupId } = req.params;
+    const updates = req.body;
+    
+    const group = await updateGroup(groupId, user.tenantId, updates);
+    res.json(group);
+  } catch (error: any) {
+    console.error('[API] Error updating group:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// DELETE /api/groups/:groupId - Delete group
+app.delete('/api/groups/:groupId', requireAuth, requirePermission('users:delete'), async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const { groupId } = req.params;
+    await deleteGroup(groupId, user.tenantId);
+    res.status(204).send();
+  } catch (error: any) {
+    console.error('[API] Error deleting group:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/groups/:groupId/members/:userId - Add member to group
+app.post('/api/groups/:groupId/members/:userId', requireAuth, requirePermission('groups:assign-users'), async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const { groupId, userId } = req.params;
+    const group = await addMemberToGroup(groupId, user.tenantId, userId);
+    res.json(group);
+  } catch (error: any) {
+    console.error('[API] Error adding member:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// DELETE /api/groups/:groupId/members/:userId - Remove member from group
+app.delete('/api/groups/:groupId/members/:userId', requireAuth, requirePermission('groups:assign-users'), async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const { groupId, userId } = req.params;
+    const group = await removeMemberFromGroup(groupId, user.tenantId, userId);
+    res.json(group);
+  } catch (error: any) {
+    console.error('[API] Error removing member:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ============================================
+// COURSE ASSIGNMENTS ENDPOINTS
+// ============================================
+
+// GET /api/course-assignments - Get all assignments for tenant
+app.get('/api/course-assignments', requireAuth, async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const assignments = await getAssignments(user.tenantId);
+    res.json(assignments);
+  } catch (error: any) {
+    console.error('[API] Error getting assignments:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/course-assignments/user/:userId - Get assignments for a user
+app.get('/api/course-assignments/user/:userId', requireAuth, requireOwnershipOrAdmin('userId'), async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const { userId } = req.params;
+    const assignments = await getUserAssignments(userId, user.tenantId);
+    res.json(assignments);
+  } catch (error: any) {
+    console.error('[API] Error getting user assignments:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/course-assignments/course/:courseId - Get assignments for a course
+app.get('/api/course-assignments/course/:courseId', requireAuth, async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const { courseId } = req.params;
+    const assignments = await getCourseAssignments(courseId, user.tenantId);
+    res.json(assignments);
+  } catch (error: any) {
+    console.error('[API] Error getting course assignments:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/course-assignments - Create new assignment
+app.post('/api/course-assignments', requireAuth, requirePermission('enrollment:assign-individual'), async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const { courseId, assignedToType, assignedToId, dueDate } = req.body;
+    
+    if (!courseId || !assignedToType || !assignedToId) {
+      return res.status(400).json({ error: 'courseId, assignedToType, and assignedToId are required' });
+    }
+    
+    const assignment = await createAssignment(
+      user.tenantId,
+      courseId,
+      assignedToType,
+      assignedToId,
+      user.id,
+      dueDate
+    );
+    res.status(201).json(assignment);
+  } catch (error: any) {
+    console.error('[API] Error creating assignment:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// PUT /api/course-assignments/:assignmentId/status - Update assignment status
+app.put('/api/course-assignments/:assignmentId/status', requireAuth, async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const { assignmentId } = req.params;
+    const { status } = req.body;
+    
+    if (!status || !['pending', 'in-progress', 'completed'].includes(status)) {
+      return res.status(400).json({ error: 'Valid status is required' });
+    }
+    
+    const assignment = await updateAssignmentStatus(assignmentId, user.tenantId, status);
+    res.json(assignment);
+  } catch (error: any) {
+    console.error('[API] Error updating assignment status:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// DELETE /api/course-assignments/:assignmentId - Delete assignment
+app.delete('/api/course-assignments/:assignmentId', requireAuth, requirePermission('enrollment:remove'), async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const { assignmentId } = req.params;
+    await deleteAssignment(assignmentId, user.tenantId);
+    res.status(204).send();
+  } catch (error: any) {
+    console.error('[API] Error deleting assignment:', error);
     res.status(500).json({ error: error.message });
   }
 });

@@ -253,8 +253,12 @@ class ApiServiceClass {
   // COURSE APIs
   // ============================================
 
-  async getCourses(tenantId: string) {
-    return this.fetchWithAuth<any[]>(`/courses/tenant/${tenantId}`)
+  async getCourses(tenantId?: string) {
+    // If tenantId provided, use legacy endpoint, otherwise use new endpoint that uses user context
+    if (tenantId) {
+      return this.fetchWithAuth<any[]>(`/courses/tenant/${tenantId}`)
+    }
+    return this.fetchWithAuth<any[]>(`/courses`)
   }
 
   async getCourseById(courseId: string) {
@@ -262,29 +266,64 @@ class ApiServiceClass {
   }
 
   async createCourse(data: {
-    tenantId: string
     title: string
     description: string
-    instructor: string
-    duration?: number
-    level?: 'beginner' | 'intermediate' | 'advanced'
-    status?: 'draft' | 'active' | 'archived'
+    category: string
+    estimatedTime?: number
+    coverImage?: string
+    modules?: any[]
   }) {
     return this.fetchWithAuth<any>(`/courses`, {
       method: 'POST',
-      body: JSON.stringify(data),
+      body: JSON.stringify({
+        title: data.title,
+        description: data.description,
+        category: data.category,
+        estimatedTime: data.estimatedTime || 60,
+        coverImage: data.coverImage,
+      }),
     })
   }
 
-  async updateCourse(courseId: string, tenantId: string, updates: any) {
-    return this.fetchWithAuth<any>(`/courses/${courseId}?tenantId=${tenantId}`, {
-      method: 'PATCH',
+  async updateCourse(courseId: string, updates: {
+    title?: string
+    description?: string
+    category?: string
+    estimatedTime?: number
+    modules?: any[]
+    assessment?: any[]
+    coverImage?: string
+    status?: 'draft' | 'pending-review' | 'published' | 'archived'
+  }) {
+    return this.fetchWithAuth<any>(`/courses/${courseId}`, {
+      method: 'PUT',
       body: JSON.stringify(updates),
     })
   }
 
   async deleteCourse(courseId: string, tenantId: string) {
     return this.fetchWithAuth<void>(`/courses/${courseId}?tenantId=${tenantId}`, {
+      method: 'DELETE',
+    })
+  }
+
+  // ============================================
+  // CATEGORY APIs
+  // ============================================
+
+  async getCategories() {
+    return this.fetchWithAuth<Array<{ id: string; name: string; tenantId: string }>>(`/categories`)
+  }
+
+  async createCategory(name: string) {
+    return this.fetchWithAuth<{ id: string; name: string; tenantId: string }>(`/categories`, {
+      method: 'POST',
+      body: JSON.stringify({ name }),
+    })
+  }
+
+  async deleteCategory(categoryId: string) {
+    return this.fetchWithAuth<void>(`/categories/${categoryId}`, {
       method: 'DELETE',
     })
   }
@@ -573,6 +612,119 @@ class ApiServiceClass {
         completedLessons,
         quizScores
       })
+    })
+  }
+
+  // ============================================
+  // USER PROGRESS APIs
+  // ============================================
+
+  async getUserProgress(userId: string) {
+    return this.fetchWithAuth<any[]>(`/user-progress/${userId}`)
+  }
+
+  async getCourseProgress(userId: string, courseId: string) {
+    return this.fetchWithAuth<any>(`/user-progress/${userId}/course/${courseId}`)
+  }
+
+  async updateUserProgress(userId: string, courseId: string, progress: number, completedLessons?: string[]) {
+    return this.fetchWithAuth<any>(`/user-progress/${userId}/course/${courseId}`, {
+      method: 'PUT',
+      body: JSON.stringify({ progress, completedLessons }),
+    })
+  }
+
+  async upsertUserProgress(progressData: any) {
+    return this.fetchWithAuth<any>(`/user-progress`, {
+      method: 'POST',
+      body: JSON.stringify(progressData),
+    })
+  }
+
+  async getCourseProgressAll(courseId: string) {
+    return this.fetchWithAuth<any[]>(`/courses/${courseId}/progress`)
+  }
+
+  // ============================================
+  // USER GROUPS APIs
+  // ============================================
+
+  async getGroups() {
+    return this.fetchWithAuth<Array<{ id: string; name: string; description?: string; memberIds: string[] }>>(`/groups`)
+  }
+
+  async getGroupById(groupId: string) {
+    return this.fetchWithAuth<any>(`/groups/${groupId}`)
+  }
+
+  async createGroup(data: { name: string; description?: string; memberIds?: string[] }) {
+    return this.fetchWithAuth<any>(`/groups`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async updateGroup(groupId: string, updates: { name?: string; description?: string; memberIds?: string[] }) {
+    return this.fetchWithAuth<any>(`/groups/${groupId}`, {
+      method: 'PUT',
+      body: JSON.stringify(updates),
+    })
+  }
+
+  async deleteGroup(groupId: string) {
+    return this.fetchWithAuth<void>(`/groups/${groupId}`, {
+      method: 'DELETE',
+    })
+  }
+
+  async addMemberToGroup(groupId: string, userId: string) {
+    return this.fetchWithAuth<any>(`/groups/${groupId}/members/${userId}`, {
+      method: 'POST',
+    })
+  }
+
+  async removeMemberFromGroup(groupId: string, userId: string) {
+    return this.fetchWithAuth<any>(`/groups/${groupId}/members/${userId}`, {
+      method: 'DELETE',
+    })
+  }
+
+  // ============================================
+  // COURSE ASSIGNMENTS APIs
+  // ============================================
+
+  async getCourseAssignments(courseId?: string, userId?: string) {
+    if (courseId) {
+      return this.fetchWithAuth<any[]>(`/course-assignments/course/${courseId}`)
+    }
+    if (userId) {
+      return this.fetchWithAuth<any[]>(`/course-assignments/user/${userId}`)
+    }
+    return this.fetchWithAuth<any[]>(`/course-assignments`)
+  }
+
+  async createCourseAssignment(data: {
+    courseId: string
+    assignedToType: 'user' | 'group'
+    assignedToId: string
+    dueDate?: string
+  }) {
+    return this.fetchWithAuth<any>(`/course-assignments`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async updateAssignmentStatus(assignmentId: string, status: 'pending' | 'in-progress' | 'completed') {
+    return this.fetchWithAuth<any>(`/course-assignments/${assignmentId}/status`, {
+      method: 'PUT',
+      body: JSON.stringify({ status }),
+    })
+  }
+
+  async deleteCourseAssignment(assignmentId: string) {
+    return this.fetchWithAuth<void>(`/course-assignments/${assignmentId}`, {
+      method: 'DELETE',
     })
   }
 }
