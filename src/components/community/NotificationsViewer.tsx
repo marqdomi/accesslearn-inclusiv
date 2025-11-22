@@ -37,13 +37,17 @@ export function NotificationsViewer({ userId }: NotificationsViewerProps) {
     useNotifications(userId)
   const [isOpen, setIsOpen] = useState(false)
 
-  const handleNotificationClick = (notificationId: string, actionUrl?: string) => {
-    markAsRead(notificationId)
-    if (actionUrl) {
-      const element = document.querySelector(actionUrl)
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  const handleNotificationClick = async (notificationId: string, actionUrl?: string) => {
+    try {
+      await markAsRead(notificationId)
+      if (actionUrl) {
+        const element = document.querySelector(actionUrl)
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        }
       }
+    } catch (error) {
+      console.error('Error marking notification as read:', error)
     }
   }
 
@@ -71,7 +75,13 @@ export function NotificationsViewer({ userId }: NotificationsViewerProps) {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={markAllAsRead}
+                onClick={async () => {
+                  try {
+                    await markAllAsRead()
+                  } catch (error) {
+                    console.error('Error marking all as read:', error)
+                  }
+                }}
                 className="text-xs gap-1"
               >
                 <Check size={14} />
@@ -118,9 +128,13 @@ export function NotificationsViewer({ userId }: NotificationsViewerProps) {
                         }
                       >
                         <button
-                          onClick={(e) => {
+                          onClick={async (e) => {
                             e.stopPropagation()
-                            deleteNotification(notification.id)
+                            try {
+                              await deleteNotification(notification.id)
+                            } catch (error) {
+                              console.error('Error deleting notification:', error)
+                            }
                           }}
                           className="absolute top-2 right-2 p-1 rounded-md hover:bg-muted"
                           aria-label={t('notifications.deleteNotification')}

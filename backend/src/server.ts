@@ -130,6 +130,23 @@ import {
   getQuizAttemptStats
 } from './functions/QuizAttemptFunctions';
 import {
+  getActivityFeed,
+  getUserActivityFeed,
+  createActivityFeedItem,
+  addActivityReaction,
+  addActivityComment
+} from './functions/ActivityFeedFunctions';
+import {
+  getUserNotifications,
+  getUnreadNotificationCount,
+  createNotification,
+  markNotificationAsRead,
+  markAllNotificationsAsRead,
+  deleteNotification,
+  getNotificationPreferences,
+  updateNotificationPreferences
+} from './functions/NotificationFunctions';
+import {
   getAuditLogs,
   getAuditLogById,
   getAuditStats,
@@ -2230,6 +2247,233 @@ app.get('/api/quiz-attempts/stats/:quizId', requireAuth, requirePermission('anal
     res.json(stats);
   } catch (error: any) {
     console.error('[API] Error getting quiz attempt stats:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ============================================
+// ACTIVITY FEED ENDPOINTS
+// ============================================
+
+// GET /api/activity-feed - Get activity feed
+app.get('/api/activity-feed', requireAuth, async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const { limit } = req.query;
+    const activities = await getActivityFeed(user.tenantId, limit ? parseInt(limit as string) : 50);
+    res.json(activities);
+  } catch (error: any) {
+    console.error('[API] Error getting activity feed:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/activity-feed/user/:userId - Get user's activity feed
+app.get('/api/activity-feed/user/:userId', requireAuth, async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const { userId } = req.params;
+    const { limit } = req.query;
+
+    // Users can only see their own activities unless admin
+    if (userId !== user.id && user.role !== 'super-admin' && user.role !== 'tenant-admin') {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    const activities = await getUserActivityFeed(user.tenantId, userId, limit ? parseInt(limit as string) : 20);
+    res.json(activities);
+  } catch (error: any) {
+    console.error('[API] Error getting user activity feed:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/activity-feed - Create activity feed item
+app.post('/api/activity-feed', requireAuth, async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const { type, data, userName, userAvatar } = req.body;
+
+    if (!type || !data) {
+      return res.status(400).json({ error: 'type and data are required' });
+    }
+
+    const activity = await createActivityFeedItem(
+      user.tenantId,
+      user.id,
+      userName || `${user.firstName} ${user.lastName}`,
+      userAvatar,
+      type,
+      data
+    );
+    res.json(activity);
+  } catch (error: any) {
+    console.error('[API] Error creating activity feed item:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/activity-feed/:activityId/reaction - Add reaction to activity
+app.post('/api/activity-feed/:activityId/reaction', requireAuth, async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const { activityId } = req.params;
+    const { reactionType } = req.body;
+
+    if (!reactionType) {
+      return res.status(400).json({ error: 'reactionType is required' });
+    }
+
+    const activity = await addActivityReaction(
+      user.tenantId,
+      activityId,
+      user.id,
+      `${user.firstName} ${user.lastName}`,
+      reactionType
+    );
+    res.json(activity);
+  } catch (error: any) {
+    console.error('[API] Error adding activity reaction:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/activity-feed/:activityId/comment - Add comment to activity
+app.post('/api/activity-feed/:activityId/comment', requireAuth, async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const { activityId } = req.params;
+    const { content, userName, userAvatar } = req.body;
+
+    if (!content) {
+      return res.status(400).json({ error: 'content is required' });
+    }
+
+    const activity = await addActivityComment(
+      user.tenantId,
+      activityId,
+      user.id,
+      userName || `${user.firstName} ${user.lastName}`,
+      userAvatar,
+      content
+    );
+    res.json(activity);
+  } catch (error: any) {
+    console.error('[API] Error adding activity comment:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ============================================
+// NOTIFICATIONS ENDPOINTS
+// ============================================
+
+// GET /api/notifications - Get user notifications
+app.get('/api/notifications', requireAuth, async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const { unreadOnly } = req.query;
+    const notifications = await getUserNotifications(
+      user.tenantId,
+      user.id,
+      unreadOnly === 'true'
+    );
+    res.json(notifications);
+  } catch (error: any) {
+    console.error('[API] Error getting notifications:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/notifications/unread-count - Get unread notification count
+app.get('/api/notifications/unread-count', requireAuth, async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const count = await getUnreadNotificationCount(user.tenantId, user.id);
+    res.json({ count });
+  } catch (error: any) {
+    console.error('[API] Error getting unread notification count:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/notifications - Create notification
+app.post('/api/notifications', requireAuth, async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const { userId, ...notificationData } = req.body;
+
+    // Only admins can create notifications for other users
+    const targetUserId = (user.role === 'super-admin' || user.role === 'tenant-admin') && userId
+      ? userId
+      : user.id;
+
+    const notification = await createNotification(user.tenantId, targetUserId, notificationData);
+    res.json(notification);
+  } catch (error: any) {
+    console.error('[API] Error creating notification:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// PUT /api/notifications/:notificationId/read - Mark notification as read
+app.put('/api/notifications/:notificationId/read', requireAuth, async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const { notificationId } = req.params;
+    const notification = await markNotificationAsRead(user.tenantId, notificationId);
+    res.json(notification);
+  } catch (error: any) {
+    console.error('[API] Error marking notification as read:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// PUT /api/notifications/read-all - Mark all notifications as read
+app.put('/api/notifications/read-all', requireAuth, async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const count = await markAllNotificationsAsRead(user.tenantId, user.id);
+    res.json({ count });
+  } catch (error: any) {
+    console.error('[API] Error marking all notifications as read:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// DELETE /api/notifications/:notificationId - Delete notification
+app.delete('/api/notifications/:notificationId', requireAuth, async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const { notificationId } = req.params;
+    await deleteNotification(user.tenantId, notificationId);
+    res.json({ success: true });
+  } catch (error: any) {
+    console.error('[API] Error deleting notification:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/notifications/preferences - Get notification preferences
+app.get('/api/notifications/preferences', requireAuth, async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const preferences = await getNotificationPreferences(user.tenantId, user.id);
+    res.json(preferences);
+  } catch (error: any) {
+    console.error('[API] Error getting notification preferences:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// PUT /api/notifications/preferences - Update notification preferences
+app.put('/api/notifications/preferences', requireAuth, async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const preferences = await updateNotificationPreferences(user.tenantId, user.id, req.body);
+    res.json(preferences);
+  } catch (error: any) {
+    console.error('[API] Error updating notification preferences:', error);
     res.status(500).json({ error: error.message });
   }
 });

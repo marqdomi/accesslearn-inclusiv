@@ -33,11 +33,14 @@ export async function initializeCosmos(): Promise<void> {
   await createContainerIfNotExists('achievements', '/tenantId')
   await createContainerIfNotExists('quiz-attempts', '/tenantId')
   await createContainerIfNotExists('forums', '/tenantId')
+  await createContainerIfNotExists('activity-feed', '/tenantId')
+  await createContainerIfNotExists('notifications', '/tenantId')
+  await createContainerIfNotExists('notification-preferences', '/tenantId')
   await createContainerIfNotExists('mentorship-requests', '/tenantId')
   await createContainerIfNotExists('mentorship-sessions', '/tenantId')
   await createContainerIfNotExists('audit-logs', '/tenantId')
   
-  console.log(`✅ Containers initialized (tenants, users, courses, categories, user-progress, groups, assignments, certificates, achievements, quiz-attempts, forums, mentorship, audit-logs)`)
+  console.log(`✅ Containers initialized (tenants, users, courses, categories, user-progress, groups, assignments, certificates, achievements, quiz-attempts, forums, activity-feed, notifications, notification-preferences, mentorship, audit-logs)`)
 }
 
 export function getDatabase(): Database {

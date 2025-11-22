@@ -1,12 +1,13 @@
-import { useKV } from '@github/spark/hooks'
+import { useState, useEffect } from 'react'
 import { NotificationPreferences } from '@/lib/types'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Separator } from '@/components/ui/separator'
-import { Bell, BellSlash, Envelope, Sparkle } from '@phosphor-icons/react'
+import { Bell, Envelope, Sparkle } from '@phosphor-icons/react'
 import { toast } from 'sonner'
+import { useNotifications } from '@/hooks/use-notifications'
 
 interface NotificationSettingsProps {
   userId: string
@@ -24,26 +25,39 @@ const DEFAULT_PREFERENCES: NotificationPreferences = {
 }
 
 export function NotificationSettings({ userId }: NotificationSettingsProps) {
-  const [preferences, setPreferences] = useKV<Record<string, NotificationPreferences>>(
-    'notification-preferences',
-    {}
-  )
+  const { preferences, loading, updatePreferences } = useNotifications(userId)
+  const [localPreferences, setLocalPreferences] = useState<NotificationPreferences>(DEFAULT_PREFERENCES)
 
-  const userPrefs = preferences?.[userId] || DEFAULT_PREFERENCES
+  useEffect(() => {
+    if (preferences) {
+      setLocalPreferences(preferences)
+    }
+  }, [preferences])
 
-  const updatePreference = <K extends keyof NotificationPreferences>(
+  const updatePreference = async <K extends keyof NotificationPreferences>(
     key: K,
     value: NotificationPreferences[K]
   ) => {
-    setPreferences((current) => ({
-      ...(current || {}),
-      [userId]: {
-        ...(current?.[userId] || DEFAULT_PREFERENCES),
-        [key]: value,
-      },
-    }))
-    toast.success('Notification preferences updated')
+    try {
+      const updated = await updatePreferences({ [key]: value })
+      setLocalPreferences(updated)
+      toast.success('Notification preferences updated')
+    } catch (error) {
+      toast.error('Failed to update preferences')
+    }
   }
+
+  if (loading && !preferences) {
+    return (
+      <Card>
+        <CardContent className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  const userPrefs = localPreferences
 
   return (
     <Card>

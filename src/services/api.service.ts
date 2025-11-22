@@ -1028,6 +1028,134 @@ class ApiServiceClass {
       uniqueUsers: number
     }>(`/quiz-attempts/stats/${quizId}`)
   }
+
+  // ============================================
+  // ACTIVITY FEED APIs
+  // ============================================
+
+  async getActivityFeed(limit?: number) {
+    const params = limit ? `?limit=${limit}` : ''
+    return this.fetchWithAuth<any[]>(`/activity-feed${params}`)
+  }
+
+  async getUserActivityFeed(userId: string, limit?: number) {
+    const params = limit ? `?limit=${limit}` : ''
+    return this.fetchWithAuth<any[]>(`/activity-feed/user/${userId}${params}`)
+  }
+
+  async createActivityFeedItem(data: {
+    type: 'level-up' | 'badge-earned' | 'course-completed' | 'achievement-unlocked'
+    data: {
+      level?: number
+      badgeName?: string
+      badgeIcon?: string
+      courseName?: string
+      achievementName?: string
+      achievementIcon?: string
+    }
+    userName?: string
+    userAvatar?: string
+  }) {
+    return this.fetchWithAuth<any>(`/activity-feed`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async addActivityReaction(activityId: string, reactionType: 'congrats' | 'highfive' | 'fire' | 'star' | 'trophy') {
+    return this.fetchWithAuth<any>(`/activity-feed/${activityId}/reaction`, {
+      method: 'POST',
+      body: JSON.stringify({ reactionType }),
+    })
+  }
+
+  async addActivityComment(activityId: string, data: {
+    content: string
+    userName?: string
+    userAvatar?: string
+  }) {
+    return this.fetchWithAuth<any>(`/activity-feed/${activityId}/comment`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
+  // ============================================
+  // NOTIFICATIONS APIs
+  // ============================================
+
+  async getNotifications(unreadOnly?: boolean) {
+    const params = unreadOnly ? '?unreadOnly=true' : ''
+    return this.fetchWithAuth<any[]>(`/notifications${params}`)
+  }
+
+  async getUnreadNotificationCount() {
+    return this.fetchWithAuth<{ count: number }>(`/notifications/unread-count`)
+  }
+
+  async createNotification(data: {
+    userId?: string
+    type: 'activity' | 'forum-reply' | 'achievement' | 'team-challenge' | 'course-reminder' | 'mention'
+    title?: string
+    titleKey?: string
+    message?: string
+    messageKey?: string
+    messageParams?: Record<string, string>
+    actionUrl?: string
+    relatedId?: string
+  }) {
+    return this.fetchWithAuth<any>(`/notifications`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async markNotificationAsRead(notificationId: string) {
+    return this.fetchWithAuth<any>(`/notifications/${notificationId}/read`, {
+      method: 'PUT',
+    })
+  }
+
+  async markAllNotificationsAsRead() {
+    return this.fetchWithAuth<{ count: number }>(`/notifications/read-all`, {
+      method: 'PUT',
+    })
+  }
+
+  async deleteNotification(notificationId: string) {
+    return this.fetchWithAuth<void>(`/notifications/${notificationId}`, {
+      method: 'DELETE',
+    })
+  }
+
+  async getNotificationPreferences() {
+    return this.fetchWithAuth<{
+      activityFeed: boolean
+      forumReplies: boolean
+      achievements: boolean
+      teamChallenges: boolean
+      courseReminders: boolean
+      emailSummary: 'never' | 'daily' | 'weekly'
+      soundEffects: boolean
+      inAppBadges: boolean
+    }>(`/notifications/preferences`)
+  }
+
+  async updateNotificationPreferences(preferences: Partial<{
+    activityFeed: boolean
+    forumReplies: boolean
+    achievements: boolean
+    teamChallenges: boolean
+    courseReminders: boolean
+    emailSummary: 'never' | 'daily' | 'weekly'
+    soundEffects: boolean
+    inAppBadges: boolean
+  }>) {
+    return this.fetchWithAuth<any>(`/notifications/preferences`, {
+      method: 'PUT',
+      body: JSON.stringify(preferences),
+    })
+  }
 }
 
 export const ApiService = new ApiServiceClass()

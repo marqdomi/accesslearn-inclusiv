@@ -1,18 +1,15 @@
-import { useState, useEffect } from 'react'
-import { useKV } from '@github/spark/hooks'
-import { ActivityFeedItem, ActivityReaction, UserProfile, ActivityComment, ActivityMention } from '@/lib/types'
+import { useState } from 'react'
+import { ActivityFeedItem } from '@/lib/types'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Trophy, Star, Fire, HandsClapping, Sparkle, Lightbulb, ChatCircle } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { formatDistanceToNow } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { useTranslation } from '@/lib/i18n'
-import { UserMentionInput } from './UserMentionInput'
-import { useNotifications } from '@/hooks/use-notifications'
+import { useActivityFeed } from '@/hooks/use-activity-feed'
 
 interface ActivityFeedProps {
   currentUserId: string
@@ -36,86 +33,29 @@ const ACTIVITY_ICONS = {
 
 export function ActivityFeed({ currentUserId, maxItems = 20 }: ActivityFeedProps) {
   const { t, language } = useTranslation()
-  const [activities, setActivities] = useKV<ActivityFeedItem[]>('activity-feed', [])
-  const [profiles] = useKV<UserProfile[]>('user-profiles', [])
+  const { activities, loading, addReaction, addComment } = useActivityFeed()
   const [expandedActivity, setExpandedActivity] = useState<string | null>(null)
   const [expandedComments, setExpandedComments] = useState<string | null>(null)
-  const { addNotification } = useNotifications(currentUserId)
 
   const sortedActivities = (activities || [])
     .sort((a, b) => b.timestamp - a.timestamp)
     .slice(0, maxItems)
 
-  const handleReaction = (activityId: string, reactionType: keyof typeof REACTION_ICONS) => {
-    setActivities((current) => {
-      const updated = [...(current || [])]
-      const activityIndex = updated.findIndex((a) => a.id === activityId)
-      
-      if (activityIndex === -1) return current || []
-
-      const activity = updated[activityIndex]
-      const existingReaction = activity.reactions.findIndex(
-        (r) => r.userId === currentUserId && r.type === reactionType
-      )
-
-      if (existingReaction >= 0) {
-        activity.reactions = activity.reactions.filter((_, i) => i !== existingReaction)
-      } else {
-        const currentProfile = profiles?.find((p) => p.id === currentUserId)
-        const newReaction: ActivityReaction = {
-          id: `${activityId}-${currentUserId}-${reactionType}-${Date.now()}`,
-          userId: currentUserId,
-          userName: currentProfile?.displayName || currentProfile?.firstName || 'Anonymous',
-          type: reactionType,
-          timestamp: Date.now(),
-        }
-        activity.reactions = [...activity.reactions, newReaction]
-      }
-
-      updated[activityIndex] = { ...activity }
-      return updated
-    })
+  const handleReaction = async (activityId: string, reactionType: keyof typeof REACTION_ICONS) => {
+    try {
+      await addReaction(activityId, reactionType)
+    } catch (error) {
+      console.error('Error adding reaction:', error)
+    }
   }
 
-  const handleAddComment = (activityId: string, content: string, mentions: ActivityMention[]) => {
-    const currentProfile = profiles?.find((p) => p.id === currentUserId)
-    if (!currentProfile) return
-
-    const newComment: ActivityComment = {
-      id: `comment-${Date.now()}-${Math.random()}`,
-      activityId,
-      userId: currentUserId,
-      userName: currentProfile.displayName || currentProfile.firstName,
-      userAvatar: currentProfile.avatar,
-      content,
-      mentions,
-      timestamp: Date.now(),
+  const handleAddComment = async (activityId: string, content: string, mentions?: any[]) => {
+    try {
+      await addComment(activityId, content)
+      // Note: Mentions would need to be handled separately if needed
+    } catch (error) {
+      console.error('Error adding comment:', error)
     }
-
-    setActivities((current) => {
-      const updated = [...(current || [])]
-      const activityIndex = updated.findIndex((a) => a.id === activityId)
-      
-      if (activityIndex === -1) return current || []
-
-      const activity = updated[activityIndex]
-      activity.comments = [...activity.comments, newComment]
-      updated[activityIndex] = { ...activity }
-      return updated
-    })
-
-    mentions.forEach((mention) => {
-      if (mention.userId !== currentUserId) {
-        addNotification({
-          userId: mention.userId,
-          type: 'mention',
-          title: t('activityFeed.mentionedYou', { userName: newComment.userName }),
-          message: content,
-          actionUrl: `#activity-${activityId}`,
-          relatedId: activityId,
-        })
-      }
-    })
   }
 
   const renderCommentContent = (comment: ActivityComment) => {
@@ -212,7 +152,13 @@ export function ActivityFeed({ currentUserId, maxItems = 20 }: ActivityFeedProps
               <AnimatePresence mode="popLayout">
                 {sortedActivities.map((activity) => {
                   const Icon = ACTIVITY_ICONS[activity.type]
-                  const reactionCounts = getReactionCounts(activity.reactions)
+                  
+                  // Calculate reaction counts
+                  const reactionCounts = activity.reactions.reduce((acc: any, r: any) => {
+                    acc[r.type] = (acc[r.type] || 0) + 1
+                    return acc
+                  }, {})
+                  
                   const isExpanded = expandedActivity === activity.id
 
                   return (
@@ -401,13 +347,33 @@ export function ActivityFeed({ currentUserId, maxItems = 20 }: ActivityFeedProps
                                   </>
                                 )}
 
-                                <UserMentionInput
-                                  users={profiles || []}
-                                  currentUserId={currentUserId}
-                                  onSubmit={(content, mentions) => handleAddComment(activity.id, content, mentions)}
-                                  placeholder={t('activityFeed.addComment')}
-                                  buttonText={t('activityFeed.postComment')}
-                                />
+                                <div className="space-y-2">
+                                  <textarea
+                                    className="w-full p-2 border rounded-md"
+                                    placeholder={t('activityFeed.addComment')}
+                                    rows={3}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter' && e.ctrlKey) {
+                                        const content = (e.target as HTMLTextAreaElement).value
+                                        if (content.trim()) {
+                                          handleAddComment(activity.id, content)
+                                          ;(e.target as HTMLTextAreaElement).value = ''
+                                        }
+                                      }
+                                    }}
+                                  />
+                                  <Button
+                                    onClick={() => {
+                                      const textarea = document.querySelector(`textarea[placeholder="${t('activityFeed.addComment')}"]`) as HTMLTextAreaElement
+                                      if (textarea?.value.trim()) {
+                                        handleAddComment(activity.id, textarea.value)
+                                        textarea.value = ''
+                                      }
+                                    }}
+                                  >
+                                    {t('activityFeed.postComment')}
+                                  </Button>
+                                </div>
                               </div>
                             </div>
                           </div>
