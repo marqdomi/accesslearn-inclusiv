@@ -1,6 +1,8 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import { initializeCosmos, getContainer } from './services/cosmosdb.service';
 import { authenticateToken } from './middleware/authentication';
 import {
@@ -164,7 +166,47 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 7071;
 
-// Middleware
+// ============================================
+// SECURITY MIDDLEWARE
+// ============================================
+
+// Helmet.js - Security headers
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'"],
+      imgSrc: ["'self'", "data:", "https:"],
+    },
+  },
+  crossOriginEmbedderPolicy: false, // Allow embedding for iframes if needed
+}));
+
+// Rate limiting - General API rate limit
+const generalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: process.env.NODE_ENV === 'production' ? 100 : 1000, // Limit each IP to 100 requests per windowMs in production
+  message: {
+    error: 'Demasiadas solicitudes desde esta IP, por favor intenta de nuevo más tarde.',
+  },
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+});
+
+// Rate limiting - Stricter for auth endpoints
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // Limit each IP to 5 login requests per windowMs
+  message: {
+    error: 'Demasiados intentos de inicio de sesión, por favor intenta de nuevo más tarde.',
+  },
+  skipSuccessfulRequests: true, // Don't count successful requests
+});
+
+// Apply general rate limiting to all routes
+app.use('/api/', generalLimiter);
+
 // CORS configuration - allow specific origins in production
 const corsOptions = {
   origin: process.env.NODE_ENV === 'production' 
@@ -178,7 +220,8 @@ const corsOptions = {
   optionsSuccessStatus: 200
 };
 app.use(cors(corsOptions));
-app.use(express.json());
+app.use(express.json({ limit: '10mb' })); // Limit JSON payload size
+
 // Note: authenticateToken is NOT applied globally - it's applied selectively to protected routes
 
 // Health check (both paths for compatibility)
@@ -204,8 +247,8 @@ app.get('/api/health', (req, res) => {
 // AUTH ENDPOINTS (Public)
 // ============================================
 
-// POST /api/auth/login - Login user
-app.post('/api/auth/login', async (req, res) => {
+// POST /api/auth/login - Login user (with stricter rate limiting)
+app.post('/api/auth/login', authLimiter, async (req, res) => {
   try {
     const { email, password, tenantId } = req.body;
 
