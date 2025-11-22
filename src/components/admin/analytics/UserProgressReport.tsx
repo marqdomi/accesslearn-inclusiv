@@ -1,22 +1,38 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
-import { useKV } from '@github/spark/hooks'
-import { CourseStructure, UserProgress, CourseStatus } from '@/lib/types'
+import { ApiService } from '@/services/api.service'
+import { useTenant } from '@/contexts/TenantContext'
+import { CourseStatus } from '@/lib/types'
 import { MagnifyingGlass, DownloadSimple, ChartBar, Table as TableIcon } from '@phosphor-icons/react'
 import { useTranslation } from '@/lib/i18n'
 
 export function UserProgressReport() {
   const { t } = useTranslation()
-  const [users] = useKV<any[]>('users', [])
-  const [courses] = useKV<CourseStructure[]>('courses', [])
-  const [allUserProgress] = useKV<Record<string, UserProgress[]>>('user-progress-all', {})
-  const [groups] = useKV<any[]>('groups', [])
-  const [mentorshipPairings] = useKV<any[]>('mentorship-pairings', [])
+  const { currentTenant } = useTenant()
+  const [loading, setLoading] = useState(true)
+  const [reportData, setReportData] = useState<Array<{
+    userId: string
+    userName: string
+    userEmail: string
+    teamName?: string
+    mentorName?: string
+    courses: Array<{
+      courseId: string
+      courseTitle: string
+      status: 'not-started' | 'in-progress' | 'completed'
+      progress: number
+      quizScore?: number
+      completionDate?: string
+      enrollmentDate?: string
+    }>
+  }>>([])
+  const [groups, setGroups] = useState<any[]>([])
+  const [mentors, setMentors] = useState<any[]>([])
 
   const [searchTerm, setSearchTerm] = useState('')
   const [teamFilter, setTeamFilter] = useState('all')
@@ -24,31 +40,38 @@ export function UserProgressReport() {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
   const [viewMode, setViewMode] = useState<'visual' | 'table'>('visual')
 
-  const filteredUsers = (users || [])
-    .filter(u => u.role !== 'admin')
-    .filter(u => {
-      if (searchTerm) {
-        const search = searchTerm.toLowerCase()
-        return (
-          (u.displayName || u.name || '').toLowerCase().includes(search) ||
-          (u.email || '').toLowerCase().includes(search)
-        )
-      }
-      return true
-    })
-    .filter(u => {
-      if (teamFilter !== 'all') {
-        return u.department === teamFilter
-      }
-      return true
-    })
-    .filter(u => {
-      if (mentorFilter !== 'all') {
-        const pairing = (mentorshipPairings || []).find(p => p.menteeId === u.id)
-        return pairing?.mentorId === mentorFilter
-      }
-      return true
-    })
+  useEffect(() => {
+    if (currentTenant) {
+      loadData()
+    }
+  }, [currentTenant?.id, searchTerm, teamFilter, mentorFilter])
+
+  const loadData = async () => {
+    if (!currentTenant) return
+
+    try {
+      setLoading(true)
+      const filters: any = {}
+      if (searchTerm) filters.searchQuery = searchTerm
+      if (teamFilter !== 'all') filters.teamId = teamFilter
+      if (mentorFilter !== 'all') filters.mentorId = mentorFilter
+
+      const data = await ApiService.getUserProgressReport(filters)
+      setReportData(data)
+
+      // Load groups for filter
+      const groupsData = await ApiService.getGroups(currentTenant.id)
+      setGroups(groupsData)
+
+      // TODO: Load mentors when endpoint is ready
+    } catch (error) {
+      console.error('Error loading user progress report:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const filteredUsers = reportData
 
   const getStatusBadgeVariant = (status: CourseStatus) => {
     switch (status) {
@@ -64,8 +87,8 @@ export function UserProgressReport() {
   const exportToCSV = () => {
     if (!selectedUserId) return
 
-    const user = (users || []).find(u => u.id === selectedUserId)
-    const userProgress = (allUserProgress || {})[selectedUserId] || []
+    const userData = reportData.find(u => u.userId === selectedUserId)
+    if (!userData) return
 
     const rows = [
       [
@@ -77,20 +100,15 @@ export function UserProgressReport() {
         t('csvExport.completionDate'),
         t('csvExport.enrolledDate')
       ],
-      ...userProgress.map(progress => {
-        const course = (courses || []).find(c => c.id === progress.courseId)
-        return [
-          user?.displayName || user?.name || '',
-          user?.email || '',
-          course?.title || 'Unknown Course',
-          progress.status,
-          progress.assessmentScore?.toString() || 'N/A',
-          progress.status === 'completed' && progress.lastAccessed
-            ? new Date(progress.lastAccessed).toLocaleDateString()
-            : 'N/A',
-          new Date(progress.lastAccessed || Date.now()).toLocaleDateString()
-        ]
-      })
+      ...userData.courses.map(course => [
+        userData.userName,
+        userData.userEmail,
+        course.courseTitle,
+        course.status,
+        course.quizScore?.toString() || 'N/A',
+        course.completionDate ? new Date(course.completionDate).toLocaleDateString() : 'N/A',
+        course.enrollmentDate ? new Date(course.enrollmentDate).toLocaleDateString() : 'N/A'
+      ])
     ]
 
     const csvContent = rows.map(row => row.join(',')).join('\n')
@@ -98,19 +116,13 @@ export function UserProgressReport() {
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = `user-progress-${user?.displayName || 'report'}-${new Date().toISOString().split('T')[0]}.csv`
+    link.download = `user-progress-${userData.userName}-${new Date().toISOString().split('T')[0]}.csv`
     link.click()
     URL.revokeObjectURL(url)
   }
 
-  const teams = Array.from(new Set((users || []).filter(u => u.department).map(u => u.department)))
-  const mentors = (mentorshipPairings || []).map(p => {
-    const mentor = (users || []).find(u => u.id === p.mentorId)
-    return {
-      id: p.mentorId,
-      name: mentor?.displayName || mentor?.name || 'Unknown'
-    }
-  }).filter((v, i, a) => a.findIndex(t => t.id === v.id) === i)
+  const teams = Array.from(new Set(groups.map(g => g.name)))
+  // TODO: Load mentors when endpoint is ready
 
   return (
     <Card className="p-6">
@@ -194,37 +206,44 @@ export function UserProgressReport() {
           </div>
         ) : (
           <div className="space-y-2">
-            {filteredUsers.map(user => {
-              const userProgress = (allUserProgress || {})[user.id] || []
-              const completedCourses = userProgress.filter(p => p.status === 'completed').length
-              const inProgressCourses = userProgress.filter(p => p.status === 'in-progress').length
+            {loading ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              </div>
+            ) : (
+              <>
+                {filteredUsers.map(userData => {
+                  const completedCourses = userData.courses.filter(c => c.status === 'completed').length
+                  const inProgressCourses = userData.courses.filter(c => c.status === 'in-progress').length
 
-              return (
-                <div
-                  key={user.id}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
-                  onClick={() => setSelectedUserId(user.id)}
-                >
-                  <div>
-                    <h3 className="font-semibold">{user.displayName || user.name}</h3>
-                    <p className="text-sm text-muted-foreground">{user.email}</p>
-                    {user.department && (
-                      <Badge variant="outline" className="mt-1">{user.department}</Badge>
-                    )}
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm font-medium">
-                      {completedCourses} {t('analytics.completed')} • {inProgressCourses} {t('analytics.inProgress')}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {userProgress.length} {t('analytics.totalAssigned')}
-                    </p>
-                  </div>
-                </div>
-              )
-            })}
-            {filteredUsers.length === 0 && (
-              <p className="text-center text-muted-foreground py-8">{t('analytics.noUsersFound')}</p>
+                  return (
+                    <div
+                      key={userData.userId}
+                      className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
+                      onClick={() => setSelectedUserId(userData.userId)}
+                    >
+                      <div>
+                        <h3 className="font-semibold">{userData.userName}</h3>
+                        <p className="text-sm text-muted-foreground">{userData.userEmail}</p>
+                        {userData.teamName && (
+                          <Badge variant="outline" className="mt-1">{userData.teamName}</Badge>
+                        )}
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-medium">
+                          {completedCourses} {t('analytics.completed')} • {inProgressCourses} {t('analytics.inProgress')}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {userData.courses.length} {t('analytics.totalAssigned')}
+                        </p>
+                      </div>
+                    </div>
+                  )
+                })}
+                {filteredUsers.length === 0 && !loading && (
+                  <p className="text-center text-muted-foreground py-8">{t('analytics.noUsersFound')}</p>
+                )}
+              </>
             )}
           </div>
         )}
@@ -235,12 +254,53 @@ export function UserProgressReport() {
 
 function UserProgressDetail({ userId, viewMode }: { userId: string; viewMode: 'visual' | 'table' }) {
   const { t } = useTranslation()
-  const [users] = useKV<any[]>('users', [])
-  const [courses] = useKV<CourseStructure[]>('courses', [])
-  const [allUserProgress] = useKV<Record<string, UserProgress[]>>('user-progress-all', {})
+  const { currentTenant } = useTenant()
+  const [loading, setLoading] = useState(true)
+  const [userData, setUserData] = useState<{
+    userId: string
+    userName: string
+    userEmail: string
+    courses: Array<{
+      courseId: string
+      courseTitle: string
+      status: 'not-started' | 'in-progress' | 'completed'
+      progress: number
+      quizScore?: number
+      completionDate?: string
+      enrollmentDate?: string
+    }>
+  } | null>(null)
 
-  const user = (users || []).find(u => u.id === userId)
-  const userProgress = (allUserProgress || {})[userId] || []
+  useEffect(() => {
+    if (currentTenant) {
+      loadUserData()
+    }
+  }, [userId, currentTenant?.id])
+
+  const loadUserData = async () => {
+    if (!currentTenant) return
+
+    try {
+      setLoading(true)
+      const data = await ApiService.getUserProgressReport({})
+      const user = data.find(u => u.userId === userId)
+      setUserData(user || null)
+    } catch (error) {
+      console.error('Error loading user data:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (loading || !userData) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    )
+  }
+
+  const userProgress = userData.courses
 
   const getStatusBadge = (status: CourseStatus) => {
     const variants: Record<CourseStatus, 'default' | 'secondary' | 'outline'> = {
@@ -268,23 +328,20 @@ function UserProgressDetail({ userId, viewMode }: { userId: string; viewMode: 'v
             </TableRow>
           </TableHeader>
           <TableBody>
-            {userProgress.map(progress => {
-              const course = (courses || []).find(c => c.id === progress.courseId)
-              return (
-                <TableRow key={progress.courseId}>
-                  <TableCell className="font-medium">{course?.title || 'Unknown Course'}</TableCell>
-                  <TableCell>{getStatusBadge(progress.status)}</TableCell>
-                  <TableCell>
-                    {progress.assessmentScore !== undefined ? `${progress.assessmentScore}%` : 'N/A'}
-                  </TableCell>
-                  <TableCell>
-                    {progress.status === 'completed' && progress.lastAccessed
-                      ? new Date(progress.lastAccessed).toLocaleDateString()
-                      : 'N/A'}
-                  </TableCell>
-                </TableRow>
-              )
-            })}
+            {userProgress.map(course => (
+              <TableRow key={course.courseId}>
+                <TableCell className="font-medium">{course.courseTitle}</TableCell>
+                <TableCell>{getStatusBadge(course.status)}</TableCell>
+                <TableCell>
+                  {course.quizScore !== undefined ? `${course.quizScore}%` : 'N/A'}
+                </TableCell>
+                <TableCell>
+                  {course.completionDate
+                    ? new Date(course.completionDate).toLocaleDateString()
+                    : 'N/A'}
+                </TableCell>
+              </TableRow>
+            ))}
           </TableBody>
         </Table>
       </div>
@@ -293,54 +350,46 @@ function UserProgressDetail({ userId, viewMode }: { userId: string; viewMode: 'v
 
   return (
     <div className="space-y-4">
-      {userProgress.map(progress => {
-        const course = (courses || []).find(c => c.id === progress.courseId)
-        const completedModules = progress.completedModules?.length || 0
-        const totalModules = course?.modules?.length || 1
-        const progressPercent = Math.round((completedModules / totalModules) * 100)
+      {userProgress.map(course => (
+        <div key={course.courseId} className="border rounded-lg p-4">
+          <div className="flex items-start justify-between mb-3">
+            <div>
+              <h4 className="font-semibold">{course.courseTitle}</h4>
+            </div>
+            {getStatusBadge(course.status)}
+          </div>
 
-        return (
-          <div key={progress.courseId} className="border rounded-lg p-4">
-            <div className="flex items-start justify-between mb-3">
-              <div>
-                <h4 className="font-semibold">{course?.title || 'Unknown Course'}</h4>
-                <p className="text-sm text-muted-foreground">{course?.category}</p>
-              </div>
-              {getStatusBadge(progress.status)}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <span>{t('analytics.progress')}</span>
+              <span className="font-medium">{course.progress}%</span>
+            </div>
+            <div className="h-2 bg-muted rounded-full overflow-hidden">
+              <div
+                className="h-full bg-primary transition-all"
+                style={{ width: `${course.progress}%` }}
+              />
             </div>
 
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <span>{t('analytics.progress')}</span>
-                <span className="font-medium">{progressPercent}%</span>
+            <div className="grid grid-cols-2 gap-4 pt-2">
+              <div>
+                <p className="text-xs text-muted-foreground">{t('analytics.score')}</p>
+                <p className="font-semibold">
+                  {course.quizScore !== undefined ? `${course.quizScore}%` : 'N/A'}
+                </p>
               </div>
-              <div className="h-2 bg-muted rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-primary transition-all"
-                  style={{ width: `${progressPercent}%` }}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 pt-2">
-                <div>
-                  <p className="text-xs text-muted-foreground">{t('analytics.score')}</p>
-                  <p className="font-semibold">
-                    {progress.assessmentScore !== undefined ? `${progress.assessmentScore}%` : 'N/A'}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">{t('analytics.completionDate')}</p>
-                  <p className="font-semibold">
-                    {progress.status === 'completed' && progress.lastAccessed
-                      ? new Date(progress.lastAccessed).toLocaleDateString()
-                      : 'N/A'}
-                  </p>
-                </div>
+              <div>
+                <p className="text-xs text-muted-foreground">{t('analytics.completionDate')}</p>
+                <p className="font-semibold">
+                  {course.completionDate
+                    ? new Date(course.completionDate).toLocaleDateString()
+                    : 'N/A'}
+                </p>
               </div>
             </div>
           </div>
-        )
-      })}
+        </div>
+      ))}
     </div>
   )
 }

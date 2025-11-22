@@ -103,6 +103,14 @@ import {
   getCourseCertificates
 } from './functions/CertificateFunctions';
 import {
+  getHighLevelStats,
+  getUserProgressReport,
+  getCourseReport,
+  getTeamReport,
+  getAssessmentReport,
+  getMentorshipReport
+} from './functions/AnalyticsFunctions';
+import {
   getAuditLogs,
   getAuditLogById,
   getAuditStats,
@@ -1844,6 +1852,92 @@ app.delete('/api/certificates/:certificateId', requireAuth, requirePermission('c
     res.status(204).send();
   } catch (error: any) {
     console.error('[API] Error deleting certificate:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ============================================
+// ANALYTICS ENDPOINTS
+// ============================================
+
+// GET /api/analytics/high-level - Get high-level platform statistics
+app.get('/api/analytics/high-level', requireAuth, requirePermission('analytics:view-all'), async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const stats = await getHighLevelStats(user.tenantId);
+    res.json(stats);
+  } catch (error: any) {
+    console.error('[API] Error getting high-level stats:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/analytics/user-progress - Get user progress report
+app.get('/api/analytics/user-progress', requireAuth, requirePermission('analytics:view-all'), async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const { searchQuery, teamId, mentorId } = req.query;
+    
+    const filters: any = {};
+    if (searchQuery) filters.searchQuery = searchQuery as string;
+    if (teamId) filters.teamId = teamId as string;
+    if (mentorId) filters.mentorId = mentorId as string;
+    
+    const report = await getUserProgressReport(user.tenantId, filters);
+    res.json(report);
+  } catch (error: any) {
+    console.error('[API] Error getting user progress report:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/analytics/course/:courseId - Get course report
+app.get('/api/analytics/course/:courseId', requireAuth, requirePermission('analytics:view-all'), async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const { courseId } = req.params;
+    const report = await getCourseReport(user.tenantId, courseId);
+    res.json(report);
+  } catch (error: any) {
+    console.error('[API] Error getting course report:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/analytics/team - Get team report
+app.get('/api/analytics/team', requireAuth, requirePermission('analytics:view-all'), async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const { teamId } = req.query;
+    const report = await getTeamReport(user.tenantId, teamId as string | undefined);
+    res.json(report);
+  } catch (error: any) {
+    console.error('[API] Error getting team report:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/analytics/assessment/:quizId - Get assessment/quiz report
+app.get('/api/analytics/assessment/:quizId', requireAuth, requirePermission('analytics:view-all'), async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const { quizId } = req.params;
+    const report = await getAssessmentReport(user.tenantId, quizId);
+    res.json(report);
+  } catch (error: any) {
+    console.error('[API] Error getting assessment report:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/analytics/mentorship - Get mentorship report
+app.get('/api/analytics/mentorship', requireAuth, requirePermission('analytics:view-all'), async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const report = await getMentorshipReport(user.tenantId);
+    res.json(report);
+  } catch (error: any) {
+    console.error('[API] Error getting mentorship report:', error);
     res.status(500).json({ error: error.message });
   }
 });

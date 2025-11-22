@@ -1,23 +1,56 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { useKV } from '@github/spark/hooks'
-import { UserProgress } from '@/lib/types'
+import { ApiService } from '@/services/api.service'
+import { useTenant } from '@/contexts/TenantContext'
 import { DownloadSimple, ChartBar, Table as TableIcon } from '@phosphor-icons/react'
 import { useTranslation } from '@/lib/i18n'
 
 export function MentorshipReport() {
   const { t } = useTranslation()
-  const [users] = useKV<any[]>('users', [])
-  const [allUserProgress] = useKV<Record<string, UserProgress[]>>('user-progress-all', {})
-  const [mentorshipPairings] = useKV<any[]>('mentorship-pairings', [])
+  const { currentTenant } = useTenant()
+  const [loading, setLoading] = useState(true)
+  const [mentorData, setMentorData] = useState<Array<{
+    mentorId: string
+    mentorName: string
+    mentorEmail: string
+    menteeCount: number
+    averageMenteeCompletionRate: number
+    totalMenteeXP: number
+    mentees: Array<{
+      menteeId: string
+      menteeName: string
+      menteeEmail: string
+      completionRate: number
+      coursesCompleted: number
+      totalXP: number
+    }>
+  }>>([])
 
   const [viewMode, setViewMode] = useState<'visual' | 'table'>('visual')
 
-  const exportToCSV = () => {
-    const mentorData = getMentorData()
+  useEffect(() => {
+    if (currentTenant) {
+      loadMentorshipReport()
+    }
+  }, [currentTenant?.id])
 
+  const loadMentorshipReport = async () => {
+    if (!currentTenant) return
+
+    try {
+      setLoading(true)
+      const data = await ApiService.getMentorshipReport()
+      setMentorData(data)
+    } catch (error) {
+      console.error('Error loading mentorship report:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const exportToCSV = () => {
     const rows = [
       ['Mentor Name', 'Mentor Email', 'Mentee Count', 'Avg Mentee Completion Rate', 'Total Mentee XP'],
       ...mentorData.map(mentor => [
@@ -38,50 +71,6 @@ export function MentorshipReport() {
     link.click()
     URL.revokeObjectURL(url)
   }
-
-  const getMentorData = () => {
-    const mentorIds = Array.from(new Set((mentorshipPairings || []).map(p => p.mentorId)))
-    
-    return mentorIds.map(mentorId => {
-      const mentor = (users || []).find(u => u.id === mentorId)
-      const menteePairings = (mentorshipPairings || []).filter(p => p.mentorId === mentorId)
-      
-      const menteeData = menteePairings.map(pairing => {
-        const mentee = (users || []).find(u => u.id === pairing.menteeId)
-        const menteeProgress = (allUserProgress || {})[pairing.menteeId] || []
-        const completedCourses = menteeProgress.filter(p => p.status === 'completed').length
-        const completionRate = menteeProgress.length > 0 ? Math.round((completedCourses / menteeProgress.length) * 100) : 0
-
-        return {
-          menteeId: pairing.menteeId,
-          menteeName: mentee?.displayName || mentee?.name || 'Unknown',
-          completionRate,
-          coursesCompleted: completedCourses
-        }
-      })
-
-      const averageCompletionRate = menteeData.length > 0
-        ? Math.round(menteeData.reduce((sum, m) => sum + m.completionRate, 0) / menteeData.length)
-        : 0
-
-      const totalMenteeXP = menteeData.reduce((sum, mentee) => {
-        const menteeStats = (users || []).find(u => u.id === mentee.menteeId)
-        return sum + (menteeStats?.totalXP || 0)
-      }, 0)
-
-      return {
-        mentorId,
-        mentorName: mentor?.displayName || mentor?.name || 'Unknown',
-        mentorEmail: mentor?.email || 'unknown@email.com',
-        menteeCount: menteePairings.length,
-        averageMenteeCompletionRate: averageCompletionRate,
-        totalMenteeXP,
-        mentees: menteeData
-      }
-    })
-  }
-
-  const mentorData = getMentorData()
 
   return (
     <Card className="p-6">
@@ -122,7 +111,11 @@ export function MentorshipReport() {
           )}
         </div>
 
-        {mentorData.length > 0 ? (
+        {loading ? (
+          <div className="flex items-center justify-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        ) : mentorData.length > 0 ? (
           viewMode === 'table' ? (
             <div className="border rounded-lg">
               <Table>

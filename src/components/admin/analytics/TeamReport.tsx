@@ -1,29 +1,65 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { useKV } from '@github/spark/hooks'
-import { UserProgress, UserStats, UserGroup } from '@/lib/types'
+import { ApiService } from '@/services/api.service'
+import { useTenant } from '@/contexts/TenantContext'
 import { DownloadSimple, ChartBar, Table as TableIcon } from '@phosphor-icons/react'
 import { useTranslation } from '@/lib/i18n'
 
 export function TeamReport() {
   const { t } = useTranslation()
-  const [users] = useKV<any[]>('users', [])
-  const [allUserProgress] = useKV<Record<string, UserProgress[]>>('user-progress-all', {})
-  const [allUserStats] = useKV<Record<string, UserStats>>('user-stats-all', {})
-  const [groups] = useKV<UserGroup[]>('groups', [])
+  const { currentTenant } = useTenant()
+  const [loading, setLoading] = useState(true)
+  const [teamReports, setTeamReports] = useState<Array<{
+    teamId: string
+    teamName: string
+    memberCount: number
+    averageCompletionRate: number
+    totalXP: number
+    members: Array<{
+      userId: string
+      userName: string
+      userEmail: string
+      completionRate: number
+      totalXP: number
+      coursesCompleted: number
+    }>
+  }>>([])
+  const [groups, setGroups] = useState<any[]>([])
 
   const [selectedTeam, setSelectedTeam] = useState<string>('')
   const [viewMode, setViewMode] = useState<'visual' | 'table'>('visual')
 
-  const teams = Array.from(new Set((users || []).filter(u => u.department).map(u => u.department)))
+  useEffect(() => {
+    if (currentTenant) {
+      loadData()
+    }
+  }, [currentTenant?.id, selectedTeam])
+
+  const loadData = async () => {
+    if (!currentTenant) return
+
+    try {
+      setLoading(true)
+      const reports = await ApiService.getTeamReport(selectedTeam || undefined)
+      setTeamReports(reports)
+
+      const groupsData = await ApiService.getGroups(currentTenant.id)
+      setGroups(groupsData)
+    } catch (error) {
+      console.error('Error loading team report:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const teams = groups.map(g => ({ id: g.id, name: g.name }))
 
   const exportToCSV = () => {
-    if (!selectedTeam) return
-
-    const teamMembers = (users || []).filter(u => u.department === selectedTeam)
+    const teamReport = teamReports.find(t => t.teamId === selectedTeam || (!selectedTeam && t.teamId))
+    if (!teamReport) return
 
     const rows = [
       [
@@ -33,20 +69,13 @@ export function TeamReport() {
         t('csvExport.totalXP'),
         t('csvExport.coursesCompleted')
       ],
-      ...teamMembers.map(user => {
-        const userProgress = (allUserProgress || {})[user.id] || []
-        const userStats = (allUserStats || {})[user.id]
-        const completedCourses = userProgress.filter(p => p.status === 'completed').length
-        const completionRate = userProgress.length > 0 ? Math.round((completedCourses / userProgress.length) * 100) : 0
-
-        return [
-          user?.displayName || user?.name || '',
-          user?.email || '',
-          `${completionRate}%`,
-          (userStats?.totalXP || 0).toString(),
-          completedCourses.toString()
-        ]
-      })
+      ...teamReport.members.map(member => [
+        member.userName,
+        member.userEmail,
+        `${member.completionRate}%`,
+        member.totalXP.toString(),
+        member.coursesCompleted.toString()
+      ])
     ]
 
     const csvContent = rows.map(row => row.join(',')).join('\n')
@@ -54,32 +83,12 @@ export function TeamReport() {
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = `team-report-${selectedTeam}-${new Date().toISOString().split('T')[0]}.csv`
+    link.download = `team-report-${teamReport.teamName}-${new Date().toISOString().split('T')[0]}.csv`
     link.click()
     URL.revokeObjectURL(url)
   }
 
-  const teamMembers = selectedTeam ? (users || []).filter(u => u.department === selectedTeam) : []
-  
-  const teamStats = teamMembers.length > 0 ? (() => {
-    let totalCompletionRate = 0
-    let totalXP = 0
-
-    teamMembers.forEach(user => {
-      const userProgress = (allUserProgress || {})[user.id] || []
-      const userStats = (allUserStats || {})[user.id]
-      const completedCourses = userProgress.filter(p => p.status === 'completed').length
-      const completionRate = userProgress.length > 0 ? (completedCourses / userProgress.length) * 100 : 0
-      totalCompletionRate += completionRate
-      totalXP += userStats?.totalXP || 0
-    })
-
-    return {
-      averageCompletionRate: teamMembers.length > 0 ? Math.round(totalCompletionRate / teamMembers.length) : 0,
-      totalXP,
-      memberCount: teamMembers.length
-    }
-  })() : null
+  const currentTeamReport = teamReports.find(t => t.teamId === selectedTeam) || (teamReports.length > 0 ? teamReports[0] : null)
 
   return (
     <Card className="p-6">
@@ -95,15 +104,16 @@ export function TeamReport() {
               <SelectValue placeholder={t('analytics.filters.selectTeam')} />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="">{t('analytics.filters.allTeams')}</SelectItem>
               {teams.map(team => (
-                <SelectItem key={team} value={team}>
-                  {team}
+                <SelectItem key={team.id} value={team.id}>
+                  {team.name}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
 
-          {selectedTeam && (
+          {currentTeamReport && (
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-1 border rounded-lg p-1">
                 <Button
@@ -133,98 +143,37 @@ export function TeamReport() {
           )}
         </div>
 
-        {selectedTeam && teamStats && (
+        {currentTeamReport ? (
           <div className="space-y-6">
-            <div className="grid gap-4 md:grid-cols-3">
-              <Card className="p-4">
-                <p className="text-sm text-muted-foreground">{t('analytics.averageCompletionRate')}</p>
-                <p className="text-2xl font-bold mt-1">{teamStats.averageCompletionRate}%</p>
-              </Card>
-              <Card className="p-4">
-                <p className="text-sm text-muted-foreground">{t('analytics.totalXP')}</p>
-                <p className="text-2xl font-bold mt-1">{teamStats.totalXP.toLocaleString()}</p>
-              </Card>
-              <Card className="p-4">
-                <p className="text-sm text-muted-foreground">{t('analytics.teamMembers')}</p>
-                <p className="text-2xl font-bold mt-1">{teamStats.memberCount}</p>
-              </Card>
-            </div>
-
-            {viewMode === 'table' ? (
-              <div className="border rounded-lg">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>{t('analytics.table.userName')}</TableHead>
-                      <TableHead>{t('analytics.table.completionRate')}</TableHead>
-                      <TableHead>{t('analytics.table.totalXP')}</TableHead>
-                      <TableHead>{t('analytics.table.coursesCompleted')}</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {teamMembers.map(user => {
-                      const userProgress = (allUserProgress || {})[user.id] || []
-                      const userStats = (allUserStats || {})[user.id]
-                      const completedCourses = userProgress.filter(p => p.status === 'completed').length
-                      const completionRate = userProgress.length > 0 ? Math.round((completedCourses / userProgress.length) * 100) : 0
-
-                      return (
-                        <TableRow key={user.id}>
-                          <TableCell className="font-medium">{user.displayName || user.name}</TableCell>
-                          <TableCell>{completionRate}%</TableCell>
-                          <TableCell>{(userStats?.totalXP || 0).toLocaleString()}</TableCell>
-                          <TableCell>{completedCourses}</TableCell>
-                        </TableRow>
-                      )
-                    })}
-                  </TableBody>
-                </Table>
+            {loading ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
               </div>
             ) : (
-              <div className="space-y-2">
-                {teamMembers.map(user => {
-                  const userProgress = (allUserProgress || {})[user.id] || []
-                  const userStats = (allUserStats || {})[user.id]
-                  const completedCourses = userProgress.filter(p => p.status === 'completed').length
-                  const completionRate = userProgress.length > 0 ? Math.round((completedCourses / userProgress.length) * 100) : 0
+              <>
+                <div className="grid gap-4 md:grid-cols-3">
+                  <Card className="p-4">
+                    <p className="text-sm text-muted-foreground">{t('analytics.averageCompletionRate')}</p>
+                    <p className="text-2xl font-bold mt-1">{currentTeamReport.averageCompletionRate}%</p>
+                  </Card>
+                  <Card className="p-4">
+                    <p className="text-sm text-muted-foreground">{t('analytics.totalXP')}</p>
+                    <p className="text-2xl font-bold mt-1">{currentTeamReport.totalXP.toLocaleString()}</p>
+                  </Card>
+                  <Card className="p-4">
+                    <p className="text-sm text-muted-foreground">{t('analytics.teamMembers')}</p>
+                    <p className="text-2xl font-bold mt-1">{currentTeamReport.memberCount}</p>
+                  </Card>
+                </div>
 
-                  return (
-                    <div key={user.id} className="border rounded-lg p-4">
-                      <div className="flex items-center justify-between mb-3">
-                        <div>
-                          <h4 className="font-semibold">{user.displayName || user.name}</h4>
-                          <p className="text-sm text-muted-foreground">{user.email}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-sm font-semibold">{(userStats?.totalXP || 0).toLocaleString()} XP</p>
-                          <p className="text-xs text-muted-foreground">{t('analytics.level')} {userStats?.level || 1}</p>
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between text-sm">
-                          <span>{t('analytics.completionRate')}</span>
-                          <span className="font-medium">{completionRate}%</span>
-                        </div>
-                        <div className="h-2 bg-muted rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-primary transition-all"
-                            style={{ width: `${completionRate}%` }}
-                          />
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                          {completedCourses} {t('analytics.coursesCompleted')}
-                        </p>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
+                <TeamReportDetail 
+                  teamReport={currentTeamReport}
+                  viewMode={viewMode}
+                />
+              </>
             )}
           </div>
-        )}
-
-        {!selectedTeam && (
+        ) : (
           <p className="text-center text-muted-foreground py-8">{t('analytics.selectTeamPrompt')}</p>
         )}
       </div>

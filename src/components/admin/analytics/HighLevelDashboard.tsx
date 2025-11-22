@@ -1,89 +1,91 @@
+import { useState, useEffect } from 'react'
 import { Card } from '@/components/ui/card'
-import { useKV } from '@github/spark/hooks'
-import { CourseStructure, UserProgress, UserStats, UserGroup, QuizAttempt } from '@/lib/types'
+import { ApiService } from '@/services/api.service'
+import { useTenant } from '@/contexts/TenantContext'
 import { Users, ChartBar, Trophy, BookOpen, CheckCircle } from '@phosphor-icons/react'
 import { useTranslation } from '@/lib/i18n'
 import { motion } from 'framer-motion'
 
 export function HighLevelDashboard() {
   const { t } = useTranslation()
-  const [users] = useKV<any[]>('users', [])
-  const [courses] = useKV<CourseStructure[]>('courses', [])
-  const [allUserProgress] = useKV<Record<string, UserProgress[]>>('user-progress-all', {})
-  const [allUserStats] = useKV<Record<string, UserStats>>('user-stats-all', {})
-  const [groups] = useKV<UserGroup[]>('groups', [])
-  const [quizAttempts] = useKV<QuizAttempt[]>('quiz-attempts', [])
+  const { currentTenant } = useTenant()
+  const [loading, setLoading] = useState(true)
+  const [stats, setStats] = useState<{
+    totalActiveUsers: number
+    totalSeats: number
+    platformCompletionRate: number
+    totalPublishedCourses: number
+    totalXPAwarded: number
+    topEngagedUsers: Array<{
+      userId: string
+      userName: string
+      xp: number
+      level: number
+    }>
+    topPopularCourses: Array<{
+      courseId: string
+      courseTitle: string
+      enrollments: number
+      completions: number
+    }>
+    complianceStatus: {
+      totalMandatory: number
+      completed: number
+      inProgress: number
+      notStarted: number
+    }
+  } | null>(null)
 
-  const totalActiveUsers = (users || []).filter(u => u.role !== 'admin').length
-  const totalSeats = 200
+  useEffect(() => {
+    if (currentTenant) {
+      loadStats()
+    }
+  }, [currentTenant?.id])
 
-  const platformCompletionRate = (() => {
-    let totalAssignedCourses = 0
-    let totalCompletedCourses = 0
+  const loadStats = async () => {
+    if (!currentTenant) return
 
-    Object.values(allUserProgress || {}).forEach(userProgressList => {
-      userProgressList.forEach(progress => {
-        totalAssignedCourses++
-        if (progress.status === 'completed') {
-          totalCompletedCourses++
-        }
-      })
-    })
+    try {
+      setLoading(true)
+      const data = await ApiService.getHighLevelStats()
+      setStats(data)
+    } catch (error) {
+      console.error('Error loading high-level stats:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
-    return totalAssignedCourses > 0 ? Math.round((totalCompletedCourses / totalAssignedCourses) * 100) : 0
-  })()
+  if (loading || !stats) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    )
+  }
 
-  const topEngagedUsers = Object.entries(allUserStats || {})
-    .map(([userId, stats]) => {
-      const user = (users || []).find(u => u.id === userId)
-      return {
-        userId,
-        userName: user?.displayName || user?.name || 'Unknown',
-        xp: stats.totalXP || 0
-      }
-    })
-    .sort((a, b) => b.xp - a.xp)
-    .slice(0, 5)
+  const { 
+    totalActiveUsers, 
+    totalSeats, 
+    platformCompletionRate, 
+    totalPublishedCourses,
+    totalXPAwarded,
+    topEngagedUsers,
+    topPopularCourses,
+    complianceStatus
+  } = stats
 
-  const topPopularCourses = (courses || [])
-    .filter(course => course.published)
-    .map(course => {
-      const enrollmentCount = Object.values(allUserProgress || {}).filter(progressList =>
-        progressList.some(p => p.courseId === course.id)
-      ).length
-      return {
-        courseId: course.id,
-        courseTitle: course.title,
-        enrollmentCount
-      }
-    })
-    .sort((a, b) => b.enrollmentCount - a.enrollmentCount)
-    .slice(0, 5)
-
-  const complianceCourses = (courses || [])
-    .filter(course => course.published && course.category === 'Compliance')
-    .map(course => {
-      let totalAssigned = 0
-      let totalCompleted = 0
-
-      Object.values(allUserProgress || {}).forEach(progressList => {
-        const courseProgress = progressList.find(p => p.courseId === course.id)
-        if (courseProgress) {
-          totalAssigned++
-          if (courseProgress.status === 'completed') {
-            totalCompleted++
-          }
-        }
-      })
-
-      return {
-        courseId: course.id,
-        courseTitle: course.title,
-        totalAssigned,
-        totalCompleted,
-        completionRate: totalAssigned > 0 ? Math.round((totalCompleted / totalAssigned) * 100) : 0
-      }
-    })
+  const complianceCourses = topPopularCourses
+    .filter(course => course.enrollments > 0)
+    .map(course => ({
+      courseId: course.courseId,
+      courseTitle: course.courseTitle,
+      totalAssigned: course.enrollments,
+      totalCompleted: course.completions,
+      completionRate: course.enrollments > 0 
+        ? Math.round((course.completions / course.enrollments) * 100) 
+        : 0
+    }))
     .slice(0, 5)
 
   return (
@@ -128,7 +130,7 @@ export function HighLevelDashboard() {
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">{t('analytics.metrics.totalCourses')}</p>
-                <p className="text-3xl font-bold mt-2">{(courses || []).filter(c => c.published).length}</p>
+                <p className="text-3xl font-bold mt-2">{totalPublishedCourses}</p>
                 <p className="text-xs text-muted-foreground mt-1">{t('analytics.metrics.published')}</p>
               </div>
               <div className="p-3 rounded-lg bg-secondary/10">
@@ -144,7 +146,7 @@ export function HighLevelDashboard() {
               <div>
                 <p className="text-sm font-medium text-muted-foreground">{t('analytics.metrics.totalXP')}</p>
                 <p className="text-3xl font-bold mt-2">
-                  {Object.values(allUserStats || {}).reduce((sum, stats) => sum + (stats.totalXP || 0), 0).toLocaleString()}
+                  {totalXPAwarded.toLocaleString()}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">{t('analytics.metrics.platformWide')}</p>
               </div>
@@ -177,7 +179,7 @@ export function HighLevelDashboard() {
                     </div>
                     <span className="font-medium">{user.userName}</span>
                   </div>
-                  <span className="text-sm font-semibold text-primary">{user.xp.toLocaleString()} XP</span>
+                  <span className="text-sm font-semibold text-primary">{user.xp.toLocaleString()} XP • Nv. {user.level}</span>
                 </div>
               ))}
             </div>
@@ -202,7 +204,7 @@ export function HighLevelDashboard() {
                     <span className="font-medium">{course.courseTitle}</span>
                   </div>
                   <span className="text-sm font-semibold text-secondary">
-                    {course.enrollmentCount} {t('analytics.enrolled')}
+                    {course.enrollments} {t('analytics.enrolled')}
                   </span>
                 </div>
               ))}

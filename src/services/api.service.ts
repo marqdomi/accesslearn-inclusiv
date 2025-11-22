@@ -803,6 +803,117 @@ class ApiServiceClass {
       method: 'DELETE',
     })
   }
+
+  // ============================================
+  // ANALYTICS APIs
+  // ============================================
+
+  async getHighLevelStats() {
+    return this.fetchWithAuth<{
+      totalActiveUsers: number
+      totalSeats: number
+      platformCompletionRate: number
+      totalPublishedCourses: number
+      totalXPAwarded: number
+      topEngagedUsers: Array<{
+        userId: string
+        userName: string
+        xp: number
+        level: number
+      }>
+      topPopularCourses: Array<{
+        courseId: string
+        courseTitle: string
+        enrollments: number
+        completions: number
+      }>
+      complianceStatus: {
+        totalMandatory: number
+        completed: number
+        inProgress: number
+        notStarted: number
+      }
+    }>(`/analytics/high-level`)
+  }
+
+  async getUserProgressReport(filters?: {
+    searchQuery?: string
+    teamId?: string
+    mentorId?: string
+  }) {
+    const params = new URLSearchParams()
+    if (filters?.searchQuery) params.append('searchQuery', filters.searchQuery)
+    if (filters?.teamId) params.append('teamId', filters.teamId)
+    if (filters?.mentorId) params.append('mentorId', filters.mentorId)
+    
+    return this.fetchWithAuth<any[]>(`/analytics/user-progress?${params.toString()}`)
+  }
+
+  async getCourseReport(courseId: string) {
+    return this.fetchWithAuth<{
+      courseId: string
+      courseTitle: string
+      totalEnrolled: number
+      totalCompleted: number
+      totalInProgress: number
+      notStarted: number
+      averageScore: number
+      users: Array<{
+        userId: string
+        userName: string
+        userEmail: string
+        status: 'not-started' | 'in-progress' | 'completed'
+        progress: number
+        quizScore?: number
+        completionDate?: string
+        enrollmentDate?: string
+      }>
+    }>(`/analytics/course/${courseId}`)
+  }
+
+  async getTeamReport(teamId?: string) {
+    const params = teamId ? `?teamId=${teamId}` : ''
+    return this.fetchWithAuth<any[]>(`/analytics/team${params}`)
+  }
+
+  async getAssessmentReport(quizId: string) {
+    return this.fetchWithAuth<{
+      quizId: string
+      quizTitle: string
+      courseId: string
+      courseTitle: string
+      totalAttempts: number
+      averageScore: number
+      passRate: number
+      passingScore: number
+      questionAnalytics: Array<{
+        questionId: string
+        questionText: string
+        correctAnswerRate: number
+        incorrectAnswerRate: number
+        totalResponses: number
+      }>
+    }>(`/analytics/assessment/${quizId}`)
+  }
+
+  async getMentorshipReport() {
+    return this.fetchWithAuth<Array<{
+      mentorId: string
+      mentorName: string
+      mentorEmail: string
+      menteeCount: number
+      averageMenteeCompletionRate: number
+      totalMenteeXP: number
+      mentees: Array<{
+        menteeId: string
+        menteeName: string
+        menteeEmail: string
+        completionRate: number
+        coursesCompleted: number
+        totalXP: number
+      }>
+    }>>(`/analytics/mentorship`)
+  }
 }
 
 export const ApiService = new ApiServiceClass()

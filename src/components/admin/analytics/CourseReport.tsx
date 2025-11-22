@@ -1,33 +1,85 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
-import { useKV } from '@github/spark/hooks'
-import { CourseStructure, UserProgress, CourseStatus } from '@/lib/types'
+import { ApiService } from '@/services/api.service'
+import { useTenant } from '@/contexts/TenantContext'
+import { CourseStatus } from '@/lib/types'
 import { DownloadSimple, ChartBar, Table as TableIcon } from '@phosphor-icons/react'
 import { useTranslation } from '@/lib/i18n'
 
 export function CourseReport() {
   const { t } = useTranslation()
-  const [users] = useKV<any[]>('users', [])
-  const [courses] = useKV<CourseStructure[]>('courses', [])
-  const [allUserProgress] = useKV<Record<string, UserProgress[]>>('user-progress-all', {})
+  const { currentTenant } = useTenant()
+  const [loading, setLoading] = useState(true)
+  const [courses, setCourses] = useState<any[]>([])
+  const [courseReport, setCourseReport] = useState<{
+    courseId: string
+    courseTitle: string
+    totalEnrolled: number
+    totalCompleted: number
+    totalInProgress: number
+    notStarted: number
+    averageScore: number
+    users: Array<{
+      userId: string
+      userName: string
+      userEmail: string
+      status: 'not-started' | 'in-progress' | 'completed'
+      progress: number
+      quizScore?: number
+      completionDate?: string
+      enrollmentDate?: string
+    }>
+  } | null>(null)
 
   const [selectedCourseId, setSelectedCourseId] = useState<string>('')
   const [viewMode, setViewMode] = useState<'visual' | 'table'>('visual')
 
-  const publishedCourses = (courses || []).filter(c => c.published)
+  useEffect(() => {
+    if (currentTenant) {
+      loadCourses()
+    }
+  }, [currentTenant?.id])
+
+  useEffect(() => {
+    if (selectedCourseId && currentTenant) {
+      loadCourseReport()
+    }
+  }, [selectedCourseId, currentTenant?.id])
+
+  const loadCourses = async () => {
+    if (!currentTenant) return
+
+    try {
+      const data = await ApiService.getCourses(currentTenant.id)
+      const published = data.filter((c: any) => c.status === 'active')
+      setCourses(published)
+    } catch (error) {
+      console.error('Error loading courses:', error)
+    }
+  }
+
+  const loadCourseReport = async () => {
+    if (!currentTenant || !selectedCourseId) return
+
+    try {
+      setLoading(true)
+      const report = await ApiService.getCourseReport(selectedCourseId)
+      setCourseReport(report)
+    } catch (error) {
+      console.error('Error loading course report:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const publishedCourses = courses
 
   const exportToCSV = () => {
-    if (!selectedCourseId) return
-
-    const course = publishedCourses.find(c => c.id === selectedCourseId)
-    const enrolledUsers = (users || []).filter(u => {
-      const userProgress = (allUserProgress || {})[u.id] || []
-      return userProgress.some(p => p.courseId === selectedCourseId)
-    })
+    if (!courseReport) return
 
     const rows = [
       [
@@ -38,24 +90,14 @@ export function CourseReport() {
         t('csvExport.score'),
         t('csvExport.completionDate')
       ],
-      ...enrolledUsers.map(user => {
-        const userProgress = (allUserProgress || {})[user.id] || []
-        const courseProgress = userProgress.find(p => p.courseId === selectedCourseId)
-        const completedModules = courseProgress?.completedModules?.length || 0
-        const totalModules = course?.modules?.length || 1
-        const progressPercent = Math.round((completedModules / totalModules) * 100)
-
-        return [
-          user?.displayName || user?.name || '',
-          user?.email || '',
-          courseProgress?.status || 'not-started',
-          progressPercent.toString(),
-          courseProgress?.assessmentScore?.toString() || 'N/A',
-          courseProgress?.status === 'completed' && courseProgress?.lastAccessed
-            ? new Date(courseProgress.lastAccessed).toLocaleDateString()
-            : 'N/A'
-        ]
-      })
+      ...courseReport.users.map(user => [
+        user.userName,
+        user.userEmail,
+        user.status,
+        user.progress.toString(),
+        user.quizScore?.toString() || 'N/A',
+        user.completionDate ? new Date(user.completionDate).toLocaleDateString() : 'N/A'
+      ])
     ]
 
     const csvContent = rows.map(row => row.join(',')).join('\n')
@@ -63,46 +105,10 @@ export function CourseReport() {
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = `course-report-${course?.title || 'report'}-${new Date().toISOString().split('T')[0]}.csv`
+    link.download = `course-report-${courseReport.courseTitle}-${new Date().toISOString().split('T')[0]}.csv`
     link.click()
     URL.revokeObjectURL(url)
   }
-
-  const selectedCourse = publishedCourses.find(c => c.id === selectedCourseId)
-  const enrolledUsers = selectedCourse ? (users || []).filter(u => {
-    const userProgress = (allUserProgress || {})[u.id] || []
-    return userProgress.some(p => p.courseId === selectedCourseId)
-  }) : []
-
-  const completedCount = enrolledUsers.filter(u => {
-    const userProgress = (allUserProgress || {})[u.id] || []
-    const courseProgress = userProgress.find(p => p.courseId === selectedCourseId)
-    return courseProgress?.status === 'completed'
-  }).length
-
-  const inProgressCount = enrolledUsers.filter(u => {
-    const userProgress = (allUserProgress || {})[u.id] || []
-    const courseProgress = userProgress.find(p => p.courseId === selectedCourseId)
-    return courseProgress?.status === 'in-progress'
-  }).length
-
-  const notStartedCount = enrolledUsers.filter(u => {
-    const userProgress = (allUserProgress || {})[u.id] || []
-    const courseProgress = userProgress.find(p => p.courseId === selectedCourseId)
-    return !courseProgress || courseProgress?.status === 'not-started'
-  }).length
-
-  const averageScore = (() => {
-    const scores = enrolledUsers
-      .map(u => {
-        const userProgress = (allUserProgress || {})[u.id] || []
-        const courseProgress = userProgress.find(p => p.courseId === selectedCourseId)
-        return courseProgress?.assessmentScore
-      })
-      .filter(s => s !== undefined) as number[]
-
-    return scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0
-  })()
 
   const getStatusBadge = (status: CourseStatus) => {
     const variants: Record<CourseStatus, 'default' | 'secondary' | 'outline'> = {
@@ -169,102 +175,41 @@ export function CourseReport() {
           )}
         </div>
 
-        {selectedCourse && (
+        {courseReport && (
           <div className="space-y-6">
             <div className="grid gap-4 md:grid-cols-4">
               <Card className="p-4">
                 <p className="text-sm text-muted-foreground">{t('analytics.enrolled')}</p>
-                <p className="text-2xl font-bold mt-1">{enrolledUsers.length}</p>
+                <p className="text-2xl font-bold mt-1">{courseReport.totalEnrolled}</p>
               </Card>
               <Card className="p-4">
                 <p className="text-sm text-muted-foreground">{t('analytics.completed')}</p>
-                <p className="text-2xl font-bold mt-1 text-success">{completedCount}</p>
+                <p className="text-2xl font-bold mt-1 text-success">{courseReport.totalCompleted}</p>
               </Card>
               <Card className="p-4">
                 <p className="text-sm text-muted-foreground">{t('analytics.inProgress')}</p>
-                <p className="text-2xl font-bold mt-1 text-secondary">{inProgressCount}</p>
+                <p className="text-2xl font-bold mt-1 text-secondary">{courseReport.totalInProgress}</p>
               </Card>
               <Card className="p-4">
                 <p className="text-sm text-muted-foreground">{t('analytics.averageScore')}</p>
-                <p className="text-2xl font-bold mt-1">{averageScore}%</p>
+                <p className="text-2xl font-bold mt-1">{courseReport.averageScore}%</p>
               </Card>
             </div>
 
-            {viewMode === 'table' ? (
-              <div className="border rounded-lg">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>{t('analytics.table.userName')}</TableHead>
-                      <TableHead>{t('analytics.table.email')}</TableHead>
-                      <TableHead>{t('analytics.table.status')}</TableHead>
-                      <TableHead>{t('analytics.table.progress')}</TableHead>
-                      <TableHead>{t('analytics.table.score')}</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {enrolledUsers.map(user => {
-                      const userProgress = (allUserProgress || {})[user.id] || []
-                      const courseProgress = userProgress.find(p => p.courseId === selectedCourseId)
-                      const completedModules = courseProgress?.completedModules?.length || 0
-                      const totalModules = selectedCourse?.modules?.length || 1
-                      const progressPercent = Math.round((completedModules / totalModules) * 100)
-
-                      return (
-                        <TableRow key={user.id}>
-                          <TableCell className="font-medium">{user.displayName || user.name}</TableCell>
-                          <TableCell>{user.email}</TableCell>
-                          <TableCell>{getStatusBadge(courseProgress?.status || 'not-started')}</TableCell>
-                          <TableCell>{progressPercent}%</TableCell>
-                          <TableCell>
-                            {courseProgress?.assessmentScore !== undefined ? `${courseProgress.assessmentScore}%` : 'N/A'}
-                          </TableCell>
-                        </TableRow>
-                      )
-                    })}
-                  </TableBody>
-                </Table>
+            {loading ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
               </div>
             ) : (
-              <div className="space-y-2">
-                {enrolledUsers.map(user => {
-                  const userProgress = (allUserProgress || {})[user.id] || []
-                  const courseProgress = userProgress.find(p => p.courseId === selectedCourseId)
-                  const completedModules = courseProgress?.completedModules?.length || 0
-                  const totalModules = selectedCourse?.modules?.length || 1
-                  const progressPercent = Math.round((completedModules / totalModules) * 100)
-
-                  return (
-                    <div key={user.id} className="border rounded-lg p-4">
-                      <div className="flex items-start justify-between mb-3">
-                        <div>
-                          <h4 className="font-semibold">{user.displayName || user.name}</h4>
-                          <p className="text-sm text-muted-foreground">{user.email}</p>
-                        </div>
-                        {getStatusBadge(courseProgress?.status || 'not-started')}
-                      </div>
-
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between text-sm">
-                          <span>{t('analytics.progress')}</span>
-                          <span className="font-medium">{progressPercent}%</span>
-                        </div>
-                        <div className="h-2 bg-muted rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-primary transition-all"
-                            style={{ width: `${progressPercent}%` }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
+              <CourseReportDetail 
+                courseReport={courseReport}
+                viewMode={viewMode}
+              />
             )}
           </div>
         )}
 
-        {!selectedCourseId && (
+        {!selectedCourseId && !loading && (
           <p className="text-center text-muted-foreground py-8">{t('analytics.selectCoursePrompt')}</p>
         )}
       </div>

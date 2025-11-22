@@ -1,64 +1,120 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Progress } from '@/components/ui/progress'
-import { useKV } from '@github/spark/hooks'
-import { CourseStructure, QuizAttempt, Quiz } from '@/lib/types'
+import { ApiService } from '@/services/api.service'
+import { useTenant } from '@/contexts/TenantContext'
 import { DownloadSimple, ChartBar, Table as TableIcon, CheckCircle, XCircle } from '@phosphor-icons/react'
 import { useTranslation } from '@/lib/i18n'
 
 export function AssessmentReport() {
   const { t } = useTranslation()
-  const [courses] = useKV<CourseStructure[]>('courses', [])
-  const [quizAttempts] = useKV<QuizAttempt[]>('quiz-attempts', [])
+  const { currentTenant } = useTenant()
+  const [loading, setLoading] = useState(true)
+  const [courses, setCourses] = useState<any[]>([])
+  const [assessmentReport, setAssessmentReport] = useState<{
+    quizId: string
+    quizTitle: string
+    courseId: string
+    courseTitle: string
+    totalAttempts: number
+    averageScore: number
+    passRate: number
+    passingScore: number
+    questionAnalytics: Array<{
+      questionId: string
+      questionText: string
+      correctAnswerRate: number
+      incorrectAnswerRate: number
+      totalResponses: number
+    }>
+  } | null>(null)
 
   const [selectedQuizId, setSelectedQuizId] = useState<string>('')
   const [viewMode, setViewMode] = useState<'visual' | 'table'>('visual')
 
-  const publishedCourses = (courses || []).filter(c => c.published)
-  
-  const quizOptions = publishedCourses.flatMap(course =>
-    (course.modules || []).flatMap(module =>
-      (module.lessons || []).flatMap(lesson =>
-        lesson.quiz ? [{
-          quizId: lesson.quiz.id,
-          courseTitle: course.title,
-          quizTitle: lesson.quiz.title,
-          quiz: lesson.quiz
-        }] : []
-      )
-    )
-  )
+  useEffect(() => {
+    if (currentTenant) {
+      loadCourses()
+    }
+  }, [currentTenant?.id])
 
-  const selectedQuizData = quizOptions.find(q => q.quizId === selectedQuizId)
-  const quizAttemptsForSelected = (quizAttempts || []).filter(a => a.quizId === selectedQuizId)
+  useEffect(() => {
+    if (selectedQuizId && currentTenant) {
+      loadAssessmentReport()
+    }
+  }, [selectedQuizId, currentTenant?.id])
+
+  const loadCourses = async () => {
+    if (!currentTenant) return
+
+    try {
+      const data = await ApiService.getCourses(currentTenant.id)
+      const published = data.filter((c: any) => c.status === 'active')
+      setCourses(published)
+    } catch (error) {
+      console.error('Error loading courses:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const loadAssessmentReport = async () => {
+    if (!currentTenant || !selectedQuizId) return
+
+    try {
+      setLoading(true)
+      const report = await ApiService.getAssessmentReport(selectedQuizId)
+      setAssessmentReport(report)
+    } catch (error) {
+      console.error('Error loading assessment report:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Build quiz options from courses (for frontend compatibility)
+  const quizOptions = courses.flatMap((course: any) => {
+    const quizzes: any[] = []
+    if (course.modules) {
+      course.modules.forEach((module: any) => {
+        if (module.lessons) {
+          module.lessons.forEach((lesson: any) => {
+            if (lesson.quiz) {
+              quizzes.push({
+                quizId: lesson.quiz.id,
+                courseTitle: course.title,
+                quizTitle: lesson.quiz.title,
+                quiz: lesson.quiz
+              })
+            }
+          })
+        }
+        // Also check if module itself is a quiz
+        if (module.type === 'quiz') {
+          quizzes.push({
+            quizId: module.id,
+            courseTitle: course.title,
+            quizTitle: module.title,
+            quiz: module
+          })
+        }
+      })
+    }
+    return quizzes
+  })
 
   const exportToCSV = () => {
-    if (!selectedQuizData) return
-
-    const questionAnalytics = selectedQuizData.quiz.questions.map(question => {
-      const responses = quizAttemptsForSelected.flatMap(attempt =>
-        attempt.answers.filter(a => a.questionId === question.id)
-      )
-      const correctCount = responses.filter(r => r.correct).length
-      const incorrectCount = responses.length - correctCount
-
-      return {
-        question: question.question,
-        correctRate: responses.length > 0 ? Math.round((correctCount / responses.length) * 100) : 0,
-        incorrectRate: responses.length > 0 ? Math.round((incorrectCount / responses.length) * 100) : 0,
-        totalResponses: responses.length
-      }
-    })
+    if (!assessmentReport) return
 
     const rows = [
       ['Question', 'Correct Rate %', 'Incorrect Rate %', 'Total Responses'],
-      ...questionAnalytics.map(q => [
-        `"${q.question.replace(/"/g, '""')}"`,
-        q.correctRate.toString(),
-        q.incorrectRate.toString(),
+      ...assessmentReport.questionAnalytics.map(q => [
+        `"${q.questionText.replace(/"/g, '""')}"`,
+        q.correctAnswerRate.toString(),
+        q.incorrectAnswerRate.toString(),
         q.totalResponses.toString()
       ])
     ]
@@ -68,38 +124,10 @@ export function AssessmentReport() {
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = `assessment-report-${selectedQuizData.quizTitle}-${new Date().toISOString().split('T')[0]}.csv`
+    link.download = `assessment-report-${assessmentReport.quizTitle}-${new Date().toISOString().split('T')[0]}.csv`
     link.click()
     URL.revokeObjectURL(url)
   }
-
-  const assessmentStats = selectedQuizData ? (() => {
-    const scores = quizAttemptsForSelected.map(a => a.score)
-    const averageScore = scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0
-    const passRate = scores.length > 0 ? Math.round((scores.filter(s => s >= (selectedQuizData.quiz.passingScore || 70)).length / scores.length) * 100) : 0
-
-    return {
-      totalAttempts: quizAttemptsForSelected.length,
-      averageScore,
-      passRate
-    }
-  })() : null
-
-  const questionAnalytics = selectedQuizData ? selectedQuizData.quiz.questions.map(question => {
-    const responses = quizAttemptsForSelected.flatMap(attempt =>
-      attempt.answers.filter(a => a.questionId === question.id)
-    )
-    const correctCount = responses.filter(r => r.correct).length
-    const totalResponses = responses.length
-
-    return {
-      questionId: question.id,
-      questionText: question.question,
-      correctAnswerRate: totalResponses > 0 ? Math.round((correctCount / totalResponses) * 100) : 0,
-      incorrectAnswerRate: totalResponses > 0 ? Math.round(((totalResponses - correctCount) / totalResponses) * 100) : 0,
-      totalResponses
-    }
-  }) : []
 
   return (
     <Card className="p-6">
@@ -153,105 +181,108 @@ export function AssessmentReport() {
           )}
         </div>
 
-        {selectedQuizData && assessmentStats && (
+        {assessmentReport && (
           <div className="space-y-6">
-            <div className="grid gap-4 md:grid-cols-3">
-              <Card className="p-4">
-                <p className="text-sm text-muted-foreground">{t('analytics.totalAttempts')}</p>
-                <p className="text-2xl font-bold mt-1">{assessmentStats.totalAttempts}</p>
-              </Card>
-              <Card className="p-4">
-                <p className="text-sm text-muted-foreground">{t('analytics.averageScore')}</p>
-                <p className="text-2xl font-bold mt-1">{assessmentStats.averageScore}%</p>
-              </Card>
-              <Card className="p-4">
-                <p className="text-sm text-muted-foreground">{t('analytics.passRate')}</p>
-                <p className="text-2xl font-bold mt-1 text-success">{assessmentStats.passRate}%</p>
-              </Card>
-            </div>
-
-            <div>
-              <h3 className="font-semibold mb-4">{t('analytics.questionBreakdown')}</h3>
-              
-              {viewMode === 'table' ? (
-                <div className="border rounded-lg">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>{t('analytics.table.question')}</TableHead>
-                        <TableHead>{t('analytics.table.correctRate')}</TableHead>
-                        <TableHead>{t('analytics.table.incorrectRate')}</TableHead>
-                        <TableHead>{t('analytics.table.responses')}</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {questionAnalytics.map((question, index) => (
-                        <TableRow key={question.questionId}>
-                          <TableCell className="font-medium">
-                            {index + 1}. {question.questionText}
-                          </TableCell>
-                          <TableCell className="text-success">{question.correctAnswerRate}%</TableCell>
-                          <TableCell className="text-destructive">{question.incorrectAnswerRate}%</TableCell>
-                          <TableCell>{question.totalResponses}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+            {loading ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              </div>
+            ) : (
+              <>
+                <div className="grid gap-4 md:grid-cols-3">
+                  <Card className="p-4">
+                    <p className="text-sm text-muted-foreground">{t('analytics.metrics.totalAttempts')}</p>
+                    <p className="text-2xl font-bold mt-1">{assessmentReport.totalAttempts}</p>
+                  </Card>
+                  <Card className="p-4">
+                    <p className="text-sm text-muted-foreground">{t('analytics.metrics.averageScore')}</p>
+                    <p className="text-2xl font-bold mt-1">{assessmentReport.averageScore}%</p>
+                  </Card>
+                  <Card className="p-4">
+                    <p className="text-sm text-muted-foreground">{t('analytics.metrics.passRate')}</p>
+                    <p className="text-2xl font-bold mt-1 text-success">{assessmentReport.passRate}%</p>
+                  </Card>
                 </div>
-              ) : (
-                <div className="space-y-4">
-                  {questionAnalytics.map((question, index) => (
-                    <div key={question.questionId} className="border rounded-lg p-4">
-                      <h4 className="font-semibold mb-3">
-                        {index + 1}. {question.questionText}
-                      </h4>
 
-                      <div className="space-y-3">
-                        <div>
-                          <div className="flex items-center justify-between text-sm mb-2">
-                            <span className="flex items-center gap-2">
-                              <CheckCircle size={16} className="text-success" />
-                              {t('analytics.correctAnswers')}
-                            </span>
-                            <span className="font-medium text-success">{question.correctAnswerRate}%</span>
-                          </div>
-                          <div className="h-2 bg-muted rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-success transition-all"
-                              style={{ width: `${question.correctAnswerRate}%` }}
-                            />
-                          </div>
-                        </div>
-
-                        <div>
-                          <div className="flex items-center justify-between text-sm mb-2">
-                            <span className="flex items-center gap-2">
-                              <XCircle size={16} className="text-destructive" />
-                              {t('analytics.incorrectAnswers')}
-                            </span>
-                            <span className="font-medium text-destructive">{question.incorrectAnswerRate}%</span>
-                          </div>
-                          <div className="h-2 bg-muted rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-destructive transition-all"
-                              style={{ width: `${question.incorrectAnswerRate}%` }}
-                            />
-                          </div>
-                        </div>
-
-                        <p className="text-xs text-muted-foreground">
-                          {question.totalResponses} {t('analytics.totalResponses')}
-                        </p>
-                      </div>
+                <div>
+                  <h3 className="font-semibold mb-4">{t('analytics.questionBreakdown')}</h3>
+                  
+                  {viewMode === 'table' ? (
+                    <div className="border rounded-lg">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>{t('analytics.table.question')}</TableHead>
+                            <TableHead>{t('analytics.table.correctRate')}</TableHead>
+                            <TableHead>{t('analytics.table.incorrectRate')}</TableHead>
+                            <TableHead>{t('analytics.table.totalResponses')}</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {assessmentReport.questionAnalytics.map((question, index) => (
+                            <TableRow key={question.questionId}>
+                              <TableCell className="font-medium">
+                                {index + 1}. {question.questionText}
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-2">
+                                  <Progress value={question.correctAnswerRate} className="w-20" />
+                                  <span className="text-success">{question.correctAnswerRate}%</span>
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-2">
+                                  <Progress value={question.incorrectAnswerRate} className="w-20" />
+                                  <span className="text-destructive">{question.incorrectAnswerRate}%</span>
+                                </div>
+                              </TableCell>
+                              <TableCell>{question.totalResponses}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
                     </div>
-                  ))}
+                  ) : (
+                    <div className="space-y-4">
+                      {assessmentReport.questionAnalytics.map((question, index) => (
+                        <Card key={question.questionId} className="p-4">
+                          <div className="flex items-start justify-between mb-3">
+                            <h4 className="font-semibold">
+                              {index + 1}. {question.questionText}
+                            </h4>
+                            {question.correctAnswerRate >= 70 ? (
+                              <CheckCircle className="h-5 w-5 text-green-500" />
+                            ) : (
+                              <XCircle className="h-5 w-5 text-red-500" />
+                            )}
+                          </div>
+
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between text-sm">
+                              <span>{t('analytics.correctRate')}</span>
+                              <span className="font-medium">{question.correctAnswerRate}%</span>
+                            </div>
+                            <Progress value={question.correctAnswerRate} />
+                            <div className="flex items-center justify-between text-sm">
+                              <span>{t('analytics.incorrectRate')}</span>
+                              <span className="font-medium">{question.incorrectAnswerRate}%</span>
+                            </div>
+                            <Progress value={question.incorrectAnswerRate} className="bg-red-100" />
+                            <p className="text-xs text-muted-foreground">
+                              {question.totalResponses} {t('analytics.totalResponses')}
+                            </p>
+                          </div>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
+              </>
+            )}
           </div>
         )}
 
-        {!selectedQuizId && (
+        {!selectedQuizId && !loading && (
           <p className="text-center text-muted-foreground py-8">{t('analytics.selectQuizPrompt')}</p>
         )}
       </div>
