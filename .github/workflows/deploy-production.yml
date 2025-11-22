@@ -6,7 +6,15 @@ on:
       - main
     paths:
       - 'backend/**'
-      - 'frontend/**'
+      - 'src/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'vite.config.ts'
+      - 'tailwind.config.js'
+      - 'tsconfig.json'
+      - 'Dockerfile'
+      - 'nginx.conf'
+      - 'docker-entrypoint.sh'
       - 'infra/**'
       - '.github/workflows/**'
   workflow_dispatch: # Permite deploy manual desde GitHub UI
@@ -108,7 +116,8 @@ jobs:
     - name: Build and push frontend image
       uses: docker/build-push-action@v5
       with:
-        context: ./frontend
+        context: .
+        file: ./Dockerfile
         push: true
         tags: |
           ${{ env.REGISTRY_NAME }}.azurecr.io/frontend:latest
