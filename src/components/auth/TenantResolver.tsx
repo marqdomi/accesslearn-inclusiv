@@ -91,6 +91,8 @@ export function TenantResolver({ children }: TenantResolverProps) {
    * - kainet.lms.kainet.mx → "kainet"
    * - demo.lms.kainet.mx → "demo"
    * - localhost → null
+   * - app.kainet.mx → null (dominio de la aplicación, no tenant)
+   * - api.kainet.mx → null (dominio de la API, no tenant)
    * - Azure Container Apps → null (ca-accesslearn-frontend-prod.gentlerock...azurecontainerapps.io)
    */
   const getSubdomain = (): string | null => {
@@ -112,7 +114,15 @@ export function TenantResolver({ children }: TenantResolverProps) {
     
     // Si tiene al menos 3 partes (subdomain.domain.tld) y no es Azure
     if (parts.length >= 3 && !parts[0].startsWith('ca-')) {
-      return parts[0];
+      const subdomain = parts[0];
+      
+      // Ignorar subdominios de infraestructura/aplicación (no son tenants)
+      const infrastructureSubdomains = ['app', 'api', 'www', 'admin', 'dashboard', 'portal'];
+      if (infrastructureSubdomains.includes(subdomain.toLowerCase())) {
+        return null;
+      }
+      
+      return subdomain;
     }
 
     return null;
@@ -186,11 +196,16 @@ export function TenantResolver({ children }: TenantResolverProps) {
       setResolving(true);
       setError(null);
       
-      // Redirigir a la raíz con el parámetro tenant
-      window.location.href = `${window.location.origin}/?tenant=${selected.slug}`;
+      // Intentar cargar el tenant directamente primero
+      await loadTenantBySlug(selected.slug);
+      
+      // Si se carga exitosamente, guardar en localStorage para futuras visitas
+      if (selected) {
+        localStorage.setItem('current-tenant-id', selected.id);
+      }
     } catch (err) {
-      setError('Error al cargar la organización seleccionada.');
-      setResolving(false);
+      // Si falla, redirigir con query param como fallback
+      window.location.href = `${window.location.origin}/?tenant=${selected.slug}`;
     }
   };
 
