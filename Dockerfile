@@ -25,6 +25,11 @@ COPY nginx.conf /etc/nginx/nginx.conf
 # Copy built files from builder
 COPY --from=builder /app/dist /usr/share/nginx/html
 
+# Copy entrypoint script to nginx's entrypoint directory
+# nginx:alpine automatically executes scripts in /docker-entrypoint.d/ before starting
+COPY docker-entrypoint.sh /docker-entrypoint.d/99-inject-config.sh
+RUN chmod +x /docker-entrypoint.d/99-inject-config.sh
+
 # Expose port 8080 (Azure Container Apps default)
 EXPOSE 8080
 
@@ -32,5 +37,5 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:8080/ || exit 1
 
-# Start nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Use nginx's default entrypoint (which will run our script from /docker-entrypoint.d/)
+# No need to override ENTRYPOINT - nginx's entrypoint will handle it

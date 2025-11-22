@@ -5,9 +5,33 @@
  * Handles authentication, error handling, and response parsing.
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_URL 
-  ? `${import.meta.env.VITE_API_URL}/api`
-  : (import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api')
+// Get API URL from runtime config (injected by docker-entrypoint.sh) or build-time env vars
+const getApiBaseUrl = (): string => {
+  // First, try runtime config (from window.__APP_CONFIG__)
+  if (typeof window !== 'undefined' && (window as any).__APP_CONFIG__) {
+    const runtimeConfig = (window as any).__APP_CONFIG__
+    if (runtimeConfig.VITE_API_URL) {
+      return runtimeConfig.VITE_API_URL
+    }
+    if (runtimeConfig.VITE_API_BASE_URL) {
+      return runtimeConfig.VITE_API_BASE_URL
+    }
+  }
+  
+  // Fallback to build-time environment variables
+  if (import.meta.env.VITE_API_URL) {
+    return `${import.meta.env.VITE_API_URL}/api`
+  }
+  
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return import.meta.env.VITE_API_BASE_URL
+  }
+  
+  // Final fallback (development)
+  return 'http://localhost:3000/api'
+}
+
+const API_BASE_URL = getApiBaseUrl()
 
 interface ApiError {
   message: string
