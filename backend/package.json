@@ -22,7 +22,12 @@
     "grant-super-admin": "ts-node src/scripts/grant-super-admin.ts",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "test:security": "ts-node src/scripts/test-security.ts",
+    "test:jwt": "./scripts/test-jwt-manual.sh",
+    "test:rate-limit": "./scripts/test-rate-limiting.sh",
+    "test:headers": "./scripts/test-security-headers.sh",
+    "test:all-security": "npm run test:jwt && npm run test:rate-limit && npm run test:headers"
   },
   "keywords": [
     "azure",
