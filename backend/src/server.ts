@@ -94,6 +94,12 @@ import {
   removeBadge
 } from './functions/GamificationFunctions';
 import {
+  getUserAchievements,
+  unlockAchievement,
+  getUserStats,
+  checkAndUnlockAchievements
+} from './functions/AchievementFunctions';
+import {
   getUserCertificates,
   getCertificateById,
   getCertificateByCode,

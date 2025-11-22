@@ -1156,6 +1156,58 @@ class ApiServiceClass {
       body: JSON.stringify(preferences),
     })
   }
+
+  // ============================================
+  // ACHIEVEMENTS APIs
+  // ============================================
+
+  async getUserAchievements(userId: string) {
+    return this.fetchWithAuth<any[]>(`/achievements/user/${userId}`)
+  }
+
+  async getUserStats(userId: string) {
+    return this.fetchWithAuth<{
+      totalCoursesCompleted: number
+      totalModulesCompleted: number
+      totalAssessmentsPassed: number
+      averageScore: number
+      currentStreak: number
+      longestStreak: number
+      lastActivityDate: number
+      achievementsUnlocked: Array<{
+        id: string
+        achievementId: string
+        unlockedAt: number
+      }>
+      totalXP: number
+      level: number
+    }>(`/achievements/user/${userId}/stats`)
+  }
+
+  async unlockAchievement(achievementId: string) {
+    return this.fetchWithAuth<any>(`/achievements/unlock`, {
+      method: 'POST',
+      body: JSON.stringify({ achievementId }),
+    })
+  }
+
+  async checkAndUnlockAchievements(stats?: Partial<{
+    totalCoursesCompleted: number
+    totalModulesCompleted: number
+    totalAssessmentsPassed: number
+    averageScore: number
+    currentStreak: number
+    longestStreak: number
+    lastActivityDate: number
+  }>) {
+    return this.fetchWithAuth<{
+      newlyUnlocked: any[]
+      count: number
+    }>(`/achievements/check`, {
+      method: 'POST',
+      body: JSON.stringify({ stats }),
+    })
+  }
 }
 
 export const ApiService = new ApiServiceClass()
