@@ -47,6 +47,13 @@ export function CourseManagement({ onBack }: CourseManagementProps) {
     try {
       const backendCourses = await ApiService.getCourses()
       
+      // Ensure backendCourses is an array
+      if (!Array.isArray(backendCourses)) {
+        console.error('Error: getCourses() did not return an array:', backendCourses)
+        setCourses([])
+        return
+      }
+      
       // Convert backend courses to frontend format
       const { adaptBackendCourseToFrontend } = await import('@/lib/course-adapter')
       const frontendCourses = backendCourses.map(adaptBackendCourseToFrontend)
@@ -62,6 +69,7 @@ export function CourseManagement({ onBack }: CourseManagementProps) {
     } catch (error) {
       console.error('Error fetching courses:', error)
       toast.error('Error al cargar los cursos')
+      setCourses([]) // Set empty array on error to prevent undefined issues
     } finally {
       setLoading(false)
     }
@@ -92,9 +100,9 @@ export function CourseManagement({ onBack }: CourseManagementProps) {
   })
 
   // Get counts for tabs
-  const draftCount = courses.filter(c => c.status === 'draft' || (!c.status && !c.published)).length
-  const pendingCount = courses.filter(c => c.status === 'pending-review').length
-  const publishedCount = courses.filter(c => c.published || c.status === 'published').length
+  const draftCount = (courses || []).filter(c => c && (c.status === 'draft' || (!c.status && !c.published))).length
+  const pendingCount = (courses || []).filter(c => c && c.status === 'pending-review').length
+  const publishedCount = (courses || []).filter(c => c && (c.published || c.status === 'published')).length
 
   const deleteCourse = async (courseId: string) => {
     if (confirm('¿Estás seguro de que quieres eliminar este curso? Esta acción no se puede deshacer.')) {
@@ -157,7 +165,7 @@ export function CourseManagement({ onBack }: CourseManagementProps) {
         <div className="space-y-2">
           <h2 className="text-3xl font-bold">Mis Cursos</h2>
           <p className="text-muted-foreground">
-            {courses.length} {courses.length === 1 ? 'curso' : 'cursos'} totales
+            {(courses || []).length} {(courses || []).length === 1 ? 'curso' : 'cursos'} totales
           </p>
         </div>
         <Button onClick={() => setIsCreating(true)}>
@@ -173,7 +181,7 @@ export function CourseManagement({ onBack }: CourseManagementProps) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Total Cursos</p>
-                <p className="text-2xl font-bold mt-1">{courses.length}</p>
+                <p className="text-2xl font-bold mt-1">{(courses || []).length}</p>
               </div>
               <div className="h-12 w-12 rounded-lg bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center">
                 <Books className="h-6 w-6 text-blue-600 dark:text-blue-400" />
@@ -248,7 +256,7 @@ export function CourseManagement({ onBack }: CourseManagementProps) {
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="all" className="flex items-center gap-2">
             <Books size={16} />
-            Todos ({courses.length})
+            Todos ({(courses || []).length})
           </TabsTrigger>
           <TabsTrigger value="drafts" className="flex items-center gap-2">
             <FileText size={16} />
@@ -324,23 +332,25 @@ export function CourseManagement({ onBack }: CourseManagementProps) {
                         <div className="flex items-center gap-2">
                           <Lightning size={14} className="text-muted-foreground" />
                           <span className="text-muted-foreground">
-                            {course.totalXP} XP
+                            {course.totalXP || 0} XP
                           </span>
                         </div>
-                        {course.estimatedHours > 0 && (
+                        {(course.estimatedHours || 0) > 0 && (
                           <>
                             <div className="flex items-center gap-2">
                               <Clock size={14} className="text-muted-foreground" />
                               <span className="text-muted-foreground">
-                                {course.estimatedHours}h
+                                {course.estimatedHours || 0}h
                               </span>
                             </div>
-                            <div className="flex items-center gap-2">
-                              <User size={14} className="text-muted-foreground" />
-                              <span className="text-muted-foreground text-xs truncate">
-                                {course.instructorName}
-                              </span>
-                            </div>
+                            {course.instructorName && (
+                              <div className="flex items-center gap-2">
+                                <User size={14} className="text-muted-foreground" />
+                                <span className="text-muted-foreground text-xs truncate">
+                                  {course.instructorName}
+                                </span>
+                              </div>
+                            )}
                           </>
                         )}
                       </div>
