@@ -57,6 +57,7 @@
     "jsonwebtoken": "^9.0.2",
     "resend": "^6.5.2",
     "typescript": "^5.9.3",
+    "ulid": "^3.0.1",
     "uuid": "^13.0.0"
   },
   "devDependencies": {
