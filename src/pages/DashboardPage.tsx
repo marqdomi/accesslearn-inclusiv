@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useTenant } from '@/contexts/TenantContext'
 import { ApiService } from '@/services/api.service'
 import { LevelBadge } from '@/components/gamification/LevelBadge'
+import { LevelProgressDashboard } from '@/components/gamification/LevelProgressDashboard'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -118,12 +119,27 @@ export function DashboardPage() {
         ? Math.round(totalProgress / enrolledCount) 
         : 0
 
+      // Get user's total XP from backend (use gamification stats)
+      let userTotalXP = 0
+      try {
+        const stats = await ApiService.getGamificationStats(user.id)
+        userTotalXP = stats.totalXP || 0
+      } catch (error) {
+        // Fallback to user data
+        try {
+          const userData = await ApiService.getUserById(user.id)
+          userTotalXP = userData.totalXP || 0
+        } catch (err) {
+          console.error('Error loading user XP:', err)
+        }
+      }
+
       // Calculate stats
       setStats({
         totalCourses: activeCourses.length,
         enrolledCourses: enrolledCount,
         completedCourses: completedCount,
-        totalXP: activeCourses.reduce((sum, c) => sum + (c.totalXP || 0), 0),
+        totalXP: userTotalXP, // Use actual user XP from backend
         averageProgress,
       })
 
@@ -314,10 +330,16 @@ export function DashboardPage() {
           </Card>
         </div>
 
-        {/* Main Content Area - Tabs */}
-        <div className="grid gap-6 lg:grid-cols-3 mb-8">
-          {/* Featured Section - 2 columns */}
-          <div className="lg:col-span-2 space-y-6">
+        {/* Level Progress Dashboard */}
+        <Tabs defaultValue="overview" className="mb-8">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="overview">Resumen</TabsTrigger>
+            <TabsTrigger value="progress">Progreso de Nivel</TabsTrigger>
+          </TabsList>
+          <TabsContent value="overview" className="mt-6">
+            <div className="grid gap-6 lg:grid-cols-3 mb-8">
+              {/* Featured Section - 2 columns */}
+              <div className="lg:col-span-2 space-y-6">
             {/* Quick Actions */}
             <Card className="overflow-hidden border-2">
               <CardHeader className="bg-linear-to-r from-primary/5 to-primary/10">
@@ -569,8 +591,12 @@ export function DashboardPage() {
               </Card>
             </RequireRole>
           </div>
-        </div>
-
+            </div>
+          </TabsContent>
+          <TabsContent value="progress" className="mt-6">
+            <LevelProgressDashboard userId={user?.id} />
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   )

@@ -88,6 +88,21 @@ import {
   deleteAssignment
 } from './functions/CourseAssignmentFunctions';
 import {
+  awardXP,
+  getUserGamificationStats,
+  awardBadge,
+  removeBadge
+} from './functions/GamificationFunctions';
+import {
+  getUserCertificates,
+  getCertificateById,
+  getCertificateByCode,
+  getCertificateByUserAndCourse,
+  createCertificate,
+  deleteCertificate,
+  getCourseCertificates
+} from './functions/CertificateFunctions';
+import {
   getAuditLogs,
   getAuditLogById,
   getAuditStats,
@@ -630,8 +645,9 @@ app.get('/api/courses/:courseId', async (req, res) => {
 });
 
 // POST /api/users/:userId/progress/lessons/:lessonId/complete - Mark lesson as completed
-app.post('/api/users/:userId/progress/lessons/:lessonId/complete', async (req, res) => {
+app.post('/api/users/:userId/progress/lessons/:lessonId/complete', requireAuth, requireOwnershipOrAdmin('userId'), async (req, res) => {
   try {
+    const user = (req as any).user;
     const { userId, lessonId } = req.params;
     const { courseId, moduleId, xpEarned } = req.body;
 
@@ -639,50 +655,37 @@ app.post('/api/users/:userId/progress/lessons/:lessonId/complete', async (req, r
       return res.status(400).json({ error: 'courseId and moduleId are required' });
     }
 
-    const container = getContainer('users');
+    // Get current progress
+    let progress = await getUserProgress(userId, user.tenantId, courseId);
     
-    // Get user
-    const querySpec = {
-      query: 'SELECT * FROM c WHERE c.id = @userId',
-      parameters: [{ name: '@userId', value: userId }]
-    };
-    
-    const { resources } = await container.items.query(querySpec).fetchAll();
-    
-    if (!resources || resources.length === 0) {
-      return res.status(404).json({ error: 'User not found' });
+    const completedLessons = progress?.completedLessons || [];
+    if (!completedLessons.includes(lessonId)) {
+      completedLessons.push(lessonId);
     }
 
-    const user = resources[0];
-    
-    // Initialize progress structure if it doesn't exist
-    if (!user.progress) {
-      user.progress = {};
-    }
-    if (!user.progress[courseId]) {
-      user.progress[courseId] = {
-        completedLessons: [],
-        lastAccessedAt: new Date().toISOString(),
-        xpEarned: 0
-      };
-    }
+    // Calculate progress percentage (simplified - assumes ~10 lessons per course)
+    const progressPercentage = Math.min(100, (completedLessons.length / 10) * 100);
 
-    // Add lesson to completed if not already there
-    if (!user.progress[courseId].completedLessons.includes(lessonId)) {
-      user.progress[courseId].completedLessons.push(lessonId);
-      user.progress[courseId].xpEarned = (user.progress[courseId].xpEarned || 0) + (xpEarned || 0);
-      user.xpPoints = (user.xpPoints || 0) + (xpEarned || 0);
+    // Update progress in user-progress container
+    const updatedProgress = await updateProgress(
+      userId,
+      user.tenantId,
+      courseId,
+      progressPercentage,
+      completedLessons
+    );
+
+    // Award XP if provided
+    let totalXp = user.totalXP || 0;
+    if (xpEarned && xpEarned > 0) {
+      const xpResult = await awardXP(userId, user.tenantId, xpEarned, `Completed lesson: ${lessonId}`);
+      totalXp = xpResult.user.totalXP || totalXp;
     }
-
-    user.progress[courseId].lastAccessedAt = new Date().toISOString();
-
-    // Update user in database
-    await container.item(user.id, user.tenantId).replace(user);
 
     res.json({
       success: true,
-      progress: user.progress[courseId],
-      totalXp: user.xpPoints
+      progress: updatedProgress,
+      totalXp
     });
   } catch (error: any) {
     console.error('[API] Error marking lesson as complete:', error);
@@ -690,31 +693,29 @@ app.post('/api/users/:userId/progress/lessons/:lessonId/complete', async (req, r
   }
 });
 
-// GET /api/users/:userId/progress/:courseId - Get user progress for course
+// GET /api/users/:userId/progress/:courseId - Get user progress for course (legacy endpoint - uses new system)
 app.get('/api/users/:userId/progress/:courseId', requireAuth, requireOwnershipOrAdmin('userId'), async (req, res) => {
   try {
+    const user = (req as any).user;
     const { userId, courseId } = req.params;
-    const container = getContainer('users');
     
-    const querySpec = {
-      query: 'SELECT * FROM c WHERE c.id = @userId',
-      parameters: [{ name: '@userId', value: userId }]
-    };
+    // Use new user-progress endpoint
+    const progress = await getUserProgress(userId, user.tenantId, courseId);
     
-    const { resources } = await container.items.query(querySpec).fetchAll();
-    
-    if (!resources || resources.length === 0) {
-      return res.status(404).json({ error: 'User not found' });
+    if (!progress) {
+      return res.json({
+        completedLessons: [],
+        lastAccessedAt: null,
+        xpEarned: 0
+      });
     }
 
-    const user = resources[0];
-    const courseProgress = user.progress?.[courseId] || {
-      completedLessons: [],
-      lastAccessedAt: null,
-      xpEarned: 0
-    };
-
-    res.json(courseProgress);
+    // Convert to legacy format for backward compatibility
+    res.json({
+      completedLessons: progress.completedLessons || [],
+      lastAccessedAt: progress.lastAccessedAt,
+      xpEarned: progress.totalXpEarned || 0
+    });
   } catch (error: any) {
     console.error('[API] Error getting course progress:', error);
     res.status(500).json({ error: error.message });
@@ -1650,6 +1651,199 @@ app.delete('/api/course-assignments/:assignmentId', requireAuth, requirePermissi
     res.status(204).send();
   } catch (error: any) {
     console.error('[API] Error deleting assignment:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ============================================
+// GAMIFICATION ENDPOINTS
+// ============================================
+
+// POST /api/gamification/award-xp - Award XP to user
+app.post('/api/gamification/award-xp', requireAuth, async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const { userId, xpAmount, reason } = req.body;
+    
+    // Users can only award XP to themselves unless admin
+    const targetUserId = userId || user.id;
+    if (targetUserId !== user.id && user.role !== 'super-admin' && user.role !== 'tenant-admin') {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+    
+    const result = await awardXP(targetUserId, user.tenantId, xpAmount, reason);
+    
+    // Include badge information in response
+    const response: any = {
+      user: result.user,
+      levelUp: result.levelUp,
+      newLevel: result.newLevel,
+    };
+    
+    if (result.newlyAwardedBadges && result.newlyAwardedBadges.length > 0) {
+      response.newlyAwardedBadges = result.newlyAwardedBadges;
+    }
+    
+    res.json(response);
+  } catch (error: any) {
+    console.error('[API] Error awarding XP:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/gamification/stats/:userId - Get user gamification stats
+app.get('/api/gamification/stats/:userId', requireAuth, requireOwnershipOrAdmin('userId'), async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const { userId } = req.params;
+    const stats = await getUserGamificationStats(userId, user.tenantId);
+    res.json(stats);
+  } catch (error: any) {
+    console.error('[API] Error getting gamification stats:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/gamification/badges/:userId - Award badge to user
+app.post('/api/gamification/badges/:userId', requireAuth, requirePermission('gamification:create-badges'), async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const { userId } = req.params;
+    const { badgeId } = req.body;
+    
+    if (!badgeId) {
+      return res.status(400).json({ error: 'badgeId is required' });
+    }
+    
+    const updatedUser = await awardBadge(userId, user.tenantId, badgeId);
+    res.json(updatedUser);
+  } catch (error: any) {
+    console.error('[API] Error awarding badge:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// DELETE /api/gamification/badges/:userId/:badgeId - Remove badge from user
+app.delete('/api/gamification/badges/:userId/:badgeId', requireAuth, requirePermission('gamification:create-badges'), async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const { userId, badgeId } = req.params;
+    const updatedUser = await removeBadge(userId, user.tenantId, badgeId);
+    res.json(updatedUser);
+  } catch (error: any) {
+    console.error('[API] Error removing badge:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ============================================
+// CERTIFICATES ENDPOINTS
+// ============================================
+
+// GET /api/certificates/user/:userId - Get all certificates for a user
+app.get('/api/certificates/user/:userId', requireAuth, requireOwnershipOrAdmin('userId'), async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const { userId } = req.params;
+    const certificates = await getUserCertificates(userId, user.tenantId);
+    res.json(certificates);
+  } catch (error: any) {
+    console.error('[API] Error getting user certificates:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/certificates/:certificateId - Get certificate by ID
+app.get('/api/certificates/:certificateId', requireAuth, async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const { certificateId } = req.params;
+    const certificate = await getCertificateById(certificateId, user.tenantId);
+    if (!certificate) {
+      return res.status(404).json({ error: 'Certificate not found' });
+    }
+    res.json(certificate);
+  } catch (error: any) {
+    console.error('[API] Error getting certificate:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/certificates/verify/:code - Verify certificate by code (public endpoint)
+app.get('/api/certificates/verify/:code', async (req, res) => {
+  try {
+    const { code } = req.params;
+    const { tenantId } = req.query;
+    
+    if (!tenantId) {
+      return res.status(400).json({ error: 'tenantId is required' });
+    }
+    
+    const certificate = await getCertificateByCode(code, tenantId as string);
+    if (!certificate) {
+      return res.status(404).json({ error: 'Certificate not found' });
+    }
+    res.json(certificate);
+  } catch (error: any) {
+    console.error('[API] Error verifying certificate:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/certificates/course/:courseId - Get all certificates for a course
+app.get('/api/certificates/course/:courseId', requireAuth, async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const { courseId } = req.params;
+    const certificates = await getCourseCertificates(courseId, user.tenantId);
+    res.json(certificates);
+  } catch (error: any) {
+    console.error('[API] Error getting course certificates:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/certificates - Create a new certificate
+app.post('/api/certificates', requireAuth, async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const { userId, courseId, courseTitle, userFullName } = req.body;
+    
+    if (!userId || !courseId || !courseTitle || !userFullName) {
+      return res.status(400).json({ error: 'userId, courseId, courseTitle, and userFullName are required' });
+    }
+    
+    // Check if certificate already exists
+    const existing = await getCertificateByUserAndCourse(userId, courseId, user.tenantId);
+    if (existing) {
+      return res.json(existing); // Return existing certificate
+    }
+    
+    const certificate = await createCertificate(
+      user.tenantId,
+      userId,
+      courseId,
+      courseTitle,
+      userFullName,
+      user.id
+    );
+    
+    res.status(201).json(certificate);
+  } catch (error: any) {
+    console.error('[API] Error creating certificate:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// DELETE /api/certificates/:certificateId - Delete certificate
+app.delete('/api/certificates/:certificateId', requireAuth, requirePermission('content:delete'), async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const { certificateId } = req.params;
+    await deleteCertificate(certificateId, user.tenantId);
+    res.status(204).send();
+  } catch (error: any) {
+    console.error('[API] Error deleting certificate:', error);
     res.status(500).json({ error: error.message });
   }
 });

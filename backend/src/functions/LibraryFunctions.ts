@@ -57,6 +57,11 @@ export async function getCourseAttempts(
 /**
  * Calcular XP diferencial para re-intento
  * Solo otorga XP por la mejora respecto al mejor intento anterior
+ * 
+ * Reglas:
+ * - Si ya tiene 100%, NO otorga XP adicional (evita farmeo)
+ * - Si mejora de un score menor a 100%, otorga XP proporcional a la mejora
+ * - Bonus de persistencia solo si hay mejora
  */
 export function calculateDifferentialXP(
   newScore: number,
@@ -71,14 +76,41 @@ export function calculateDifferentialXP(
     total: number;
   };
 } {
+  // Si ya tiene 100% en el mejor intento anterior, NO otorga más XP
+  if (bestPreviousScore >= 100) {
+    return {
+      xpEarned: 0,
+      breakdown: {
+        improvement: 0,
+        improvementXP: 0,
+        persistenceBonus: 0,
+        total: 0,
+      },
+    };
+  }
+  
   // Si el nuevo score es peor o igual, no hay XP de mejora
   const improvement = Math.max(0, newScore - bestPreviousScore);
   
-  // XP proporcional a la mejora
+  // Si no hay mejora, no otorga XP
+  if (improvement === 0) {
+    return {
+      xpEarned: 0,
+      breakdown: {
+        improvement: 0,
+        improvementXP: 0,
+        persistenceBonus: 0,
+        total: 0,
+      },
+    };
+  }
+  
+  // XP proporcional a la mejora (solo por la diferencia)
+  // Ejemplo: Si tenía 80% y ahora tiene 100%, solo otorga XP por el 20% de mejora
   const improvementXP = Math.floor((improvement / 100) * totalCourseXP);
   
-  // Bonus por persistencia (25 XP por intentarlo de nuevo)
-  const persistenceBonus = improvement > 0 ? 25 : 0;
+  // Bonus por persistencia (25 XP por mejorar)
+  const persistenceBonus = 25;
   
   const total = improvementXP + persistenceBonus;
 
@@ -210,9 +242,9 @@ export async function completeCourseAttempt(
     throw new Error('No se encontró el intento actual');
   }
 
-  // Calcular XP diferencial
+  // Calcular XP diferencial (solo otorga XP por mejora, no por re-intentos al 100%)
   const bestPreviousScore = progressData.bestScore || 0;
-  const xpCalculation = calculateDifferentialXP(finalScore, bestPreviousScore);
+  const xpCalculation = calculateDifferentialXP(finalScore, bestPreviousScore, 500); // 500 XP base por curso
 
   // Actualizar el intento actual
   progressData.attempts[attemptIndex].completedAt = new Date().toISOString();

@@ -727,6 +727,82 @@ class ApiServiceClass {
       method: 'DELETE',
     })
   }
+
+  // ============================================
+  // GAMIFICATION APIs
+  // ============================================
+
+  async awardXP(userId: string, xpAmount: number, reason?: string) {
+    return this.fetchWithAuth<{
+      user: any
+      levelUp: boolean
+      newLevel?: number
+      newlyAwardedBadges?: string[]
+    }>(`/gamification/award-xp`, {
+      method: 'POST',
+      body: JSON.stringify({ userId, xpAmount, reason }),
+    })
+  }
+
+  async getGamificationStats(userId: string) {
+    return this.fetchWithAuth<{
+      totalXP: number
+      level: number
+      badges: string[]
+      achievements: string[]
+    }>(`/gamification/stats/${userId}`)
+  }
+
+  async awardBadge(userId: string, badgeId: string) {
+    return this.fetchWithAuth<any>(`/gamification/badges/${userId}`, {
+      method: 'POST',
+      body: JSON.stringify({ badgeId }),
+    })
+  }
+
+  async removeBadge(userId: string, badgeId: string) {
+    return this.fetchWithAuth<any>(`/gamification/badges/${userId}/${badgeId}`, {
+      method: 'DELETE',
+    })
+  }
+
+  // ============================================
+  // CERTIFICATES APIs
+  // ============================================
+
+  async getUserCertificates(userId: string) {
+    return this.fetchWithAuth<any[]>(`/certificates/user/${userId}`)
+  }
+
+  async getCertificateById(certificateId: string) {
+    return this.fetchWithAuth<any>(`/certificates/${certificateId}`)
+  }
+
+  async verifyCertificate(code: string, tenantId: string) {
+    return this.fetchWithoutAuth<any>(`/certificates/verify/${code}?tenantId=${tenantId}`)
+  }
+
+  async getCourseCertificates(courseId: string) {
+    return this.fetchWithAuth<any[]>(`/certificates/course/${courseId}`)
+  }
+
+  async createCertificate(data: {
+    userId: string
+    courseId: string
+    courseTitle: string
+    userFullName: string
+  }) {
+    return this.fetchWithAuth<any>(`/certificates`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async deleteCertificate(certificateId: string) {
+    return this.fetchWithAuth<void>(`/certificates/${certificateId}`, {
+      method: 'DELETE',
+    })
+  }
 }
 
 export const ApiService = new ApiServiceClass()

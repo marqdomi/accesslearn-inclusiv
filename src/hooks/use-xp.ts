@@ -1,8 +1,11 @@
-import { useKV } from '@github/spark/hooks'
+import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 import { useActivityFeed } from './use-activity-feed'
 import { useMentorXP } from './use-mentor-xp'
 import { useTranslation } from '@/lib/i18n'
+import { ApiService } from '@/services/api.service'
+import { useAuth } from '@/contexts/AuthContext'
+import { useTenant } from '@/contexts/TenantContext'
 
 export const XP_REWARDS = {
   DAILY_LOGIN: 10,
@@ -74,20 +77,79 @@ export function getRankKey(level: number): string {
   return RANK_KEYS[rankIndex]
 }
 
+/**
+ * Check if a level is a milestone (important level)
+ */
+export function isMilestoneLevel(level: number): boolean {
+  const milestoneLevels = [5, 10, 25, 50, 75, 100, 150, 200, 250, 500]
+  return milestoneLevels.includes(level)
+}
+
 export function useXP(userId?: string) {
   const { t } = useTranslation()
-  const userKey = userId || 'default-user'
-  const [totalXP, setTotalXP] = useKV<number>(`user-total-xp-${userKey}`, 0)
-  const [currentLevel, setCurrentLevel] = useKV<number>(`user-level-${userKey}`, 1)
+  const { user: currentUser } = useAuth()
+  const { currentTenant } = useTenant()
+  const effectiveUserId = userId || currentUser?.id
+  const [totalXP, setTotalXP] = useState<number>(0)
+  const [currentLevel, setCurrentLevel] = useState<number>(1)
+  const [loading, setLoading] = useState(true)
   const { postLevelUp } = useActivityFeed()
   const { awardMentorBonus } = useMentorXP()
 
-  const awardXP = (amount: number, reason: string, showNotification = true) => {
-    setTotalXP((currentXP) => {
-      const current = currentXP || 0
-      const newXP = current + amount
-      const oldLevel = getLevelFromXP(current)
+  // Load XP and level from backend
+  useEffect(() => {
+    if (effectiveUserId && currentTenant) {
+      loadStats()
+    } else {
+      // Fallback to user data if available
+      if (currentUser) {
+        setTotalXP(currentUser.totalXP || 0)
+        setCurrentLevel(currentUser.level || 1)
+        setLoading(false)
+      }
+    }
+  }, [effectiveUserId, currentTenant?.id, currentUser?.id])
+
+  const loadStats = async () => {
+    if (!effectiveUserId || !currentTenant) return
+
+    try {
+      setLoading(true)
+      const stats = await ApiService.getGamificationStats(effectiveUserId)
+      setTotalXP(stats.totalXP)
+      setCurrentLevel(stats.level)
+    } catch (error) {
+      console.error('Error loading gamification stats:', error)
+      // Fallback to user data
+      if (currentUser) {
+        setTotalXP(currentUser.totalXP || 0)
+        setCurrentLevel(currentUser.level || 1)
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const awardXP = async (amount: number, reason: string, showNotification = true) => {
+    if (!effectiveUserId || !currentTenant) {
+      // Fallback to local state if no backend
+      const newXP = totalXP + amount
+      const oldLevel = getLevelFromXP(totalXP)
       const newLevel = getLevelFromXP(newXP)
+      
+      setTotalXP(newXP)
+      if (newLevel > oldLevel) {
+        setCurrentLevel(newLevel)
+      }
+      return
+    }
+
+    try {
+      const result = await ApiService.awardXP(effectiveUserId, amount, reason)
+      
+      // Update local state
+      setTotalXP(result.user.totalXP || 0)
+      setCurrentLevel(result.user.level || 1)
 
       if (showNotification) {
         toast.success(`+${amount} XP`, {
@@ -97,27 +159,66 @@ export function useXP(userId?: string) {
         })
       }
 
-      if (userId) {
-        awardMentorBonus(userId, amount)
+      if (effectiveUserId) {
+        awardMentorBonus(effectiveUserId, amount)
       }
 
-      if (newLevel > oldLevel) {
-        setCurrentLevel(newLevel)
-        if (userId) {
-          postLevelUp(userId, newLevel)
+      if (result.levelUp && result.newLevel) {
+        if (effectiveUserId) {
+          postLevelUp(effectiveUserId, result.newLevel)
         }
+        
+        // Check if it's a milestone level
+        const isMilestone = isMilestoneLevel(result.newLevel)
+        const hasNewBadges = result.newlyAwardedBadges && result.newlyAwardedBadges.length > 0
+        
         setTimeout(() => {
-          const rankKey = getRankKey(newLevel)
-          toast.success(`🎉 ${t('playerIdentity.level')} ${newLevel}`, {
-            description: `${t(rankKey)}!`,
-            duration: 5000,
-            className: 'bg-gradient-to-r from-purple-600 to-pink-600 text-white',
-          })
+          const rankKey = getRankKey(result.newLevel!)
+          
+          if (hasNewBadges) {
+            // Special notification for milestone levels with badges
+            toast.success(`🏆 ¡Nivel ${result.newLevel} alcanzado!`, {
+              description: `Has obtenido ${result.newlyAwardedBadges!.length} nueva(s) insignia(s)`,
+              duration: 7000,
+              className: 'bg-gradient-to-r from-yellow-500 to-orange-600 text-white',
+            })
+          } else if (isMilestone) {
+            // Milestone level notification
+            toast.success(`🎉 ¡Hito alcanzado! Nivel ${result.newLevel}`, {
+              description: `${t(rankKey)}!`,
+              duration: 6000,
+              className: 'bg-gradient-to-r from-purple-600 to-pink-600 text-white',
+            })
+          } else {
+            // Regular level up
+            toast.success(`🎉 ${t('playerIdentity.level')} ${result.newLevel}`, {
+              description: `${t(rankKey)}!`,
+              duration: 5000,
+              className: 'bg-gradient-to-r from-purple-600 to-pink-600 text-white',
+            })
+          }
         }, 500)
       }
-
-      return newXP
-    })
+    } catch (error) {
+      console.error('Error awarding XP:', error)
+      // Fallback to local update
+      const newXP = totalXP + amount
+      const oldLevel = getLevelFromXP(totalXP)
+      const newLevel = getLevelFromXP(newXP)
+      
+      setTotalXP(newXP)
+      if (newLevel > oldLevel) {
+        setCurrentLevel(newLevel)
+      }
+      
+      if (showNotification) {
+        toast.success(`+${amount} XP`, {
+          description: reason,
+          duration: 3000,
+          className: 'bg-gradient-to-r from-lime-500 to-green-600 text-white',
+        })
+      }
+    }
   }
 
   const getProgressToNextLevel = () => {
@@ -140,8 +241,10 @@ export function useXP(userId?: string) {
   return {
     totalXP: totalXP || 0,
     currentLevel: currentLevel || 1,
+    loading,
     awardXP,
     getProgressToNextLevel,
     getRankName: () => t(getRankKey(currentLevel || 1)),
+    refresh: loadStats,
   }
 }

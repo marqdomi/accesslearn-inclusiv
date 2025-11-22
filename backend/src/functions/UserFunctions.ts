@@ -8,6 +8,7 @@ import * as crypto from 'crypto';
 import { getContainer } from '../services/cosmosdb.service';
 import { User, CreateUserRequest, UpdateUserRequest, UserProgress } from '../models/User';
 import { emailService } from '../services/email.service';
+import { getLevelFromXP } from './GamificationFunctions';
 
 /**
  * Hash password using SHA-256
@@ -251,9 +252,9 @@ export async function completeCourse(
   // Add to completed courses
   user.completedCourses.push(courseId);
   
-  // Update XP and potentially level up
+  // Update XP and potentially level up (using logarithmic system)
   user.totalXP += xpEarned;
-  const newLevel = Math.floor(user.totalXP / 100) + 1; // 100 XP per level
+  const newLevel = getLevelFromXP(user.totalXP);
   if (newLevel > user.level) {
     user.level = newLevel;
   }
