@@ -72,7 +72,11 @@ export function CourseManagement({ onBack }: CourseManagementProps) {
   }, [user?.id])
 
   // Filter courses by search and tab
-  const filteredCourses = courses.filter(course => {
+  const filteredCourses = (courses || []).filter(course => {
+    if (!course || !course.title || !course.category || !course.description) {
+      return false // Skip invalid courses
+    }
+    
     const matchesSearch = course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          course.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          course.description.toLowerCase().includes(searchQuery.toLowerCase())
@@ -314,7 +318,7 @@ export function CourseManagement({ onBack }: CourseManagementProps) {
                         <div className="flex items-center gap-2">
                           <Books size={14} className="text-muted-foreground" />
                           <span className="text-muted-foreground">
-                            {course.modules.length} módulos
+                            {course.modules?.length || 0} módulos
                           </span>
                         </div>
                         <div className="flex items-center gap-2">
