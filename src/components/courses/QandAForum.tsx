@@ -61,7 +61,7 @@ export function QandAForum({ course, userId, userRole }: QandAForumProps) {
   const [userProfile] = useKV<UserProfile>(`user-profile-${userId}`, {} as UserProfile)
   const {
     questions,
-    answers,
+    loading: qandaLoading,
     postQuestion,
     postAnswer,
     markAsCorrectAnswer,
@@ -107,7 +107,7 @@ export function QandAForum({ course, userId, userRole }: QandAForumProps) {
     }
   }, [questions, searchQuery, sortBy])
 
-  const handlePostQuestion = () => {
+  const handlePostQuestion = async () => {
     if (!questionTitle.trim() || !questionContent.trim()) {
       toast.error('Please fill in all fields')
       return
@@ -118,47 +118,75 @@ export function QandAForum({ course, userId, userRole }: QandAForumProps) {
       return
     }
 
-    postQuestion(questionTitle, questionContent, selectedModule, userName, userAvatar)
-    setQuestionTitle('')
-    setQuestionContent('')
-    setSelectedModule('')
-    setShowNewQuestionDialog(false)
-    toast.success(t('qanda.questionPosted'))
+    try {
+      await postQuestion(questionTitle, questionContent, selectedModule, userName, userAvatar)
+      setQuestionTitle('')
+      setQuestionContent('')
+      setSelectedModule('')
+      setShowNewQuestionDialog(false)
+      toast.success(t('qanda.questionPosted'))
+    } catch (error) {
+      toast.error('Failed to post question')
+    }
   }
 
-  const handlePostAnswer = (questionId: string) => {
+  const handlePostAnswer = async (questionId: string) => {
     const content = replyContent[questionId]
     if (!content?.trim()) {
       toast.error('Please enter an answer')
       return
     }
 
-    postAnswer(questionId, content, userName, userAvatar, userRole)
-    setReplyContent(prev => ({ ...prev, [questionId]: '' }))
-    toast.success(t('qanda.answerPosted'))
+    try {
+      await postAnswer(questionId, content, userName, userAvatar, userRole)
+      setReplyContent(prev => ({ ...prev, [questionId]: '' }))
+      toast.success(t('qanda.answerPosted'))
+    } catch (error) {
+      toast.error('Failed to post answer')
+    }
   }
 
-  const handleMarkCorrect = (answerId: string, questionId: string) => {
-    markAsCorrectAnswer(answerId, questionId)
-    toast.success(t('qanda.markedCorrect'))
+  const handleMarkCorrect = async (answerId: string, questionId: string) => {
+    try {
+      await markAsCorrectAnswer(answerId, questionId)
+      toast.success(t('qanda.markedCorrect'))
+    } catch (error) {
+      toast.error('Failed to mark as correct')
+    }
   }
 
-  const handleUpvoteQuestion = (questionId: string) => {
-    upvoteQuestion(questionId)
+  const handleUpvoteQuestion = async (questionId: string) => {
+    try {
+      await upvoteQuestion(questionId)
+    } catch (error) {
+      toast.error('Failed to upvote question')
+    }
   }
 
-  const handleUpvoteAnswer = (answerId: string) => {
-    upvoteAnswer(answerId)
+  const handleUpvoteAnswer = async (answerId: string) => {
+    try {
+      await upvoteAnswer(answerId)
+    } catch (error) {
+      toast.error('Failed to upvote answer')
+    }
   }
 
-  const handleDeleteQuestion = (questionId: string) => {
-    deleteQuestion(questionId)
-    toast.success(t('qanda.deleted'))
+  const handleDeleteQuestion = async (questionId: string) => {
+    try {
+      await deleteQuestion(questionId)
+      toast.success(t('qanda.deleted'))
+    } catch (error) {
+      toast.error('Failed to delete question')
+    }
   }
 
-  const handleDeleteAnswer = (answerId: string) => {
-    deleteAnswer(answerId)
-    toast.success(t('qanda.deleted'))
+  const handleDeleteAnswer = async (answerId: string) => {
+    try {
+      await deleteAnswer(answerId)
+      toast.success(t('qanda.deleted'))
+    } catch (error) {
+      toast.error('Failed to delete answer')
+    }
   }
 
   const canDelete = (itemUserId: string) => {
@@ -265,19 +293,24 @@ export function QandAForum({ course, userId, userRole }: QandAForumProps) {
         </Select>
       </div>
 
-      <AnimatePresence mode="popLayout">
-        {filteredAndSortedQuestions.length === 0 ? (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="text-center py-12"
-          >
-            <ChatCircle size={64} className="mx-auto mb-4 text-muted-foreground" />
-            <h3 className="text-xl font-semibold mb-2">{t('qanda.noQuestions')}</h3>
-            <p className="text-muted-foreground">{t('qanda.noQuestionsDesc')}</p>
-          </motion.div>
-        ) : (
+      {qandaLoading ? (
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      ) : (
+        <AnimatePresence mode="popLayout">
+          {filteredAndSortedQuestions.length === 0 ? (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="text-center py-12"
+            >
+              <ChatCircle size={64} className="mx-auto mb-4 text-muted-foreground" />
+              <h3 className="text-xl font-semibold mb-2">{t('qanda.noQuestions')}</h3>
+              <p className="text-muted-foreground">{t('qanda.noQuestionsDesc')}</p>
+            </motion.div>
+          ) : (
           <div className="space-y-4">
             {filteredAndSortedQuestions.map(question => {
               const questionAnswers = getQuestionAnswers(question.id)

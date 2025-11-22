@@ -914,6 +914,120 @@ class ApiServiceClass {
       }>
     }>>(`/analytics/mentorship`)
   }
+
+  // ============================================
+  // FORUM/Q&A APIs
+  // ============================================
+
+  async getCourseQuestions(courseId: string, moduleId?: string) {
+    const params = moduleId ? `?moduleId=${moduleId}` : ''
+    return this.fetchWithAuth<any[]>(`/forums/course/${courseId}/questions${params}`)
+  }
+
+  async getQuestionAnswers(questionId: string) {
+    return this.fetchWithAuth<any[]>(`/forums/question/${questionId}/answers`)
+  }
+
+  async createQuestion(courseId: string, data: {
+    moduleId: string
+    title: string
+    content: string
+    userName?: string
+    userAvatar?: string
+  }) {
+    return this.fetchWithAuth<any>(`/forums/course/${courseId}/questions`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async createAnswer(questionId: string, data: {
+    content: string
+    userName?: string
+    userAvatar?: string
+  }) {
+    return this.fetchWithAuth<any>(`/forums/question/${questionId}/answers`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async upvoteQuestion(questionId: string) {
+    return this.fetchWithAuth<any>(`/forums/question/${questionId}/upvote`, {
+      method: 'POST',
+    })
+  }
+
+  async upvoteAnswer(answerId: string) {
+    return this.fetchWithAuth<any>(`/forums/answer/${answerId}/upvote`, {
+      method: 'POST',
+    })
+  }
+
+  async markBestAnswer(answerId: string) {
+    return this.fetchWithAuth<any>(`/forums/answer/${answerId}/best`, {
+      method: 'POST',
+    })
+  }
+
+  async deleteQuestion(questionId: string) {
+    return this.fetchWithAuth<void>(`/forums/question/${questionId}`, {
+      method: 'DELETE',
+    })
+  }
+
+  async deleteAnswer(answerId: string) {
+    return this.fetchWithAuth<void>(`/forums/answer/${answerId}`, {
+      method: 'DELETE',
+    })
+  }
+
+  // ============================================
+  // QUIZ ATTEMPTS APIs
+  // ============================================
+
+  async createQuizAttempt(data: {
+    courseId: string
+    quizId: string
+    score: number
+    answers: Array<{
+      questionId: string
+      selectedAnswer: number | number[] | string
+      correct: boolean
+    }>
+  }) {
+    return this.fetchWithAuth<any>(`/quiz-attempts`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async getUserQuizAttempts(userId: string, quizId?: string) {
+    const params = quizId ? `?quizId=${quizId}` : ''
+    return this.fetchWithAuth<any[]>(`/quiz-attempts/user/${userId}${params}`)
+  }
+
+  async getQuizAttemptsByQuiz(quizId: string) {
+    return this.fetchWithAuth<any[]>(`/quiz-attempts/quiz/${quizId}`)
+  }
+
+  async getCourseQuizAttempts(courseId: string, userId?: string) {
+    const params = userId ? `?userId=${userId}` : ''
+    return this.fetchWithAuth<any[]>(`/quiz-attempts/course/${courseId}${params}`)
+  }
+
+  async getBestQuizScore(quizId: string) {
+    return this.fetchWithAuth<{ bestScore: number }>(`/quiz-attempts/best/${quizId}`)
+  }
+
+  async getQuizAttemptStats(quizId: string) {
+    return this.fetchWithAuth<{
+      totalAttempts: number
+      averageScore: number
+      passRate: number
+      uniqueUsers: number
+    }>(`/quiz-attempts/stats/${quizId}`)
+  }
 }
 
 export const ApiService = new ApiServiceClass()

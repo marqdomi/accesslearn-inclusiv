@@ -111,6 +111,25 @@ import {
   getMentorshipReport
 } from './functions/AnalyticsFunctions';
 import {
+  getCourseQuestions,
+  getQuestionAnswers,
+  createQuestion,
+  createAnswer,
+  upvoteQuestion,
+  upvoteAnswer,
+  markBestAnswer,
+  deleteQuestion,
+  deleteAnswer
+} from './functions/ForumFunctions';
+import {
+  createQuizAttempt,
+  getUserQuizAttempts,
+  getQuizAttemptsByQuiz,
+  getCourseQuizAttempts,
+  getBestQuizScore,
+  getQuizAttemptStats
+} from './functions/QuizAttemptFunctions';
+import {
   getAuditLogs,
   getAuditLogById,
   getAuditStats,
@@ -1938,6 +1957,279 @@ app.get('/api/analytics/mentorship', requireAuth, requirePermission('analytics:v
     res.json(report);
   } catch (error: any) {
     console.error('[API] Error getting mentorship report:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ============================================
+// FORUM/Q&A ENDPOINTS
+// ============================================
+
+// GET /api/forums/course/:courseId/questions - Get all questions for a course
+app.get('/api/forums/course/:courseId/questions', requireAuth, async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const { courseId } = req.params;
+    const { moduleId } = req.query;
+    const questions = await getCourseQuestions(user.tenantId, courseId, moduleId as string | undefined);
+    res.json(questions);
+  } catch (error: any) {
+    console.error('[API] Error getting course questions:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/forums/question/:questionId/answers - Get all answers for a question
+app.get('/api/forums/question/:questionId/answers', requireAuth, async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const { questionId } = req.params;
+    const answers = await getQuestionAnswers(user.tenantId, questionId);
+    res.json(answers);
+  } catch (error: any) {
+    console.error('[API] Error getting question answers:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/forums/course/:courseId/questions - Create a new question
+app.post('/api/forums/course/:courseId/questions', requireAuth, async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const { courseId } = req.params;
+    const { moduleId, title, content, userName, userAvatar } = req.body;
+
+    if (!moduleId || !title || !content) {
+      return res.status(400).json({ error: 'moduleId, title, and content are required' });
+    }
+
+    const question = await createQuestion(
+      user.tenantId,
+      courseId,
+      moduleId,
+      user.id,
+      userName || `${user.firstName} ${user.lastName}`,
+      userAvatar,
+      title,
+      content
+    );
+    res.json(question);
+  } catch (error: any) {
+    console.error('[API] Error creating question:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/forums/question/:questionId/answers - Create a new answer
+app.post('/api/forums/question/:questionId/answers', requireAuth, async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const { questionId } = req.params;
+    const { content, userName, userAvatar } = req.body;
+
+    if (!content) {
+      return res.status(400).json({ error: 'content is required' });
+    }
+
+    const answer = await createAnswer(
+      user.tenantId,
+      questionId,
+      user.id,
+      userName || `${user.firstName} ${user.lastName}`,
+      userAvatar,
+      content
+    );
+    res.json(answer);
+  } catch (error: any) {
+    console.error('[API] Error creating answer:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/forums/question/:questionId/upvote - Upvote a question
+app.post('/api/forums/question/:questionId/upvote', requireAuth, async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const { questionId } = req.params;
+    const question = await upvoteQuestion(user.tenantId, questionId, user.id);
+    res.json(question);
+  } catch (error: any) {
+    console.error('[API] Error upvoting question:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/forums/answer/:answerId/upvote - Upvote an answer
+app.post('/api/forums/answer/:answerId/upvote', requireAuth, async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const { answerId } = req.params;
+    const answer = await upvoteAnswer(user.tenantId, answerId, user.id);
+    res.json(answer);
+  } catch (error: any) {
+    console.error('[API] Error upvoting answer:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/forums/answer/:answerId/best - Mark answer as best answer
+app.post('/api/forums/answer/:answerId/best', requireAuth, async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const { answerId } = req.params;
+    
+    // Get the answer to check question ownership
+    const forumsContainer = getContainer('forums');
+    const { resource: answer } = await forumsContainer.item(answerId, user.tenantId).read();
+    if (!answer) {
+      return res.status(404).json({ error: 'Answer not found' });
+    }
+
+    // Get the question to check ownership
+    const { resource: question } = await forumsContainer.item(answer.questionId, user.tenantId).read();
+    const isQuestionOwner = question?.userId === user.id;
+    const isAdmin = user.role === 'super-admin' || user.role === 'tenant-admin';
+
+    const updatedAnswer = await markBestAnswer(user.tenantId, answerId, user.id, isQuestionOwner, isAdmin);
+    res.json(updatedAnswer);
+  } catch (error: any) {
+    console.error('[API] Error marking best answer:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// DELETE /api/forums/question/:questionId - Delete a question
+app.delete('/api/forums/question/:questionId', requireAuth, async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const { questionId } = req.params;
+    const isAdmin = user.role === 'super-admin' || user.role === 'tenant-admin';
+    await deleteQuestion(user.tenantId, questionId, user.id, isAdmin);
+    res.json({ success: true });
+  } catch (error: any) {
+    console.error('[API] Error deleting question:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// DELETE /api/forums/answer/:answerId - Delete an answer
+app.delete('/api/forums/answer/:answerId', requireAuth, async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const { answerId } = req.params;
+    const isAdmin = user.role === 'super-admin' || user.role === 'tenant-admin';
+    await deleteAnswer(user.tenantId, answerId, user.id, isAdmin);
+    res.json({ success: true });
+  } catch (error: any) {
+    console.error('[API] Error deleting answer:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ============================================
+// QUIZ ATTEMPTS ENDPOINTS
+// ============================================
+
+// POST /api/quiz-attempts - Create a new quiz attempt
+app.post('/api/quiz-attempts', requireAuth, async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const { courseId, quizId, score, answers } = req.body;
+
+    if (!courseId || !quizId || score === undefined || !answers) {
+      return res.status(400).json({ error: 'courseId, quizId, score, and answers are required' });
+    }
+
+    const attempt = await createQuizAttempt(
+      user.tenantId,
+      user.id,
+      courseId,
+      quizId,
+      score,
+      answers
+    );
+    res.json(attempt);
+  } catch (error: any) {
+    console.error('[API] Error creating quiz attempt:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/quiz-attempts/user/:userId - Get all quiz attempts for a user
+app.get('/api/quiz-attempts/user/:userId', requireAuth, async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const { userId } = req.params;
+    const { quizId } = req.query;
+
+    // Users can only see their own attempts unless admin
+    if (userId !== user.id && user.role !== 'super-admin' && user.role !== 'tenant-admin') {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    const attempts = await getUserQuizAttempts(user.tenantId, userId, quizId as string | undefined);
+    res.json(attempts);
+  } catch (error: any) {
+    console.error('[API] Error getting user quiz attempts:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/quiz-attempts/quiz/:quizId - Get all attempts for a quiz
+app.get('/api/quiz-attempts/quiz/:quizId', requireAuth, requirePermission('analytics:view-all'), async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const { quizId } = req.params;
+    const attempts = await getQuizAttemptsByQuiz(user.tenantId, quizId);
+    res.json(attempts);
+  } catch (error: any) {
+    console.error('[API] Error getting quiz attempts:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/quiz-attempts/course/:courseId - Get all attempts for a course
+app.get('/api/quiz-attempts/course/:courseId', requireAuth, async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const { courseId } = req.params;
+    const { userId } = req.query;
+
+    // Users can only see their own attempts unless admin
+    const targetUserId = (user.role === 'super-admin' || user.role === 'tenant-admin') 
+      ? (userId as string | undefined)
+      : user.id;
+
+    const attempts = await getCourseQuizAttempts(user.tenantId, courseId, targetUserId);
+    res.json(attempts);
+  } catch (error: any) {
+    console.error('[API] Error getting course quiz attempts:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/quiz-attempts/best/:quizId - Get best score for current user on a quiz
+app.get('/api/quiz-attempts/best/:quizId', requireAuth, async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const { quizId } = req.params;
+    const bestScore = await getBestQuizScore(user.tenantId, user.id, quizId);
+    res.json({ bestScore });
+  } catch (error: any) {
+    console.error('[API] Error getting best quiz score:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/quiz-attempts/stats/:quizId - Get quiz attempt statistics
+app.get('/api/quiz-attempts/stats/:quizId', requireAuth, requirePermission('analytics:view-all'), async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const { quizId } = req.params;
+    const stats = await getQuizAttemptStats(user.tenantId, quizId);
+    res.json(stats);
+  } catch (error: any) {
+    console.error('[API] Error getting quiz attempt stats:', error);
     res.status(500).json({ error: error.message });
   }
 });

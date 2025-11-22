@@ -1,176 +1,233 @@
-import { useState } from 'react'
-import { ForumQuestion, ForumAnswer, UserNotification } from '@/lib/types'
-import { useXP, XP_REWARDS } from './use-xp'
-import { ulid as generateId } from 'ulid'
+import { useState, useEffect, useCallback } from 'react'
+import { ForumQuestion, ForumAnswer } from '@/lib/types'
+import { ApiService } from '@/services/api.service'
+import { useTenant } from '@/contexts/TenantContext'
+import { useXP } from './use-xp'
 
 export function useQandA(courseId: string, userId?: string) {
-  const userKey = userId || 'default-user'
+  const { currentTenant } = useTenant()
   const [questions, setQuestions] = useState<ForumQuestion[]>([])
-  const [answers, setAnswers] = useState<ForumAnswer[]>([])
-  const [notifications, setNotifications] = useState<UserNotification[]>([])
-  const [correctAnswerCount, setCorrectAnswerCount] = useState<number>(0)
+  const [answers, setAnswers] = useState<Record<string, ForumAnswer[]>>({})
+  const [loading, setLoading] = useState(true)
   const { awardXP } = useXP(userId)
 
-  const postQuestion = (
+  // Load questions on mount and when courseId changes
+  useEffect(() => {
+    if (currentTenant && courseId) {
+      loadQuestions()
+    }
+  }, [currentTenant?.id, courseId])
+
+  const loadQuestions = async () => {
+    if (!currentTenant || !courseId) return
+
+    try {
+      setLoading(true)
+      const data = await ApiService.getCourseQuestions(courseId)
+      setQuestions(data)
+      
+      // Load answers for all questions
+      const answersMap: Record<string, ForumAnswer[]> = {}
+      for (const question of data) {
+        const questionAnswers = await ApiService.getQuestionAnswers(question.id)
+        answersMap[question.id] = questionAnswers
+      }
+      setAnswers(answersMap)
+    } catch (error) {
+      console.error('Error loading questions:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const postQuestion = async (
     title: string,
     content: string,
     moduleId: string,
     userName: string,
     userAvatar?: string
-  ) => {
-    const newQuestion: ForumQuestion = {
-      id: generateId(),
-      courseId,
-      moduleId,
-      userId: userKey,
-      userName,
-      userAvatar,
-      title,
-      content,
-      timestamp: Date.now(),
-      upvotes: 0,
-      upvotedBy: [],
-      answered: false,
+  ): Promise<string> => {
+    if (!currentTenant || !courseId) {
+      throw new Error('Tenant or course ID missing')
     }
 
-    setQuestions((current) => [newQuestion, ...(current || [])])
-    return newQuestion.id
+    try {
+      const question = await ApiService.createQuestion(courseId, {
+        moduleId,
+        title,
+        content,
+        userName,
+        userAvatar
+      })
+      
+      // Reload questions
+      await loadQuestions()
+      
+      return question.id
+    } catch (error) {
+      console.error('Error posting question:', error)
+      throw error
+    }
   }
 
-  const postAnswer = (
+  const postAnswer = async (
     questionId: string,
     content: string,
     userName: string,
     userAvatar?: string,
     userRole?: 'employee' | 'admin' | 'mentor'
-  ) => {
-    const newAnswer: ForumAnswer = {
-      id: generateId(),
-      questionId,
-      userId: userKey,
-      userName,
-      userAvatar,
-      userRole,
-      content,
-      timestamp: Date.now(),
-      upvotes: 0,
-      upvotedBy: [],
-      isBestAnswer: false,
+  ): Promise<string> => {
+    if (!currentTenant) {
+      throw new Error('Tenant missing')
     }
 
-    setAnswers((current) => [...(current || []), newAnswer])
-
-    const question = (questions || []).find(q => q.id === questionId)
-    if (question && question.userId !== userKey) {
-      const notification: UserNotification = {
-        id: generateId(),
-        userId: question.userId,
-        type: 'forum-reply',
-        title: 'New Answer',
-        message: `Your question "${question.title}" has a new answer`,
-        timestamp: Date.now(),
-        read: false,
-        actionUrl: `/course/${courseId}/qanda/${questionId}`,
-        relatedId: questionId,
-      }
-      
-      setNotifications((current) => [notification, ...(current || [])])
-    }
-
-    return newAnswer.id
-  }
-
-  const markAsCorrectAnswer = (answerId: string, questionId: string) => {
-    setAnswers((current) =>
-      (current || []).map(answer =>
-        answer.questionId === questionId
-          ? { ...answer, isBestAnswer: answer.id === answerId }
-          : answer
-      )
-    )
-
-    setQuestions((current) =>
-      (current || []).map(q =>
-        q.id === questionId ? { ...q, answered: true, bestAnswerId: answerId } : q
-      )
-    )
-
-    const answer = (answers || []).find(a => a.id === answerId)
-    if (answer && answer.userId !== userKey) {
-      awardXP(10, 'Answer marked as correct')
-      
-      const notification: UserNotification = {
-        id: generateId(),
-        userId: answer.userId,
-        type: 'achievement',
-        title: 'Correct Answer!',
-        message: 'Your answer was marked as correct! +10 XP',
-        timestamp: Date.now(),
-        read: false,
-        relatedId: answerId,
-      }
-      
-      setNotifications((current) => [notification, ...(current || [])])
-
-      if (answer.userId === userKey) {
-        setCorrectAnswerCount((current) => (current || 0) + 1)
-      }
-    }
-  }
-
-  const upvoteQuestion = (questionId: string) => {
-    setQuestions((current) =>
-      (current || []).map(q => {
-        if (q.id === questionId) {
-          const hasUpvoted = q.upvotedBy.includes(userKey)
-          return {
-            ...q,
-            upvotes: hasUpvoted ? q.upvotes - 1 : q.upvotes + 1,
-            upvotedBy: hasUpvoted
-              ? q.upvotedBy.filter(id => id !== userKey)
-              : [...q.upvotedBy, userKey],
-          }
-        }
-        return q
+    try {
+      const answer = await ApiService.createAnswer(questionId, {
+        content,
+        userName,
+        userAvatar
       })
-    )
+      
+      // Reload answers for this question
+      const questionAnswers = await ApiService.getQuestionAnswers(questionId)
+      setAnswers(prev => ({
+        ...prev,
+        [questionId]: questionAnswers
+      }))
+      
+      // Reload questions to update answered status
+      await loadQuestions()
+      
+      return answer.id
+    } catch (error) {
+      console.error('Error posting answer:', error)
+      throw error
+    }
   }
 
-  const upvoteAnswer = (answerId: string) => {
-    setAnswers((current) =>
-      (current || []).map(a => {
-        if (a.id === answerId) {
-          const hasUpvoted = a.upvotedBy.includes(userKey)
-          return {
-            ...a,
-            upvotes: hasUpvoted ? a.upvotes - 1 : a.upvotes + 1,
-            upvotedBy: hasUpvoted
-              ? a.upvotedBy.filter(id => id !== userKey)
-              : [...a.upvotedBy, userKey],
-          }
-        }
-        return a
+  const markAsCorrectAnswer = async (answerId: string, questionId: string) => {
+    if (!currentTenant) {
+      throw new Error('Tenant missing')
+    }
+
+    try {
+      await ApiService.markBestAnswer(answerId)
+      
+      // Reload answers for this question
+      const questionAnswers = await ApiService.getQuestionAnswers(questionId)
+      setAnswers(prev => ({
+        ...prev,
+        [questionId]: questionAnswers
+      }))
+      
+      // Award XP to the answer author
+      const answer = questionAnswers.find(a => a.id === answerId)
+      if (answer && answer.userId !== userId) {
+        awardXP(10, 'Answer marked as correct')
+      }
+    } catch (error) {
+      console.error('Error marking best answer:', error)
+      throw error
+    }
+  }
+
+  const upvoteQuestion = async (questionId: string) => {
+    if (!currentTenant) {
+      throw new Error('Tenant missing')
+    }
+
+    try {
+      const updated = await ApiService.upvoteQuestion(questionId)
+      
+      // Update local state
+      setQuestions(prev => prev.map(q => 
+        q.id === questionId ? { ...q, upvotes: updated.upvotes, upvotedBy: updated.upvotedBy } : q
+      ))
+    } catch (error) {
+      console.error('Error upvoting question:', error)
+      throw error
+    }
+  }
+
+  const upvoteAnswer = async (answerId: string) => {
+    if (!currentTenant) {
+      throw new Error('Tenant missing')
+    }
+
+    try {
+      const updated = await ApiService.upvoteAnswer(answerId)
+      
+      // Find which question this answer belongs to
+      const questionId = Object.keys(answers).find(qId => 
+        answers[qId].some(a => a.id === answerId)
+      )
+      
+      if (questionId) {
+        // Update local state
+        setAnswers(prev => ({
+          ...prev,
+          [questionId]: prev[questionId].map(a =>
+            a.id === answerId ? { ...a, upvotes: updated.upvotes, upvotedBy: updated.upvotedBy } : a
+          )
+        }))
+      }
+    } catch (error) {
+      console.error('Error upvoting answer:', error)
+      throw error
+    }
+  }
+
+  const deleteQuestion = async (questionId: string) => {
+    if (!currentTenant) {
+      throw new Error('Tenant missing')
+    }
+
+    try {
+      await ApiService.deleteQuestion(questionId)
+      
+      // Remove from local state
+      setQuestions(prev => prev.filter(q => q.id !== questionId))
+      setAnswers(prev => {
+        const newAnswers = { ...prev }
+        delete newAnswers[questionId]
+        return newAnswers
       })
-    )
+    } catch (error) {
+      console.error('Error deleting question:', error)
+      throw error
+    }
   }
 
-  const deleteQuestion = (questionId: string) => {
-    setQuestions((current) => (current || []).filter(q => q.id !== questionId))
-    setAnswers((current) => (current || []).filter(a => a.questionId !== questionId))
+  const deleteAnswer = async (answerId: string) => {
+    if (!currentTenant) {
+      throw new Error('Tenant missing')
+    }
+
+    try {
+      await ApiService.deleteAnswer(answerId)
+      
+      // Remove from local state
+      setAnswers(prev => {
+        const newAnswers = { ...prev }
+        Object.keys(newAnswers).forEach(questionId => {
+          newAnswers[questionId] = newAnswers[questionId].filter(a => a.id !== answerId)
+        })
+        return newAnswers
+      })
+    } catch (error) {
+      console.error('Error deleting answer:', error)
+      throw error
+    }
   }
 
-  const deleteAnswer = (answerId: string) => {
-    setAnswers((current) => (current || []).filter(a => a.id !== answerId))
-  }
-
-  const getQuestionAnswers = (questionId: string) => {
-    return (answers || []).filter(a => a.questionId === questionId)
-  }
+  const getQuestionAnswers = useCallback((questionId: string): ForumAnswer[] => {
+    return answers[questionId] || []
+  }, [answers])
 
   return {
     questions: questions || [],
-    answers: answers || [],
-    correctAnswerCount: correctAnswerCount || 0,
+    answers: Object.values(answers).flat(),
+    loading,
     postQuestion,
     postAnswer,
     markAsCorrectAnswer,
@@ -179,5 +236,6 @@ export function useQandA(courseId: string, userId?: string) {
     deleteQuestion,
     deleteAnswer,
     getQuestionAnswers,
+    refreshQuestions: loadQuestions
   }
 }
