@@ -547,3 +547,4 @@ The Spark Template files and resources from GitHub are licensed under the terms 
 **Built with ♿ accessibility, 🎮 gamification, and ☁️ Azure cloud in mind**
 
 **Ready to transform corporate training? Start with [RESUMEN_EJECUTIVO.md](./RESUMEN_EJECUTIVO.md)! 🚀**
+
