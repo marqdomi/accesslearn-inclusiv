@@ -63,6 +63,7 @@ export function TenantResolver({ children }: TenantResolverProps) {
       }
 
       // 2. Intentar desde subdomain (producción)
+      // IMPORTANTE: getSubdomain() ya filtra subdomains de infraestructura (app, api, etc.)
       const subdomain = getSubdomain();
       if (subdomain) {
         console.log('[TenantResolver] Detectado subdomain:', subdomain);
@@ -72,6 +73,9 @@ export function TenantResolver({ children }: TenantResolverProps) {
         }
         // Si falla, continuar con otros métodos
         console.warn('[TenantResolver] No se pudo cargar tenant del subdomain, continuando...');
+      } else {
+        // Si getSubdomain() retorna null, no intentar cargar tenant (subdomain es de infraestructura)
+        console.log('[TenantResolver] Subdomain ignorado (infraestructura) o no detectado');
       }
 
       // 3. Intentar desde localStorage
