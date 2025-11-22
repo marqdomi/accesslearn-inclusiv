@@ -630,6 +630,7 @@ export function QandAForum({ course, userId, userRole }: QandAForumProps) {
           </div>
         )}
       </AnimatePresence>
+      )}
     </div>
   )
 }
