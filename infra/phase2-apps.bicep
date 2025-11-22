@@ -38,6 +38,10 @@ param emailFrom string = 'newsletter@kainet.mx'
 @secure()
 param jwtSecret string
 
+@description('Application Insights connection string')
+@secure()
+param applicationInsightsConnectionString string = ''
+
 @description('Container image tag')
 param imageTag string = 'latest'
 
@@ -158,6 +162,10 @@ resource backendApp 'Microsoft.App/containerApps@2023-05-01' = {
             {
               name: 'FRONTEND_URL'
               value: 'https://app.kainet.mx'
+            }
+            {
+              name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
+              value: applicationInsightsConnectionString
             }
           ]
           probes: [

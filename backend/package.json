@@ -13,6 +13,9 @@
     "create-user": "ts-node src/scripts/create-user.ts",
     "list-tenants": "ts-node src/scripts/list-tenants.ts",
     "setup-demo": "ts-node src/scripts/setup-demo-data.ts",
+    "setup-demo-complete": "ts-node src/scripts/setup-demo-complete.ts",
+    "setup-tutorial-courses": "ts-node src/scripts/setup-tutorial-courses.ts",
+    "assign-tutorial-courses": "ts-node src/scripts/assign-tutorial-courses-to-user.ts",
     "setup-dra-amayrani": "ts-node src/scripts/setup-dra-amayrani.ts",
     "update-passwords": "ts-node src/scripts/update-passwords.ts",
     "update-ana-role": "ts-node src/scripts/update-ana-role.ts",
@@ -29,6 +32,7 @@
     "test:headers": "./scripts/test-security-headers.sh",
     "test:all-security": "npm run test:jwt && npm run test:rate-limit && npm run test:headers",
     "test:functionality": "ts-node src/scripts/test-functionality.ts",
+    "test:profile": "ts-node src/scripts/test-profile.ts",
     "test:all": "npm run test:all-security && npm run test:functionality"
   },
   "keywords": [

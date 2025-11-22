@@ -421,6 +421,98 @@ Para cada test, documentar:
   - [ ] Ver progreso
   - [ ] Gamificación básica
 
+### ✅ FASE X: Gestión de Perfiles
+
+#### Test X.1: Acceder a Perfil
+- [ ] Login como cualquier usuario
+- [ ] Click en botón "Perfil" en el header del Dashboard
+- [ ] Verificar que se carga la página de perfil (`/profile`)
+- [ ] Verificar que se muestra información actual del usuario:
+  - [ ] Nombre completo
+  - [ ] Email (solo lectura)
+  - [ ] Avatar (si tiene)
+  - [ ] XP y nivel
+  - [ ] Rol
+
+**Resultado Esperado:** ✅ Página de perfil carga correctamente con información del usuario
+
+#### Test X.2: Actualizar Información Personal
+- [ ] En la pestaña "Información Personal"
+- [ ] Modificar nombre
+- [ ] Modificar apellido
+- [ ] Agregar/modificar teléfono
+- [ ] Agregar/modificar fecha de nacimiento
+- [ ] Seleccionar género
+- [ ] Agregar dirección (calle, ciudad, estado, código postal, país)
+- [ ] Click en "Guardar Cambios"
+- [ ] Verificar que aparece mensaje de éxito
+- [ ] Verificar que los cambios se guardaron (recargar página)
+- [ ] Verificar en Cosmos DB que los datos se actualizaron
+
+**Resultado Esperado:** ✅ Información personal se actualiza correctamente y persiste
+
+#### Test X.3: Subir Avatar
+- [ ] Click en el ícono de cámara sobre el avatar
+- [ ] Seleccionar imagen (JPG, PNG, GIF)
+- [ ] Verificar que aparece preview inmediato
+- [ ] Verificar que se valida tamaño máximo (5MB)
+- [ ] Verificar que se valida formato (solo imágenes)
+- [ ] Esperar a que se complete el upload
+- [ ] Verificar que el avatar se actualiza
+- [ ] Recargar página y verificar que el avatar persiste
+- [ ] Verificar en Cosmos DB que el avatar (base64) se guardó
+
+**Resultado Esperado:** ✅ Avatar se sube, muestra preview, y persiste correctamente
+
+#### Test X.4: Cambiar Contraseña
+- [ ] Ir a pestaña "Cambiar Contraseña"
+- [ ] Ingresar contraseña actual incorrecta
+- [ ] Ingresar nueva contraseña
+- [ ] Click en "Cambiar Contraseña"
+- [ ] Verificar que aparece error de contraseña actual incorrecta
+- [ ] Ingresar contraseña actual correcta
+- [ ] Ingresar nueva contraseña (< 8 caracteres)
+- [ ] Verificar que aparece error de validación
+- [ ] Ingresar nueva contraseña válida (>= 8 caracteres)
+- [ ] Confirmar nueva contraseña (diferente)
+- [ ] Verificar que aparece error de no coincidencia
+- [ ] Confirmar nueva contraseña (igual)
+- [ ] Click en "Cambiar Contraseña"
+- [ ] Verificar que aparece mensaje de éxito
+- [ ] Logout
+- [ ] Login con nueva contraseña
+- [ ] Verificar que el login funciona
+- [ ] Cambiar contraseña de vuelta a la original
+
+**Resultado Esperado:** ✅ Cambio de contraseña funciona con todas las validaciones
+
+#### Test X.5: Validaciones de Formulario
+- [ ] **Perfil:**
+  - [ ] Intentar guardar sin nombre (dejar vacío)
+  - [ ] Verificar que aparece error de campo requerido
+  - [ ] Intentar guardar sin apellido
+  - [ ] Verificar que aparece error
+- [ ] **Contraseña:**
+  - [ ] Intentar cambiar sin contraseña actual
+  - [ ] Verificar que aparece error
+  - [ ] Intentar con nueva contraseña igual a la actual
+  - [ ] Verificar que aparece error
+
+**Resultado Esperado:** ✅ Todas las validaciones funcionan correctamente
+
+#### Test X.6: Persistencia en Cosmos DB
+- [ ] Realizar cambios en el perfil
+- [ ] Verificar en Cosmos DB (Azure Portal o Azure Data Explorer):
+  - [ ] Container: `users`
+  - [ ] Documento del usuario se actualizó
+  - [ ] Campos modificados están presentes
+  - [ ] `updatedAt` se actualizó
+- [ ] Verificar que el avatar (base64) se guardó en campo `avatar`
+
+**Resultado Esperado:** ✅ Todos los cambios persisten en Cosmos DB
+
+---
+
 ### Para Producción
 - [ ] 100% de los tests pasan
 - [ ] No hay errores en consola

@@ -17,6 +17,7 @@ import { ContentManagerDashboardPage } from '@/pages/ContentManagerDashboardPage
 import { CourseManagementPage } from '@/pages/CourseManagementPage'
 import { AdminUsersPage } from '@/pages/AdminUsersPage'
 import { AdminSettingsPage } from '@/pages/AdminSettingsPage'
+import { ProfilePage } from '@/pages/ProfilePage'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth()
@@ -147,6 +148,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <AdminSettingsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/profile"
+        element={
+          <ProtectedRoute>
+            <ProfilePage />
           </ProtectedRoute>
         }
       />

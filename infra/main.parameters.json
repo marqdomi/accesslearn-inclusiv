@@ -26,6 +26,9 @@
     "jwtSecret": {
       "value": "SET_FROM_ENV_OR_KEYVAULT"
     },
+    "applicationInsightsConnectionString": {
+      "value": "InstrumentationKey=fb0cc223-bade-4ac7-a0dc-f87a248f57b9;IngestionEndpoint=https://eastus-8.in.applicationinsights.azure.com/;LiveEndpoint=https://eastus.livediagnostics.monitor.azure.com/;ApplicationId=981ff82c-0569-4e64-b722-533fa1d16ed8"
+    },
     "imageTag": {
       "value": "latest"
     }

@@ -202,6 +202,112 @@ export async function updateUser(
 }
 
 /**
+ * Change user password
+ */
+export async function changePassword(
+  userId: string,
+  tenantId: string,
+  currentPassword: string,
+  newPassword: string
+): Promise<User> {
+  const usersContainer = getContainer('users');
+  
+  // Get existing user
+  const existingUser = await getUserById(userId, tenantId);
+  if (!existingUser) {
+    throw new Error(`Usuario ${userId} no encontrado.`);
+  }
+  
+  // Validate current password
+  const hashedCurrentPassword = hashPassword(currentPassword);
+  if (existingUser.password && existingUser.password !== hashedCurrentPassword) {
+    throw new Error('Contraseña actual incorrecta.');
+  }
+  
+  // Validate new password (minimum 8 characters)
+  if (newPassword.length < 8) {
+    throw new Error('La nueva contraseña debe tener al menos 8 caracteres.');
+  }
+  
+  // Hash new password
+  const hashedNewPassword = hashPassword(newPassword);
+  
+  // Update password
+  const updatedUser: User = {
+    ...existingUser,
+    password: hashedNewPassword,
+    passwordResetRequired: false,
+    updatedAt: new Date().toISOString()
+  };
+  
+  const { resource } = await usersContainer.items.upsert(updatedUser);
+  return resource as unknown as User;
+}
+
+/**
+ * Update user profile (avatar, personal info, etc.)
+ */
+export async function updateProfile(
+  userId: string,
+  tenantId: string,
+  profileUpdates: {
+    firstName?: string;
+    lastName?: string;
+    phone?: string;
+    dateOfBirth?: string;
+    gender?: 'male' | 'female' | 'other' | 'prefer-not-to-say';
+    avatar?: string; // Base64 string or URL
+    address?: {
+      street?: string;
+      city?: string;
+      state?: string;
+      zipCode?: string;
+      country?: string;
+    };
+  }
+): Promise<User> {
+  const usersContainer = getContainer('users');
+  
+  // Get existing user
+  const existingUser = await getUserById(userId, tenantId);
+  if (!existingUser) {
+    throw new Error(`Usuario ${userId} no encontrado.`);
+  }
+  
+  // Validate date format if provided
+  if (profileUpdates.dateOfBirth) {
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(profileUpdates.dateOfBirth)) {
+      throw new Error('Fecha de nacimiento debe estar en formato YYYY-MM-DD.');
+    }
+  }
+  
+  // Apply profile updates
+  const updatedUser: User = {
+    ...existingUser,
+    ...(profileUpdates.firstName && { firstName: profileUpdates.firstName }),
+    ...(profileUpdates.lastName && { lastName: profileUpdates.lastName }),
+    ...(profileUpdates.phone && { phone: profileUpdates.phone }),
+    ...(profileUpdates.dateOfBirth && { dateOfBirth: profileUpdates.dateOfBirth }),
+    ...(profileUpdates.gender && { gender: profileUpdates.gender }),
+    ...(profileUpdates.avatar && { avatar: profileUpdates.avatar }),
+    ...(profileUpdates.address && {
+      address: {
+        street: profileUpdates.address.street || existingUser.address?.street || '',
+        city: profileUpdates.address.city || existingUser.address?.city || '',
+        state: profileUpdates.address.state || existingUser.address?.state || '',
+        zipCode: profileUpdates.address.zipCode || existingUser.address?.zipCode || '',
+        country: profileUpdates.address.country || existingUser.address?.country || '',
+      }
+    }),
+    updatedAt: new Date().toISOString()
+  };
+  
+  const { resource } = await usersContainer.items.upsert(updatedUser);
+  return resource as unknown as User;
+}
+
+/**
  * Enroll user in a course
  */
 export async function enrollUserInCourse(

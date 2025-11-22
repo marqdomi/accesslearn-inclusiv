@@ -219,6 +219,60 @@ class ApiServiceClass {
     })
   }
 
+  // ============================================
+  // PROFILE MANAGEMENT
+  // ============================================
+
+  /**
+   * Update user profile (firstName, lastName, phone, avatar, etc.)
+   */
+  async updateProfile(userId: string, tenantId: string, profileData: {
+    firstName?: string
+    lastName?: string
+    phone?: string
+    dateOfBirth?: string
+    gender?: 'male' | 'female' | 'other' | 'prefer-not-to-say'
+    avatar?: string // Base64 string or URL
+    address?: {
+      street?: string
+      city?: string
+      state?: string
+      zipCode?: string
+      country?: string
+    }
+  }) {
+    return this.fetchWithAuth<any>(`/users/${userId}/profile`, {
+      method: 'PUT',
+      body: JSON.stringify({ tenantId, ...profileData }),
+    })
+  }
+
+  /**
+   * Change user password
+   */
+  async changePassword(userId: string, tenantId: string, currentPassword: string, newPassword: string) {
+    return this.fetchWithAuth<{
+      success: boolean
+      message: string
+      user: {
+        id: string
+        email: string
+        firstName: string
+        lastName: string
+      }
+    }>(`/users/${userId}/password`, {
+      method: 'PUT',
+      body: JSON.stringify({ tenantId, currentPassword, newPassword }),
+    })
+  }
+
+  /**
+   * Get current user profile
+   */
+  async getCurrentUserProfile(userId: string, tenantId: string) {
+    return this.fetchWithAuth<any>(`/users/${userId}?tenantId=${tenantId}`)
+  }
+
   async deleteUser(userId: string, tenantId: string) {
     return this.fetchWithAuth<void>(`/users/${userId}`, {
       method: 'DELETE',

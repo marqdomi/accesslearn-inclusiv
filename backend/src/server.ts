@@ -3,6 +3,8 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
+import { initializeAppInsights, trackException, trackMetric, trackEvent } from './services/applicationinsights.service';
+import { trackRequestTelemetry, trackErrorTelemetry } from './middleware/telemetry';
 import { initializeCosmos, getContainer } from './services/cosmosdb.service';
 import { authenticateToken } from './middleware/authentication';
 import {
@@ -26,6 +28,8 @@ import {
   enrollUserInCourse,
   completeCourse,
   updateUser,
+  changePassword,
+  updateProfile,
   deleteUser,
   inviteUser,
   acceptInvitation,
@@ -222,6 +226,9 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json({ limit: '10mb' })); // Limit JSON payload size
 
+// Application Insights telemetry middleware (track all requests)
+app.use(trackRequestTelemetry);
+
 // Note: authenticateToken is NOT applied globally - it's applied selectively to protected routes
 
 // Health check (both paths for compatibility)
@@ -262,9 +269,23 @@ app.post('/api/auth/login', authLimiter, async (req, res) => {
       return res.status(401).json({ error: result.error });
     }
 
+    // Track successful login
+    if (result.success && result.user) {
+      trackEvent('UserLoggedIn', {
+        userId: result.user.id,
+        tenantId: result.user.tenantId,
+        role: result.user.role,
+      });
+    }
+
     res.json(result);
   } catch (error: any) {
     console.error('[API] Error during login:', error);
+    trackException(error, {
+      endpoint: '/api/auth/login',
+      tenantId: req.body.tenantId,
+      errorType: 'LoginError',
+    });
     res.status(500).json({ error: error.message });
   }
 });
@@ -476,9 +497,10 @@ app.get('/api/stats/tenant/:tenantId/users', async (req, res) => {
   }
 });
 
-// PUT /api/users/:id - Update user
+// PUT /api/users/:id - Update user (admin only - for role/status changes)
 app.put('/api/users/:id', requireAuth, requirePermission('users:update'), async (req, res) => {
   try {
+    const user = (req as any).user;
     const { id } = req.params;
     const { tenantId, ...updates } = req.body;
 
@@ -486,10 +508,81 @@ app.put('/api/users/:id', requireAuth, requirePermission('users:update'), async 
       return res.status(400).json({ error: 'tenantId is required' });
     }
 
-    const user = await updateUser(id, tenantId, updates);
-    res.json(user);
+    // Users can only update their own profile, admins can update anyone
+    if (user.id !== id && user.role !== 'super-admin' && user.role !== 'tenant-admin') {
+      return res.status(403).json({ error: 'No tienes permiso para actualizar este usuario' });
+    }
+
+    const updatedUser = await updateUser(id, tenantId, updates);
+    res.json(updatedUser);
   } catch (error: any) {
     console.error('[API] Error updating user:', error);
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// PUT /api/users/:id/profile - Update user profile (user can update own profile)
+app.put('/api/users/:id/profile', requireAuth, async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const { id } = req.params;
+    const { tenantId, ...profileUpdates } = req.body;
+
+    if (!tenantId) {
+      return res.status(400).json({ error: 'tenantId is required' });
+    }
+
+    // Users can only update their own profile
+    if (user.id !== id && user.role !== 'super-admin' && user.role !== 'tenant-admin') {
+      return res.status(403).json({ error: 'No tienes permiso para actualizar este perfil' });
+    }
+
+    const updatedUser = await updateProfile(id, tenantId, profileUpdates);
+    res.json(updatedUser);
+  } catch (error: any) {
+    console.error('[API] Error updating profile:', error);
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// PUT /api/users/:id/password - Change user password
+app.put('/api/users/:id/password', requireAuth, async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const { id } = req.params;
+    const { tenantId, currentPassword, newPassword } = req.body;
+
+    if (!tenantId || !currentPassword || !newPassword) {
+      return res.status(400).json({ 
+        error: 'tenantId, currentPassword, and newPassword are required' 
+      });
+    }
+
+    // Users can only change their own password
+    if (user.id !== id && user.role !== 'super-admin' && user.role !== 'tenant-admin') {
+      return res.status(403).json({ error: 'No tienes permiso para cambiar esta contraseña' });
+    }
+
+    // Validate new password strength
+    if (newPassword.length < 8) {
+      return res.status(400).json({ 
+        error: 'La nueva contraseña debe tener al menos 8 caracteres' 
+      });
+    }
+
+    const updatedUser = await changePassword(id, tenantId, currentPassword, newPassword);
+    res.json({ 
+      success: true, 
+      message: 'Contraseña actualizada correctamente',
+      user: {
+        id: updatedUser.id,
+        email: updatedUser.email,
+        firstName: updatedUser.firstName,
+        lastName: updatedUser.lastName,
+      }
+    });
+  } catch (error: any) {
+    console.error('[API] Error changing password:', error);
     res.status(400).json({ error: error.message });
   }
 });
@@ -2528,6 +2621,31 @@ app.put('/api/notifications/preferences', requireAuth, async (req, res) => {
 });
 
 // ============================================
+// ERROR HANDLING MIDDLEWARE (Must be last)
+// ============================================
+
+// Application Insights error tracking
+app.use(trackErrorTelemetry);
+
+// Global error handler
+app.use((error: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  console.error('[GLOBAL ERROR HANDLER]', error);
+  
+  // Track exception
+  trackException(error, {
+    endpoint: req.path,
+    method: req.method,
+    tenantId: (req as any).user?.tenantId || 'unknown',
+    userId: (req as any).user?.id || 'anonymous',
+  });
+  
+  res.status(error.status || 500).json({
+    error: error.message || 'Error interno del servidor',
+    ...(process.env.NODE_ENV === 'development' && { stack: error.stack }),
+  });
+});
+
+// ============================================
 // START SERVER
 // ============================================
 
@@ -2535,16 +2653,37 @@ async function startServer() {
   try {
     console.log('\n🚀 Iniciando AccessLearn Backend API...\n');
 
+    // Initialize Application Insights (must be done before anything else)
+    console.log('📊 Inicializando Application Insights...');
+    initializeAppInsights();
+    
+    // Track server startup event
+    trackEvent('ServerStarted', {
+      environment: process.env.NODE_ENV || 'development',
+      port: process.env.PORT || '3000',
+    });
+
     // Initialize Cosmos DB
     console.log('📦 Conectando a Cosmos DB...');
     await initializeCosmos();
     console.log('✅ Cosmos DB conectado\n');
+    
+    // Track Cosmos DB connection metric
+    trackMetric('CosmosDB.Connected', 1);
 
     // Start Express server
     app.listen(PORT, () => {
       console.log(`✅ Servidor corriendo en http://localhost:${PORT}`);
       console.log(`📍 Health check: http://localhost:${PORT}/api/health`);
-      console.log(`📚 API Base URL: http://localhost:${PORT}/api\n`);
+      console.log(`📚 API Base URL: http://localhost:${PORT}/api`);
+      
+      // Track server startup metric
+      trackMetric('Server.Started', 1, {
+        port: PORT.toString(),
+        environment: process.env.NODE_ENV || 'development',
+      });
+      
+      console.log('');
       console.log('📋 Endpoints disponibles:');
       console.log('   GET  /api/tenants');
       console.log('   GET  /api/tenants/slug/:slug');
@@ -2562,8 +2701,12 @@ async function startServer() {
       console.log('   GET  /api/users/:userId/progress/:courseId\n');
       console.log('🎯 Presiona Ctrl+C para detener el servidor\n');
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Error iniciando servidor:', error);
+    trackException(error, {
+      context: 'startServer',
+      errorType: 'ServerStartupError',
+    });
     process.exit(1);
   }
 }

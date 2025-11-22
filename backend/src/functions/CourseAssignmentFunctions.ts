@@ -120,11 +120,20 @@ export async function updateAssignmentStatus(
   
   const { resource: assignment } = await container.item(assignmentId, tenantId).read<CourseAssignment>()
   
+  if (!assignment) {
+    throw new Error('Assignment not found')
+  }
+  
   assignment.status = status
   assignment.updatedAt = new Date().toISOString()
   
   const { resource } = await container.item(assignmentId, tenantId).replace<CourseAssignment>(assignment)
-  return resource!
+  
+  if (!resource) {
+    throw new Error('Failed to update assignment')
+  }
+  
+  return resource as CourseAssignment
 }
 
 /**

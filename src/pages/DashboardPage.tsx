@@ -29,6 +29,7 @@ import {
   PlayCircle,
   ChevronRight,
   ArrowRight,
+  User,
 } from 'lucide-react'
 import { RequireRole } from '@/components/auth/RequireRole'
 import { RequirePermission } from '@/components/auth/RequirePermission'
@@ -234,6 +235,15 @@ export function DashboardPage() {
                 <p className="text-xs text-muted-foreground">{user?.email}</p>
               </div>
               <LevelBadge xp={stats.totalXP} size="md" />
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => navigate('/profile')}
+                title="Ver mi perfil"
+              >
+                <User className="h-4 w-4 mr-2" />
+                Perfil
+              </Button>
               <Button variant="outline" size="sm" onClick={handleLogout}>
                 <LogOut className="h-4 w-4 mr-2" />
                 Salir
