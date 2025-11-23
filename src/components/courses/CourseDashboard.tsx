@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { MagnifyingGlass, SquaresFour, ListBullets } from '@phosphor-icons/react'
 import { motion } from 'framer-motion'
-import { UserProgressService } from '@/services'
+import { ApiService } from '@/services/api.service'
+import { useAuth } from '@/contexts/AuthContext'
 
 interface CourseDashboardProps {
   courses: Course[]
@@ -16,6 +17,7 @@ interface CourseDashboardProps {
 }
 
 export function CourseDashboard({ courses, onSelectCourse, onViewAchievements }: CourseDashboardProps) {
+  const { user } = useAuth()
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | 'not-started' | 'in-progress' | 'completed'>('all')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
@@ -25,16 +27,19 @@ export function CourseDashboard({ courses, onSelectCourse, onViewAchievements }:
   // Load all progress for current user
   useEffect(() => {
     const loadProgress = async () => {
+      if (!user?.id) {
+        setLoading(false)
+        return
+      }
+
       try {
         setLoading(true)
-        // TODO: Replace with actual user ID from auth context
-        // For now using placeholder - should be replaced with useAuth() or similar
-        const userId = 'current-user'
-        const progressList = await UserProgressService.getByUserId(userId)
+        // Use ApiService instead of legacy UserProgressService
+        const progressList = await ApiService.getUserProgress(user.id)
         
         // Convert array to map for easier lookup
         const progressMap: Record<string, UserProgress> = {}
-        progressList.forEach(progress => {
+        progressList.forEach((progress: any) => {
           progressMap[progress.courseId] = progress
         })
         setAllProgress(progressMap)
@@ -45,7 +50,7 @@ export function CourseDashboard({ courses, onSelectCourse, onViewAchievements }:
       }
     }
     loadProgress()
-  }, [])
+  }, [user?.id])
 
   const filteredCourses = courses.filter((course) => {
     const matchesSearch =
@@ -156,7 +161,7 @@ export function CourseDashboard({ courses, onSelectCourse, onViewAchievements }:
           transition={{ delay: 0.2 }}
         >
           {filteredCourses.map((course, index) => {
-            const progress = allProgress?.[`course-progress-${course.id}`]
+            const progress = allProgress?.[course.id]
             return (
               <motion.div
                 key={course.id}

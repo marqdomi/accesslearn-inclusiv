@@ -5,7 +5,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { ApiService } from '@/services/api.service'
-import { useAuth } from '@/hooks/use-auth'
+import { useAuth } from '@/contexts/AuthContext'
 import { useTenant } from '@/contexts/TenantContext'
 import { toast } from 'sonner'
 

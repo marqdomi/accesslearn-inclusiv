@@ -9,10 +9,10 @@ import {
   Clock, 
   CheckCircle, 
   XCircle, 
-  ArchiveBox, 
+  Archive, 
   MagnifyingGlass,
   FileText,
-  AlertCircle,
+  WarningCircle,
   Eye
 } from '@phosphor-icons/react'
 import { StatusBadge } from '@/components/courses'
@@ -129,7 +129,7 @@ export function ContentManagerDashboard({ onReviewCourse }: ContentManagerDashbo
   if (!canManageContent) {
     return (
       <Alert variant="destructive">
-        <AlertCircle size={18} />
+        <WarningCircle size={18} />
         <AlertDescription>
           No tienes permisos para acceder al Content Manager Dashboard. 
           Solo content managers y administradores pueden gestionar la aprobación de contenido.
@@ -197,7 +197,7 @@ export function ContentManagerDashboard({ onReviewCourse }: ContentManagerDashbo
                 <p className="text-2xl font-bold mt-1">{stats.archived}</p>
               </div>
               <div className="h-12 w-12 rounded-lg bg-gray-100 dark:bg-gray-900/50 flex items-center justify-center">
-                <ArchiveBox className="h-6 w-6 text-gray-600 dark:text-gray-400" />
+                <Archive className="h-6 w-6 text-gray-600 dark:text-gray-400" />
               </div>
             </div>
           </CardContent>
@@ -338,7 +338,7 @@ export function ContentManagerDashboard({ onReviewCourse }: ContentManagerDashbo
                   {/* Requested Changes */}
                   {course.requestedChanges && (
                     <Alert className="mt-4">
-                      <AlertCircle size={16} />
+                      <WarningCircle size={16} />
                       <AlertDescription>
                         <strong>Cambios Solicitados:</strong>
                         <p className="mt-1">{course.requestedChanges}</p>

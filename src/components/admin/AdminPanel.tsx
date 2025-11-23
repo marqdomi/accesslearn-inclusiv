@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { AdminDashboard } from './AdminDashboard'
 import { CourseManagement } from './CourseManagement'
-import { UserManagement as UserManagementOld } from './UserManagement'
 import { UserManagement } from './UserManagementV2'
 import { GamificationHub } from './GamificationHub'
 import { ReportsView } from './ReportsView'

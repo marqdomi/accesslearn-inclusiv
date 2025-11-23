@@ -19,7 +19,7 @@ import {
   Camera, 
   ArrowLeft, 
   CheckCircle, 
-  AlertCircle,
+  WarningCircle,
   X,
   Eye,
   EyeSlash,
@@ -194,7 +194,7 @@ export function ProfilePage() {
         <Card className="max-w-md">
           <CardContent className="pt-6">
             <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
+              <WarningCircle className="h-4 w-4" />
               <AlertDescription>
                 No se pudo cargar el perfil. Por favor, intenta de nuevo.
               </AlertDescription>
