@@ -425,14 +425,6 @@ class ApiServiceClass {
     })
   }
 
-  async getCourseProgress(userId: string, courseId: string) {
-    return this.fetchWithAuth<{
-      completedLessons: string[]
-      lastAccessedAt: string | null
-      xpEarned: number
-    }>(`/users/${userId}/progress/${courseId}`)
-  }
-
   // ============================================
   // AUTHENTICATION
   // ============================================
@@ -678,7 +670,11 @@ class ApiServiceClass {
   }
 
   async getCourseProgress(userId: string, courseId: string) {
-    return this.fetchWithAuth<any>(`/user-progress/${userId}/course/${courseId}`)
+    return this.fetchWithAuth<{
+      completedLessons: string[]
+      lastAccessedAt: string | null
+      xpEarned: number
+    }>(`/user-progress/${userId}/course/${courseId}`)
   }
 
   async updateUserProgress(userId: string, courseId: string, progress: number, completedLessons?: string[]) {

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTenant } from '@/contexts/TenantContext';
 import { ApiService } from '@/services/api.service';
-import { Loader2, Building2, AlertCircle } from '@phosphor-icons/react';
+import { CircleNotch, Buildings, WarningCircle } from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -264,7 +264,7 @@ export function TenantResolver({ children }: TenantResolverProps) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
         <div className="text-center space-y-4">
-          <Loader2 className="w-12 h-12 animate-spin mx-auto text-blue-600" />
+                <CircleNotch className="w-12 h-12 animate-spin mx-auto text-blue-600" />
           <p className="text-lg text-gray-700">Cargando configuración...</p>
         </div>
       </div>
@@ -276,7 +276,7 @@ export function TenantResolver({ children }: TenantResolverProps) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 to-orange-100">
         <div className="bg-white rounded-xl shadow-xl p-8 max-w-md text-center space-y-4">
-          <AlertCircle className="w-16 h-16 text-red-600 mx-auto" />
+          <WarningCircle className="w-16 h-16 text-red-600 mx-auto" weight="fill" />
           <h2 className="text-2xl font-bold text-gray-900">Error de Configuración</h2>
           <p className="text-gray-600">{error}</p>
           <Button onClick={resolveTenant} className="w-full">
@@ -322,7 +322,7 @@ export function TenantResolver({ children }: TenantResolverProps) {
 
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start space-x-3">
-              <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+              <WarningCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" weight="fill" />
               <p className="text-sm text-red-800">{error}</p>
             </div>
           )}
@@ -347,7 +347,7 @@ export function TenantResolver({ children }: TenantResolverProps) {
                     availableTenants.map((tenant) => (
                       <SelectItem key={tenant.id} value={tenant.id} className="py-3">
                         <div className="flex items-center space-x-3">
-                          <Building2 className="w-5 h-5 text-gray-400" />
+                          <Buildings className="w-5 h-5 text-gray-400" />
                           <span className="font-medium">{tenant.name}</span>
                         </div>
                       </SelectItem>
@@ -355,7 +355,7 @@ export function TenantResolver({ children }: TenantResolverProps) {
                   ) : (
                     <SelectItem value="loading" disabled>
                       <div className="flex items-center space-x-3">
-                        <Loader2 className="w-5 h-5 text-gray-400 animate-spin" />
+                        <CircleNotch className="w-5 h-5 text-gray-400 animate-spin" />
                         <span className="font-medium">Cargando organizaciones...</span>
                       </div>
                     </SelectItem>
