@@ -76,18 +76,29 @@ export function CourseCatalog({ onCourseEnrolled }: CourseCatalogProps) {
   }
 
   const handleEnroll = async (course: Course) => {
-    if (!user || !currentTenant) return
+    if (!user) return
+
+    // Prefer user's tenantId from auth context, fallback to currentTenant
+    const tenantId = user.tenantId || currentTenant?.id
+    if (!tenantId) {
+      toast.error('No se pudo determinar el tenant. Por favor, inicia sesión nuevamente.')
+      return
+    }
 
     try {
       setEnrolling(course.id)
-      await ApiService.enrollUserInCourse(user.id, currentTenant.id, course.id)
+      console.log(`[CourseCatalog] Enrolling user ${user.id} in course ${course.id} with tenant ${tenantId}`)
+      await ApiService.enrollUserInCourse(user.id, tenantId, course.id)
       toast.success(`¡Te has inscrito en "${course.title}"!`, {
         description: 'El curso ya está disponible en tu biblioteca'
       })
       onCourseEnrolled?.()
     } catch (error: any) {
       console.error('Error enrolling in course:', error)
-      toast.error(error.message || 'Error al inscribirse en el curso')
+      const errorMessage = error.status === 400 && error.message?.includes('no encontrado')
+        ? 'Usuario no encontrado. Por favor, contacta al administrador.'
+        : error.message || 'Error al inscribirse en el curso'
+      toast.error(errorMessage)
     } finally {
       setEnrolling(null)
     }

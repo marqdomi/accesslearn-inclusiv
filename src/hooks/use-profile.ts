@@ -56,7 +56,15 @@ export function useProfile() {
 
   // Load user profile
   const loadProfile = useCallback(async () => {
-    if (!user?.id || !currentTenant?.id) {
+    if (!user?.id) {
+      return
+    }
+
+    // Prefer user's tenantId from auth context, fallback to currentTenant
+    const tenantId = user.tenantId || currentTenant?.id
+    if (!tenantId) {
+      console.warn('[useProfile] No tenantId available')
+      setError('No se pudo determinar el tenant. Por favor, inicia sesión nuevamente.')
       return
     }
 
@@ -64,15 +72,19 @@ export function useProfile() {
     setError(null)
 
     try {
-      const userData = await ApiService.getCurrentUserProfile(user.id, currentTenant.id)
+      console.log(`[useProfile] Loading profile for user ${user.id} with tenant ${tenantId}`)
+      const userData = await ApiService.getCurrentUserProfile(user.id, tenantId)
       setProfile(userData)
     } catch (err: any) {
       console.error('[useProfile] Error loading profile:', err)
-      setError(err.message || 'Error al cargar el perfil')
+      const errorMessage = err.status === 404 
+        ? 'Usuario no encontrado. Por favor, contacta al administrador.'
+        : err.message || 'Error al cargar el perfil'
+      setError(errorMessage)
     } finally {
       setLoading(false)
     }
-  }, [user?.id, currentTenant?.id])
+  }, [user?.id, user?.tenantId, currentTenant?.id])
 
   // Load profile on mount and when user/tenant changes
   useEffect(() => {
@@ -81,8 +93,14 @@ export function useProfile() {
 
   // Update profile
   const updateProfile = useCallback(async (profileData: ProfileData) => {
-    if (!user?.id || !currentTenant?.id) {
-      throw new Error('Usuario o tenant no disponible')
+    if (!user?.id) {
+      throw new Error('Usuario no disponible')
+    }
+
+    // Prefer user's tenantId from auth context, fallback to currentTenant
+    const tenantId = user.tenantId || currentTenant?.id
+    if (!tenantId) {
+      throw new Error('Tenant no disponible')
     }
 
     setLoading(true)
@@ -91,7 +109,7 @@ export function useProfile() {
     try {
       const updatedUser = await ApiService.updateProfile(
         user.id,
-        currentTenant.id,
+        tenantId,
         profileData
       )
       setProfile(updatedUser)
@@ -105,12 +123,18 @@ export function useProfile() {
     } finally {
       setLoading(false)
     }
-  }, [user?.id, currentTenant?.id])
+  }, [user?.id, user?.tenantId, currentTenant?.id])
 
   // Change password
   const changePassword = useCallback(async (currentPassword: string, newPassword: string) => {
-    if (!user?.id || !currentTenant?.id) {
-      throw new Error('Usuario o tenant no disponible')
+    if (!user?.id) {
+      throw new Error('Usuario no disponible')
+    }
+
+    // Prefer user's tenantId from auth context, fallback to currentTenant
+    const tenantId = user.tenantId || currentTenant?.id
+    if (!tenantId) {
+      throw new Error('Tenant no disponible')
     }
 
     setLoading(true)
@@ -119,7 +143,7 @@ export function useProfile() {
     try {
       const result = await ApiService.changePassword(
         user.id,
-        currentTenant.id,
+        tenantId,
         currentPassword,
         newPassword
       )
@@ -133,7 +157,7 @@ export function useProfile() {
     } finally {
       setLoading(false)
     }
-  }, [user?.id, currentTenant?.id])
+  }, [user?.id, user?.tenantId, currentTenant?.id])
 
   // Upload avatar (converts to base64)
   const uploadAvatar = useCallback(async (file: File): Promise<string> => {

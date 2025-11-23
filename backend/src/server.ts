@@ -456,10 +456,16 @@ app.get('/api/users/:id', requireAuth, requireOwnershipOrAdmin('id'), async (req
       return res.status(400).json({ error: 'tenantId query parameter is required' });
     }
 
+    console.log(`[API] Getting user ${id} for tenant ${tenantId}`);
     const user = await getUserById(id, tenantId as string);
 
     if (!user) {
-      return res.status(404).json({ error: `User ${id} not found` });
+      console.warn(`[API] User ${id} not found for tenant ${tenantId}`);
+      return res.status(404).json({ 
+        error: `User ${id} not found for tenant ${tenantId}`,
+        userId: id,
+        tenantId: tenantId
+      });
     }
 
     res.json(user);
@@ -490,11 +496,19 @@ app.post('/api/users/:id/enroll', requireAuth, requirePermission('enrollment:ass
       return res.status(400).json({ error: 'tenantId and courseId are required' });
     }
 
+    console.log(`[API] Enrolling user ${id} in course ${courseId} for tenant ${tenantId}`);
     const user = await enrollUserInCourse(id, tenantId, courseId);
     res.json(user);
   } catch (error: any) {
     console.error('[API] Error enrolling user:', error);
-    res.status(400).json({ error: error.message });
+    // Provide more context in error message
+    const errorMessage = error.message || 'Error al inscribir usuario en el curso';
+    res.status(400).json({ 
+      error: errorMessage,
+      userId: req.params.id,
+      tenantId: req.body.tenantId,
+      courseId: req.body.courseId
+    });
   }
 });
 
