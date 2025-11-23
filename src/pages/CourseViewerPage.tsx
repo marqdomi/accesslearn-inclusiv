@@ -391,9 +391,11 @@ export function CourseViewerPage() {
     ? isLessonCompleted(currentLessonId)
     : false
 
+  // Calculate total lessons (used in multiple places)
+  const totalLessons = course ? course.modules.reduce((acc, m) => acc + (m.lessons?.length || 0), 0) : 0
+
   // Show completion page if course is finished
   if (courseCompleted && course) {
-    const totalLessons = course.modules.reduce((acc, m) => acc + m.lessons.length, 0)
     return (
       <CourseCompletionPage
         courseTitle={course.title}
@@ -446,7 +448,7 @@ export function CourseViewerPage() {
               <div className="border-l pl-4">
                 <h1 className="text-lg font-bold">{course.title}</h1>
                 <p className="text-sm text-muted-foreground">
-                  {completedLessons.size} de {totalLessons} lecciones completadas
+                  {completedLessons.size} de {totalLessons || 0} lecciones completadas
                 </p>
               </div>
             </div>
@@ -454,13 +456,13 @@ export function CourseViewerPage() {
             {/* Progress indicator */}
             <div className="hidden md:flex items-center gap-3">
               <div className="text-right">
-                <p className="text-sm font-medium">{Math.round((completedLessons.size / totalLessons) * 100)}%</p>
+                <p className="text-sm font-medium">{totalLessons > 0 ? Math.round((completedLessons.size / totalLessons) * 100) : 0}%</p>
                 <p className="text-xs text-muted-foreground">Progreso</p>
               </div>
               <div className="w-32 h-2 bg-muted rounded-full overflow-hidden">
                 <div 
                   className="h-full bg-primary transition-all duration-300"
-                  style={{ width: `${(completedLessons.size / totalLessons) * 100}%` }}
+                  style={{ width: `${totalLessons > 0 ? (completedLessons.size / totalLessons) * 100 : 0}%` }}
                 />
               </div>
             </div>

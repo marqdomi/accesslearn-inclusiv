@@ -1,8 +1,8 @@
 import { useState, useMemo } from 'react'
-import { useKV } from '@github/spark/hooks'
-import { Course, UserProfile, ContentModule } from '@/lib/types'
+import { Course, ContentModule } from '@/lib/types'
 import { useQandA } from '@/hooks/use-qanda'
 import { useTranslation } from '@/lib/i18n'
+import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -58,7 +58,7 @@ type SortOption = 'newest' | 'mostUpvoted' | 'unansweredFirst'
 
 export function QandAForum({ course, userId, userRole }: QandAForumProps) {
   const { t } = useTranslation()
-  const [userProfile] = useKV<UserProfile>(`user-profile-${userId}`, {} as UserProfile)
+  const { user } = useAuth()
   const {
     questions,
     loading: qandaLoading,
@@ -81,8 +81,8 @@ export function QandAForum({ course, userId, userRole }: QandAForumProps) {
   const [expandedQuestion, setExpandedQuestion] = useState<string | null>(null)
   const [replyContent, setReplyContent] = useState<Record<string, string>>({})
 
-  const userName = userProfile?.displayName || userProfile?.firstName || 'User'
-  const userAvatar = userProfile?.avatar
+  const userName = user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : user?.email?.split('@')[0] || 'User'
+  const userAvatar = user?.avatar
 
   const filteredAndSortedQuestions = useMemo(() => {
     let filtered = questions.filter(q => {
