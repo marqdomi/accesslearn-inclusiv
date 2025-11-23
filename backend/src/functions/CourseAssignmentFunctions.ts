@@ -85,7 +85,6 @@ async function initializeUserProgress(
   tenantId: string,
   courseId: string
 ): Promise<void> {
-  const { getContainer } = await import('../services/cosmosdb.service');
   const progressContainer = getContainer('user-progress');
 
   // Check if progress already exists
