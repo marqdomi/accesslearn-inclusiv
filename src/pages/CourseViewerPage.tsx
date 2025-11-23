@@ -81,12 +81,24 @@ export function CourseViewerPage() {
     try {
       setLoading(true)
       const data = await ApiService.getCourseById(courseId)
-      setCourse(data)
+      
+      // Ensure modules and lessons arrays exist
+      const courseData: Course = {
+        ...data,
+        modules: Array.isArray(data.modules) 
+          ? data.modules.map(module => ({
+              ...module,
+              lessons: Array.isArray(module.lessons) ? module.lessons : []
+            }))
+          : []
+      }
+      
+      setCourse(courseData)
 
       // Set first lesson as current if not set
-      if (data.modules.length > 0 && data.modules[0].lessons.length > 0) {
-        setCurrentModuleId(data.modules[0].id)
-        setCurrentLessonId(data.modules[0].lessons[0].id)
+      if (courseData.modules.length > 0 && courseData.modules[0].lessons && courseData.modules[0].lessons.length > 0) {
+        setCurrentModuleId(courseData.modules[0].id)
+        setCurrentLessonId(courseData.modules[0].lessons[0].id)
       }
 
       // Load user progress
@@ -186,8 +198,8 @@ export function CourseViewerPage() {
       })
 
       // Check if module is completed
-      const currentModule = course?.modules.find(m => m.id === currentModuleId)
-      if (currentModule) {
+      const currentModule = course?.modules?.find(m => m.id === currentModuleId)
+      if (currentModule && currentModule.lessons) {
         const moduleCompletedLessons = new Set([...completedLessons, currentLessonId])
         const allModuleLessonsCompleted = currentModule.lessons.every(l => 
           moduleCompletedLessons.has(l.id)
@@ -203,8 +215,8 @@ export function CourseViewerPage() {
 
           // Check if ALL course modules are completed
           const allCourseModules = course?.modules || []
-          const allCourseLessons = allCourseModules.flatMap(m => m.lessons)
-          const allCourseLessonsCompleted = allCourseLessons.every(l => 
+          const allCourseLessons = allCourseModules.flatMap(m => m.lessons || [])
+          const allCourseLessonsCompleted = allCourseLessons.length > 0 && allCourseLessons.every(l => 
             moduleCompletedLessons.has(l.id)
           )
 
@@ -231,12 +243,12 @@ export function CourseViewerPage() {
   }
   
   const completeCourseAttempt = async () => {
-    if (!user || !courseId || !currentTenant || !course) return
+    if (!user || !courseId || !currentTenant || !course || !course.modules) return
     
     try {
       // Calculate final score based on quiz scores
       const allQuizzes = course.modules.flatMap(m => 
-        m.lessons.filter(l => l.type === 'quiz')
+        (m.lessons || []).filter(l => l.type === 'quiz')
       )
       
       let totalQuizScore = 0
@@ -309,35 +321,37 @@ export function CourseViewerPage() {
   }
 
   const goToNextLesson = () => {
-    if (!course) return
+    if (!course || !course.modules) return
 
     const currentModule = course.modules.find(m => m.id === currentModuleId)
-    if (!currentModule) return
+    if (!currentModule || !currentModule.lessons) return
 
     const currentLessonIndex = currentModule.lessons.findIndex(
       l => l.id === currentLessonId
     )
 
     // Try next lesson in current module
-    if (currentLessonIndex < currentModule.lessons.length - 1) {
+    if (currentLessonIndex >= 0 && currentLessonIndex < currentModule.lessons.length - 1) {
       setCurrentLessonId(currentModule.lessons[currentLessonIndex + 1].id)
       return
     }
 
     // Try first lesson of next module
     const currentModuleIndex = course.modules.findIndex(m => m.id === currentModuleId)
-    if (currentModuleIndex < course.modules.length - 1) {
+    if (currentModuleIndex >= 0 && currentModuleIndex < course.modules.length - 1) {
       const nextModule = course.modules[currentModuleIndex + 1]
-      setCurrentModuleId(nextModule.id)
-      setCurrentLessonId(nextModule.lessons[0].id)
+      if (nextModule.lessons && nextModule.lessons.length > 0) {
+        setCurrentModuleId(nextModule.id)
+        setCurrentLessonId(nextModule.lessons[0].id)
+      }
     }
   }
 
   const goToPreviousLesson = () => {
-    if (!course) return
+    if (!course || !course.modules) return
 
     const currentModule = course.modules.find(m => m.id === currentModuleId)
-    if (!currentModule) return
+    if (!currentModule || !currentModule.lessons) return
 
     const currentLessonIndex = currentModule.lessons.findIndex(
       l => l.id === currentLessonId
@@ -353,8 +367,10 @@ export function CourseViewerPage() {
     const currentModuleIndex = course.modules.findIndex(m => m.id === currentModuleId)
     if (currentModuleIndex > 0) {
       const prevModule = course.modules[currentModuleIndex - 1]
-      setCurrentModuleId(prevModule.id)
-      setCurrentLessonId(prevModule.lessons[prevModule.lessons.length - 1].id)
+      if (prevModule.lessons && prevModule.lessons.length > 0) {
+        setCurrentModuleId(prevModule.id)
+        setCurrentLessonId(prevModule.lessons[prevModule.lessons.length - 1].id)
+      }
     }
   }
 
@@ -366,16 +382,19 @@ export function CourseViewerPage() {
   }
 
   const isFirstLesson = () => {
-    if (!course) return true
+    if (!course || !course.modules || course.modules.length === 0) return true
+    const firstModule = course.modules[0]
+    if (!firstModule.lessons || firstModule.lessons.length === 0) return true
     return (
-      course.modules[0].id === currentModuleId &&
-      course.modules[0].lessons[0].id === currentLessonId
+      firstModule.id === currentModuleId &&
+      firstModule.lessons[0].id === currentLessonId
     )
   }
 
   const isLastLesson = () => {
-    if (!course) return true
+    if (!course || !course.modules || course.modules.length === 0) return true
     const lastModule = course.modules[course.modules.length - 1]
+    if (!lastModule.lessons || lastModule.lessons.length === 0) return true
     return (
       lastModule.id === currentModuleId &&
       lastModule.lessons[lastModule.lessons.length - 1].id === currentLessonId
@@ -401,7 +420,7 @@ export function CourseViewerPage() {
         courseTitle={course.title}
         totalXP={totalXP}
         totalLessons={totalLessons}
-        totalModules={course.modules.length}
+        totalModules={course.modules?.length || 0}
       />
     )
   }
@@ -476,13 +495,13 @@ export function CourseViewerPage() {
           {/* Sidebar Navigation */}
           <aside className="lg:col-span-3">
             <ModuleNavigation
-              modules={course.modules.map(module => ({
+              modules={(course.modules || []).map(module => ({
                 ...module,
-                lessons: module.lessons.map(lesson => ({
+                lessons: (module.lessons || []).map(lesson => ({
                   ...lesson,
                   isCompleted: isLessonCompleted(lesson.id),
                 })),
-                isCompleted: module.lessons.every(l => isLessonCompleted(l.id)),
+                isCompleted: (module.lessons || []).every(l => isLessonCompleted(l.id)),
               }))}
               currentLessonId={currentLessonId}
               onLessonSelect={handleLessonSelect}
