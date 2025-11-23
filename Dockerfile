@@ -14,6 +14,8 @@ RUN npm ci
 COPY . .
 
 # Build production bundle
+# Increase Node.js memory limit for large builds
+ENV NODE_OPTIONS="--max-old-space-size=4096"
 RUN npm run build
 
 # Production stage with nginx
