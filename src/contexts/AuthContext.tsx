@@ -7,6 +7,7 @@ interface AuthContextType {
   token: string | null
   login: (email: string, password: string, tenantId: string) => Promise<void>
   logout: () => void
+  switchTenant: () => void
   isAuthenticated: boolean
   isLoading: boolean
 }
@@ -82,8 +83,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = () => {
     setUser(null)
     setToken(null)
+
+    // Limpiar TODOS los datos de sesión
     localStorage.removeItem('auth-token')
     localStorage.removeItem('current-user')
+    localStorage.removeItem('current-tenant-id')
+
+    // Redirigir a página de inicio
+    window.location.href = '/'
+  }
+
+  const switchTenant = () => {
+    // Limpiar solo el tenant, mantener autenticación
+    localStorage.removeItem('current-tenant-id')
+
+    // Redirigir a página de inicio para seleccionar nuevo tenant
+    window.location.href = '/'
   }
 
   const value: AuthContextType = {
@@ -91,6 +106,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     token,
     login,
     logout,
+    switchTenant,
     isAuthenticated: !!user && !!token,
     isLoading,
   }

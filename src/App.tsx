@@ -17,6 +17,7 @@ import { ContentManagerDashboardPage } from '@/pages/ContentManagerDashboardPage
 import { CourseManagementPage } from '@/pages/CourseManagementPage'
 import { AdminUsersPage } from '@/pages/AdminUsersPage'
 import { AdminSettingsPage } from '@/pages/AdminSettingsPage'
+import { AdminAnalyticsPage } from '@/pages/AdminAnalyticsPage'
 import { ProfilePage } from '@/pages/ProfilePage'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -140,6 +141,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <AdminUsersPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/analytics"
+        element={
+          <ProtectedRoute>
+            <AdminAnalyticsPage />
           </ProtectedRoute>
         }
       />

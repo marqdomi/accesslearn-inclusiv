@@ -8,17 +8,17 @@ import { LevelProgressDashboard } from '@/components/gamification/LevelProgressD
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { 
-  BookOpen, 
-  Clock, 
-  CheckCircle2, 
-  LogOut, 
-  Users, 
-  Calendar, 
-  ClipboardList, 
-  Library, 
-  Settings, 
-  BarChart3, 
+import {
+  BookOpen,
+  Clock,
+  CheckCircle2,
+  LogOut,
+  Users,
+  Calendar,
+  ClipboardList,
+  Library,
+  Settings,
+  BarChart3,
   UserCog,
   Sparkles,
   GraduationCap,
@@ -34,6 +34,7 @@ import {
 import { RequireRole } from '@/components/auth/RequireRole'
 import { RequirePermission } from '@/components/auth/RequirePermission'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { TenantSwitcher } from '@/components/dashboard/TenantSwitcher'
 
 interface Course {
   id: string
@@ -90,21 +91,21 @@ export function DashboardPage() {
       let totalProgress = 0
       let enrolledCount = 0
       let completedCount = 0
-      
+
       for (const course of activeCourses) {
         try {
           const progress = await ApiService.getCourseProgress(user.id, course.id)
           if (progress && progress.completedLessons) {
             enrolledCount++
             // Calculate progress percentage based on completed lessons
-            const totalLessons = course.modules?.reduce((sum: number, m: any) => 
+            const totalLessons = course.modules?.reduce((sum: number, m: any) =>
               sum + (m.lessons?.length || 0), 0) || 0
             const completedLessons = progress.completedLessons?.length || 0
-            const courseProgress = totalLessons > 0 
-              ? Math.round((completedLessons / totalLessons) * 100) 
+            const courseProgress = totalLessons > 0
+              ? Math.round((completedLessons / totalLessons) * 100)
               : 0
             totalProgress += courseProgress
-            
+
             // Consider completed if 100% or all lessons completed
             if (courseProgress === 100 || completedLessons >= totalLessons) {
               completedCount++
@@ -116,8 +117,8 @@ export function DashboardPage() {
         }
       }
 
-      const averageProgress = enrolledCount > 0 
-        ? Math.round(totalProgress / enrolledCount) 
+      const averageProgress = enrolledCount > 0
+        ? Math.round(totalProgress / enrolledCount)
         : 0
 
       // Get user's total XP from backend (use gamification stats)
@@ -161,9 +162,9 @@ export function DashboardPage() {
         setNotificationCounts(prev => ({ ...prev, pendingRequests: requests.length }))
       } else {
         const scheduledSessions = await ApiService.getMenteeSessions(currentTenant.id, user.id, 'scheduled')
-        setNotificationCounts(prev => ({ 
-          ...prev, 
-          acceptedSessions: scheduledSessions.length 
+        setNotificationCounts(prev => ({
+          ...prev,
+          acceptedSessions: scheduledSessions.length
         }))
       }
     } catch (error) {
@@ -223,7 +224,7 @@ export function DashboardPage() {
                 <p className="text-sm text-muted-foreground">Plataforma de Aprendizaje</p>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-2">
               <div className="text-right pr-4">
                 <div className="flex items-center gap-2 justify-end mb-1">
@@ -235,9 +236,10 @@ export function DashboardPage() {
                 <p className="text-xs text-muted-foreground">{user?.email}</p>
               </div>
               <LevelBadge xp={stats.totalXP} size="md" />
-              <Button 
-                variant="outline" 
-                size="sm" 
+              <TenantSwitcher />
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => navigate('/profile')}
                 title="Ver mi perfil"
               >
@@ -350,257 +352,257 @@ export function DashboardPage() {
             <div className="grid gap-6 lg:grid-cols-3 mb-8">
               {/* Featured Section - 2 columns */}
               <div className="lg:col-span-2 space-y-6">
-            {/* Quick Actions */}
-            <Card className="overflow-hidden border-2">
-              <CardHeader className="bg-linear-to-r from-primary/5 to-primary/10">
-                <div className="flex items-center gap-2">
-                  <Sparkles className="h-5 w-5 text-primary" />
-                  <CardTitle>Acciones Rápidas</CardTitle>
-                </div>
-                <CardDescription>Accede a las funciones más importantes</CardDescription>
-              </CardHeader>
-              <CardContent className="pt-6">
-                <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
-                  <Button 
-                    variant="outline" 
-                    className="h-auto py-4 flex flex-col items-center gap-2"
-                    onClick={() => navigate('/catalog')}
-                  >
-                    <BookOpen className="h-5 w-5" />
-                    <span className="text-xs">Catálogo de Cursos</span>
-                  </Button>
-
-                  <Button 
-                    variant="outline" 
-                    className="h-auto py-4 flex flex-col items-center gap-2"
-                    onClick={() => navigate('/library')}
-                  >
-                    <Library className="h-5 w-5" />
-                    <span className="text-xs">Mi Biblioteca</span>
-                  </Button>
-
-                  <Button 
-                    variant="outline" 
-                    className="h-auto py-4 flex flex-col items-center gap-2"
-                    onClick={() => navigate('/mentors')}
-                  >
-                    <Users className="h-5 w-5" />
-                    <span className="text-xs">Buscar Mentor</span>
-                  </Button>
-
-                  <RequireRole roles={['super-admin', 'tenant-admin', 'content-manager', 'instructor']}>
-                    <Button 
-                      variant="outline" 
-                      className="h-auto py-4 flex flex-col items-center gap-2"
-                      onClick={() => navigate('/my-courses')}
-                    >
-                      <BookOpen className="h-5 w-5" />
-                      <span className="text-xs">Mis Cursos</span>
-                    </Button>
-                  </RequireRole>
-
-                  <RequireRole roles={['super-admin', 'tenant-admin', 'content-manager']}>
-                    <Button 
-                      variant="outline" 
-                      className="h-auto py-4 flex flex-col items-center gap-2"
-                      onClick={() => navigate('/content-manager')}
-                    >
-                      <CheckCircle2 className="h-5 w-5" />
-                      <span className="text-xs">Aprobar Cursos</span>
-                    </Button>
-                  </RequireRole>
-
-                  {user?.role === 'mentor' ? (
-                    <Button 
-                      variant="outline" 
-                      className="h-auto py-4 flex flex-col items-center gap-2 relative"
-                      onClick={() => navigate('/mentor/dashboard')}
-                    >
-                      <Calendar className="h-5 w-5" />
-                      <span className="text-xs">Mentorados</span>
-                      {notificationCounts.pendingRequests > 0 && (
-                        <Badge variant="destructive" className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center text-xs">
-                          {notificationCounts.pendingRequests}
-                        </Badge>
-                      )}
-                    </Button>
-                  ) : (
-                    <Button 
-                      variant="outline" 
-                      className="h-auto py-4 flex flex-col items-center gap-2 relative"
-                      onClick={() => navigate('/my-mentorships')}
-                    >
-                      <ClipboardList className="h-5 w-5" />
-                      <span className="text-xs">Solicitudes</span>
-                      {notificationCounts.acceptedSessions > 0 && (
-                        <Badge variant="default" className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center text-xs">
-                          {notificationCounts.acceptedSessions}
-                        </Badge>
-                      )}
-                    </Button>
-                  )}
-
-                  <RequirePermission permission="analytics:view-all">
-                    <Button 
-                      variant="outline" 
-                      className="h-auto py-4 flex flex-col items-center gap-2"
-                      onClick={() => navigate('/admin/analytics')}
-                    >
-                      <BarChart3 className="h-5 w-5" />
-                      <span className="text-xs">Analytics</span>
-                    </Button>
-                  </RequirePermission>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Featured Courses */}
-            <Card className="overflow-hidden border-2">
-              <CardHeader className="bg-linear-to-r from-purple-50 to-purple-100 dark:from-purple-950 dark:to-purple-900">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <GraduationCap className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                    <CardTitle>Cursos Destacados</CardTitle>
-                  </div>
-                  {courses.length > 3 && (
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => navigate('/library')}
-                    >
-                      Ver todos
-                      <ChevronRight className="h-4 w-4 ml-1" />
-                    </Button>
-                  )}
-                </div>
-              </CardHeader>
-              <CardContent className="pt-6">
-                {courses.length === 0 ? (
-                  <div className="text-center py-8">
-                    <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
-                    <p className="text-muted-foreground">No hay cursos disponibles</p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {courses.slice(0, 3).map((course) => (
-                      <div 
-                        key={course.id}
-                        className="p-4 rounded-lg border border-border/50 hover:border-primary/50 transition-colors cursor-pointer group"
-                        onClick={() => navigate(`/courses/${course.id}`)}
+                {/* Quick Actions */}
+                <Card className="overflow-hidden border-2">
+                  <CardHeader className="bg-linear-to-r from-primary/5 to-primary/10">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="h-5 w-5 text-primary" />
+                      <CardTitle>Acciones Rápidas</CardTitle>
+                    </div>
+                    <CardDescription>Accede a las funciones más importantes</CardDescription>
+                  </CardHeader>
+                  <CardContent className="pt-6">
+                    <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
+                      <Button
+                        variant="outline"
+                        className="h-auto py-4 flex flex-col items-center gap-2"
+                        onClick={() => navigate('/catalog')}
                       >
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <h4 className="font-semibold group-hover:text-primary transition-colors line-clamp-1">{course.title}</h4>
-                            <p className="text-sm text-muted-foreground line-clamp-1">{course.description}</p>
-                            <div className="flex items-center gap-4 mt-2">
-                              <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                                <Clock className="h-3 w-3" />
-                                {course.estimatedHours}h
+                        <BookOpen className="h-5 w-5" />
+                        <span className="text-xs">Catálogo de Cursos</span>
+                      </Button>
+
+                      <Button
+                        variant="outline"
+                        className="h-auto py-4 flex flex-col items-center gap-2"
+                        onClick={() => navigate('/library')}
+                      >
+                        <Library className="h-5 w-5" />
+                        <span className="text-xs">Mi Biblioteca</span>
+                      </Button>
+
+                      <Button
+                        variant="outline"
+                        className="h-auto py-4 flex flex-col items-center gap-2"
+                        onClick={() => navigate('/mentors')}
+                      >
+                        <Users className="h-5 w-5" />
+                        <span className="text-xs">Buscar Mentor</span>
+                      </Button>
+
+                      <RequireRole roles={['super-admin', 'tenant-admin', 'content-manager', 'instructor']}>
+                        <Button
+                          variant="outline"
+                          className="h-auto py-4 flex flex-col items-center gap-2"
+                          onClick={() => navigate('/my-courses')}
+                        >
+                          <BookOpen className="h-5 w-5" />
+                          <span className="text-xs">Mis Cursos</span>
+                        </Button>
+                      </RequireRole>
+
+                      <RequireRole roles={['super-admin', 'tenant-admin', 'content-manager']}>
+                        <Button
+                          variant="outline"
+                          className="h-auto py-4 flex flex-col items-center gap-2"
+                          onClick={() => navigate('/content-manager')}
+                        >
+                          <CheckCircle2 className="h-5 w-5" />
+                          <span className="text-xs">Aprobar Cursos</span>
+                        </Button>
+                      </RequireRole>
+
+                      {user?.role === 'mentor' ? (
+                        <Button
+                          variant="outline"
+                          className="h-auto py-4 flex flex-col items-center gap-2 relative"
+                          onClick={() => navigate('/mentor/dashboard')}
+                        >
+                          <Calendar className="h-5 w-5" />
+                          <span className="text-xs">Mentorados</span>
+                          {notificationCounts.pendingRequests > 0 && (
+                            <Badge variant="destructive" className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center text-xs">
+                              {notificationCounts.pendingRequests}
+                            </Badge>
+                          )}
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          className="h-auto py-4 flex flex-col items-center gap-2 relative"
+                          onClick={() => navigate('/my-mentorships')}
+                        >
+                          <ClipboardList className="h-5 w-5" />
+                          <span className="text-xs">Solicitudes</span>
+                          {notificationCounts.acceptedSessions > 0 && (
+                            <Badge variant="default" className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center text-xs">
+                              {notificationCounts.acceptedSessions}
+                            </Badge>
+                          )}
+                        </Button>
+                      )}
+
+                      <RequirePermission permission="analytics:view-all">
+                        <Button
+                          variant="outline"
+                          className="h-auto py-4 flex flex-col items-center gap-2"
+                          onClick={() => navigate('/admin/analytics')}
+                        >
+                          <BarChart3 className="h-5 w-5" />
+                          <span className="text-xs">Analytics</span>
+                        </Button>
+                      </RequirePermission>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Featured Courses */}
+                <Card className="overflow-hidden border-2">
+                  <CardHeader className="bg-linear-to-r from-purple-50 to-purple-100 dark:from-purple-950 dark:to-purple-900">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <GraduationCap className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                        <CardTitle>Cursos Destacados</CardTitle>
+                      </div>
+                      {courses.length > 3 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => navigate('/library')}
+                        >
+                          Ver todos
+                          <ChevronRight className="h-4 w-4 ml-1" />
+                        </Button>
+                      )}
+                    </div>
+                  </CardHeader>
+                  <CardContent className="pt-6">
+                    {courses.length === 0 ? (
+                      <div className="text-center py-8">
+                        <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
+                        <p className="text-muted-foreground">No hay cursos disponibles</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {courses.slice(0, 3).map((course) => (
+                          <div
+                            key={course.id}
+                            className="p-4 rounded-lg border border-border/50 hover:border-primary/50 transition-colors cursor-pointer group"
+                            onClick={() => navigate(`/courses/${course.id}`)}
+                          >
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <h4 className="font-semibold group-hover:text-primary transition-colors line-clamp-1">{course.title}</h4>
+                                <p className="text-sm text-muted-foreground line-clamp-1">{course.description}</p>
+                                <div className="flex items-center gap-4 mt-2">
+                                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                    <Clock className="h-3 w-3" />
+                                    {course.estimatedHours}h
+                                  </div>
+                                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                    <BookOpen className="h-3 w-3" />
+                                    {course.modules?.length || 0} módulos
+                                  </div>
+                                  <Badge variant="outline" className="text-xs">{course.difficulty}</Badge>
+                                </div>
                               </div>
-                              <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                                <BookOpen className="h-3 w-3" />
-                                {course.modules?.length || 0} módulos
-                              </div>
-                              <Badge variant="outline" className="text-xs">{course.difficulty}</Badge>
+                              <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors ml-2 shrink-0" />
                             </div>
                           </div>
-                          <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors ml-2 shrink-0" />
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Sidebar - 1 column */}
+              <div className="space-y-6">
+                {/* Features Widget */}
+                <Card className="overflow-hidden border-2">
+                  <CardHeader className="bg-linear-to-r from-green-50 to-green-100 dark:from-green-950 dark:to-green-900">
+                    <div className="flex items-center gap-2">
+                      <Medal className="h-5 w-5 text-green-600 dark:text-green-400" />
+                      <CardTitle className="text-sm">Características</CardTitle>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="pt-4">
+                    <div className="space-y-3">
+                      <div className="flex items-start gap-3">
+                        <div className="h-6 w-6 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center mt-1 shrink-0">
+                          <Target className="h-3 w-3 text-blue-600 dark:text-blue-400" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold">Cursos Interactivos</p>
+                          <p className="text-xs text-muted-foreground">Aprende con contenido multimedia</p>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
 
-          {/* Sidebar - 1 column */}
-          <div className="space-y-6">
-            {/* Features Widget */}
-            <Card className="overflow-hidden border-2">
-              <CardHeader className="bg-linear-to-r from-green-50 to-green-100 dark:from-green-950 dark:to-green-900">
-                <div className="flex items-center gap-2">
-                  <Medal className="h-5 w-5 text-green-600 dark:text-green-400" />
-                  <CardTitle className="text-sm">Características</CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent className="pt-4">
-                <div className="space-y-3">
-                  <div className="flex items-start gap-3">
-                    <div className="h-6 w-6 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center mt-1 shrink-0">
-                      <Target className="h-3 w-3 text-blue-600 dark:text-blue-400" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold">Cursos Interactivos</p>
-                      <p className="text-xs text-muted-foreground">Aprende con contenido multimedia</p>
-                    </div>
-                  </div>
+                      <div className="flex items-start gap-3">
+                        <div className="h-6 w-6 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center mt-1 shrink-0">
+                          <Zap className="h-3 w-3 text-purple-600 dark:text-purple-400" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold">Sistema XP</p>
+                          <p className="text-xs text-muted-foreground">Gana puntos y sube de nivel</p>
+                        </div>
+                      </div>
 
-                  <div className="flex items-start gap-3">
-                    <div className="h-6 w-6 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center mt-1 shrink-0">
-                      <Zap className="h-3 w-3 text-purple-600 dark:text-purple-400" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold">Sistema XP</p>
-                      <p className="text-xs text-muted-foreground">Gana puntos y sube de nivel</p>
-                    </div>
-                  </div>
+                      <div className="flex items-start gap-3">
+                        <div className="h-6 w-6 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center mt-1 shrink-0">
+                          <Users className="h-3 w-3 text-green-600 dark:text-green-400" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold">Mentoría Personalizada</p>
+                          <p className="text-xs text-muted-foreground">Conéctate con expertos</p>
+                        </div>
+                      </div>
 
-                  <div className="flex items-start gap-3">
-                    <div className="h-6 w-6 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center mt-1 shrink-0">
-                      <Users className="h-3 w-3 text-green-600 dark:text-green-400" />
+                      <div className="flex items-start gap-3">
+                        <div className="h-6 w-6 rounded-full bg-orange-100 dark:bg-orange-900 flex items-center justify-center mt-1 shrink-0">
+                          <TrendingUp className="h-3 w-3 text-orange-600 dark:text-orange-400" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold">Progreso Detallado</p>
+                          <p className="text-xs text-muted-foreground">Monitorea tu desarrollo</p>
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm font-semibold">Mentoría Personalizada</p>
-                      <p className="text-xs text-muted-foreground">Conéctate con expertos</p>
-                    </div>
-                  </div>
+                  </CardContent>
+                </Card>
 
-                  <div className="flex items-start gap-3">
-                    <div className="h-6 w-6 rounded-full bg-orange-100 dark:bg-orange-900 flex items-center justify-center mt-1 shrink-0">
-                      <TrendingUp className="h-3 w-3 text-orange-600 dark:text-orange-400" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold">Progreso Detallado</p>
-                      <p className="text-xs text-muted-foreground">Monitorea tu desarrollo</p>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Admin Section - Conditional */}
-            <RequireRole roles={['super-admin', 'tenant-admin', 'user-manager']}>
-              <Card className="overflow-hidden border-2 border-destructive/30">
-                <CardHeader className="bg-destructive/5">
-                  <div className="flex items-center gap-2">
-                    <UserCog className="h-5 w-5 text-destructive" />
-                    <CardTitle className="text-sm">Administración</CardTitle>
-                  </div>
-                </CardHeader>
-                <CardContent className="pt-4">
-                  <div className="space-y-2">
-                    <Button 
-                      variant="outline" 
-                      className="w-full justify-start"
-                      onClick={() => navigate('/admin/users')}
-                    >
-                      <UserCog className="h-4 w-4 mr-2" />
-                      Gestionar Usuarios
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      className="w-full justify-start"
-                      onClick={() => navigate('/admin/settings')}
-                    >
-                      <Settings className="h-4 w-4 mr-2" />
-                      Configuración
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </RequireRole>
-          </div>
+                {/* Admin Section - Conditional */}
+                <RequireRole roles={['super-admin', 'tenant-admin', 'user-manager']}>
+                  <Card className="overflow-hidden border-2 border-destructive/30">
+                    <CardHeader className="bg-destructive/5">
+                      <div className="flex items-center gap-2">
+                        <UserCog className="h-5 w-5 text-destructive" />
+                        <CardTitle className="text-sm">Administración</CardTitle>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="pt-4">
+                      <div className="space-y-2">
+                        <Button
+                          variant="outline"
+                          className="w-full justify-start"
+                          onClick={() => navigate('/admin/users')}
+                        >
+                          <UserCog className="h-4 w-4 mr-2" />
+                          Gestionar Usuarios
+                        </Button>
+                        <Button
+                          variant="outline"
+                          className="w-full justify-start"
+                          onClick={() => navigate('/admin/settings')}
+                        >
+                          <Settings className="h-4 w-4 mr-2" />
+                          Configuración
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </RequireRole>
+              </div>
             </div>
           </TabsContent>
           <TabsContent value="progress" className="mt-6">

@@ -25,10 +25,10 @@ export function ContentManagerDashboardPage() {
             onClick={() => navigate('/dashboard')}
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Dashboard
+            Volver al Dashboard
           </Button>
           <Button variant="outline" size="sm" onClick={logout}>
-            Logout
+            Cerrar Sesión
           </Button>
         </div>
       </header>

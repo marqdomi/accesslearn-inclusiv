@@ -62,21 +62,71 @@ export function ContentManagerDashboard({ onReviewCourse }: ContentManagerDashbo
 
   // Load courses from backend
   useEffect(() => {
-    if (currentTenant) {
+    if (currentTenant && user) {
       loadCourses()
     }
-  }, [currentTenant])
+  }, [currentTenant, user?.id, user?.tenantId])
 
   const loadCourses = async () => {
-    if (!currentTenant) return
+    if (!currentTenant || !user) return
 
     try {
       setLoading(true)
-      const data = await ApiService.getCourses(currentTenant.id)
-      setCourses(data)
+      // Use user's tenantId from auth context, fallback to currentTenant
+      const tenantId = user.tenantId || currentTenant.id
+      const data = await ApiService.getCourses(tenantId)
+      
+      // Get all unique instructor IDs
+      const instructorIds = [...new Set(
+        data
+          .map((course: any) => course.createdBy || course.instructor)
+          .filter((id: string | undefined) => id)
+      )]
+      
+      // Fetch all instructors in parallel
+      const instructorMap = new Map<string, string>()
+      await Promise.all(
+        instructorIds.map(async (instructorId: string) => {
+          try {
+            const instructor = await ApiService.getUserById(instructorId, tenantId)
+            if (instructor) {
+              const name = `${instructor.firstName || ''} ${instructor.lastName || ''}`.trim() || instructor.email || 'Desconocido'
+              instructorMap.set(instructorId, name)
+            }
+          } catch (err) {
+            console.warn(`Could not fetch instructor ${instructorId}:`, err)
+            instructorMap.set(instructorId, 'Desconocido')
+          }
+        })
+      )
+      
+      // Map courses with instructor names
+      const mappedCourses = data.map((course: any) => {
+        const instructorId = course.createdBy || course.instructor
+        const instructorName = instructorId ? instructorMap.get(instructorId) || 'Desconocido' : 'No asignado'
+        
+        return {
+          id: course.id,
+          title: course.title || 'Sin título',
+          description: course.description || '',
+          instructor: instructorId || '',
+          instructorName: instructorName,
+          status: course.status || 'draft',
+          category: course.category || 'Sin categoría',
+          createdAt: course.createdAt || new Date().toISOString(),
+          submittedForReviewAt: course.submittedForReviewAt,
+          publishedAt: course.publishedAt,
+          archivedAt: course.archivedAt,
+          reviewComments: course.reviewComments,
+          requestedChanges: course.requestedChanges,
+        }
+      })
+      
+      setCourses(mappedCourses)
     } catch (error: any) {
       console.error('Error loading courses:', error)
       toast.error('Error al cargar cursos')
+      setCourses([])
     } finally {
       setLoading(false)
     }
@@ -153,7 +203,7 @@ export function ContentManagerDashboard({ onReviewCourse }: ContentManagerDashbo
     <div className="space-y-6">
       {/* Header */}
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold">Content Manager Dashboard</h1>
+        <h1 className="text-3xl font-bold">Panel de Gestión de Contenido</h1>
         <p className="text-muted-foreground">
           Gestiona y revisa todos los cursos del sistema
         </p>
@@ -165,7 +215,7 @@ export function ContentManagerDashboard({ onReviewCourse }: ContentManagerDashbo
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Pending Review</p>
+                <p className="text-sm font-medium text-muted-foreground">Pendientes de Revisión</p>
                 <p className="text-2xl font-bold mt-1">{stats.pending}</p>
               </div>
               <div className="h-12 w-12 rounded-lg bg-orange-100 dark:bg-orange-900/50 flex items-center justify-center">
@@ -179,7 +229,7 @@ export function ContentManagerDashboard({ onReviewCourse }: ContentManagerDashbo
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Published</p>
+                <p className="text-sm font-medium text-muted-foreground">Publicados</p>
                 <p className="text-2xl font-bold mt-1">{stats.published}</p>
               </div>
               <div className="h-12 w-12 rounded-lg bg-green-100 dark:bg-green-900/50 flex items-center justify-center">
@@ -193,7 +243,7 @@ export function ContentManagerDashboard({ onReviewCourse }: ContentManagerDashbo
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Archived</p>
+                <p className="text-sm font-medium text-muted-foreground">Archivados</p>
                 <p className="text-2xl font-bold mt-1">{stats.archived}</p>
               </div>
               <div className="h-12 w-12 rounded-lg bg-gray-100 dark:bg-gray-900/50 flex items-center justify-center">
@@ -207,7 +257,7 @@ export function ContentManagerDashboard({ onReviewCourse }: ContentManagerDashbo
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Drafts</p>
+                <p className="text-sm font-medium text-muted-foreground">Borradores</p>
                 <p className="text-2xl font-bold mt-1">{stats.draft}</p>
               </div>
               <div className="h-12 w-12 rounded-lg bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center">
@@ -237,16 +287,16 @@ export function ContentManagerDashboard({ onReviewCourse }: ContentManagerDashbo
       <Tabs value={selectedTab} onValueChange={setSelectedTab}>
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="pending" className="relative">
-            Pending Review
+            Pendientes de Revisión
             {stats.pending > 0 && (
               <Badge variant="destructive" className="ml-2 h-5 w-5 p-0 flex items-center justify-center">
                 {stats.pending}
               </Badge>
             )}
           </TabsTrigger>
-          <TabsTrigger value="published">Published ({stats.published})</TabsTrigger>
-          <TabsTrigger value="archived">Archived ({stats.archived})</TabsTrigger>
-          <TabsTrigger value="draft">Drafts ({stats.draft})</TabsTrigger>
+          <TabsTrigger value="published">Publicados ({stats.published})</TabsTrigger>
+          <TabsTrigger value="archived">Archivados ({stats.archived})</TabsTrigger>
+          <TabsTrigger value="draft">Borradores ({stats.draft})</TabsTrigger>
         </TabsList>
 
         {/* Courses List */}
@@ -281,7 +331,7 @@ export function ContentManagerDashboard({ onReviewCourse }: ContentManagerDashbo
                         size="sm"
                       >
                         <Eye className="mr-2" size={16} />
-                        Review
+                        Revisar
                       </Button>
                     )}
                   </div>
@@ -290,7 +340,7 @@ export function ContentManagerDashboard({ onReviewCourse }: ContentManagerDashbo
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                     <div>
                       <p className="text-muted-foreground">Instructor</p>
-                      <p className="font-medium">{course.instructorName}</p>
+                      <p className="font-medium">{course.instructorName || 'No asignado'}</p>
                     </div>
                     <div>
                       <p className="text-muted-foreground">Categoría</p>

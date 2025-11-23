@@ -27,6 +27,7 @@ export interface Tenant {
 interface TenantContextType {
   currentTenant: Tenant | null
   setCurrentTenant: (tenant: Tenant | null) => void
+  clearTenant: () => void
   isLoading: boolean
 }
 
@@ -43,7 +44,7 @@ export function TenantProvider({ children }: TenantProviderProps) {
   // Load tenant from localStorage on mount
   useEffect(() => {
     const storedTenantId = localStorage.getItem('current-tenant-id')
-    
+
     if (storedTenantId) {
       // In production, this would fetch from backend API
       // For now, we'll use a default tenant
@@ -71,7 +72,7 @@ export function TenantProvider({ children }: TenantProviderProps) {
       setCurrentTenantState(demoTenant)
       localStorage.setItem('current-tenant-id', 'tenant-demo')
     }
-    
+
     setIsLoading(false)
   }, [])
 
@@ -84,8 +85,13 @@ export function TenantProvider({ children }: TenantProviderProps) {
     }
   }
 
+  const clearTenant = () => {
+    setCurrentTenantState(null)
+    localStorage.removeItem('current-tenant-id')
+  }
+
   return (
-    <TenantContext.Provider value={{ currentTenant, setCurrentTenant, isLoading }}>
+    <TenantContext.Provider value={{ currentTenant, setCurrentTenant, clearTenant, isLoading }}>
       {children}
     </TenantContext.Provider>
   )

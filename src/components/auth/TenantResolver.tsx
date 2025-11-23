@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTenant } from '@/contexts/TenantContext';
 import { ApiService } from '@/services/api.service';
-import { CircleNotch, Buildings, WarningCircle } from '@phosphor-icons/react';
+import { CircleNotch, Buildings, WarningCircle, SignOut } from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -27,7 +27,7 @@ interface TenantResolverProps {
  * Solo renderiza children cuando el tenant está confirmado.
  */
 export function TenantResolver({ children }: TenantResolverProps) {
-  const { currentTenant, setCurrentTenant, isLoading: tenantLoading } = useTenant();
+  const { currentTenant, setCurrentTenant, clearTenant, isLoading: tenantLoading } = useTenant();
   const [resolving, setResolving] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [availableTenants, setAvailableTenants] = useState<Array<{
@@ -36,6 +36,7 @@ export function TenantResolver({ children }: TenantResolverProps) {
     slug: string;
   }>>([]);
   const [showSelector, setShowSelector] = useState(false);
+  const [savedTenantId, setSavedTenantId] = useState<string | null>(null);
 
   useEffect(() => {
     resolveTenant();
@@ -86,7 +87,13 @@ export function TenantResolver({ children }: TenantResolverProps) {
         return;
       }
 
-      // 4. No se pudo resolver automáticamente → mostrar selector
+      // 4. Si hay tenant guardado pero no está cargado, guardarlo para mostrar opción
+      if (savedTenantId) {
+        console.log('[TenantResolver] Tenant guardado encontrado:', savedTenantId);
+        setSavedTenantId(savedTenantId);
+      }
+
+      // 5. No se pudo resolver automáticamente → mostrar selector
       console.log('[TenantResolver] No se detectó tenant, mostrando selector...');
       await loadAvailableTenants();
       setShowSelector(true);
@@ -112,7 +119,7 @@ export function TenantResolver({ children }: TenantResolverProps) {
    */
   const getSubdomain = (): string | null => {
     const hostname = window.location.hostname;
-    
+
     // Desarrollo local
     if (hostname === 'localhost' || hostname === '127.0.0.1') {
       return null;
@@ -126,17 +133,17 @@ export function TenantResolver({ children }: TenantResolverProps) {
     // Producción: extraer primer segmento
     // kainet.lms.kainet.mx → ["kainet", "lms", "kainet", "mx"]
     const parts = hostname.split('.');
-    
+
     // Si tiene al menos 3 partes (subdomain.domain.tld) y no es Azure
     if (parts.length >= 3 && !parts[0].startsWith('ca-')) {
       const subdomain = parts[0];
-      
+
       // Ignorar subdominios de infraestructura/aplicación (no son tenants)
       const infrastructureSubdomains = ['app', 'api', 'www', 'admin', 'dashboard', 'portal'];
       if (infrastructureSubdomains.includes(subdomain.toLowerCase())) {
         return null;
       }
-      
+
       return subdomain;
     }
 
@@ -158,7 +165,7 @@ export function TenantResolver({ children }: TenantResolverProps) {
   const loadTenantBySlug = async (slug: string): Promise<boolean> => {
     try {
       const tenant = await ApiService.getTenantBySlug(slug);
-      
+
       if (!tenant) {
         console.warn(`[TenantResolver] Tenant "${slug}" no encontrado`);
         return false;
@@ -182,16 +189,16 @@ export function TenantResolver({ children }: TenantResolverProps) {
       console.log('[TenantResolver] Cargando lista de tenants disponibles...');
       const tenants = await ApiService.listTenants();
       console.log('[TenantResolver] Tenants obtenidos del API:', tenants);
-      
+
       const mappedTenants = tenants.map(t => ({
         id: t.id,
         name: t.name,
         slug: t.slug,
       }));
-      
+
       console.log('[TenantResolver] Tenants mapeados:', mappedTenants);
       setAvailableTenants(mappedTenants);
-      
+
       if (mappedTenants.length === 0) {
         console.warn('[TenantResolver] No se encontraron tenants, usando fallback');
         // Fallback a tenants hardcoded para desarrollo
@@ -218,7 +225,7 @@ export function TenantResolver({ children }: TenantResolverProps) {
    */
   const handleTenantSelect = async (tenantId: string) => {
     console.log('[TenantResolver] handleTenantSelect llamado con tenantId:', tenantId);
-    
+
     const selected = availableTenants.find(t => t.id === tenantId);
     if (!selected) {
       console.error('[TenantResolver] Tenant no encontrado en availableTenants:', tenantId);
@@ -232,11 +239,11 @@ export function TenantResolver({ children }: TenantResolverProps) {
     try {
       setResolving(true);
       setError(null);
-      
+
       // Intentar cargar el tenant directamente primero
       console.log('[TenantResolver] Intentando cargar tenant por slug:', selected.slug);
       const loaded = await loadTenantBySlug(selected.slug);
-      
+
       if (loaded) {
         console.log('[TenantResolver] Tenant cargado exitosamente');
         // Si se carga exitosamente, guardar en localStorage para futuras visitas
@@ -264,7 +271,7 @@ export function TenantResolver({ children }: TenantResolverProps) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
         <div className="text-center space-y-4">
-                <CircleNotch className="w-12 h-12 animate-spin mx-auto text-blue-600" />
+          <CircleNotch className="w-12 h-12 animate-spin mx-auto text-blue-600" />
           <p className="text-lg text-gray-700">Cargando configuración...</p>
         </div>
       </div>
@@ -295,6 +302,23 @@ export function TenantResolver({ children }: TenantResolverProps) {
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMzLjMxNCAwIDYgMi42ODYgNiA2cy0yLjY4NiA2LTYgNi02LTIuNjg2LTYtNiAyLjY4Ni02IDYtNnptMCA0YzEuMTA1IDAgMiAuODk1IDIgMnMtLjg5NSAyLTIgMi0yLS44OTUtMi0yIC44OTUtMiAyLTJ6IiBmaWxsPSIjZmZmIiBmaWxsLW9wYWNpdHk9Ii4wNSIvPjwvZz48L3N2Zz4=')] opacity-20"></div>
 
         <div className="relative bg-white rounded-2xl shadow-2xl p-10 max-w-lg w-full mx-4 space-y-8">
+          {/* Logout button in top-right */}
+          <div className="absolute top-4 right-4">
+            <Button
+              onClick={() => {
+                // Limpiar todo y redirigir
+                localStorage.clear();
+                window.location.href = '/';
+              }}
+              variant="ghost"
+              size="sm"
+              className="gap-2 text-gray-600 hover:text-gray-900"
+            >
+              <SignOut size={18} />
+              <span className="hidden sm:inline">Cerrar Sesión</span>
+            </Button>
+          </div>
+
           {/* Logo y header */}
           <div className="text-center space-y-4">
             <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg">
@@ -328,11 +352,39 @@ export function TenantResolver({ children }: TenantResolverProps) {
           )}
 
           <div className="space-y-6">
+            {/* Continue with saved tenant option */}
+            {savedTenantId && availableTenants.find(t => t.id === savedTenantId) && (
+              <div className="space-y-3">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <p className="text-sm text-blue-900">
+                    <strong className="font-semibold">Última organización utilizada:</strong>
+                    <br />
+                    {availableTenants.find(t => t.id === savedTenantId)?.name}
+                  </p>
+                </div>
+                <Button
+                  onClick={() => handleTenantSelect(savedTenantId)}
+                  className="w-full h-12"
+                  variant="default"
+                >
+                  Continuar con {availableTenants.find(t => t.id === savedTenantId)?.name}
+                </Button>
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-gray-200"></div>
+                  </div>
+                  <div className="relative flex justify-center text-xs">
+                    <span className="px-2 bg-white text-gray-500">o selecciona otra organización</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="space-y-3">
               <label className="text-sm font-medium text-gray-700">
                 Organización
               </label>
-              <Select 
+              <Select
                 value={availableTenants.find(t => t.id === localStorage.getItem('current-tenant-id'))?.id || ''}
                 onValueChange={(value) => {
                   console.log('[TenantResolver] Select onValueChange triggered with value:', value);
