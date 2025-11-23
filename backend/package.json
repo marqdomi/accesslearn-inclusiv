@@ -23,6 +23,7 @@
     "seed": "ts-node src/scripts/seed-data.ts",
     "reset-db": "npm run clean && npm run seed",
     "reset-kainet": "ts-node src/scripts/reset-to-kainet-only.ts",
+    "create-test-users-all-roles": "ts-node src/scripts/create-test-users-all-roles.ts",
     "grant-super-admin": "ts-node src/scripts/grant-super-admin.ts",
     "test": "jest",
     "test:watch": "jest --watch",

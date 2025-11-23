@@ -55,47 +55,88 @@
 
 ### Usuarios de Prueba
 
+**Tenant:** Kainet  
+**Slug:** `kainet`  
+**Password (todos los usuarios):** `Demo123!`
+
 #### Super Admin
 ```
-Email: admin@kainet.test
-Password: Admin2024!
+Email: ana.lopez@kainet.mx
+Password: Demo123!
 Rol: super-admin
+Descripción: Acceso completo a nivel plataforma (multi-tenant)
 ```
 
 #### Tenant Admin
 ```
-Email: tenant-admin@kainet.test
-Password: Admin2024!
+Email: admin.tenant@kainet.mx
+Password: Demo123!
 Rol: tenant-admin
+Descripción: Administrador completo de la organización
 ```
 
 #### Content Manager
 ```
-Email: content-manager@kainet.test
-Password: Manager2024!
+Email: carlos.content@kainet.mx
+Password: Demo123!
 Rol: content-manager
+Descripción: Gestión de cursos y contenido
+```
+
+#### User Manager
+```
+Email: laura.users@kainet.mx
+Password: Demo123!
+Rol: user-manager
+Descripción: Gestión de usuarios y equipos
+```
+
+#### Analytics Viewer
+```
+Email: pedro.analytics@kainet.mx
+Password: Demo123!
+Rol: analytics-viewer
+Descripción: Acceso solo lectura a analytics
 ```
 
 #### Instructor
 ```
-Email: instructor@kainet.test
-Password: Instructor2024!
+Email: maria.instructor@kainet.mx
+Password: Demo123!
 Rol: instructor
+Descripción: Creación de cursos (con aprobación)
+```
+
+#### Mentor
+```
+Email: carlos.mentor@kainet.mx
+Password: Demo123!
+Rol: mentor
+Descripción: Guía de estudiantes
 ```
 
 #### Student
 ```
-Email: student@kainet.test
-Password: Student2024!
+Email: juan.student@kainet.mx
+Password: Demo123!
 Rol: student
+Descripción: Experiencia de aprendizaje
 ```
 
-### Tenant de Prueba
+### Crear Usuarios de Prueba
+
+Para crear/actualizar todos los usuarios de prueba, ejecuta:
+
+```bash
+cd backend
+npm run create-test-users-all-roles
 ```
-Tenant ID: tenant-kainet
-Slug: kainet
-Nombre: Kainet
-```
+
+Este script:
+- ✅ Crea usuarios para TODOS los roles del sistema
+- ✅ Actualiza usuarios existentes si ya existen
+- ✅ Establece password: `Demo123!` para todos
+- ✅ Marca usuarios como activos
 
 ---
 
