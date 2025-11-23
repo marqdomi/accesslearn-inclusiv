@@ -27,15 +27,21 @@ interface BackendCourse {
  * Convert backend Course to frontend CourseStructure
  */
 export function adaptBackendCourseToFrontend(backendCourse: BackendCourse): CourseStructure {
+  // Ensure modules is an array and each module has lessons as an array
+  const modules = (backendCourse.modules || []).map((m: any) => ({
+    ...m,
+    lessons: Array.isArray(m.lessons) ? m.lessons : []
+  }))
+
   return {
     id: backendCourse.id,
     title: backendCourse.title,
     description: backendCourse.description,
     category: backendCourse.category,
     coverImage: backendCourse.coverImage,
-    modules: backendCourse.modules || [],
+    modules: modules,
     estimatedHours: backendCourse.estimatedTime ? Math.round(backendCourse.estimatedTime / 60) : 0,
-    totalXP: (backendCourse.modules || []).reduce((sum, m) => {
+    totalXP: modules.reduce((sum, m) => {
       return sum + (m.lessons || []).reduce((lessonSum: number, l: any) => {
         return lessonSum + (l.xpReward || 0)
       }, 0)

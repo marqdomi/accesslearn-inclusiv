@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from 'react'
-import { useKV } from '@github/spark/hooks'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -7,36 +6,63 @@ import { Label } from '@/components/ui/label'
 import { ArrowLeft, Upload, Palette, CheckCircle, XCircle, Warning } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { motion } from 'framer-motion'
-import { BrandingSettings } from '@/hooks/use-branding'
 import { checkContrastCompliance, hexToRgb, rgbToOklch } from '@/lib/contrast-checker'
+import { ApiService } from '@/services/api.service'
+import { useTenant } from '@/contexts/TenantContext'
+import { useAuth } from '@/contexts/AuthContext'
 
 interface BrandingManagementProps {
   onBack: () => void
 }
 
 export function BrandingManagement({ onBack }: BrandingManagementProps) {
-  const [branding, setBranding] = useKV<BrandingSettings>('branding-settings', {})
+  const { currentTenant, setCurrentTenant } = useTenant()
+  const { user } = useAuth()
   const [logoFile, setLogoFile] = useState<File | null>(null)
-  const [logoPreview, setLogoPreview] = useState<string | null>(branding?.logoUrl || null)
-  const [primaryColor, setPrimaryColor] = useState<string>(branding?.primaryColor || '#8B5CF6')
-  const [companyName, setCompanyName] = useState<string>(branding?.companyName || '')
+  const [logoPreview, setLogoPreview] = useState<string | null>(currentTenant?.logo || null)
+  const [primaryColor, setPrimaryColor] = useState<string>(currentTenant?.primaryColor || '#4F46E5')
+  const [secondaryColor, setSecondaryColor] = useState<string>(currentTenant?.secondaryColor || '#10B981')
+  const [companyName, setCompanyName] = useState<string>(currentTenant?.name || '')
   const [isDragging, setIsDragging] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const [loading, setLoading] = useState(true)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const contrastCheck = checkContrastCompliance(primaryColor)
 
+  // Load tenant data on mount
   useEffect(() => {
-    if (branding?.logoUrl) {
-      setLogoPreview(branding.logoUrl)
+    const loadTenant = async () => {
+      if (!currentTenant?.id || !user) return
+      
+      try {
+        setLoading(true)
+        // Use user's tenantId from auth context, fallback to currentTenant
+        const tenantId = user.tenantId || currentTenant.id
+        const tenant = await ApiService.getTenantById(tenantId)
+        
+        if (tenant) {
+          setLogoPreview(tenant.logo || null)
+          setPrimaryColor(tenant.primaryColor || '#4F46E5')
+          setSecondaryColor(tenant.secondaryColor || '#10B981')
+          setCompanyName(tenant.name || '')
+          
+          // Update tenant context
+          setCurrentTenant({
+            ...currentTenant,
+            ...tenant
+          })
+        }
+      } catch (error) {
+        console.error('Error loading tenant:', error)
+        toast.error('Error al cargar la configuración del tenant')
+      } finally {
+        setLoading(false)
+      }
     }
-    if (branding?.primaryColor) {
-      setPrimaryColor(branding.primaryColor)
-    }
-    if (branding?.companyName) {
-      setCompanyName(branding.companyName)
-    }
-  }, [branding])
+    
+    loadTenant()
+  }, [currentTenant?.id, user?.id, user?.tenantId])
 
   const handleFileChange = (file: File) => {
     if (!file.type.match(/^image\/(png|svg\+xml)$/)) {
@@ -83,30 +109,43 @@ export function BrandingManagement({ onBack }: BrandingManagementProps) {
 
   const handleSave = async () => {
     if (!contrastCheck.isAccessible) {
-      toast.error('Cannot save: Selected color does not meet WCAG accessibility standards.')
+      toast.error('No se puede guardar: El color seleccionado no cumple con los estándares de accesibilidad WCAG.')
+      return
+    }
+
+    if (!currentTenant?.id || !user) {
+      toast.error('No se pudo determinar el tenant')
       return
     }
 
     setIsSaving(true)
 
     try {
-      const rgb = hexToRgb(primaryColor)
-      const oklchColor = rgb ? rgbToOklch(rgb.r, rgb.g, rgb.b) : primaryColor
-
-      const newBranding: BrandingSettings = {
-        logoUrl: logoPreview || undefined,
-        primaryColor: oklchColor,
-        companyName: companyName || undefined,
+      const tenantId = user.tenantId || currentTenant.id
+      
+      // Convert hex to oklch if needed, but keep hex for backend
+      const updates: any = {
+        name: companyName || currentTenant.name,
+        logo: logoPreview || undefined,
+        primaryColor: primaryColor,
+        secondaryColor: secondaryColor,
       }
 
-      await setBranding(newBranding)
+      const updatedTenant = await ApiService.updateTenant(tenantId, updates)
 
-      document.documentElement.style.setProperty('--primary', oklchColor)
-      document.documentElement.style.setProperty('--ring', oklchColor)
+      // Update tenant context
+      setCurrentTenant({
+        ...currentTenant,
+        ...updatedTenant
+      })
 
-      toast.success('Branding settings saved successfully!')
-    } catch (error) {
-      toast.error('Failed to save branding settings.')
+      // Apply colors to document
+      document.documentElement.style.setProperty('--primary', primaryColor)
+      document.documentElement.style.setProperty('--ring', primaryColor)
+
+      toast.success('Configuración de marca guardada exitosamente')
+    } catch (error: any) {
+      toast.error(error.message || 'Error al guardar la configuración de marca')
       console.error(error)
     } finally {
       setIsSaving(false)
@@ -114,17 +153,53 @@ export function BrandingManagement({ onBack }: BrandingManagementProps) {
   }
 
   const handleReset = async () => {
-    setLogoPreview(null)
-    setLogoFile(null)
-    setPrimaryColor('#8B5CF6')
-    setCompanyName('')
+    if (!currentTenant?.id || !user) return
+
+    setIsSaving(true)
     
-    await setBranding({})
-    
-    document.documentElement.style.setProperty('--primary', 'oklch(0.55 0.20 290)')
-    document.documentElement.style.setProperty('--ring', 'oklch(0.55 0.20 290)')
-    
-    toast.success('Branding reset to defaults')
+    try {
+      const tenantId = user.tenantId || currentTenant.id
+      const defaultPrimary = '#4F46E5'
+      const defaultSecondary = '#10B981'
+      
+      const updates = {
+        logo: undefined,
+        primaryColor: defaultPrimary,
+        secondaryColor: defaultSecondary,
+      }
+
+      const updatedTenant = await ApiService.updateTenant(tenantId, updates)
+      
+      setLogoPreview(null)
+      setLogoFile(null)
+      setPrimaryColor(defaultPrimary)
+      setSecondaryColor(defaultSecondary)
+      
+      setCurrentTenant({
+        ...currentTenant,
+        ...updatedTenant
+      })
+      
+      document.documentElement.style.setProperty('--primary', defaultPrimary)
+      document.documentElement.style.setProperty('--ring', defaultPrimary)
+      
+      toast.success('Marca restablecida a los valores por defecto')
+    } catch (error: any) {
+      toast.error(error.message || 'Error al restablecer la marca')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Cargando configuración...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -133,7 +208,7 @@ export function BrandingManagement({ onBack }: BrandingManagementProps) {
         <div className="flex items-center gap-4">
           <Button variant="ghost" onClick={onBack}>
             <ArrowLeft size={20} className="mr-2" />
-            Back to Dashboard
+            Volver a Configuración
           </Button>
         </div>
       </div>
@@ -147,21 +222,21 @@ export function BrandingManagement({ onBack }: BrandingManagementProps) {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Palette size={24} />
-              Branding & Appearance
+              Marca y Apariencia
             </CardTitle>
             <CardDescription>
-              Customize the platform with your company's branding. All custom themes must meet WCAG accessibility standards.
+              Personaliza la plataforma con la marca de tu empresa. Todos los temas personalizados deben cumplir con los estándares de accesibilidad WCAG.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-8">
             <div className="space-y-4">
               <div>
-                <Label htmlFor="company-name">Company Name (Optional)</Label>
+                <Label htmlFor="company-name">Nombre de la Empresa (Opcional)</Label>
                 <Input
                   id="company-name"
                   value={companyName}
                   onChange={(e) => setCompanyName(e.target.value)}
-                  placeholder="Enter your company name"
+                  placeholder="Ingresa el nombre de tu empresa"
                   className="mt-2"
                 />
               </div>
@@ -169,9 +244,9 @@ export function BrandingManagement({ onBack }: BrandingManagementProps) {
 
             <div className="space-y-4">
               <div>
-                <Label>Company Logo</Label>
+                <Label>Logo de la Empresa</Label>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Upload a PNG or SVG file. This logo will replace the GameLearn logo in the header and login page.
+                  Sube un archivo PNG o SVG. Este logo reemplazará el logo en el encabezado y la página de inicio de sesión.
                 </p>
               </div>
 
@@ -248,9 +323,9 @@ export function BrandingManagement({ onBack }: BrandingManagementProps) {
             <div className="border-t pt-8">
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="primary-color">Primary Brand Color</Label>
+                  <Label htmlFor="primary-color">Color Primario de la Marca</Label>
                   <p className="text-sm text-muted-foreground mt-1">
-                    This color will be used for buttons, links, and interactive elements throughout the platform.
+                    Este color se usará para botones, enlaces y elementos interactivos en toda la plataforma.
                   </p>
                 </div>
 
@@ -423,18 +498,18 @@ export function BrandingManagement({ onBack }: BrandingManagementProps) {
             </div>
 
             <div className="flex items-center justify-between border-t pt-6">
-              <Button variant="outline" onClick={handleReset}>
-                Reset to Defaults
+              <Button variant="outline" onClick={handleReset} disabled={isSaving}>
+                Restablecer Valores por Defecto
               </Button>
               <div className="flex gap-2">
-                <Button variant="ghost" onClick={onBack}>
-                  Cancel
+                <Button variant="ghost" onClick={onBack} disabled={isSaving}>
+                  Cancelar
                 </Button>
                 <Button
                   onClick={handleSave}
                   disabled={!contrastCheck.isAccessible || isSaving}
                 >
-                  {isSaving ? 'Saving...' : 'Save Theme'}
+                  {isSaving ? 'Guardando...' : 'Guardar Configuración'}
                 </Button>
               </div>
             </div>

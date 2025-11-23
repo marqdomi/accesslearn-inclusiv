@@ -140,3 +140,52 @@ export async function updateTenantStatus(
 
   return resource as Tenant
 }
+
+export interface UpdateTenantRequest {
+  name?: string
+  contactEmail?: string
+  contactPhone?: string
+  logo?: string
+  primaryColor?: string
+  secondaryColor?: string
+  domain?: string
+  rfc?: string
+  businessName?: string
+  address?: string
+}
+
+export async function updateTenant(
+  tenantId: string,
+  updates: UpdateTenantRequest
+): Promise<Tenant> {
+  const container = getContainer("tenants")
+
+  const tenant = await getTenantById(tenantId)
+  if (!tenant) {
+    throw new Error(`Tenant ${tenantId} not found`)
+  }
+
+  // Update allowed fields
+  if (updates.name !== undefined) tenant.name = updates.name
+  if (updates.contactEmail !== undefined) tenant.contactEmail = updates.contactEmail
+  if (updates.contactPhone !== undefined) tenant.contactPhone = updates.contactPhone
+  if (updates.logo !== undefined) tenant.logo = updates.logo
+  if (updates.primaryColor !== undefined) tenant.primaryColor = updates.primaryColor
+  if (updates.secondaryColor !== undefined) tenant.secondaryColor = updates.secondaryColor
+  if (updates.domain !== undefined) tenant.domain = updates.domain
+  if (updates.rfc !== undefined) tenant.rfc = updates.rfc
+  if (updates.businessName !== undefined) tenant.businessName = updates.businessName
+  if (updates.address !== undefined) tenant.address = updates.address
+
+  tenant.updatedAt = new Date().toISOString()
+
+  const { resource } = await container
+    .item(tenantId, tenantId)
+    .replace(tenant)
+
+  if (!resource) {
+    throw new Error("Failed to update tenant")
+  }
+
+  return resource as Tenant
+}

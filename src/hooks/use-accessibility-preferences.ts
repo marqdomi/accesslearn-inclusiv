@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { useKV } from '@github/spark/hooks'
+import { useLocalStorage } from './use-local-storage'
 import { UserPreferences } from '@/lib/types'
 
 const defaultPreferences: UserPreferences = {
@@ -25,7 +25,7 @@ const defaultProfile: AccessibilityProfile = {
 }
 
 export function useAccessibilityPreferences() {
-  const [profile, setProfile] = useKV<AccessibilityProfile>(
+  const [profile, setProfile] = useLocalStorage<AccessibilityProfile>(
     'accessibility-profile',
     defaultProfile
   )

@@ -4,16 +4,22 @@ A fully accessible, WCAG 2.1 Level AA compliant gamified corporate training plat
 
 ## 🎯 Project Status & Roadmap
 
-**Current State:** 40% Complete - Fully functional single-tenant MVP  
+**Current State:** 90% Ready for Demo | 85% Ready for Production  
 **Goal:** Multi-tenant SaaS platform ready for Azure deployment  
-**Timeline:** 8-10 weeks for MVP, 16-20 weeks for full production
+**Timeline:** Demo ready now | Production ready in 2-3 weeks
+
+### ✅ Latest Updates (November 2025)
+- ✅ **Azure Infrastructure Deployed** - Container Apps, Cosmos DB, ACR all configured
+- ✅ **CI/CD Pipeline Active** - Automatic deployment from GitHub to Azure
+- ✅ **Production Environment** - Application running in Azure production
+- ✅ **GitHub Actions** - Automated builds and deployments on push to `main`
 
 📚 **Key Documents:**
-- 📊 [**RESUMEN_EJECUTIVO.md**](./RESUMEN_EJECUTIVO.md) - Start here! Complete overview
+- 📊 [**PROYECTO_ESTADO_ACTUAL.md**](./docs/PROYECTO_ESTADO_ACTUAL.md) - ⭐ **START HERE** - Complete project audit & status
+- 👋 [**ONBOARDING_DEVELOPER.md**](./docs/ONBOARDING_DEVELOPER.md) - Developer onboarding guide
+- ✅ [**DEMO_READINESS_CHECKLIST.md**](./docs/DEMO_READINESS_CHECKLIST.md) - Checklist for client demo
 - 🗺️ [**ESTADO_ACTUAL_Y_ROADMAP.md**](./ESTADO_ACTUAL_Y_ROADMAP.md) - Detailed roadmap (16-20 weeks)
 - 🌐 [**AZURE_COSMOS_DB_STRATEGY.md**](./AZURE_COSMOS_DB_STRATEGY.md) - Database & multi-tenancy strategy
-- 📅 [**PLAN_ACCION_2_SEMANAS.md**](./PLAN_ACCION_2_SEMANAS.md) - Immediate action plan (next 2 weeks)
-- 🏗️ [**ARQUITECTURA_VISUAL.md**](./ARQUITECTURA_VISUAL.md) - Architecture diagrams & flows
 
 ---
 
@@ -30,12 +36,14 @@ A fully accessible, WCAG 2.1 Level AA compliant gamified corporate training plat
 - **Dual Persona**: Separate UX for learners (gamified) and admins (professional)
 - **Employee Management**: Bulk upload, groups, course assignments
 
-### ⚠️ In Progress / Needs Migration
-- **Backend**: Currently using GitHub Spark KV (localStorage) → Needs Azure Functions + Cosmos DB
-- **Multi-Tenancy**: Single tenant → Needs database-per-tenant architecture
-- **Authentication**: Basic auth → Needs Azure AD B2C
-- **Storage**: In-browser → Needs Azure Blob Storage
-- **Deployment**: Local dev → Needs Azure CI/CD pipeline
+### ✅ Infrastructure & Deployment
+- **Backend**: ✅ Express.js API deployed on Azure Container Apps
+- **Database**: ✅ Azure Cosmos DB Production configured
+- **Multi-Tenancy**: ✅ Multi-tenant architecture with Cosmos DB partition keys
+- **Authentication**: ✅ JWT-based authentication (Azure AD B2C optional for future)
+- **Storage**: ⚠️ Base64 in Cosmos DB (Azure Blob Storage optional for future)
+- **Deployment**: ✅ **CI/CD with GitHub Actions** - Automatic deployment on push to `main`
+- **Monitoring**: ✅ Application Insights configured
 
 ## ♿ Accessibility Features
 

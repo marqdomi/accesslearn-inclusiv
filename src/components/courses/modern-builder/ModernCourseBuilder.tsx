@@ -181,7 +181,11 @@ export function ModernCourseBuilder({ courseId, onBack }: ModernCourseBuilderPro
         return !!(course.title?.trim() && course.description?.trim() && course.category)
       case 3:
         // Need at least one module with one lesson
-        return course.modules.length > 0 && course.modules.some(m => m.lessons.length > 0)
+        // Add defensive checks for undefined/null values
+        if (!course.modules || !Array.isArray(course.modules)) return false
+        return course.modules.length > 0 && course.modules.some(m => 
+          m && m.lessons && Array.isArray(m.lessons) && m.lessons.length > 0
+        )
       case 4:
         // Content step not blocking
         return true

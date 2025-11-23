@@ -17,6 +17,11 @@ import { ContentManagerDashboardPage } from '@/pages/ContentManagerDashboardPage
 import { CourseManagementPage } from '@/pages/CourseManagementPage'
 import { AdminUsersPage } from '@/pages/AdminUsersPage'
 import { AdminSettingsPage } from '@/pages/AdminSettingsPage'
+import { BrandingSettingsPage } from '@/pages/BrandingSettingsPage'
+import { NotificationSettingsPage } from '@/pages/NotificationSettingsPage'
+import { SecuritySettingsPage } from '@/pages/SecuritySettingsPage'
+import { DataSettingsPage } from '@/pages/DataSettingsPage'
+import { AdvancedAccessibilityPanel } from '@/components/accessibility/AdvancedAccessibilityPanel'
 import { AdminAnalyticsPage } from '@/pages/AdminAnalyticsPage'
 import { ProfilePage } from '@/pages/ProfilePage'
 
@@ -161,6 +166,38 @@ function AppRoutes() {
         }
       />
       <Route
+        path="/admin/settings/branding"
+        element={
+          <ProtectedRoute>
+            <BrandingSettingsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/settings/notifications"
+        element={
+          <ProtectedRoute>
+            <NotificationSettingsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/settings/security"
+        element={
+          <ProtectedRoute>
+            <SecuritySettingsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/settings/data"
+        element={
+          <ProtectedRoute>
+            <DataSettingsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/profile"
         element={
           <ProtectedRoute>
@@ -181,6 +218,7 @@ function App() {
         <TenantResolver>
           <AuthProvider>
             <AppRoutes />
+            <AdvancedAccessibilityPanel />
             <Toaster position="top-right" richColors />
           </AuthProvider>
         </TenantResolver>

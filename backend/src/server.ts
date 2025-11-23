@@ -19,6 +19,7 @@ import {
   getTenantById,
   listTenants,
   createTenant,
+  updateTenant,
 } from './functions/TenantFunctions';
 import {
   createUser,
@@ -375,8 +376,8 @@ app.get('/api/tenants/slug/:slug', async (req, res) => {
   }
 });
 
-// GET /api/tenants/:id - Get tenant by ID
-app.get('/api/tenants/:id', async (req, res) => {
+// GET /api/tenants/:id - Get tenant by ID (requires auth)
+app.get('/api/tenants/:id', authenticateToken, requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const tenant = await getTenantById(id);
@@ -393,12 +394,38 @@ app.get('/api/tenants/:id', async (req, res) => {
 });
 
 // POST /api/tenants - Create new tenant
-app.post('/api/tenants', requireAuth, requirePermission('tenants:create'), async (req, res) => {
+app.post('/api/tenants', authenticateToken, requireAuth, requirePermission('tenants:create'), async (req, res) => {
   try {
     const tenant = await createTenant(req.body);
     res.status(201).json(tenant);
   } catch (error: any) {
     console.error('[API] Error creating tenant:', error);
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// PUT /api/tenants/:id - Update tenant
+app.put('/api/tenants/:id', authenticateToken, requireAuth, requirePermission('tenants:update'), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = (req as any).user;
+    
+    if (!user) {
+      return res.status(401).json({ 
+        error: 'Authentication required',
+        message: 'You must be logged in to access this resource'
+      });
+    }
+    
+    // Only super-admin or tenant-admin of the same tenant can update
+    if (user.role !== 'super-admin' && user.tenantId !== id) {
+      return res.status(403).json({ error: 'No tienes permiso para actualizar este tenant' });
+    }
+    
+    const tenant = await updateTenant(id, req.body);
+    res.json(tenant);
+  } catch (error: any) {
+    console.error('[API] Error updating tenant:', error);
     res.status(400).json({ error: error.message });
   }
 });

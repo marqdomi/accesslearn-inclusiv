@@ -13,8 +13,18 @@
 
 <body>
     <div id="root"></div>
+    <!-- Define KV service URL before any modules load -->
+    <script>
+      // Define BASE_KV_SERVICE_URL for @github/spark/hooks compatibility
+      if (typeof window.BASE_KV_SERVICE_URL === 'undefined') {
+        window.BASE_KV_SERVICE_URL = '';
+      }
+      if (typeof globalThis.BASE_KV_SERVICE_URL === 'undefined') {
+        globalThis.BASE_KV_SERVICE_URL = '';
+      }
+    </script>
     <!-- Runtime configuration injected by docker-entrypoint.sh -->
-    <script src="/config.js"></script>
+    <script src="/config.js" type="module"></script>
     <script type="module" src="/src/main.tsx"></script>
 </body>
 

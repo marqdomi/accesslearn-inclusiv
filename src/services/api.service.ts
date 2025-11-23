@@ -57,6 +57,8 @@ class ApiServiceClass {
       const token = localStorage.getItem('auth-token')
       if (token) {
         headers['Authorization'] = `Bearer ${token}`
+      } else {
+        console.warn('[ApiService] No auth token found for authenticated request to:', endpoint)
       }
     }
 
@@ -139,6 +141,24 @@ class ApiServiceClass {
     return this.fetchWithAuth<any>(`/tenants`, {
       method: 'POST',
       body: JSON.stringify(data),
+    })
+  }
+
+  async updateTenant(tenantId: string, updates: {
+    name?: string
+    contactEmail?: string
+    contactPhone?: string
+    logo?: string
+    primaryColor?: string
+    secondaryColor?: string
+    domain?: string
+    rfc?: string
+    businessName?: string
+    address?: string
+  }) {
+    return this.fetchWithAuth<any>(`/tenants/${tenantId}`, {
+      method: 'PUT',
+      body: JSON.stringify(updates),
     })
   }
 

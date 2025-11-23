@@ -9,9 +9,9 @@
   body {
     font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
     font-size: 18px;
-    line-height: 1.6;
-    letter-spacing: normal;
-    word-spacing: normal;
+    line-height: var(--line-height, 1.6);
+    letter-spacing: var(--letter-spacing, normal);
+    word-spacing: var(--word-spacing, normal);
   }
   
   p + p {
@@ -214,4 +214,80 @@ select:focus-visible {
   top: 0;
   outline: 3px solid var(--primary-foreground);
   outline-offset: 2px;
+}
+
+/* Advanced Accessibility Styles */
+
+/* Contrast Schemes */
+.contrast-dark {
+  --background: oklch(0.15 0 0);
+  --foreground: oklch(0.95 0 0);
+  --card: oklch(0.20 0 0);
+  --card-foreground: oklch(0.95 0 0);
+}
+
+.contrast-light {
+  --background: oklch(1 0 0);
+  --foreground: oklch(0 0 0);
+  --card: oklch(0.98 0 0);
+  --card-foreground: oklch(0 0 0);
+}
+
+.contrast-yellow-black {
+  --background: oklch(0 0 0);
+  --foreground: oklch(0.85 0.15 90);
+  --card: oklch(0.05 0 0);
+  --card-foreground: oklch(0.85 0.15 90);
+  --primary: oklch(0.85 0.15 90);
+}
+
+/* Color Blindness Filters */
+.colorblind-protanopia {
+  filter: url('#protanopia-filter');
+}
+
+.colorblind-deuteranopia {
+  filter: url('#deuteranopia-filter');
+}
+
+.colorblind-tritanopia {
+  filter: url('#tritanopia-filter');
+}
+
+/* Invert Colors */
+.invert-colors {
+  filter: invert(1);
+}
+
+.invert-colors img,
+.invert-colors video {
+  filter: invert(1);
+}
+
+/* Simplified Navigation */
+.simplified-navigation .sidebar,
+.simplified-navigation nav {
+  display: none;
+}
+
+.simplified-navigation main {
+  margin-left: 0;
+  width: 100%;
+}
+
+/* Reading Mode Simplified */
+.reading-mode-simplified {
+  font-size: 1.2em;
+  line-height: 1.8;
+}
+
+.reading-mode-simplified h1,
+.reading-mode-simplified h2,
+.reading-mode-simplified h3 {
+  margin-top: 2em;
+  margin-bottom: 1em;
+}
+
+.reading-mode-simplified p {
+  margin-bottom: 1.5em;
 }

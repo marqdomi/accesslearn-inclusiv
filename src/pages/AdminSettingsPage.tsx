@@ -2,13 +2,15 @@ import { useNavigate } from 'react-router-dom'
 import { useTenant } from '@/contexts/TenantContext'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
+import { motion } from 'framer-motion'
 import {
   ArrowLeft,
   Palette,
   Bell,
   Shield,
-  Database
+  Database,
+  ChevronRight,
+  Info
 } from 'lucide-react'
 
 interface SettingSection {
@@ -16,9 +18,6 @@ interface SettingSection {
   title: string
   description: string
   icon: any
-  iconColor: string
-  bgColor: string
-  status: string
   onClick: () => void
 }
 
@@ -29,14 +28,11 @@ export function AdminSettingsPage() {
   const settingsSections: SettingSection[] = [
     {
       id: 'branding',
-      title: 'Marco y Apariencia',
+      title: 'Marca y Apariencia',
       description: 'Personaliza los colores, logo y nombre de tu organización',
       icon: Palette,
-      iconColor: 'text-blue-600 dark:text-blue-400',
-      bgColor: 'bg-blue-50 dark:bg-blue-950/20',
-      status: 'Próximamente',
       onClick: () => {
-        // TODO: Navigate to /admin/settings/branding
+        navigate('/admin/settings/branding')
       }
     },
     {
@@ -44,11 +40,8 @@ export function AdminSettingsPage() {
       title: 'Notificaciones',
       description: 'Configura las notificaciones por email y push',
       icon: Bell,
-      iconColor: 'text-yellow-600 dark:text-yellow-400',
-      bgColor: 'bg-yellow-50 dark:bg-yellow-950/20',
-      status: 'Próximamente',
       onClick: () => {
-        // TODO: Navigate to /admin/settings/notifications
+        navigate('/admin/settings/notifications')
       }
     },
     {
@@ -56,11 +49,8 @@ export function AdminSettingsPage() {
       title: 'Seguridad',
       description: 'Administra permisos, roles y políticas de seguridad',
       icon: Shield,
-      iconColor: 'text-green-600 dark:text-green-400',
-      bgColor: 'bg-green-50 dark:bg-green-950/20',
-      status: 'Próximamente',
       onClick: () => {
-        // TODO: Navigate to /admin/settings/security
+        navigate('/admin/settings/security')
       }
     },
     {
@@ -68,11 +58,8 @@ export function AdminSettingsPage() {
       title: 'Datos',
       description: 'Exporta, importa y administra los datos de tu organización',
       icon: Database,
-      iconColor: 'text-purple-600 dark:text-purple-400',
-      bgColor: 'bg-purple-50 dark:bg-purple-950/20',
-      status: 'Próximamente',
       onClick: () => {
-        // TODO: Navigate to /admin/settings/data
+        navigate('/admin/settings/data')
       }
     }
   ]
@@ -81,81 +68,109 @@ export function AdminSettingsPage() {
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8 max-w-6xl">
         {/* Header */}
-        <div className="mb-8">
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.2 }}
+          className="mb-8"
+        >
           <Button
             variant="ghost"
             onClick={() => navigate('/dashboard')}
-            className="mb-4 gap-2"
+            className="mb-6 gap-2"
           >
             <ArrowLeft size={20} />
             Volver al Dashboard
           </Button>
 
           <div>
-            <h1 className="text-4xl font-bold mb-2">Configuración</h1>
-            <p className="text-lg text-muted-foreground">
+            <h1 className="text-3xl font-bold tracking-tight mb-2">Configuración</h1>
+            <p className="text-muted-foreground">
               Administra la configuración de {currentTenant?.name}
             </p>
           </div>
-        </div>
+        </motion.div>
 
         {/* Settings Grid */}
-        <div className="grid gap-6 md:grid-cols-2 mb-8">
-          {settingsSections.map((section) => {
+        <div className="grid gap-4 md:grid-cols-2 mb-8">
+          {settingsSections.map((section, index) => {
             const Icon = section.icon
             return (
-              <Card
+              <motion.div
                 key={section.id}
-                className="cursor-pointer hover:border-primary/50 transition-colors"
-                onClick={section.onClick}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05, duration: 0.2 }}
               >
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className={`p-3 rounded-lg ${section.bgColor}`}>
-                        <Icon className={`h-6 w-6 ${section.iconColor}`} />
+                <Card 
+                  className="hover:shadow-md transition-shadow cursor-pointer group h-full"
+                  onClick={section.onClick}
+                >
+                  <CardHeader>
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                        <Icon className="h-5 w-5 text-primary" aria-hidden="true" />
                       </div>
-                      <div>
-                        <CardTitle className="text-xl">{section.title}</CardTitle>
+                      <div className="flex-1">
+                        <CardTitle className="text-base leading-tight mb-1">
+                          {section.title}
+                        </CardTitle>
+                        <CardDescription className="text-sm">
+                          {section.description}
+                        </CardDescription>
                       </div>
+                      <ChevronRight 
+                        className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors shrink-0 mt-1" 
+                        aria-hidden="true"
+                      />
                     </div>
-                  </div>
-                  <CardDescription className="mt-2">
-                    {section.description}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Badge variant="secondary" className="text-xs">
-                    {section.status}
-                  </Badge>
-                </CardContent>
-              </Card>
+                  </CardHeader>
+                </Card>
+              </motion.div>
             )
           })}
         </div>
 
         {/* System Information */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Información del Sistema</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
-              <div>
-                <p className="text-sm text-muted-foreground mb-1">Tenant ID</p>
-                <p className="font-mono text-sm">{currentTenant?.id}</p>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2, duration: 0.2 }}
+        >
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-muted">
+                  <Info className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
+                </div>
+                <CardTitle className="text-xl">Información del Sistema</CardTitle>
               </div>
-              <div>
-                <p className="text-sm text-muted-foreground mb-1">Slug</p>
-                <p className="font-mono text-sm">{currentTenant?.slug}</p>
+              <CardDescription className="mt-2">
+                Detalles técnicos de tu instancia de {currentTenant?.name}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-muted-foreground">Tenant ID</p>
+                  <p className="font-mono text-sm break-all">
+                    {currentTenant?.id || 'N/A'}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-muted-foreground">Slug</p>
+                  <p className="font-mono text-sm">
+                    {currentTenant?.slug || 'N/A'}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-muted-foreground">Versión</p>
+                  <p className="font-mono text-sm">1.0.0</p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm text-muted-foreground mb-1">Versión</p>
-                <p className="font-mono text-sm">1.0.0</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </motion.div>
       </div>
     </div>
   )
