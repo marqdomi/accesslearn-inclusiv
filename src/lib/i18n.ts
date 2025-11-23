@@ -1,4 +1,3 @@
-import { useKV } from '@github/spark/hooks'
 import { useEffect, useState, useMemo } from 'react'
 import esTranslations from '../locales/es.json'
 import enTranslations from '../locales/en.json'
@@ -17,8 +16,33 @@ const translationsMap: Record<Language, Record<string, string>> = {
   en: enTranslations
 }
 
+const LANGUAGE_STORAGE_KEY = 'user-language'
+
 export function useLanguage() {
-  const [language, setLanguage, deleteLanguage] = useKV<Language>('user-language', DEFAULT_LANGUAGE)
+  const [language, setLanguageState] = useState<Language>(() => {
+    // Get initial value from localStorage
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem(LANGUAGE_STORAGE_KEY)
+      if (stored === 'es' || stored === 'en') {
+        return stored as Language
+      }
+    }
+    return DEFAULT_LANGUAGE
+  })
+
+  // Sync with localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(LANGUAGE_STORAGE_KEY, language)
+    }
+  }, [language])
+
+  const setLanguage = (newLanguage: Language) => {
+    setLanguageState(newLanguage)
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(LANGUAGE_STORAGE_KEY, newLanguage)
+    }
+  }
   
   return {
     language: language || DEFAULT_LANGUAGE,
