@@ -78,6 +78,55 @@ export async function getCourseAssignments(
 }
 
 /**
+ * Initialize user progress for a course (creates initial progress record)
+ */
+async function initializeUserProgress(
+  userId: string,
+  tenantId: string,
+  courseId: string
+): Promise<void> {
+  const { getContainer } = await import('../services/cosmosdb.service');
+  const progressContainer = getContainer('user-progress');
+
+  // Check if progress already exists
+  const query = {
+    query: 'SELECT * FROM c WHERE c.userId = @userId AND c.tenantId = @tenantId AND c.courseId = @courseId',
+    parameters: [
+      { name: '@userId', value: userId },
+      { name: '@tenantId', value: tenantId },
+      { name: '@courseId', value: courseId },
+    ],
+  };
+
+  const { resources } = await progressContainer.items.query(query).fetchAll();
+
+  // If progress already exists, don't create a new one
+  if (resources.length > 0) {
+    return;
+  }
+
+  // Create initial progress record
+  const progressData = {
+    id: `progress-${userId}-${courseId}`,
+    userId,
+    tenantId,
+    courseId,
+    status: 'not-started',
+    progress: 0,
+    lastAccessedAt: new Date().toISOString(),
+    completedLessons: [],
+    quizScores: [],
+    certificateEarned: false,
+    attempts: [],
+    bestScore: 0,
+    totalXpEarned: 0,
+    currentAttempt: 0,
+  };
+
+  await progressContainer.items.upsert(progressData);
+}
+
+/**
  * Create a new assignment
  */
 export async function createAssignment(
@@ -89,6 +138,11 @@ export async function createAssignment(
   dueDate?: string
 ): Promise<CourseAssignment> {
   const container = getContainer('course-assignments')
+  
+  // If assigning to a user (not a group), initialize their progress
+  if (assignedToType === 'user') {
+    await initializeUserProgress(assignedToId, tenantId, courseId);
+  }
   
   const now = new Date().toISOString()
   const assignment: CourseAssignment = {

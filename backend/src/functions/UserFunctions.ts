@@ -309,6 +309,7 @@ export async function updateProfile(
 
 /**
  * Enroll user in a course
+ * Also creates initial progress record so the course appears in the user's library
  */
 export async function enrollUserInCourse(
   userId: string,
@@ -331,6 +332,49 @@ export async function enrollUserInCourse(
   user.updatedAt = new Date().toISOString();
   
   const { resource } = await usersContainer.items.upsert(user);
+
+  // Initialize user progress for this course (so it appears in library)
+  try {
+    const progressContainer = getContainer('user-progress');
+    
+    // Check if progress already exists
+    const query = {
+      query: 'SELECT * FROM c WHERE c.userId = @userId AND c.tenantId = @tenantId AND c.courseId = @courseId',
+      parameters: [
+        { name: '@userId', value: userId },
+        { name: '@tenantId', value: tenantId },
+        { name: '@courseId', value: courseId },
+      ],
+    };
+
+    const { resources } = await progressContainer.items.query(query).fetchAll();
+
+    // Only create if it doesn't exist
+    if (resources.length === 0) {
+      const progressData = {
+        id: `progress-${userId}-${courseId}`,
+        userId,
+        tenantId,
+        courseId,
+        status: 'not-started',
+        progress: 0,
+        lastAccessedAt: new Date().toISOString(),
+        completedLessons: [],
+        quizScores: [],
+        certificateEarned: false,
+        attempts: [],
+        bestScore: 0,
+        totalXpEarned: 0,
+        currentAttempt: 0,
+      };
+
+      await progressContainer.items.upsert(progressData);
+    }
+  } catch (error: any) {
+    console.error(`[enrollUserInCourse] Error initializing progress for course ${courseId}:`, error);
+    // Don't fail enrollment if progress initialization fails
+  }
+  
   return resource as unknown as User;
 }
 
