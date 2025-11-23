@@ -171,10 +171,46 @@ const app = express();
 const PORT = process.env.PORT || 7071;
 
 // ============================================
+// CORS CONFIGURATION - MUST BE FIRST
+// ============================================
+
+// CORS configuration - allow specific origins in production
+// IMPORTANT: CORS must be configured BEFORE other middleware
+const corsOptions = {
+  origin: function (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    const allowedOrigins = process.env.NODE_ENV === 'production' 
+      ? [
+          'https://app.kainet.mx',
+          'https://api.kainet.mx',
+          process.env.FRONTEND_URL || 'https://app.kainet.mx'
+        ]
+      : ['http://localhost:5173', 'http://localhost:5001', 'http://127.0.0.1:5173', 'http://127.0.0.1:5001'];
+    
+    if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV !== 'production') {
+      callback(null, true);
+    } else {
+      console.warn(`[CORS] Origin not allowed: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  exposedHeaders: ['Content-Range', 'X-Content-Range'],
+  optionsSuccessStatus: 200
+};
+
+// Apply CORS FIRST, before any other middleware
+app.use(cors(corsOptions));
+
+// ============================================
 // SECURITY MIDDLEWARE
 // ============================================
 
-// Helmet.js - Security headers
+// Helmet.js - Security headers (configured to work with CORS)
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
@@ -185,6 +221,7 @@ app.use(helmet({
     },
   },
   crossOriginEmbedderPolicy: false, // Allow embedding for iframes if needed
+  crossOriginResourcePolicy: { policy: "cross-origin" }, // Allow cross-origin requests
 }));
 
 // Rate limiting - General API rate limit
@@ -196,6 +233,10 @@ const generalLimiter = rateLimit({
   },
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  skip: (req) => {
+    // Skip rate limiting for OPTIONS requests (preflight)
+    return req.method === 'OPTIONS';
+  },
 });
 
 // Rate limiting - Stricter for auth endpoints
@@ -206,24 +247,14 @@ const authLimiter = rateLimit({
     error: 'Demasiados intentos de inicio de sesión, por favor intenta de nuevo más tarde.',
   },
   skipSuccessfulRequests: true, // Don't count successful requests
+  skip: (req) => {
+    // Skip rate limiting for OPTIONS requests (preflight)
+    return req.method === 'OPTIONS';
+  },
 });
 
 // Apply general rate limiting to all routes
 app.use('/api/', generalLimiter);
-
-// CORS configuration - allow specific origins in production
-const corsOptions = {
-  origin: process.env.NODE_ENV === 'production' 
-    ? [
-        'https://app.kainet.mx',
-        'https://api.kainet.mx',
-        process.env.FRONTEND_URL || 'https://app.kainet.mx'
-      ]
-    : true, // Allow all origins in development
-  credentials: true,
-  optionsSuccessStatus: 200
-};
-app.use(cors(corsOptions));
 app.use(express.json({ limit: '10mb' })); // Limit JSON payload size
 
 // Application Insights telemetry middleware (track all requests)
