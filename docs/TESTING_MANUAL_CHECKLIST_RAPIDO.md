@@ -182,11 +182,31 @@
 
 ---
 
+## 🔑 CREDENCIALES RÁPIDAS
+
+**Tenant:** `kainet`  
+**Password (todos):** `Demo123!`
+
+| Rol | Email |
+|-----|-------|
+| Super Admin | `ana.lopez@kainet.mx` |
+| Tenant Admin | `admin.tenant@kainet.mx` |
+| Content Manager | `carlos.content@kainet.mx` |
+| User Manager | `laura.users@kainet.mx` |
+| Analytics Viewer | `pedro.analytics@kainet.mx` |
+| Instructor | `maria.instructor@kainet.mx` |
+| Mentor | `carlos.mentor@kainet.mx` |
+| Student | `juan.student@kainet.mx` |
+
+**Ver detalles completos:** [CREDENCIALES_TEST_USUARIOS.md](./CREDENCIALES_TEST_USUARIOS.md)
+
+---
+
 ## 🔗 REFERENCIAS
 
 - **Guía Completa:** [TESTING_MANUAL_GUIA_COMPLETA.md](./TESTING_MANUAL_GUIA_COMPLETA.md)
 - **Checklist de Demo:** [DEMO_READINESS_CHECKLIST.md](./DEMO_READINESS_CHECKLIST.md)
-- **Credenciales:** Ver sección de credenciales en guía completa
+- **Credenciales Completas:** [CREDENCIALES_TEST_USUARIOS.md](./CREDENCIALES_TEST_USUARIOS.md)
 
 ---
 
