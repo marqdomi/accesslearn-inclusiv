@@ -74,6 +74,20 @@ export function useProfile() {
     try {
       console.log(`[useProfile] Loading profile for user ${user.id} with tenant ${tenantId}`)
       const userData = await ApiService.getCurrentUserProfile(user.id, tenantId)
+      
+      // Si el avatar es un blobName (formato: container/blobName), generar URL con SAS
+      if (userData.avatar && !userData.avatar.startsWith('http') && !userData.avatar.startsWith('data:')) {
+        try {
+          const [containerName, ...blobNameParts] = userData.avatar.split('/')
+          const blobName = blobNameParts.join('/')
+          const { url } = await ApiService.getMediaUrl(containerName, blobName)
+          userData.avatar = url
+        } catch (error) {
+          console.error('[useProfile] Error generating avatar URL:', error)
+          // Mantener el blobName si falla la generación de URL
+        }
+      }
+      
       setProfile(userData)
     } catch (err: any) {
       console.error('[useProfile] Error loading profile:', err)
@@ -159,42 +173,46 @@ export function useProfile() {
     }
   }, [user?.id, user?.tenantId, currentTenant?.id])
 
-  // Upload avatar (converts to base64)
+  // Upload avatar to Blob Storage
   const uploadAvatar = useCallback(async (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      // Validate file type
-      if (!file.type.startsWith('image/')) {
-        reject(new Error('El archivo debe ser una imagen'))
-        return
-      }
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      throw new Error('El archivo debe ser una imagen')
+    }
 
-      // Validate file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        reject(new Error('La imagen debe ser menor a 5MB'))
-        return
-      }
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      throw new Error('La imagen debe ser menor a 5MB')
+    }
 
-      const reader = new FileReader()
+    try {
+      // Upload to Blob Storage
+      const { url, blobName, containerName } = await ApiService.uploadFile(file, 'avatar')
       
-      reader.onload = (event) => {
-        const base64 = event.target?.result as string
-        resolve(base64)
-      }
-
-      reader.onerror = () => {
-        reject(new Error('Error al leer el archivo'))
-      }
-
-      reader.readAsDataURL(file)
-    })
+      // Return blobName in format container/blobName for storage in Cosmos DB
+      // The URL includes SAS token for immediate use, but we store the blobName
+      return `${containerName}/${blobName}`
+    } catch (err: any) {
+      throw new Error(err.message || 'Error al subir el avatar')
+    }
   }, [])
 
   // Update avatar
   const updateAvatar = useCallback(async (file: File) => {
     try {
-      const base64Avatar = await uploadAvatar(file)
-      await updateProfile({ avatar: base64Avatar })
-      return base64Avatar
+      // Upload to Blob Storage and get blobName
+      const blobName = await uploadAvatar(file)
+      
+      // Update profile with blobName
+      await updateProfile({ avatar: blobName })
+      
+      // Return URL with SAS token for immediate display
+      // Extract container and blobName from the format container/blobName
+      const [containerName, ...blobNameParts] = blobName.split('/')
+      const fullBlobName = blobNameParts.join('/')
+      const { url } = await ApiService.getMediaUrl(containerName, fullBlobName)
+      
+      return url
     } catch (err: any) {
       throw err
     }
