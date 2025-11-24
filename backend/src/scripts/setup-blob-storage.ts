@@ -14,8 +14,8 @@
  *   - AZURE_STORAGE_CONNECTION_STRING en .env
  */
 
-import { BlobServiceClient, ContainerClient } from '@azure/storage-blob';
-import dotenv from 'dotenv';
+import { BlobServiceClient } from '@azure/storage-blob';
+import * as dotenv from 'dotenv';
 import * as path from 'path';
 
 // Cargar variables de entorno
@@ -23,7 +23,7 @@ dotenv.config({ path: path.join(__dirname, '../../.env') });
 
 interface ContainerConfig {
   name: string;
-  access: 'private' | 'blob' | 'container';
+  access: 'blob' | 'container' | undefined; // undefined = private
   cors?: {
     allowedOrigins: string[];
     allowedMethods: string[];
@@ -52,7 +52,7 @@ const CONTAINERS: ContainerConfig[] = [
   },
   {
     name: 'user-avatars',
-    access: 'private',
+    access: undefined, // Private
     cors: {
       allowedOrigins: [
         'http://localhost:5173',
@@ -67,7 +67,7 @@ const CONTAINERS: ContainerConfig[] = [
   },
   {
     name: 'course-media',
-    access: 'private',
+    access: undefined, // Private
     cors: {
       allowedOrigins: [
         'http://localhost:5173',
@@ -82,7 +82,7 @@ const CONTAINERS: ContainerConfig[] = [
   },
   {
     name: 'certificates',
-    access: 'private',
+    access: undefined, // Private
     cors: {
       allowedOrigins: [
         'http://localhost:5173',
@@ -97,7 +97,7 @@ const CONTAINERS: ContainerConfig[] = [
   },
   {
     name: 'course-files',
-    access: 'private',
+    access: undefined, // Private
     cors: {
       allowedOrigins: [
         'http://localhost:5173',
@@ -160,11 +160,13 @@ async function setupBlobStorage() {
             const corsRules = serviceProperties.cors || [];
             
             // Verificar si ya existe una regla CORS para estos orígenes
-            const existingRule = corsRules.find(rule => 
-              rule.allowedOrigins.some(origin => 
-                containerConfig.cors!.allowedOrigins.includes(origin)
-              )
-            );
+            // allowedOrigins es un string separado por comas, no un array
+            const existingRule = corsRules.find(rule => {
+              const ruleOrigins = rule.allowedOrigins ? rule.allowedOrigins.split(',') : [];
+              return containerConfig.cors!.allowedOrigins.some(origin => 
+                ruleOrigins.includes(origin)
+              );
+            });
 
             if (!existingRule) {
               // Agregar nueva regla CORS
@@ -196,10 +198,9 @@ async function setupBlobStorage() {
     // Verificar configuración
     console.log('\n🔍 Verificando configuración...\n');
     
-    const properties = await blobServiceClient.getProperties();
-    console.log('   Storage Account:', properties.accountName);
-    console.log('   SKU:', properties.skuName);
-    console.log('   Kind:', properties.kind);
+    // Obtener información del account desde la connection string
+    const accountName = connectionString.match(/AccountName=([^;]+)/)?.[1] || 'N/A';
+    console.log('   Storage Account:', accountName);
     
     // Listar containers
     console.log('\n📋 Containers existentes:');
