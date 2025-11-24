@@ -110,6 +110,7 @@ export interface User {
   role: UserRole
   tenantId: string
   assignedCourses: string[]
+  enrolledCourses?: string[]       // Array of course IDs the user is enrolled in
   
   // Custom Permissions (optional overrides)
   customPermissions?: string[]

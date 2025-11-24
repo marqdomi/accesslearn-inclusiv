@@ -8,6 +8,7 @@ interface AuthContextType {
   login: (email: string, password: string, tenantId: string) => Promise<void>
   logout: () => void
   switchTenant: () => void
+  refreshUser: () => Promise<void>
   isAuthenticated: boolean
   isLoading: boolean
 }
@@ -55,6 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           role: backendUser.role as UserRole,
           tenantId: backendUser.tenantId,
           assignedCourses: backendUser.assignedCourses || [],
+          enrolledCourses: backendUser.enrolledCourses || [],
           customPermissions: backendUser.customPermissions,
           // Mexican compliance fields (if present)
           curp: backendUser.curp,
@@ -101,12 +103,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     window.location.href = '/'
   }
 
+  const refreshUser = async () => {
+    if (!user || !token) return
+
+    try {
+      const updatedUser = await ApiService.getUserById(user.id, user.tenantId)
+      
+      // Construir objeto User completo desde response
+      const userData: User = {
+        id: updatedUser.id,
+        name: `${updatedUser.firstName} ${updatedUser.lastName}`,
+        firstName: updatedUser.firstName,
+        lastName: updatedUser.lastName,
+        email: updatedUser.email,
+        role: updatedUser.role as UserRole,
+        tenantId: updatedUser.tenantId,
+        assignedCourses: updatedUser.assignedCourses || [],
+        enrolledCourses: updatedUser.enrolledCourses || [],
+        customPermissions: updatedUser.customPermissions,
+        // Mexican compliance fields (if present)
+        curp: updatedUser.curp,
+        rfc: updatedUser.rfc,
+        nss: updatedUser.nss,
+        puesto: updatedUser.puesto,
+        area: updatedUser.area,
+        departamento: updatedUser.departamento,
+        centroCostos: updatedUser.centroCostos,
+      }
+
+      setUser(userData)
+      localStorage.setItem('current-user', JSON.stringify(userData))
+    } catch (error) {
+      console.error('Error refreshing user:', error)
+      // No lanzar error, solo loguear para no interrumpir el flujo
+    }
+  }
+
   const value: AuthContextType = {
     user,
     token,
     login,
     logout,
     switchTenant,
+    refreshUser,
     isAuthenticated: !!user && !!token,
     isLoading,
   }

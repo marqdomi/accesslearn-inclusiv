@@ -23,6 +23,7 @@ export interface LoginResponse {
     role: string;
     tenantId: string;
     customPermissions?: string[];
+    enrolledCourses?: string[];
   };
   token?: string;
   error?: string;
@@ -129,6 +130,7 @@ export async function login(request: LoginRequest): Promise<LoginResponse> {
         role: user.role,
         tenantId: user.tenantId,
         customPermissions: user.customPermissions,
+        enrolledCourses: user.enrolledCourses || [],
       },
       token,
     };
@@ -209,6 +211,7 @@ export async function validateToken(token: string): Promise<LoginResponse> {
         role: resource.role,
         tenantId: resource.tenantId,
         customPermissions: resource.customPermissions,
+        enrolledCourses: resource.enrolledCourses || [],
       },
       token,
     };

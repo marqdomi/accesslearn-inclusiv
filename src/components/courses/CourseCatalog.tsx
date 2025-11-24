@@ -41,7 +41,7 @@ interface CourseCatalogProps {
 }
 
 export function CourseCatalog({ onCourseEnrolled }: CourseCatalogProps) {
-  const { user } = useAuth()
+  const { user, refreshUser } = useAuth()
   const { currentTenant } = useTenant()
   const [courses, setCourses] = useState<Course[]>([])
   const [loading, setLoading] = useState(true)
@@ -70,6 +70,17 @@ export function CourseCatalog({ onCourseEnrolled }: CourseCatalogProps) {
 
     try {
       setLoading(true)
+      
+      // Refrescar usuario para obtener cursos inscritos actualizados
+      if (user) {
+        try {
+          await refreshUser()
+        } catch (error) {
+          console.error('Error refreshing user:', error)
+          // Continuar aunque falle el refresh
+        }
+      }
+      
       const data = await ApiService.getCourses(currentTenant.id)
       // Filter only published/active courses
       const availableCourses = data.filter((c: Course) => 
@@ -110,11 +121,17 @@ export function CourseCatalog({ onCourseEnrolled }: CourseCatalogProps) {
       toast.success(`¡Te has inscrito en "${course.title}"!`, {
         description: 'El curso ya está disponible en tu biblioteca'
       })
+      
+      // Actualizar estado local inmediatamente
       setEnrolledCourseIds(prev => {
         const updated = new Set(prev)
         updated.add(course.id)
         return updated
       })
+      
+      // Refrescar usuario del backend para sincronizar enrolledCourses
+      await refreshUser()
+      
       onCourseEnrolled?.()
     } catch (error: any) {
       console.error('Error enrolling in course:', error)
