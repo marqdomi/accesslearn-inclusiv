@@ -75,6 +75,125 @@ export function CourseViewerPage() {
     loadCourse()
   }, [courseId])
 
+  // Transform lesson from CourseStructure format (with blocks) to CourseViewerPage format
+  const transformLesson = (lesson: any): Lesson => {
+    // If lesson already has the viewer format (type and content), return as is
+    if (lesson.type && lesson.content) {
+      return {
+        id: lesson.id,
+        title: lesson.title,
+        type: lesson.type,
+        order: lesson.order || 0,
+        duration: lesson.duration || lesson.estimatedMinutes,
+        isRequired: lesson.isRequired !== false,
+        xpReward: lesson.xpReward || lesson.totalXP || 0,
+        content: lesson.content
+      }
+    }
+
+    // Check if lesson has a quiz
+    if (lesson.quiz && lesson.quiz.questions && lesson.quiz.questions.length > 0) {
+      return {
+        id: lesson.id,
+        title: lesson.title,
+        type: 'quiz',
+        order: lesson.order || 0,
+        duration: lesson.estimatedMinutes || 0,
+        isRequired: true,
+        xpReward: lesson.totalXP || lesson.quiz.totalXP || 0,
+        content: {
+          quiz: {
+            description: lesson.description || '',
+            questions: lesson.quiz.questions.map((q: any) => ({
+              id: q.id || `q-${Date.now()}-${Math.random()}`,
+              question: q.question || q.text || '',
+              type: q.type || 'multiple-choice',
+              options: q.options || [],
+              correctAnswer: q.correctAnswer !== undefined ? q.correctAnswer : (q.correctAnswerIndex !== undefined ? q.correctAnswerIndex : 0),
+              points: q.points || 1,
+              explanation: q.explanation
+            })),
+            maxLives: lesson.quiz.maxAttempts || 3,
+            showTimer: lesson.quiz.showTimer || false,
+            passingScore: lesson.quiz.passingScore || 70
+          }
+        }
+      }
+    }
+
+    // Check if lesson has blocks (from CourseStructure format)
+    if (lesson.blocks && Array.isArray(lesson.blocks) && lesson.blocks.length > 0) {
+      // Find video block
+      const videoBlock = lesson.blocks.find((b: any) => b.type === 'video')
+      if (videoBlock && videoBlock.videoUrl) {
+        // Determine video provider
+        let videoProvider: 'youtube' | 'vimeo' | 'url' = 'url'
+        let videoId: string | undefined = undefined
+        
+        if (videoBlock.videoUrl.includes('youtube.com') || videoBlock.videoUrl.includes('youtu.be')) {
+          videoProvider = 'youtube'
+          // Extract YouTube video ID
+          const match = videoBlock.videoUrl.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/)
+          videoId = match ? match[1] : undefined
+        } else if (videoBlock.videoUrl.includes('vimeo.com')) {
+          videoProvider = 'vimeo'
+          const match = videoBlock.videoUrl.match(/vimeo\.com\/(\d+)/)
+          videoId = match ? match[1] : undefined
+        }
+        
+        return {
+          id: lesson.id,
+          title: lesson.title,
+          type: 'video',
+          order: lesson.order || 0,
+          duration: lesson.estimatedMinutes || 0,
+          isRequired: true,
+          xpReward: lesson.totalXP || 0,
+          content: {
+            videoProvider,
+            videoId,
+            videoUrl: videoBlock.videoUrl
+          }
+        }
+      }
+
+      // Combine all text blocks into markdown
+      const textBlocks = lesson.blocks
+        .filter((b: any) => ['text', 'welcome', 'code'].includes(b.type))
+        .sort((a: any, b: any) => (a.order || 0) - (b.order || 0))
+      
+      if (textBlocks.length > 0) {
+        const markdown = textBlocks.map((b: any) => b.content).join('\n\n')
+        return {
+          id: lesson.id,
+          title: lesson.title,
+          type: 'markdown',
+          order: lesson.order || 0,
+          duration: lesson.estimatedMinutes || 0,
+          isRequired: true,
+          xpReward: lesson.totalXP || 0,
+          content: {
+            markdown
+          }
+        }
+      }
+    }
+
+    // Fallback: create a markdown lesson with description
+    return {
+      id: lesson.id,
+      title: lesson.title,
+      type: 'markdown',
+      order: lesson.order || 0,
+      duration: lesson.estimatedMinutes || 0,
+      isRequired: true,
+      xpReward: lesson.totalXP || 0,
+      content: {
+        markdown: lesson.description || `# ${lesson.title}\n\nContenido de la lección.`
+      }
+    }
+  }
+
   const loadCourse = async () => {
     if (!courseId || !currentTenant) return
 
@@ -82,13 +201,26 @@ export function CourseViewerPage() {
       setLoading(true)
       const data = await ApiService.getCourseById(courseId)
       
-      // Ensure modules and lessons arrays exist
+      // Transform modules and lessons to CourseViewerPage format
       const courseData: Course = {
-        ...data,
+        id: data.id,
+        title: data.title,
+        description: data.description || '',
+        difficulty: data.difficulty || 'Novice',
+        estimatedHours: data.estimatedTime ? Math.round(data.estimatedTime / 60) : 0,
         modules: Array.isArray(data.modules) 
-          ? data.modules.map(module => ({
-              ...module,
-              lessons: Array.isArray(module.lessons) ? module.lessons : []
+          ? data.modules.map((module: any, moduleIndex: number) => ({
+              id: module.id || `module-${moduleIndex}`,
+              title: module.title,
+              description: module.description || '',
+              order: module.order || moduleIndex,
+              xpReward: module.xpReward || 0,
+              lessons: Array.isArray(module.lessons) 
+                ? module.lessons.map((lesson: any, lessonIndex: number) => transformLesson({
+                    ...lesson,
+                    order: lesson.order !== undefined ? lesson.order : lessonIndex
+                  }))
+                : []
             }))
           : []
       }
