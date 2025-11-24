@@ -6,7 +6,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import * as crypto from 'crypto';
 import { getContainer } from '../services/cosmosdb.service';
-import { User, CreateUserRequest, UpdateUserRequest, UserProgress } from '../models/User';
+import { User, UserRole, CreateUserRequest, UpdateUserRequest, UserProgress } from '../models/User';
 import { emailService } from '../services/email.service';
 import { getLevelFromXP } from './GamificationFunctions';
 
@@ -610,5 +610,76 @@ export async function acceptInvitation(
   user.updatedAt = new Date().toISOString();
   
   const { resource } = await usersContainer.items.upsert(user);
+  return resource as unknown as User;
+}
+
+/**
+ * Register new user (public registration for demos)
+ * Creates user directly without invitation
+ */
+export async function registerUser(request: {
+  tenantId: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  password: string;
+  role?: string; // Defaults to 'student' if not provided
+}): Promise<User> {
+  const usersContainer = getContainer('users');
+  
+  // Check if email already exists in this tenant
+  const { resources: existingUsers } = await usersContainer.items
+    .query({
+      query: 'SELECT * FROM c WHERE c.tenantId = @tenantId AND c.email = @email',
+      parameters: [
+        { name: '@tenantId', value: request.tenantId },
+        { name: '@email', value: request.email }
+      ]
+    })
+    .fetchAll();
+  
+  if (existingUsers.length > 0) {
+    throw new Error(`El email ${request.email} ya está registrado en esta organización.`);
+  }
+  
+  // Validate password
+  if (!request.password || request.password.length < 8) {
+    throw new Error('La contraseña debe tener al menos 8 caracteres.');
+  }
+  
+  // Generate user ID
+  const userId = `user-${uuidv4()}`;
+  const now = new Date().toISOString();
+  
+  // Default role to 'student' if not provided
+  const userRole = (request.role || 'student') as UserRole;
+  
+  // Create user
+  const newUser: User = {
+    id: userId,
+    tenantId: request.tenantId,
+    email: request.email,
+    firstName: request.firstName,
+    lastName: request.lastName,
+    role: userRole,
+    status: 'active', // Directly active for public registration
+    
+    // Hash password
+    password: hashPassword(request.password),
+    passwordResetRequired: false,
+    
+    // Initialize empty
+    enrolledCourses: [],
+    completedCourses: [],
+    totalXP: 0,
+    level: 1,
+    badges: [],
+    
+    createdAt: now,
+    updatedAt: now
+  };
+  
+  const { resource } = await usersContainer.items.create(newUser);
+  
   return resource as unknown as User;
 }

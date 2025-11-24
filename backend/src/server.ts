@@ -804,6 +804,65 @@ app.post('/api/users/accept-invitation', async (req, res) => {
   }
 });
 
+// POST /api/users/register - Public user registration (for demos)
+app.post('/api/users/register', async (req, res) => {
+  try {
+    const { tenantSlug, email, firstName, lastName, password, role } = req.body;
+
+    if (!tenantSlug || !email || !firstName || !lastName || !password) {
+      return res.status(400).json({ 
+        error: 'tenantSlug, email, firstName, lastName, and password are required' 
+      });
+    }
+
+    // Get tenant by slug
+    const { getTenantBySlug } = await import('./functions/TenantFunctions');
+    const tenant = await getTenantBySlug(tenantSlug);
+    
+    if (!tenant) {
+      return res.status(404).json({ error: `Organización "${tenantSlug}" no encontrada.` });
+    }
+
+    // Register user
+    const { registerUser } = await import('./functions/UserFunctions');
+    const user = await registerUser({
+      tenantId: tenant.id,
+      email,
+      firstName,
+      lastName,
+      password,
+      role: role || 'student' // Default to student for public registration
+    });
+    
+    // Send welcome email
+    try {
+      const loginUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/login`;
+      
+      await emailService.sendWelcomeEmail({
+        recipientEmail: user.email,
+        recipientName: `${user.firstName} ${user.lastName}`,
+        tenantName: tenant.name,
+        loginUrl
+      });
+      
+      console.log(`✅ Welcome email sent to ${user.email}`);
+    } catch (emailError: any) {
+      console.error('⚠️ Failed to send welcome email:', emailError.message);
+      // Don't fail the request if email fails
+    }
+    
+    // Return user without password
+    const { password: _, ...userWithoutPassword } = user;
+    res.status(201).json({
+      user: userWithoutPassword,
+      message: 'Usuario registrado exitosamente. Ya puedes iniciar sesión.'
+    });
+  } catch (error: any) {
+    console.error('[API] Error registering user:', error);
+    res.status(400).json({ error: error.message });
+  }
+});
+
 // ============================================
 // COURSE ENDPOINTS
 // ============================================

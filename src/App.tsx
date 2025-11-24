@@ -5,6 +5,7 @@ import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import { TenantResolver } from '@/components/auth/TenantResolver'
 import { TenantLoginPage } from '@/components/auth/TenantLoginPage'
 import { AcceptInvitationPage } from '@/pages/AcceptInvitationPage'
+import { RegisterPage } from '@/pages/RegisterPage'
 import { DashboardPage } from '@/pages/DashboardPage'
 import { CourseViewerPage } from '@/pages/CourseViewerPage'
 import { MentorDirectoryPage } from '@/pages/MentorDirectoryPage'
@@ -60,6 +61,10 @@ function AppRoutes() {
       <Route
         path="/accept-invitation"
         element={<AcceptInvitationPage />}
+      />
+      <Route
+        path="/register"
+        element={<RegisterPage />}
       />
       <Route
         path="/dashboard"

@@ -323,6 +323,23 @@ class ApiServiceClass {
     })
   }
 
+  async registerUser(data: {
+    tenantSlug: string
+    email: string
+    firstName: string
+    lastName: string
+    password: string
+    role?: string
+  }) {
+    return this.fetchWithoutAuth<{
+      user: any
+      message: string
+    }>(`/users/register`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
   // ============================================
   // COURSE APIs
   // ============================================
