@@ -93,6 +93,43 @@ export function CourseViewerPage() {
 
     // Check if lesson has a quiz (prioritize quiz over blocks)
     if (lesson.quiz && lesson.quiz.questions && Array.isArray(lesson.quiz.questions) && lesson.quiz.questions.length > 0) {
+      // Transform questions to QuizLesson format
+      const transformedQuestions = lesson.quiz.questions.map((q: any, index: number) => {
+        const questionType = q.type || 'multiple-choice'
+        const questionId = q.id || `q-${lesson.id}-${index}`
+        
+        // Build question object based on type
+        let questionObj: any = {
+          question: q.question || q.text || '',
+          explanation: q.explanation || ''
+        }
+        
+        if (questionType === 'multiple-choice') {
+          questionObj.options = Array.isArray(q.options) ? q.options : (q.choices || [])
+          questionObj.correctAnswer = q.correctAnswer !== undefined 
+            ? q.correctAnswer 
+            : (q.correctAnswerIndex !== undefined 
+              ? q.correctAnswerIndex 
+              : 0)
+        } else if (questionType === 'true-false') {
+          questionObj.correctAnswer = q.correctAnswer !== undefined 
+            ? Boolean(q.correctAnswer)
+            : (q.correctAnswerIndex !== undefined 
+              ? Boolean(q.correctAnswerIndex)
+              : true)
+        } else if (questionType === 'fill-blank') {
+          questionObj.blanks = q.blanks || []
+          questionObj.correctAnswers = q.correctAnswers || []
+        }
+        
+        return {
+          id: questionId,
+          type: questionType,
+          question: questionObj,
+          xpReward: q.points || q.xpReward || 10
+        }
+      })
+      
       return {
         id: lesson.id,
         title: lesson.title,
@@ -104,19 +141,7 @@ export function CourseViewerPage() {
         content: {
           quiz: {
             description: lesson.description || lesson.quiz.description || '',
-            questions: lesson.quiz.questions.map((q: any, index: number) => ({
-              id: q.id || `q-${lesson.id}-${index}`,
-              question: q.question || q.text || '',
-              type: q.type || 'multiple-choice',
-              options: Array.isArray(q.options) ? q.options : (q.choices || []),
-              correctAnswer: q.correctAnswer !== undefined 
-                ? q.correctAnswer 
-                : (q.correctAnswerIndex !== undefined 
-                  ? q.correctAnswerIndex 
-                  : (typeof q.correctAnswer === 'number' ? q.correctAnswer : 0)),
-              points: q.points || 1,
-              explanation: q.explanation || ''
-            })),
+            questions: transformedQuestions,
             maxLives: lesson.quiz.maxAttempts || lesson.quiz.maxLives || 3,
             showTimer: lesson.quiz.showTimer || false,
             passingScore: lesson.quiz.passingScore || 70
