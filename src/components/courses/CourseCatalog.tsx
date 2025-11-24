@@ -46,6 +46,7 @@ export function CourseCatalog({ onCourseEnrolled }: CourseCatalogProps) {
   const [courses, setCourses] = useState<Course[]>([])
   const [loading, setLoading] = useState(true)
   const [enrolling, setEnrolling] = useState<string | null>(null)
+  const [enrolledCourseIds, setEnrolledCourseIds] = useState<Set<string>>(new Set())
   const [searchQuery, setSearchQuery] = useState('')
   const [categoryFilter, setCategoryFilter] = useState<string>('all')
   const [levelFilter, setLevelFilter] = useState<string>('all')
@@ -55,6 +56,14 @@ export function CourseCatalog({ onCourseEnrolled }: CourseCatalogProps) {
       loadCourses()
     }
   }, [currentTenant])
+
+  useEffect(() => {
+    if (user?.enrolledCourses) {
+      setEnrolledCourseIds(new Set(user.enrolledCourses))
+    } else {
+      setEnrolledCourseIds(new Set())
+    }
+  }, [user?.enrolledCourses])
 
   const loadCourses = async () => {
     if (!currentTenant) return
@@ -100,6 +109,11 @@ export function CourseCatalog({ onCourseEnrolled }: CourseCatalogProps) {
       
       toast.success(`¡Te has inscrito en "${course.title}"!`, {
         description: 'El curso ya está disponible en tu biblioteca'
+      })
+      setEnrolledCourseIds(prev => {
+        const updated = new Set(prev)
+        updated.add(course.id)
+        return updated
       })
       onCourseEnrolled?.()
     } catch (error: any) {
@@ -262,8 +276,12 @@ export function CourseCatalog({ onCourseEnrolled }: CourseCatalogProps) {
         </Card>
       ) : (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {filteredCourses.map((course) => (
-            <Card key={course.id} className="h-full flex flex-col hover:shadow-lg transition-shadow">
+          {filteredCourses.map((course) => {
+            const isEnrolled = enrolledCourseIds.has(course.id)
+            const isEnrolling = enrolling === course.id
+
+            return (
+              <Card key={course.id} className="h-full flex flex-col hover:shadow-lg transition-shadow relative">
                 {course.coverImage && (
                   <div className="h-48 overflow-hidden rounded-t-lg">
                     <img 
@@ -272,6 +290,15 @@ export function CourseCatalog({ onCourseEnrolled }: CourseCatalogProps) {
                       className="w-full h-full object-cover"
                     />
                   </div>
+                )}
+                
+                {isEnrolled && (
+                  <Badge 
+                    className="absolute top-4 right-4 bg-emerald-100 text-emerald-700 border-emerald-200"
+                    variant="outline"
+                  >
+                    Inscrito
+                  </Badge>
                 )}
                 
                 <CardHeader>
@@ -319,9 +346,15 @@ export function CourseCatalog({ onCourseEnrolled }: CourseCatalogProps) {
                   <Button 
                     onClick={() => handleEnroll(course)} 
                     className="w-full gap-2"
-                    disabled={enrolling === course.id}
+                    disabled={isEnrolling || isEnrolled}
+                    variant={isEnrolled ? 'outline' : 'default'}
                   >
-                    {enrolling === course.id ? (
+                    {isEnrolled ? (
+                      <>
+                        <CheckCircle size={18} weight="fill" />
+                        Inscrito
+                      </>
+                    ) : isEnrolling ? (
                       <>
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                         Inscribiendo...
@@ -335,7 +368,8 @@ export function CourseCatalog({ onCourseEnrolled }: CourseCatalogProps) {
                   </Button>
                 </CardFooter>
               </Card>
-          ))}
+            )
+          })}
         </div>
       )}
     </div>
