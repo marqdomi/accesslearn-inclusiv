@@ -10,6 +10,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Button } from '@/components/ui/button'
+import { TenantLogo } from '@/components/branding/TenantLogo'
 
 export function TenantSwitcher() {
     const { currentTenant } = useTenant()
@@ -23,7 +24,7 @@ export function TenantSwitcher() {
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="gap-2">
-                    <Buildings size={18} />
+                    <TenantLogo size="sm" className="flex-shrink-0" />
                     <span className="hidden md:inline">{currentTenant.name}</span>
                     <CaretDown size={14} />
                 </Button>
@@ -31,11 +32,14 @@ export function TenantSwitcher() {
             <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>Organización Actual</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <div className="px-2 py-2">
-                    <p className="text-sm font-medium">{currentTenant.name}</p>
-                    <p className="text-xs text-muted-foreground capitalize">
-                        Plan: {currentTenant.plan}
-                    </p>
+                <div className="px-2 py-2 flex items-center gap-3">
+                    <TenantLogo size="sm" className="flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{currentTenant.name}</p>
+                        <p className="text-xs text-muted-foreground capitalize">
+                            Plan: {currentTenant.plan}
+                        </p>
+                    </div>
                 </div>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={switchTenant}>

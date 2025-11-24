@@ -35,6 +35,7 @@ import { RequireRole } from '@/components/auth/RequireRole'
 import { RequirePermission } from '@/components/auth/RequirePermission'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { TenantSwitcher } from '@/components/dashboard/TenantSwitcher'
+import { TenantLogo } from '@/components/branding/TenantLogo'
 
 interface Course {
   id: string
@@ -219,6 +220,7 @@ export function DashboardPage() {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
+              <TenantLogo size="md" className="flex-shrink-0" />
               <div>
                 <h1 className="text-2xl font-bold">{currentTenant?.name}</h1>
                 <p className="text-sm text-muted-foreground">Plataforma de Aprendizaje</p>

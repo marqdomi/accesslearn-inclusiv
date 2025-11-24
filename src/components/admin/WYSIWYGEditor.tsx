@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { LessonBlock } from '@/lib/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -14,23 +14,56 @@ import {
   Warning, CheckCircle
 } from '@phosphor-icons/react'
 import { toast } from 'sonner'
+import { ApiService } from '@/services/api.service'
 
 interface WYSIWYGEditorProps {
   block: LessonBlock
   onChange: (block: LessonBlock) => void
   onSave: () => void
   onCancel: () => void
+  courseId?: string
+  lessonId?: string
 }
 
-export function WYSIWYGEditor({ block, onChange, onSave, onCancel }: WYSIWYGEditorProps) {
+export function WYSIWYGEditor({ block, onChange, onSave, onCancel, courseId, lessonId }: WYSIWYGEditorProps) {
   const [content, setContent] = useState(block.content)
   const [altText, setAltText] = useState(block.accessibility?.altText || '')
   const [captions, setCaptions] = useState(block.accessibility?.captions || '')
   const [videoUrl, setVideoUrl] = useState(block.videoUrl || '')
   const [activeTab, setActiveTab] = useState<'text' | 'image' | 'video'>('text')
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const captionInputRef = useRef<HTMLInputElement>(null)
+
+  // Load image preview URL when block changes
+  useEffect(() => {
+    const loadImagePreview = async () => {
+      if (block.type === 'image' && block.imageFile) {
+        // Si ya es una URL (con SAS token o externa), usarla directamente
+        if (block.imageFile.startsWith('http') || block.imageFile.startsWith('data:')) {
+          setImagePreviewUrl(block.imageFile)
+        } else if (block.imageFile.includes('/')) {
+          // Es un blobName (formato: container/blobName), generar URL con SAS
+          try {
+            const [containerName, ...blobNameParts] = block.imageFile.split('/')
+            const blobName = blobNameParts.join('/')
+            const { url } = await ApiService.getMediaUrl(containerName, blobName)
+            setImagePreviewUrl(url)
+          } catch (error) {
+            console.error('Error generating image preview URL:', error)
+            setImagePreviewUrl(null)
+          }
+        } else {
+          setImagePreviewUrl(block.imageFile)
+        }
+      } else {
+        setImagePreviewUrl(null)
+      }
+    }
+
+    loadImagePreview()
+  }, [block.imageFile, block.type])
 
   const applyFormatting = (format: string) => {
     const textarea = textareaRef.current
@@ -62,28 +95,65 @@ export function WYSIWYGEditor({ block, onChange, onSave, onCancel }: WYSIWYGEdit
     onChange({ ...block, content: newText })
   }
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
 
     if (!file.type.startsWith('image/')) {
-      toast.error('Please upload an image file (JPG, PNG, GIF)')
+      toast.error('Por favor, sube un archivo de imagen (JPG, PNG, GIF)')
       return
     }
 
-    const reader = new FileReader()
-    reader.onload = (event) => {
-      const dataUrl = event.target?.result as string
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('La imagen debe ser menor a 5MB')
+      return
+    }
+
+    // Si no hay courseId o lessonId, usar Base64 como fallback
+    if (!courseId || !lessonId) {
+      console.warn('[WYSIWYGEditor] courseId o lessonId no disponibles, usando Base64 como fallback')
+      const reader = new FileReader()
+      reader.onload = (event) => {
+        const dataUrl = event.target?.result as string
+        onChange({
+          ...block,
+          type: 'image',
+          content: dataUrl,
+          imageFile: dataUrl,
+          accessibility: { ...block.accessibility, altText }
+        })
+        toast.success('Imagen subida exitosamente')
+      }
+      reader.readAsDataURL(file)
+      return
+    }
+
+    try {
+      // Upload to Blob Storage
+      const { url, blobName, containerName } = await ApiService.uploadFile(file, 'lesson-image', {
+        courseId,
+        lessonId
+      })
+
+      // Guardar blobName en formato container/blobName para Cosmos DB
+      const blobNameForStorage = `${containerName}/${blobName}`
+      
       onChange({
         ...block,
         type: 'image',
-        content: dataUrl,
-        imageFile: dataUrl,
+        content: blobNameForStorage, // Guardar blobName en lugar de Base64
+        imageFile: blobNameForStorage, // Guardar blobName también en imageFile para consistencia
         accessibility: { ...block.accessibility, altText }
       })
-      toast.success('Image uploaded successfully')
+      
+      // Actualizar preview con URL con SAS token
+      setImagePreviewUrl(url)
+      toast.success('Imagen subida exitosamente')
+    } catch (error: any) {
+      console.error('Error uploading image:', error)
+      toast.error(error.message || 'Error al subir la imagen')
     }
-    reader.readAsDataURL(file)
   }
 
   const handleCaptionUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -252,9 +322,9 @@ export function WYSIWYGEditor({ block, onChange, onSave, onCancel }: WYSIWYGEdit
                 </div>
               </div>
 
-              {block.imageFile && (
+              {imagePreviewUrl && (
                 <div className="border rounded-lg p-4">
-                  <img src={block.imageFile} alt="Preview" className="max-w-full h-auto rounded" />
+                  <img src={imagePreviewUrl} alt="Preview" className="max-w-full h-auto rounded" />
                 </div>
               )}
 

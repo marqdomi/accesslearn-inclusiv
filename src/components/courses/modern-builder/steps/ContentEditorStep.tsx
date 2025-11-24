@@ -1,5 +1,5 @@
 import { CourseStructure, LessonBlock, Lesson } from '@/lib/types'
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -45,12 +45,16 @@ import {
   Link as LinkIcon,
   Quotes,
   Eye,
+  UploadSimple,
 } from '@phosphor-icons/react'
 import ReactMarkdown from 'react-markdown'
+import { ApiService } from '@/services/api.service'
+import { toast } from 'sonner'
 
 interface ContentEditorStepProps {
   course: CourseStructure
   updateCourse: (updates: Partial<CourseStructure>) => void
+  courseId?: string
 }
 
 const BLOCK_TYPES = [
@@ -63,10 +67,12 @@ const BLOCK_TYPES = [
   { value: 'code', label: 'Código', icon: Code, description: 'Bloque de código' },
 ] as const
 
-export function ContentEditorStep({ course, updateCourse }: ContentEditorStepProps) {
+export function ContentEditorStep({ course, updateCourse, courseId }: ContentEditorStepProps) {
   const [selectedLessonPath, setSelectedLessonPath] = useState<string>('')
   const [isBlockDialogOpen, setIsBlockDialogOpen] = useState(false)
   const [editingBlock, setEditingBlock] = useState<{ moduleIndex: number; lessonIndex: number; blockIndex: number; data: LessonBlock } | null>(null)
+  const [isUploadingImage, setIsUploadingImage] = useState(false)
+  const imageFileInputRef = useRef<HTMLInputElement>(null)
   
   // Form state
   const [blockForm, setBlockForm] = useState({
@@ -613,16 +619,91 @@ export function ContentEditorStep({ course, updateCourse }: ContentEditorStepPro
             {/* Image File (only for image blocks) */}
             {blockForm.type === 'image' && (
               <div className="space-y-2">
-                <Label htmlFor="image-file">Nombre/URL de Imagen</Label>
-                <Input
-                  id="image-file"
-                  placeholder="imagen.jpg o https://..."
-                  value={blockForm.imageFile}
-                  onChange={(e) => setBlockForm({ ...blockForm, imageFile: e.target.value })}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Por ahora ingresa el nombre o URL. Pronto agregaremos subida de archivos.
-                </p>
+                <Label htmlFor="image-file">Imagen</Label>
+                <div className="space-y-2">
+                  {/* Upload Button */}
+                  <div className="border-2 border-dashed rounded-lg p-4 text-center">
+                    <input
+                      ref={imageFileInputRef}
+                      id="image-file-upload"
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0]
+                        if (!file) return
+
+                        if (!file.type.startsWith('image/')) {
+                          toast.error('Por favor, sube un archivo de imagen (JPG, PNG, GIF)')
+                          return
+                        }
+
+                        if (file.size > 5 * 1024 * 1024) {
+                          toast.error('La imagen debe ser menor a 5MB')
+                          return
+                        }
+
+                        if (!courseId || !selectedLesson) {
+                          toast.error('Error: No se pudo determinar el curso o lección')
+                          return
+                        }
+
+                        setIsUploadingImage(true)
+                        try {
+                          const { url, blobName, containerName } = await ApiService.uploadFile(file, 'lesson-image', {
+                            courseId,
+                            lessonId: selectedLesson.lesson.id
+                          })
+
+                          // Guardar blobName en formato container/blobName
+                          const blobNameForStorage = `${containerName}/${blobName}`
+                          setBlockForm({ ...blockForm, imageFile: blobNameForStorage })
+                          toast.success('Imagen subida exitosamente')
+                        } catch (error: any) {
+                          console.error('Error uploading image:', error)
+                          toast.error(error.message || 'Error al subir la imagen')
+                        } finally {
+                          setIsUploadingImage(false)
+                        }
+                      }}
+                      disabled={isUploadingImage}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => imageFileInputRef.current?.click()}
+                      disabled={isUploadingImage}
+                    >
+                      <UploadSimple size={20} className="mr-2" />
+                      {isUploadingImage ? 'Subiendo...' : 'Subir Imagen'}
+                    </Button>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      JPG, PNG, GIF • Máx 5MB
+                    </p>
+                  </div>
+
+                  {/* Preview or URL Input */}
+                  {blockForm.imageFile && (
+                    <div className="space-y-2">
+                      {blockForm.imageFile.startsWith('http') || blockForm.imageFile.startsWith('data:') ? (
+                        <div className="border rounded-lg p-2">
+                          <img 
+                            src={blockForm.imageFile} 
+                            alt="Preview" 
+                            className="max-w-full h-auto rounded"
+                          />
+                        </div>
+                      ) : (
+                        <Input
+                          id="image-file"
+                          placeholder="blobName o URL de imagen"
+                          value={blockForm.imageFile}
+                          onChange={(e) => setBlockForm({ ...blockForm, imageFile: e.target.value })}
+                        />
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 

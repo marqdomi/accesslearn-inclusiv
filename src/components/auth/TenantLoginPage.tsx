@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Shield, Eye, EyeSlash, CheckCircle, UserPlus, SignIn } from '@phosphor-icons/react';
 import { ApiService } from '@/services/api.service';
 import { toast } from 'sonner';
+import { TenantLogo } from '@/components/branding/TenantLogo';
 
 /**
  * TenantLoginPage: Página de login con branding del tenant
@@ -171,7 +172,13 @@ export function TenantLoginPage() {
         }}
       >
         <div>
-          <Shield className="w-12 h-12 mb-4" weight="fill" />
+          <div className="mb-6">
+            <TenantLogo 
+              size="xl" 
+              className="mb-4"
+              fallbackIcon={<Shield className="w-12 h-12" weight="fill" />}
+            />
+          </div>
           <h1 className="text-4xl font-bold mb-2">
             {currentTenant?.name || 'AccessLearn'}
           </h1>
@@ -221,11 +228,19 @@ export function TenantLoginPage() {
           <div className="bg-white rounded-2xl shadow-xl p-8 space-y-6">
             {/* Header */}
             <div className="text-center space-y-2">
-              <div 
-                className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
-                style={{ backgroundColor: `${primaryColor}20` }}
-              >
-                <Shield className="w-8 h-8" weight="fill" style={{ color: primaryColor }} />
+              <div className="flex justify-center mb-4">
+                <TenantLogo 
+                  size="lg" 
+                  className="rounded-full"
+                  fallbackIcon={
+                    <div 
+                      className="w-16 h-16 rounded-full flex items-center justify-center"
+                      style={{ backgroundColor: `${primaryColor}20` }}
+                    >
+                      <Shield className="w-8 h-8" weight="fill" style={{ color: primaryColor }} />
+                    </div>
+                  }
+                />
               </div>
               <h2 className="text-2xl font-bold text-gray-900">
                 Bienvenido a {currentTenant?.name}

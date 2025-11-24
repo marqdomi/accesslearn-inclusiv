@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { CourseStructure } from '@/lib/types'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -7,13 +7,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
-import { Info, Plus, X } from '@phosphor-icons/react'
+import { Info, Plus, X, UploadSimple, Image as ImageIcon } from '@phosphor-icons/react'
 import { useCustomCategories } from '@/hooks/use-custom-categories'
 import { toast } from 'sonner'
+import { ApiService } from '@/services/api.service'
 
 interface CourseDetailsStepProps {
   course: CourseStructure
   updateCourse: (updates: Partial<CourseStructure>) => void
+  courseId?: string
 }
 
 const DIFFICULTIES = [
@@ -23,11 +25,83 @@ const DIFFICULTIES = [
   { value: 'Expert', label: 'Experto', description: 'Dominio del tema' },
 ]
 
-export function CourseDetailsStep({ course, updateCourse }: CourseDetailsStepProps) {
+export function CourseDetailsStep({ course, updateCourse, courseId }: CourseDetailsStepProps) {
   const { categories, addCategory, loading: categoriesLoading } = useCustomCategories()
   const [showAddCategory, setShowAddCategory] = useState(false)
   const [newCategory, setNewCategory] = useState('')
   const [addingCategory, setAddingCategory] = useState(false)
+  const [isUploadingCover, setIsUploadingCover] = useState(false)
+  const [coverImagePreview, setCoverImagePreview] = useState<string | null>(null)
+  const coverImageInputRef = useRef<HTMLInputElement>(null)
+
+  // Load cover image preview when course changes
+  useEffect(() => {
+    const loadCoverImagePreview = async () => {
+      if (course.coverImage) {
+        // Si ya es una URL (con SAS token o externa), usarla directamente
+        if (course.coverImage.startsWith('http') || course.coverImage.startsWith('data:')) {
+          setCoverImagePreview(course.coverImage)
+        } else if (course.coverImage.includes('/')) {
+          // Es un blobName (formato: container/blobName), generar URL con SAS
+          try {
+            const [containerName, ...blobNameParts] = course.coverImage.split('/')
+            const blobName = blobNameParts.join('/')
+            const { url } = await ApiService.getMediaUrl(containerName, blobName)
+            setCoverImagePreview(url)
+          } catch (error) {
+            console.error('Error generating cover image preview URL:', error)
+            setCoverImagePreview(null)
+          }
+        } else {
+          setCoverImagePreview(course.coverImage)
+        }
+      } else {
+        setCoverImagePreview(null)
+      }
+    }
+
+    loadCoverImagePreview()
+  }, [course.coverImage])
+
+  const handleCoverImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('Por favor, sube un archivo de imagen (JPG, PNG, GIF)')
+      return
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('La imagen debe ser menor a 5MB')
+      return
+    }
+
+    if (!courseId && !course.id) {
+      toast.error('Error: No se pudo determinar el curso. Guarda el curso primero.')
+      return
+    }
+
+    setIsUploadingCover(true)
+    try {
+      const { url, blobName, containerName } = await ApiService.uploadFile(file, 'course-cover', {
+        courseId: courseId || course.id
+      })
+
+      // Guardar blobName en formato container/blobName
+      const blobNameForStorage = `${containerName}/${blobName}`
+      updateCourse({ coverImage: blobNameForStorage })
+      
+      // Actualizar preview con URL con SAS token
+      setCoverImagePreview(url)
+      toast.success('Imagen de portada subida exitosamente')
+    } catch (error: any) {
+      console.error('Error uploading cover image:', error)
+      toast.error(error.message || 'Error al subir la imagen de portada')
+    } finally {
+      setIsUploadingCover(false)
+    }
+  }
 
   const handleAddCategory = async () => {
     if (!newCategory.trim()) return
@@ -55,6 +129,73 @@ export function CourseDetailsStep({ course, updateCourse }: CourseDetailsStepPro
         </p>
       </div>
       
+      {/* Cover Image */}
+      <div className="space-y-2">
+        <Label htmlFor="cover-image">Imagen de Portada</Label>
+        <div className="space-y-2">
+          {/* Upload Button */}
+          <div className="border-2 border-dashed rounded-lg p-6 text-center">
+            <input
+              ref={coverImageInputRef}
+              id="cover-image-upload"
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleCoverImageUpload}
+              disabled={isUploadingCover}
+            />
+            {coverImagePreview ? (
+              <div className="space-y-3">
+                <div className="relative inline-block">
+                  <img 
+                    src={coverImagePreview} 
+                    alt="Portada del curso" 
+                    className="max-w-full h-48 object-cover rounded-lg border"
+                  />
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    className="absolute top-2 right-2"
+                    onClick={() => {
+                      updateCourse({ coverImage: undefined })
+                      setCoverImagePreview(null)
+                    }}
+                  >
+                    <X size={16} />
+                  </Button>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => coverImageInputRef.current?.click()}
+                  disabled={isUploadingCover}
+                >
+                  <UploadSimple size={20} className="mr-2" />
+                  {isUploadingCover ? 'Subiendo...' : 'Cambiar Imagen'}
+                </Button>
+              </div>
+            ) : (
+              <>
+                <ImageIcon size={48} className="mx-auto text-muted-foreground mb-2" />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => coverImageInputRef.current?.click()}
+                  disabled={isUploadingCover}
+                >
+                  <UploadSimple size={20} className="mr-2" />
+                  {isUploadingCover ? 'Subiendo...' : 'Subir Imagen de Portada'}
+                </Button>
+                <p className="text-xs text-muted-foreground mt-2">
+                  JPG, PNG, GIF • Máx 5MB • Recomendado: 1200x675px
+                </p>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+
       {/* Title */}
       <div className="space-y-2">
         <Label htmlFor="course-title" className="required">

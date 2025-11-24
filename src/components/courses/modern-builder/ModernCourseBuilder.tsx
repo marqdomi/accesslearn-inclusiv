@@ -379,7 +379,8 @@ export function ModernCourseBuilder({ courseId, onBack }: ModernCourseBuilderPro
             {currentStep === 1 && (
               <CourseDetailsStep 
                 course={course} 
-                updateCourse={updateCourse} 
+                updateCourse={updateCourse}
+                courseId={courseId || course.id}
               />
             )}
             
@@ -393,7 +394,8 @@ export function ModernCourseBuilder({ courseId, onBack }: ModernCourseBuilderPro
             {currentStep === 3 && (
               <ContentEditorStep 
                 course={course} 
-                updateCourse={updateCourse} 
+                updateCourse={updateCourse}
+                courseId={courseId || course.id}
               />
             )}
             
