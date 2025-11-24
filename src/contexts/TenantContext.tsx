@@ -11,6 +11,7 @@
  */
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import { ApiService } from '@/services/api.service'
 
 export interface Tenant {
   id: string              // tenant-demo, tenant-kainet
@@ -41,39 +42,70 @@ export function TenantProvider({ children }: TenantProviderProps) {
   const [currentTenant, setCurrentTenantState] = useState<Tenant | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
-  // Load tenant from localStorage on mount
+  // Load tenant from localStorage and API on mount
   useEffect(() => {
-    const storedTenantId = localStorage.getItem('current-tenant-id')
+    const loadTenant = async () => {
+      const storedTenantId = localStorage.getItem('current-tenant-id')
+      const tenantId = storedTenantId || 'tenant-demo'
+      
+      // Extract slug from tenantId (tenant-kainet -> kainet)
+      const slug = tenantId.replace('tenant-', '')
 
-    if (storedTenantId) {
-      // In production, this would fetch from backend API
-      // For now, we'll use a default tenant
-      const defaultTenant: Tenant = {
-        id: storedTenantId,
-        name: storedTenantId === 'tenant-demo' ? 'Empresa Demo' : 'Kainet',
-        slug: storedTenantId.replace('tenant-', ''),
-        primaryColor: '#4F46E5',
-        secondaryColor: '#10B981',
-        plan: storedTenantId === 'tenant-demo' ? 'demo' : 'profesional',
-        status: 'active'
+      try {
+        // Try to load tenant from API using slug (public endpoint, no auth required)
+        // This works for login page where user is not authenticated yet
+        const tenant = await ApiService.getTenantBySlug(slug)
+        
+        if (tenant) {
+          // Map backend tenant to frontend Tenant interface
+          const frontendTenant: Tenant = {
+            id: tenant.id,
+            name: tenant.name,
+            slug: tenant.slug,
+            domain: tenant.domain,
+            logo: tenant.logo, // This will be blobName if from Blob Storage
+            primaryColor: tenant.primaryColor || '#4F46E5',
+            secondaryColor: tenant.secondaryColor || '#10B981',
+            plan: tenant.plan as 'demo' | 'profesional' | 'enterprise',
+            status: tenant.status as 'active' | 'suspended' | 'canceled'
+          }
+          setCurrentTenantState(frontendTenant)
+        } else {
+          // Fallback to default tenant if API call fails or tenant not found
+          const defaultTenant: Tenant = {
+            id: tenantId,
+            name: tenantId === 'tenant-demo' ? 'Empresa Demo' : slug,
+            slug: slug,
+            primaryColor: '#4F46E5',
+            secondaryColor: '#10B981',
+            plan: tenantId === 'tenant-demo' ? 'demo' : 'profesional',
+            status: 'active'
+          }
+          setCurrentTenantState(defaultTenant)
+        }
+      } catch (error) {
+        // If API call fails, use default tenant
+        console.warn('[TenantContext] Failed to load tenant from API, using default:', error)
+        const defaultTenant: Tenant = {
+          id: tenantId,
+          name: tenantId === 'tenant-demo' ? 'Empresa Demo' : slug,
+          slug: slug,
+          primaryColor: '#4F46E5',
+          secondaryColor: '#10B981',
+          plan: tenantId === 'tenant-demo' ? 'demo' : 'profesional',
+          status: 'active'
+        }
+        setCurrentTenantState(defaultTenant)
+        
+        if (!storedTenantId) {
+          localStorage.setItem('current-tenant-id', 'tenant-demo')
+        }
+      } finally {
+        setIsLoading(false)
       }
-      setCurrentTenantState(defaultTenant)
-    } else {
-      // Default to demo tenant if none selected
-      const demoTenant: Tenant = {
-        id: 'tenant-demo',
-        name: 'Empresa Demo',
-        slug: 'demo',
-        primaryColor: '#4F46E5',
-        secondaryColor: '#10B981',
-        plan: 'demo',
-        status: 'active'
-      }
-      setCurrentTenantState(demoTenant)
-      localStorage.setItem('current-tenant-id', 'tenant-demo')
     }
 
-    setIsLoading(false)
+    loadTenant()
   }, [])
 
   const setCurrentTenant = (tenant: Tenant | null) => {

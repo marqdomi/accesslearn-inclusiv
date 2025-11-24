@@ -18,6 +18,7 @@ export function BrandingSettingsPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [logoPreview, setLogoPreview] = useState<string | null>(currentTenant?.logo || null)
+  const [logoBlobName, setLogoBlobName] = useState<string | null>(null) // Guardar blobName para guardar en BD
   const [logoFile, setLogoFile] = useState<File | null>(null)
   const [primaryColor, setPrimaryColor] = useState(currentTenant?.primaryColor || '#4F46E5')
   const [secondaryColor, setSecondaryColor] = useState(currentTenant?.secondaryColor || '#10B981')
@@ -138,10 +139,15 @@ export function BrandingSettingsPage() {
       setSaving(true)
       
       // Upload a Blob Storage
-      const { url } = await ApiService.uploadFile(file, 'logo')
+      const { url, blobName, containerName } = await ApiService.uploadFile(file, 'logo')
       
-      // Guardar URL (ya incluye SAS token)
+      // Guardar URL con SAS token para preview inmediato
       setLogoPreview(url)
+      
+      // Guardar blobName en formato container/blobName para guardar en BD
+      const blobNameForStorage = `${containerName}/${blobName}`
+      setLogoBlobName(blobNameForStorage)
+      
       setLogoFile(null) // Ya no necesitamos el archivo local
       
       toast.success('Logo subido exitosamente')
@@ -155,6 +161,7 @@ export function BrandingSettingsPage() {
 
   const handleRemoveLogo = () => {
     setLogoPreview(null)
+    setLogoBlobName(null)
     setLogoFile(null)
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
@@ -200,30 +207,35 @@ export function BrandingSettingsPage() {
       }
 
       // Only include logo if it was changed
-      // logoPreview puede ser:
-      // 1. URL con SAS token (después de upload) - extraer blobName
-      // 2. blobName guardado (formato: container/blobName) - mantener
-      // 3. Base64 o URL externa antigua - mantener
-      if (logoPreview) {
-        // Si es una URL de blob con SAS token, extraer el blobName
+      // Si hay un nuevo logo subido (logoBlobName), usar ese
+      // Si no, mantener el logo existente del tenant
+      // Si logoPreview es null y había un logo, eliminarlo
+      if (logoBlobName) {
+        // Nuevo logo subido: guardar blobName
+        updates.logo = logoBlobName
+      } else if (logoPreview) {
+        // Logo existente (puede ser blobName o URL antigua): mantener
+        // Si es una URL de blob, intentar extraer blobName
         if (logoPreview.includes('blob.core.windows.net')) {
           // Extraer blobName desde la URL (antes del ?)
           const urlParts = logoPreview.split('?')[0]
           const blobNameMatch = urlParts.match(/\/([^\/]+)\/(.+)$/)
           if (blobNameMatch) {
-            // Guardar formato: container/blobName
             const containerName = blobNameMatch[1]
             const blobName = blobNameMatch[2]
             updates.logo = `${containerName}/${blobName}`
           } else {
             updates.logo = logoPreview
           }
+        } else if (logoPreview.includes('/') && !logoPreview.startsWith('http') && !logoPreview.startsWith('data:')) {
+          // Ya es un blobName (formato: container/blobName)
+          updates.logo = logoPreview
         } else {
-          // Mantener blobName o URL antigua
+          // URL externa o Base64 antigua: mantener
           updates.logo = logoPreview
         }
       } else if (logoPreview === null && currentTenant.logo) {
-        // If logo was removed, set to undefined
+        // Logo fue eliminado: setear a undefined
         updates.logo = undefined
       }
 
@@ -234,6 +246,30 @@ export function BrandingSettingsPage() {
         ...currentTenant,
         ...updatedTenant
       })
+
+      // Si se guardó un nuevo logo, limpiar logoBlobName y actualizar preview
+      if (logoBlobName) {
+        // El logo ya está guardado en BD como blobName, ahora necesitamos regenerar la URL con SAS
+        // para el preview, pero ya no necesitamos logoBlobName
+        setLogoBlobName(null)
+        
+        // Actualizar logoPreview con el blobName guardado (para que se recargue correctamente)
+        if (updatedTenant.logo && updatedTenant.logo.includes('/') && !updatedTenant.logo.startsWith('http')) {
+          // Es un blobName, generar URL con SAS para preview
+          try {
+            const [containerName, ...blobNameParts] = updatedTenant.logo.split('/')
+            const blobName = blobNameParts.join('/')
+            const { url } = await ApiService.getMediaUrl(containerName, blobName)
+            setLogoPreview(url)
+          } catch (error) {
+            console.error('Error generating logo preview URL after save:', error)
+            // Mantener el blobName si falla
+            setLogoPreview(updatedTenant.logo)
+          }
+        } else {
+          setLogoPreview(updatedTenant.logo)
+        }
+      }
 
       // Apply colors to document
       document.documentElement.style.setProperty('--primary', primaryColor)
