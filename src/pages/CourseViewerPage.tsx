@@ -70,6 +70,7 @@ export function CourseViewerPage() {
   // Library/retake states
   const [quizScores, setQuizScores] = useState<Map<string, number>>(new Map())
   const [attemptStarted, setAttemptStarted] = useState(false)
+  const [completedQuizzes, setCompletedQuizzes] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     loadCourse()
@@ -117,6 +118,11 @@ export function CourseViewerPage() {
             : (q.correctAnswerIndex !== undefined 
               ? Boolean(q.correctAnswerIndex)
               : true)
+        } else if (questionType === 'ordering') {
+          questionObj.options = Array.isArray(q.options) ? q.options : []
+          questionObj.correctAnswer = Array.isArray(q.correctAnswer) 
+            ? q.correctAnswer 
+            : (q.options ? q.options.map((_: any, i: number) => i) : [])
         } else if (questionType === 'fill-blank') {
           questionObj.blanks = q.blanks || []
           questionObj.correctAnswers = q.correctAnswers || []
@@ -583,6 +589,11 @@ export function CourseViewerPage() {
   const isCurrentLessonCompleted = currentLessonId
     ? isLessonCompleted(currentLessonId)
     : false
+  
+  // Verificar si la lección actual es un quiz y si fue completado
+  const isCurrentLessonQuiz = currentLesson?.type === 'quiz'
+  const isQuizCompleted = currentLessonId ? completedQuizzes.has(currentLessonId) : false
+  const canCompleteLesson = !isCurrentLessonQuiz || isQuizCompleted
 
   // Calculate total lessons (used in multiple places)
   const totalLessons = course ? course.modules.reduce((acc, m) => acc + (m.lessons?.length || 0), 0) : 0
@@ -702,6 +713,10 @@ export function CourseViewerPage() {
                         setQuizScores(prev => new Map(prev).set(currentLessonId, results.score))
                         console.log('Quiz completed:', results, 'Score:', results.score)
                       }
+                      // Marcar el quiz como completado para habilitar el botón de completar lección
+                      if (currentLessonId) {
+                        setCompletedQuizzes(prev => new Set([...prev, currentLessonId]))
+                      }
                       // NO avanzar automáticamente - dejar que el usuario revise sus resultados
                       // y haga clic en "Marcar como Completado" cuando esté listo
                     }}
@@ -723,8 +738,9 @@ export function CourseViewerPage() {
                     {!isCurrentLessonCompleted && (
                       <Button
                         onClick={handleCompleteLesson}
-                        disabled={completing}
+                        disabled={completing || !canCompleteLesson}
                         className="gap-2"
+                        title={isCurrentLessonQuiz && !isQuizCompleted ? 'Debes completar el quiz antes de marcar la lección como completada' : ''}
                       >
                         <CheckCircle className="h-4 w-4" />
                         {completing ? 'Completando...' : 'Marcar como Completado'}

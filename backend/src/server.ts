@@ -981,8 +981,23 @@ app.post('/api/users/:userId/progress/lessons/:lessonId/complete', requireAuth, 
       completedLessons.push(lessonId);
     }
 
-    // Calculate progress percentage (simplified - assumes ~10 lessons per course)
-    const progressPercentage = Math.min(100, (completedLessons.length / 10) * 100);
+    // Get course to calculate total lessons
+    const { getCourseById } = await import('./functions/CourseFunctions');
+    const course = await getCourseById(courseId, user.tenantId);
+    
+    // Calculate total lessons from course structure
+    let totalLessons = 0;
+    if (course && (course as any).modules) {
+      // Course structure: modules -> lessons
+      totalLessons = (course as any).modules.reduce((sum: number, module: any) => {
+        return sum + (module.lessons?.length || 0);
+      }, 0);
+    }
+    
+    // Calculate progress percentage based on actual total lessons
+    const progressPercentage = totalLessons > 0 
+      ? Math.min(100, Math.round((completedLessons.length / totalLessons) * 100))
+      : Math.min(100, (completedLessons.length / 10) * 100); // Fallback to 10 if course structure not available
 
     // Update progress in user-progress container
     const updatedProgress = await updateProgress(

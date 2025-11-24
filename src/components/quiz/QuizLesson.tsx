@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { MultipleChoiceQuiz } from './MultipleChoiceQuiz'
 import { TrueFalseQuiz } from './TrueFalseQuiz'
 import { FillInTheBlankQuiz } from './FillInTheBlankQuiz'
+import { OrderingQuiz } from './OrderingQuiz'
 import { ScenarioSolverQuiz } from './ScenarioSolverQuiz'
 import { QuizResults } from './QuizContainer'
 import { QuizResultsPage } from './QuizResultsPage'
@@ -21,7 +22,7 @@ import { cn } from '@/lib/utils'
 
 interface QuizQuestion {
   id: string
-  type: 'multiple-choice' | 'true-false' | 'fill-blank' | 'scenario-solver'
+  type: 'multiple-choice' | 'true-false' | 'fill-blank' | 'ordering' | 'scenario-solver'
   question: any
   xpReward: number
 }
@@ -57,6 +58,7 @@ export function QuizLesson({
   const [isAnswered, setIsAnswered] = useState(false)
   const [selectedAnswer, setSelectedAnswer] = useState<any>(null)
   const [scenarioPerfectScore, setScenarioPerfectScore] = useState(0)
+  const [answeredQuestions, setAnsweredQuestions] = useState<Set<number>>(new Set())
 
   const currentQuestion = questions[currentQuestionIndex]
   const progress = ((currentQuestionIndex + 1) / questions.length) * 100
@@ -76,6 +78,7 @@ export function QuizLesson({
 
   const handleAnswer = (isCorrect: boolean, answerOrScore: any, perfectScore?: number) => {
     setIsAnswered(true)
+    setAnsweredQuestions(prev => new Set([...prev, currentQuestionIndex]))
     
     // Para scenario-solver, answerOrScore es el score total y perfectScore viene como 3er parámetro
     // Para otros tipos, answerOrScore es la respuesta del usuario
@@ -132,6 +135,7 @@ export function QuizLesson({
       setCurrentQuestionIndex((prev) => prev + 1)
       setIsAnswered(false)
       setSelectedAnswer(null)
+      // No resetear answeredQuestions aquí, queremos mantener el registro
     }
   }
 
@@ -327,6 +331,15 @@ export function QuizLesson({
               onAnswer={handleAnswer}
               isAnswered={isAnswered}
               selectedAnswers={selectedAnswer || []}
+            />
+          )}
+
+          {currentQuestion.type === 'ordering' && (
+            <OrderingQuiz
+              question={currentQuestion.question as any}
+              onAnswer={handleAnswer}
+              isAnswered={isAnswered}
+              selectedAnswer={selectedAnswer as number[] | null}
             />
           )}
 

@@ -78,6 +78,7 @@ export function QuizBuilderStep({ course, updateCourse }: QuizBuilderStepProps) 
     options: ['', '', '', ''],
     correctAnswer: 0,
     correctAnswers: [] as number[],
+    correctOrder: [] as number[], // Para preguntas de ordenamiento: [0, 1, 2, 3...]
     shortAnswer: '',
     correctFeedback: '¡Correcto! Excelente trabajo.',
     incorrectFeedback: 'Incorrecto. Inténtalo de nuevo.',
@@ -213,6 +214,11 @@ export function QuizBuilderStep({ course, updateCourse }: QuizBuilderStepProps) 
       options: Array.isArray(question.options) ? question.options : ['', '', '', ''],
       correctAnswer: typeof question.correctAnswer === 'number' ? question.correctAnswer : 0,
       correctAnswers: Array.isArray(question.correctAnswer) ? question.correctAnswer : [],
+      correctOrder: question.type === 'ordering' && Array.isArray(question.correctAnswer) 
+        ? question.correctAnswer 
+        : Array.isArray(question.options) 
+          ? question.options.map((_, i) => i) 
+          : [],
       shortAnswer: typeof question.correctAnswer === 'string' ? question.correctAnswer : '',
       correctFeedback: question.correctFeedback,
       incorrectFeedback: question.incorrectFeedback,
@@ -247,6 +253,13 @@ export function QuizBuilderStep({ course, updateCourse }: QuizBuilderStepProps) 
     } else if (questionForm.type === 'multiple-select') {
       questionText = questionForm.question
       correctAnswer = questionForm.correctAnswers
+    } else if (questionForm.type === 'ordering') {
+      questionText = questionForm.question
+      // El orden correcto es el orden en que están las opciones por defecto [0, 1, 2, 3...]
+      // O el orden que el usuario haya configurado en correctOrder
+      correctAnswer = questionForm.correctOrder.length > 0 
+        ? questionForm.correctOrder 
+        : questionForm.options.map((_, i) => i).filter((_, i) => questionForm.options[i].trim() !== '')
     } else if (questionForm.type === 'true-false') {
       questionText = questionForm.question
       correctAnswer = questionForm.correctAnswer
@@ -927,6 +940,62 @@ export function QuizBuilderStep({ course, updateCourse }: QuizBuilderStepProps) 
                       <Label htmlFor="false">Falso</Label>
                     </div>
                   </RadioGroup>
+                ) : questionForm.type === 'ordering' ? (
+                  <div className="space-y-2">
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Define el orden correcto. El orden por defecto es el orden de la lista (1, 2, 3, 4...).
+                    </p>
+                    {questionForm.options.map((option, index) => {
+                      // Inicializar correctOrder si está vacío
+                      const currentOrder = questionForm.correctOrder.length > 0 
+                        ? questionForm.correctOrder 
+                        : questionForm.options.map((_, i) => i).filter((_, i) => questionForm.options[i].trim() !== '')
+                      const position = currentOrder.indexOf(index) + 1
+                      
+                      return (
+                        <div key={index} className="flex items-center gap-2">
+                          <div className="flex-shrink-0 w-20">
+                            <Label className="text-xs text-muted-foreground">Posición:</Label>
+                            <Input
+                              type="number"
+                              min={1}
+                              max={questionForm.options.filter(o => o.trim()).length}
+                              value={position}
+                              onChange={(e) => {
+                                const newPosition = parseInt(e.target.value) - 1
+                                if (newPosition < 0 || newPosition >= currentOrder.length) return
+                                
+                                // Intercambiar posiciones
+                                const newOrder = [...currentOrder]
+                                const oldIndex = currentOrder.indexOf(index)
+                                ;[newOrder[oldIndex], newOrder[newPosition]] = [newOrder[newPosition], newOrder[oldIndex]]
+                                
+                                setQuestionForm({ ...questionForm, correctOrder: newOrder })
+                              }}
+                              className="w-full"
+                            />
+                          </div>
+                          <Input
+                            placeholder={`Opción ${String.fromCharCode(65 + index)}`}
+                            value={option}
+                            onChange={(e) => {
+                              const newOptions = [...questionForm.options]
+                              newOptions[index] = e.target.value
+                              // Recalcular correctOrder si cambian las opciones
+                              const filteredOptions = newOptions.filter(o => o.trim())
+                              const newOrder = filteredOptions.map((_, i) => i)
+                              setQuestionForm({ 
+                                ...questionForm, 
+                                options: newOptions,
+                                correctOrder: newOrder
+                              })
+                            }}
+                            className="flex-1"
+                          />
+                        </div>
+                      )
+                    })}
+                  </div>
                 ) : (
                   <div className="space-y-2">
                     {questionForm.options.map((option, index) => (
@@ -964,7 +1033,13 @@ export function QuizBuilderStep({ course, updateCourse }: QuizBuilderStepProps) 
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => setQuestionForm({ ...questionForm, options: [...questionForm.options, ''] })}
+                      onClick={() => {
+                        const newOptions = [...questionForm.options, '']
+                        const newOrder = questionForm.type === 'ordering' 
+                          ? newOptions.map((_, i) => i)
+                          : questionForm.correctOrder
+                        setQuestionForm({ ...questionForm, options: newOptions, correctOrder: newOrder })
+                      }}
                     >
                       <Plus className="mr-2" size={14} />
                       Agregar Opción

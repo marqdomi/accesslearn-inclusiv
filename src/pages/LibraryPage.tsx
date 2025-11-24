@@ -70,13 +70,28 @@ export function LibraryPage() {
     }
   }
 
-  const inProgressItems = library.filter(item => (item.progress.bestScore || 0) < 100)
-  const completedItems = library.filter(item => (item.progress.bestScore || 0) >= 100)
+  const inProgressItems = library.filter(item => {
+    const progress = item.progress.progress !== undefined 
+      ? item.progress.progress 
+      : (item.progress.bestScore || 0)
+    return progress < 100
+  })
+  const completedItems = library.filter(item => {
+    const progress = item.progress.progress !== undefined 
+      ? item.progress.progress 
+      : (item.progress.bestScore || 0)
+    return progress >= 100
+  })
 
   const totalXP = library.reduce((sum, item) => sum + (item.progress.totalXpEarned || 0), 0)
   const totalAttempts = library.reduce((sum, item) => sum + (item.progress.attempts?.length || 0), 0)
   const averageScore = library.length > 0
-    ? library.reduce((sum, item) => sum + (item.progress.bestScore || 0), 0) / library.length
+    ? library.reduce((sum, item) => {
+        const progress = item.progress.progress !== undefined 
+          ? item.progress.progress 
+          : (item.progress.bestScore || 0)
+        return sum + progress
+      }, 0) / library.length
     : 0
 
   if (loading) {
@@ -283,10 +298,28 @@ interface CourseLibraryCardProps {
 function CourseLibraryCard({ course, progress, onRetake }: CourseLibraryCardProps) {
   const navigate = useNavigate()
   const bestScore = progress.bestScore || 0
+  
+  // Calculate progress based on completed lessons vs total lessons
+  const completedLessons = progress.completedLessons?.length || 0
+  // Handle both Course structure (ContentModule[]) and CourseStructure (Module[] with lessons)
+  const totalLessons = (course as any).modules?.reduce((sum: number, module: any) => {
+    // If module has lessons array (CourseStructure format)
+    if (module.lessons && Array.isArray(module.lessons)) {
+      return sum + module.lessons.length
+    }
+    // Otherwise, count modules as lessons (legacy Course format)
+    return sum + 1
+  }, 0) || 0
+  
+  // Use progress percentage from backend, or calculate from lessons
+  const progressPercentage = progress.progress !== undefined 
+    ? progress.progress 
+    : (totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0)
+  
   const attemptCount = progress.attempts?.length || 0
   const totalXP = progress.totalXpEarned || 0
-  const isCompleted = bestScore >= 100
-  const isInProgress = progress.status === 'in-progress' && bestScore < 100
+  const isCompleted = progressPercentage >= 100 || bestScore >= 100
+  const isInProgress = (progress.status === 'in-progress' || progressPercentage > 0) && progressPercentage < 100
 
   return (
     <Card className="hover:shadow-lg transition-shadow">
@@ -307,10 +340,15 @@ function CourseLibraryCard({ course, progress, onRetake }: CourseLibraryCardProp
         {/* Progress Bar */}
         <div className="space-y-2">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Mejor Calificación</span>
-            <span className="font-semibold">{bestScore}%</span>
+            <span className="text-muted-foreground">Progreso</span>
+            <span className="font-semibold">{progressPercentage}%</span>
           </div>
-          <Progress value={bestScore} className="h-2" />
+          <Progress value={progressPercentage} className="h-2" />
+          {totalLessons > 0 && (
+            <p className="text-xs text-muted-foreground">
+              {completedLessons} de {totalLessons} lecciones completadas
+            </p>
+          )}
         </div>
 
         {/* Stats */}

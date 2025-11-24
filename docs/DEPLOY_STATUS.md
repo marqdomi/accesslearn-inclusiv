@@ -76,3 +76,6 @@ Después del deploy exitoso:
 - Los cambios se aplicarán automáticamente a producción
 - Los servicios legacy eliminados no afectarán la funcionalidad
 
+
+
+
