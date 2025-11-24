@@ -1,558 +1,395 @@
-# AccessLearn - Multi-Tenant Gamified Learning Platform
+# 🎓 AccessLearn - Plataforma Multi-Tenant de Aprendizaje Corporativo
 
-A fully accessible, WCAG 2.1 Level AA compliant gamified corporate training platform that makes learning feel like playing a video game. Built for **multi-tenant SaaS deployment** on Azure.
+<div align="center">
 
-## 🎯 Project Status & Roadmap
+![Status](https://img.shields.io/badge/status-95%25%20Demo%20Ready-success)
+![Status](https://img.shields.io/badge/production-90%25%20Ready-yellow)
+![Version](https://img.shields.io/badge/version-1.0.1-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
 
-**Current State:** 90% Ready for Demo | 85% Ready for Production  
-**Goal:** Multi-tenant SaaS platform ready for Azure deployment  
-**Timeline:** Demo ready now | Production ready in 2-3 weeks
+**Plataforma SaaS multi-tenant de aprendizaje corporativo gamificado, accesible y lista para producción en Azure**
 
-### ✅ Latest Updates (November 2025)
-- ✅ **Azure Infrastructure Deployed** - Container Apps, Cosmos DB, ACR all configured
-- ✅ **CI/CD Pipeline Active** - Automatic deployment from GitHub to Azure
-- ✅ **Production Environment** - Application running in Azure production
-- ✅ **GitHub Actions** - Automated builds and deployments on push to `main`
+[Características](#-características-principales) • [Instalación](#-instalación-rápida) • [Documentación](#-documentación) • [Estado del Proyecto](#-estado-actual-del-proyecto)
 
-📚 **Key Documents:**
-- 📊 [**PROYECTO_ESTADO_ACTUAL.md**](./docs/PROYECTO_ESTADO_ACTUAL.md) - ⭐ **START HERE** - Complete project audit & status
-- 👋 [**ONBOARDING_DEVELOPER.md**](./docs/ONBOARDING_DEVELOPER.md) - Developer onboarding guide
-- ✅ [**DEMO_READINESS_CHECKLIST.md**](./docs/DEMO_READINESS_CHECKLIST.md) - Checklist for client demo
-- 🗺️ [**ESTADO_ACTUAL_Y_ROADMAP.md**](./ESTADO_ACTUAL_Y_ROADMAP.md) - Detailed roadmap (16-20 weeks)
-- 🌐 [**AZURE_COSMOS_DB_STRATEGY.md**](./AZURE_COSMOS_DB_STRATEGY.md) - Database & multi-tenancy strategy
+</div>
 
 ---
 
-## 🎮 Features (Current Implementation)
+## 📋 Descripción
 
-### ✅ Fully Implemented
-- **Gamification**: XP system, achievements, levels, leaderboards, weekly challenges
-- **Course Builder**: Professional authoring tool with rich content types
-- **Certificates**: PDF generation with company branding
-- **Analytics**: Complete dashboard with engagement metrics
-- **Community**: Q&A forums, mentorship, team challenges
-- **Internationalization**: Full ES/EN support (2,204 translation lines)
-- **Accessibility**: WCAG 2.1 Level AA compliant
-- **Dual Persona**: Separate UX for learners (gamified) and admins (professional)
-- **Employee Management**: Bulk upload, groups, course assignments
+**AccessLearn** es una plataforma SaaS multi-tenant diseñada para transformar el aprendizaje corporativo en una experiencia gamificada, accesible e inclusiva. La plataforma combina elementos de gamificación (XP, logros, niveles) con cumplimiento completo de **WCAG 2.1 Level AA** para garantizar accesibilidad universal.
 
-### ✅ Infrastructure & Deployment
-- **Backend**: ✅ Express.js API deployed on Azure Container Apps
-- **Database**: ✅ Azure Cosmos DB Production configured
-- **Multi-Tenancy**: ✅ Multi-tenant architecture with Cosmos DB partition keys
-- **Authentication**: ✅ JWT-based authentication (Azure AD B2C optional for future)
-- **Storage**: ⚠️ Base64 in Cosmos DB (Azure Blob Storage optional for future)
-- **Deployment**: ✅ **CI/CD with GitHub Actions** - Automatic deployment on push to `main`
-- **Monitoring**: ✅ Application Insights configured
+### 🎯 Características Principales
 
-## ♿ Accessibility Features
-
-GameLearn is built with accessibility as a core principle, not an afterthought.
-
-### User Features
-- **Text Size Adjustment**: Normal, Large, X-Large options
-- **High Contrast Mode**: Enhanced color contrast for better visibility
-- **Reduce Motion**: Disable decorative animations
-- **Keyboard Navigation**: 100% keyboard accessible
-- **Screen Reader Support**: Optimized for NVDA, JAWS, VoiceOver, TalkBack
-- **Captions & Transcripts**: All video and audio content
-
-### Quick Access
-Look for the ⚙️ icon in the bottom-right corner to access accessibility settings.
-
-## 📚 Documentation
-
-### Accessibility
-- **[Accessibility Overview](./ACCESSIBILITY.md)** - Implementation guide and usage patterns
-- **[Accessibility Style Guide](./ACCESSIBILITY_STYLE_GUIDE.md)** - WCAG 2.1 Level AA compliance standards
-- **[Accessibility Testing](./ACCESSIBILITY_TESTING.md)** - Complete testing checklist and procedures
-
-### Platform Guides
-- **[Product Requirements](./PRD.md)** - Complete feature specifications
-- **[Admin Guide](./ADMIN_GUIDE.md)** - Administrator documentation
-- **[Security Policy](./SECURITY.md)** - Security guidelines
+- 🎮 **Gamificación Completa**: Sistema de XP, logros, niveles, tablas de clasificación y desafíos
+- 🏢 **Multi-Tenancy**: Arquitectura SaaS con aislamiento completo de datos por tenant
+- ♿ **Accesibilidad Total**: Cumplimiento WCAG 2.1 Level AA desde el diseño
+- 🎨 **Dual Persona**: Experiencia gamificada para estudiantes, profesional para administradores
+- 📚 **Constructor de Cursos**: Herramienta profesional de autoría con contenido rico
+- 📊 **Analíticas Avanzadas**: Dashboards completos con métricas de engagement
+- 🏆 **Certificados**: Generación de PDFs con branding de la empresa
+- 🌐 **Internacionalización**: Soporte completo ES/EN (2,204 líneas de traducción)
+- ☁️ **Azure Cloud**: Desplegado en Azure Container Apps con CI/CD automatizado
 
 ---
 
-## 🏗️ Architecture
+## 🚀 Estado Actual del Proyecto
 
-### **Current (Development):**
-```
-Frontend: React 19 + TypeScript + Vite
-Storage: GitHub Spark KV (localStorage enhanced)
-Auth: Basic (in-memory)
-Deployment: Local development
-```
+### ✅ Completitud General
 
-### **Target (Production):**
-```
-Frontend:   Azure Static Web Apps (React)
-Backend:    Azure Functions (Node.js Serverless)
-Database:   Azure Cosmos DB (NoSQL Serverless)
-Storage:    Azure Blob Storage
-Auth:       Azure AD B2C
-CI/CD:      GitHub Actions
-Multi-tenancy: Database-per-Tenant
-Cost:       ~$10-50/month for 10 tenants
-```
+| Área | Completitud | Estado |
+|------|-------------|--------|
+| **Frontend Features** | 95% | ✅ Funcional |
+| **Backend API** | 90% | ✅ Funcional |
+| **Base de Datos** | 100% | ✅ Cosmos DB configurado |
+| **Autenticación** | 85% | ✅ JWT implementado |
+| **Multi-tenancy** | 80% | ⚠️ Funcional, necesita testing |
+| **Infraestructura Azure** | 90% | ✅ Desplegado y funcionando |
+| **Testing** | 30% | ❌ Pendiente |
+| **Documentación** | 75% | ⚠️ Buena, necesita actualización |
 
-**Why Cosmos DB?**
-- ✅ Serverless = $0.20/month per tenant (100 users)
-- ✅ Auto-scales from 0 to infinity
-- ✅ JSON native = current data model compatible
-- ✅ 99.99% SLA
-- ✅ Global distribution ready
+**Estado General:** 🟢 **95% Listo para Demo | 90% Listo para Producción**
+
+### 📊 Métricas del Proyecto
+
+- **Líneas de Código:** ~53,500 LOC (Frontend: ~45,000 | Backend: ~8,500)
+- **Componentes React:** 100+ componentes
+- **Endpoints API:** 90+ endpoints REST funcionales
+- **Containers Cosmos DB:** 8 containers configurados
+- **Traducciones:** 2,204 líneas (ES/EN)
+- **Documentación:** 119 archivos MD en `/docs`
+
+### 🆕 Cambios Recientes (Diciembre 2024)
+
+- ✅ **Sistema de Progreso**: Cálculo correcto de porcentaje de avance basado en lecciones reales
+- ✅ **Sincronización de Estadísticas**: Biblioteca sincronizada con Cosmos DB
+- ✅ **Quizzes Mejorados**: Preguntas de ordenamiento implementadas
+- ✅ **Publicación Directa**: Endpoint para publicar cursos directamente
+- ✅ **Auto-inscripción**: Estudiantes pueden inscribirse en cursos publicados
+- ✅ **Indicadores Visuales**: Badge "Inscrito" en catálogo de cursos
 
 ---
 
-## 🚀 Getting Started
+## 🏗️ Arquitectura
 
-### **Current Development Setup:**
+### Stack Tecnológico
 
-**Prerequisites:**
-- Node.js 18+
-- npm or yarn
+**Frontend:**
+- React 19 + TypeScript
+- Vite (build tool)
+- Tailwind CSS v4 + shadcn/ui
+- Framer Motion (animaciones)
+- Phosphor Icons
 
-**Installation:**
+**Backend:**
+- Node.js + Express.js
+- TypeScript
+- JWT Authentication
+- Azure Cosmos DB
+
+**Infraestructura:**
+- **Frontend:** Azure Static Web Apps (o Container Apps)
+- **Backend:** Azure Container Apps
+- **Database:** Azure Cosmos DB (Serverless)
+- **CI/CD:** GitHub Actions
+- **Monitoring:** Application Insights
+
+### Arquitectura Multi-Tenant
+
+```
+Azure Cosmos DB
+├── Container: tenants (metadata compartida)
+├── Container: users (partición por tenantId)
+├── Container: courses (partición por tenantId)
+├── Container: user-progress (partición por tenantId)
+├── Container: categories (partición por tenantId)
+├── Container: notifications (partición por tenantId)
+├── Container: audit-logs (partición por tenantId)
+└── Container: certificates (partición por tenantId)
+```
+
+**Estrategia de Aislamiento:**
+- Partición por `tenantId` en todos los containers
+- Resolución de tenant por subdomain o header HTTP
+- Branding personalizado por tenant (logo, colores)
+- Datos completamente aislados entre tenants
+
+---
+
+## 🚀 Instalación Rápida
+
+### Prerrequisitos
+
+- Node.js 18+ 
+- npm o yarn
+- Azure Cosmos DB (para producción) o configuración local
+
+### Desarrollo Local
+
 ```bash
+# Clonar el repositorio
+git clone https://github.com/marqdomi/accesslearn-inclusiv.git
+cd accesslearn-inclusiv
+
+# Instalar dependencias del frontend
+cd src  # Si es necesario
 npm install
-```
 
-**Development:**
-```bash
+# Instalar dependencias del backend
+cd ../backend
+npm install
+
+# Configurar variables de entorno
+cp .env.example .env
+# Editar .env con tus credenciales de Cosmos DB
+
+# Iniciar backend (puerto 3000)
+npm run dev
+
+# En otra terminal, iniciar frontend (puerto 5173)
+cd ..
 npm run dev
 ```
 
-**Build:**
-```bash
-npm run build
-```
+### Acceso a la Aplicación
 
-### **Quick Test Login:**
+1. Abre `http://localhost:5173`
+2. Selecciona un tenant (ej: `kainet`)
+3. Inicia sesión con credenciales de prueba
 
-**Admin Account:**
-- Email: `admin@gamelearn.test`
-- Password: `Admin2024!`
+### Credenciales de Prueba
 
-**User Account:**
-- Email: `sarah.johnson@gamelearn.test`
-- Password: `Welcome123!`
+**Super Admin (Kainet):**
+- Email: `ana.lopez@kainet.mx`
+- Password: `Demo123!`
 
-See [TEST_CREDENTIALS.md](./docs/TEST_CREDENTIALS.md) for complete test account details.
+Ver [CREDENCIALES_TEST_USUARIOS.md](./docs/CREDENCIALES_TEST_USUARIOS.md) para más usuarios de prueba.
 
 ---
 
-## 📋 Next Steps (MVP - 8-10 weeks)
+## 📚 Documentación
 
-### **Week 1-2: Azure + Backend Foundation**
-- [ ] Create Azure subscription
-- [ ] Setup Cosmos DB (Serverless)
-- [ ] Create Azure Functions project
-- [ ] Implement 2-3 basic APIs (users, courses)
-- [ ] Tenant resolution middleware
+### 📖 Documentos Principales
 
-### **Week 3-4: Frontend Migration**
-- [ ] Create API client
-- [ ] Implement Tenant Context
-- [ ] Migrate hooks from Spark KV to APIs
-- [ ] Connect frontend to backend
+| Documento | Descripción | Audiencia |
+|-----------|-------------|-----------|
+| **[PROYECTO_ESTADO_ACTUAL.md](./docs/PROYECTO_ESTADO_ACTUAL.md)** ⭐ | Auditoría completa del proyecto | Todos |
+| **[ONBOARDING_DEVELOPER.md](./docs/ONBOARDING_DEVELOPER.md)** ⭐ | Guía para nuevos desarrolladores | Desarrolladores |
+| **[DEMO_READINESS_CHECKLIST.md](./docs/DEMO_READINESS_CHECKLIST.md)** ⭐ | Checklist para demo con cliente | PM/Stakeholders |
+| **[INDICE_DOCUMENTACION.md](./docs/INDICE_DOCUMENTACION.md)** | Índice completo de documentación | Todos |
 
-### **Week 5-6: Multi-Tenancy**
-- [ ] Create 2 demo tenants
-- [ ] Subdomain routing
-- [ ] Data isolation validation
-- [ ] Per-tenant branding
+### 🧪 Testing Manual
 
-### **Week 7-8: Auth + Storage**
-- [ ] Azure AD B2C setup
-- [ ] Blob Storage for media
-- [ ] JWT authentication
-- [ ] E2E testing
+- **[TESTING_MANUAL_GUIA_COMPLETA.md](./docs/TESTING_MANUAL_GUIA_COMPLETA.md)** - Guía completa de testing
+- **[TESTING_MANUAL_CHECKLIST_RAPIDO.md](./docs/TESTING_MANUAL_CHECKLIST_RAPIDO.md)** - Checklist rápido
 
-### **Week 9-10: Polish + Demo**
-- [ ] Bug fixes
-- [ ] Documentation
-- [ ] Video demo
-- [ ] Client presentation
+### 🏗️ Arquitectura y Diseño
 
-**See [PLAN_ACCION_2_SEMANAS.md](./PLAN_ACCION_2_SEMANAS.md) for detailed day-by-day plan.**
+- **[DUAL_PERSONA_ARCHITECTURE.md](./docs/DUAL_PERSONA_ARCHITECTURE.md)** - Arquitectura dual persona
+- **[ACCESSIBILITY_STYLE_GUIDE.md](./docs/ACCESSIBILITY_STYLE_GUIDE.md)** - Guía de accesibilidad WCAG 2.1 AA
+- **[ADMIN_EXPERIENCE_ARCHITECTURE.md](./docs/ADMIN_EXPERIENCE_ARCHITECTURE.md)** - Arquitectura de experiencia admin
 
-### For Users
-1. Navigate to the Dashboard
-2. Click the ⚙️ icon (bottom-right) to adjust accessibility settings
-3. Start with the Main Mission or browse Side Missions
-4. Complete modules to earn XP and unlock achievements
+### 📋 Guías de Usuario
 
-### For Developers
-
-**Prerequisites:**
-- Node.js 18+
-- npm or yarn
-
-**Installation:**
-```bash
-npm install
-```
-
-**Development:**
-```bash
-npm run dev
-```
-
-**Build:**
-```bash
-npm run build
-```
-
-## 🎨 Design Philosophy
-
-GameLearn combines the excitement of video games with enterprise learning needs:
-
-- **Playful & Engaging**: Colorful visuals, satisfying animations, instant rewards
-- **Empowering & Clear**: Simple mechanics with high-contrast visuals
-- **Rewarding & Motivating**: Constant positive feedback through XP, achievements, progress
-
-All while maintaining **WCAG 2.1 Level AA compliance** for universal accessibility.
+- **[FORMULARIO_REGISTRO_DEMO.md](./docs/FORMULARIO_REGISTRO_DEMO.md)** - Registro público de estudiantes
+- **[CREDENCIALES_TEST_USUARIOS.md](./docs/CREDENCIALES_TEST_USUARIOS.md)** - Credenciales de usuarios de prueba
 
 ---
 
-## 📊 Project Statistics
+## ✨ Características Principales
 
-```
-Code:
-├─ Total Lines:        ~23,000+
-├─ Components:         100+
-├─ Hooks:              20+
-├─ Services:           8
-├─ Translation Lines:  2,204 (ES + EN)
-└─ Documentation:      15+ MD files
+### 🎮 Gamificación
 
-Features:
-├─ Gamification:       ✅ Complete
-├─ Courses:            ✅ Complete
-├─ Certificates:       ✅ Complete
-├─ Analytics:          ✅ Complete
-├─ Community:          ✅ Complete
-├─ Accessibility:      ✅ WCAG 2.1 AA
-├─ Backend:            ❌ Needs implementation
-├─ Multi-tenancy:      ❌ Needs implementation
-└─ Azure Deployment:   ❌ Needs setup
+- **Sistema de XP**: Puntos por cada acción (completar lección, quiz, etc.)
+- **Niveles y Rangos**: Progreso a través de 50+ niveles
+- **Logros**: Desbloquea trofeos (bronce → platino)
+- **Misiones**: Diarias, semanales y de historia
+- **Rachas**: Mantén el momentum de aprendizaje
+- **Tablas de Clasificación**: Compite con compañeros
 
-Completion: 40% (MVP features) + 60% (Infrastructure)
-```
+### ♿ Accesibilidad
+
+- **WCAG 2.1 Level AA**: Cumplimiento completo
+- **Navegación por Teclado**: 100% accesible sin mouse
+- **Lectores de Pantalla**: Optimizado para NVDA, JAWS, VoiceOver
+- **Alto Contraste**: Modo de visibilidad mejorada
+- **Reducir Animación**: Respeta preferencias de movimiento
+- **Tamaño de Texto**: Ajustable (Normal, Grande, Extra Grande)
+- **Filtros de Color**: Soporte para daltonismo
+- **Panel Avanzado**: Configuración completa de accesibilidad
+
+### 📚 Gestión de Cursos
+
+- **Constructor Profesional**: Herramienta de autoría con pasos guiados
+- **Tipos de Contenido**: Markdown, video, audio, quizzes, código
+- **Quizzes Interactivos**: Múltiple opción, verdadero/falso, ordenamiento
+- **Flujo de Aprobación**: Draft → Pending Review → Published
+- **Publicación Directa**: Para instructores con permisos
+- **Categorías y Etiquetas**: Organización flexible
+
+### 👥 Gestión de Usuarios
+
+- **Roles y Permisos**: Sistema granular de permisos
+- **Invitaciones por Email**: Onboarding automatizado
+- **Registro Público**: Estudiantes pueden registrarse directamente
+- **Gestión Masiva**: Carga masiva de usuarios
+- **Grupos y Asignaciones**: Organización por departamentos
+
+### 📊 Analíticas
+
+- **Dashboard de Progreso**: Vista completa del avance del estudiante
+- **Biblioteca de Cursos**: Cursos inscritos con progreso detallado
+- **Estadísticas de Curso**: Completitud, XP ganado, mejor calificación
+- **Reportes Administrativos**: Métricas de engagement por tenant
 
 ---
 
-## 🎯 Target Use Cases
+## 🔐 Seguridad y Multi-Tenancy
 
-AccessLearn is perfect for:
+### Aislamiento de Datos
 
-✅ **Corporate Training:** Employee onboarding, compliance, skills development  
-✅ **Sales Enablement:** Product training, sales techniques, customer service  
-✅ **IT Training:** Software training, security awareness, tech skills  
-✅ **Manufacturing:** Safety training, equipment operation, quality control  
-✅ **Healthcare:** Compliance training, protocol updates, patient care  
-✅ **Education:** K-12 supplemental learning, continuing education  
+- **Partición por Tenant**: Todos los containers usan `tenantId` como partition key
+- **Validación de Tenant**: Middleware valida que el usuario pertenezca al tenant
+- **JWT con Tenant**: Token incluye `tenantId` para validación
+- **Sin Cross-Tenant Access**: Imposible acceder a datos de otros tenants
 
-**Multi-Tenant Model:**
-- Each company gets their own isolated instance
-- Custom branding (logo, colors)
-- Own courses and users
-- Independent analytics
-- Pay-per-user pricing
+### Autenticación
+
+- **JWT Tokens**: Autenticación basada en tokens
+- **Password Hashing**: SHA-256 (mejorable a bcrypt)
+- **Sesiones Persistentes**: Tokens almacenados en localStorage
+- **Refresh Automático**: Actualización de usuario al cargar páginas
+
+### Permisos
+
+- **Roles Predefinidos**: super-admin, tenant-admin, content-manager, instructor, student, mentor, etc.
+- **Permisos Granulares**: Sistema de permisos por acción (ej: `courses:create`, `users:view`)
+- **Permisos Personalizados**: Override de permisos por usuario
 
 ---
 
-## 🚦 Current Limitations (To Be Fixed)
+## 🚢 Despliegue en Azure
 
-### **Critical:**
-- ❌ No real backend (data in browser localStorage)
-- ❌ No multi-tenancy (single organization only)
-- ❌ No cloud deployment
-- ❌ No persistent storage between devices
+### Infraestructura Actual
 
-### **Important:**
-- ⚠️ Basic authentication (no SSO/OAuth)
-- ⚠️ No real-time sync between users
-- ⚠️ Limited file upload (base64 only)
-- ⚠️ No video streaming (local files only)
+✅ **Desplegado y Funcionando:**
+- Azure Container Apps (Backend)
+- Azure Cosmos DB (Database)
+- Azure Container Registry (ACR)
+- GitHub Actions (CI/CD)
+- Application Insights (Monitoring)
 
-### **Nice to Have:**
-- ⚠️ No automated tests
-- ⚠️ No CI/CD pipeline
-- ⚠️ No subscription/billing system
-- ⚠️ No advanced analytics (ML/AI)
+### CI/CD Pipeline
 
-**All limitations will be addressed in the Azure migration roadmap.**
+El proyecto tiene un pipeline automatizado que:
+1. Detecta pushes a `main`
+2. Construye las imágenes Docker
+3. Las sube a Azure Container Registry
+4. Despliega automáticamente a Azure Container Apps
+
+**Workflow:** `.github/workflows/azure-container-apps.yml`
+
+### Configuración de Producción
+
+Las variables de entorno se configuran en Azure Portal:
+- `COSMOS_DB_ENDPOINT`
+- `COSMOS_DB_KEY`
+- `JWT_SECRET`
+- `NODE_ENV=production`
 
 ---
 
 ## 🧪 Testing
 
----
+### Testing Manual
 
-## 💰 Cost Estimation (Azure)
+El proyecto incluye guías completas de testing manual:
+- **[TESTING_MANUAL_GUIA_COMPLETA.md](./docs/TESTING_MANUAL_GUIA_COMPLETA.md)**
+- **[TESTING_MANUAL_CHECKLIST_RAPIDO.md](./docs/TESTING_MANUAL_CHECKLIST_RAPIDO.md)**
 
-### **Monthly Costs (Serverless):**
-```
-10 Tenants (100 users each):
-├─ Cosmos DB:           $2-10    (Serverless, pay-per-request)
-├─ Azure Functions:     $5-20    (Consumption plan)
-├─ Blob Storage:        $1-5     (Pay-per-GB)
-├─ Azure AD B2C:        $0.50    ($0.0055 per auth, 50k free)
-├─ Static Web Apps:     FREE     (Built-in)
-├─ App Insights:        $1-5     (Monitoring)
-└─ TOTAL:              ~$10-50/month
-```
+### Testing Automatizado
 
-**Note:** First $25 of Cosmos DB is free (25GB + 1000 RU/s monthly)
-
-### **Cost per Tenant:**
-- 100 active users: ~$0.20-1.00/month
-- 500 active users: ~$1-5/month
-- 1,000 active users: ~$5-10/month
-
-**Scalability:**
-- 10 tenants: $10-50/month
-- 50 tenants: $100-200/month
-- 100 tenants: $300-500/month
+⚠️ **Pendiente de Implementación:**
+- Unit tests (Jest/Vitest)
+- Integration tests
+- E2E tests (Playwright/Cypress)
+- Accessibility tests automatizados
 
 ---
 
-## 🔐 Multi-Tenancy Strategy
+## 🤝 Contribución
 
-### **Database-per-Tenant (Recommended):**
-```
-Cosmos DB Account
-├── Database: tenant-acme-corp
-│   ├── Container: users
-│   ├── Container: courses
-│   ├── Container: progress
-│   └── Container: analytics
-│
-├── Database: tenant-techstart-inc
-│   └── (same containers)
-│
-└── Database: shared-metadata
-    └── Container: tenants
-```
+### Para Desarrolladores Nuevos
 
-**Benefits:**
-- ✅ Complete data isolation (security)
-- ✅ Easy GDPR compliance (delete entire database)
-- ✅ Independent backups per tenant
-- ✅ Scales per customer
-- ✅ Billing per customer
+1. Lee **[ONBOARDING_DEVELOPER.md](./docs/ONBOARDING_DEVELOPER.md)**
+2. Configura tu entorno de desarrollo
+3. Revisa la estructura del proyecto
+4. Sigue las convenciones de código existentes
 
-**Tenant Resolution:**
-- Subdomain: `acme.accesslearn.com` → tenantId: "acme"
-- HTTP Header: `x-tenant-id: acme`
-- JWT claim: `tenantId: "acme"`
+### Guías de Contribución
+
+- **Accesibilidad**: Todas las nuevas features deben mantener WCAG 2.1 AA
+- **Testing**: Agregar tests para nuevas funcionalidades
+- **Documentación**: Actualizar documentación relevante
+- **Commits**: Usar mensajes descriptivos en español o inglés
 
 ---
 
-## 🧪 Testing
+## 📄 Licencia
 
-### Accessibility Testing
-```bash
-# Manual testing with keyboard (no mouse)
-# Tab through interface, verify focus indicators
-
-# Automated testing
-# Run Lighthouse in Chrome DevTools
-# Install axe DevTools extension
-# Target: 95+ accessibility score
-```
-
-See [ACCESSIBILITY_TESTING.md](./ACCESSIBILITY_TESTING.md) for complete checklist.
-
-## 🛠️ Tech Stack
-
-- **Frontend**: React 19, TypeScript
-- **Styling**: Tailwind CSS v4, shadcn/ui components
-- **Animation**: Framer Motion
-- **Icons**: Phosphor Icons
-- **Build**: Vite
-- **Persistence**: Spark KV (useKV hook)
-
-## 📦 Project Structure
-
-```
-src/
-├── components/
-│   ├── accessibility/      # Accessibility features
-│   ├── achievements/       # Achievement system
-│   ├── admin/             # Admin panel
-│   ├── courses/           # Course viewer
-│   ├── dashboard/         # User dashboard
-│   ├── gamification/      # XP, levels, quests
-│   └── ui/                # shadcn components
-├── hooks/                 # Custom React hooks
-├── lib/                   # Utilities and types
-└── styles/                # Global styles
-```
-
-## 🌟 Key Features
-
-### Gamification
-- **XP System**: Earn points for every action
-- **Levels & Ranks**: Progress through 50+ levels
-- **Achievements**: Unlock trophies (bronze → platinum)
-- **Quests**: Daily, weekly, and story missions
-- **Streaks**: Maintain learning momentum
-
-### Accessibility
-- **WCAG 2.1 Level AA**: Full compliance
-- **Keyboard Navigation**: 100% keyboard accessible
-- **Screen Readers**: Optimized support
-- **High Contrast**: Enhanced visibility mode
-- **Reduce Motion**: Respectful animations
-- **44x44px Touch Targets**: Mobile-friendly
-
-### Content Types
-- **Interactive Lessons**: Gamified learning blocks
-- **Video & Audio**: With captions and transcripts
-- **Quizzes**: Accessible assessments
-- **Code Examples**: Syntax-highlighted
-- **Rich Media**: Images with alt text
-
-## 🤝 Contributing
-
-When contributing, please ensure:
-1. All new features maintain WCAG 2.1 Level AA compliance
-2. Run accessibility tests before submitting
-3. Follow established patterns in [ACCESSIBILITY.md](./ACCESSIBILITY.md)
-4. Update documentation as needed
-
-## 📄 License
-
-The Spark Template files and resources from GitHub are licensed under the terms of the MIT license, Copyright GitHub, Inc.
-
-## 🔗 Resources
-
-### **Project Documentation:**
-- 📊 [RESUMEN_EJECUTIVO.md](./RESUMEN_EJECUTIVO.md) - Executive summary & quick overview
-- 🗺️ [ESTADO_ACTUAL_Y_ROADMAP.md](./ESTADO_ACTUAL_Y_ROADMAP.md) - Complete roadmap (16-20 weeks)
-- 🌐 [AZURE_COSMOS_DB_STRATEGY.md](./AZURE_COSMOS_DB_STRATEGY.md) - Database strategy & costs
-- 📅 [PLAN_ACCION_2_SEMANAS.md](./PLAN_ACCION_2_SEMANAS.md) - Day-by-day action plan
-- 🏗️ [ARQUITECTURA_VISUAL.md](./ARQUITECTURA_VISUAL.md) - Architecture diagrams
-- 📚 [CURRENT_FEATURES.md](./CURRENT_FEATURES.md) - Implemented features list
-- ♿ [ACCESSIBILITY.md](./docs/ACCESSIBILITY.md) - Accessibility implementation guide
-- 👨‍💼 [ADMIN_GUIDE.md](./docs/ADMIN_GUIDE.md) - Administrator documentation
-
-### **Accessibility:**
-- [WCAG 2.1 Guidelines](https://www.w3.org/WAI/WCAG21/quickref/)
-- [WebAIM Contrast Checker](https://webaim.org/resources/contrastchecker/)
-- [axe DevTools](https://www.deque.com/axe/devtools/)
-- [NVDA Screen Reader](https://www.nvaccess.org/) (Windows - Free)
-- [Lighthouse](https://developers.google.com/web/tools/lighthouse) (Chrome DevTools)
-
-### **Azure Resources:**
-- [Azure Cosmos DB Documentation](https://learn.microsoft.com/azure/cosmos-db/)
-- [Azure Functions Documentation](https://learn.microsoft.com/azure/azure-functions/)
-- [Azure Static Web Apps](https://learn.microsoft.com/azure/static-web-apps/)
-- [Azure AD B2C Documentation](https://learn.microsoft.com/azure/active-directory-b2c/)
-- [Azure Free Account](https://azure.microsoft.com/free) - $200 credit
+Este proyecto está licenciado bajo la Licencia MIT. Ver [LICENSE](./LICENSE) para más detalles.
 
 ---
 
-## 📞 Support & Contact
+## 🆘 Soporte
 
-**For Project Questions:**
-- Review documentation in `/docs` folder
-- Check [RESUMEN_EJECUTIVO.md](./RESUMEN_EJECUTIVO.md) for quick answers
-- See [PLAN_ACCION_2_SEMANAS.md](./PLAN_ACCION_2_SEMANAS.md) for immediate next steps
+### Problemas Comunes
 
-**Technical Stack:**
-- Frontend: React 19 + TypeScript + Vite
-- UI: Radix UI + Tailwind CSS
-- Target Backend: Azure Functions (Node.js)
-- Target Database: Azure Cosmos DB
-- Target Auth: Azure AD B2C
+- **Error de conexión a Cosmos DB**: Verifica las variables de entorno
+- **Error 401/403**: Verifica que el token JWT sea válido
+- **Cursos no aparecen**: Verifica que el tenant esté correctamente configurado
 
----
+### Recursos
 
-## 🎯 Quick Decision Matrix
-
-### **"Should I use AccessLearn for my use case?"**
-
-✅ **YES, if you need:**
-- Corporate employee training platform
-- Multi-company/multi-tenant SaaS
-- Gamified learning experience
-- Full accessibility compliance (WCAG 2.1 AA)
-- Cloud-native Azure deployment
-- Scalable from 10 to 10,000+ users
-
-⚠️ **MAYBE, if you need:**
-- K-12 education (needs curriculum features)
-- University LMS (needs grading, transcripts)
-- Consumer mobile app (needs native apps)
-- Video-first platform (needs streaming infrastructure)
-
-❌ **NO, if you need:**
-- Simple quiz maker (too complex)
-- Single-user learning app (overkill)
-- WordPress plugin (wrong stack)
-- Non-cloud solution (requires Azure)
+- 📚 [Documentación Completa](./docs/INDICE_DOCUMENTACION.md)
+- 🐛 [Reportar Issues](https://github.com/marqdomi/accesslearn-inclusiv/issues)
+- 💬 [Discusiones](https://github.com/marqdomi/accesslearn-inclusiv/discussions)
 
 ---
 
-## 🚀 Quick Start Checklist
+## 🗺️ Roadmap
 
-### **For Evaluating the Project (10 minutes):**
-- [ ] Clone the repo
-- [ ] `npm install`
-- [ ] `npm run dev`
-- [ ] Login with `admin@gamelearn.test` / `Admin2024!`
-- [ ] Explore dashboard, courses, gamification
-- [ ] Test accessibility (keyboard navigation)
-- [ ] Read [RESUMEN_EJECUTIVO.md](./RESUMEN_EJECUTIVO.md)
+### Próximos Pasos (Q1 2025)
 
-### **For Starting Development (Day 1):**
-- [ ] Read [RESUMEN_EJECUTIVO.md](./RESUMEN_EJECUTIVO.md) completely
-- [ ] Read [AZURE_COSMOS_DB_STRATEGY.md](./AZURE_COSMOS_DB_STRATEGY.md)
-- [ ] Read [PLAN_ACCION_2_SEMANAS.md](./PLAN_ACCION_2_SEMANAS.md)
-- [ ] Create Azure free account ($200 credit)
-- [ ] Answer decision questions in RESUMEN_EJECUTIVO
-- [ ] Start Day 1 tasks from PLAN_ACCION_2_SEMANAS
+- [ ] Testing automatizado completo
+- [ ] Mejoras de seguridad (bcrypt, rate limiting)
+- [ ] Azure AD B2C integration
+- [ ] Azure Blob Storage para media
+- [ ] Mejoras de performance
+- [ ] Documentación de API (Swagger/OpenAPI)
 
-### **For Production Deployment (Week 8-10):**
-- [ ] Complete all phases in [ESTADO_ACTUAL_Y_ROADMAP.md](./ESTADO_ACTUAL_Y_ROADMAP.md)
-- [ ] 2+ demo tenants working
-- [ ] E2E tests passing
-- [ ] Azure infrastructure configured
-- [ ] CI/CD pipeline running
-- [ ] Documentation complete
-- [ ] Security audit done
+### Futuro
+
+- [ ] Mobile apps (React Native)
+- [ ] Video streaming (Azure Media Services)
+- [ ] AI/ML para recomendaciones
+- [ ] Integraciones con LMS externos
+- [ ] Marketplace de cursos
 
 ---
 
-## 💡 Key Insights
+## 📞 Contacto
 
-### **What Makes AccessLearn Unique:**
-1. **Dual Persona Design** - Gamified for learners, professional for admins
-2. **Accessibility First** - WCAG 2.1 AA compliance from day one
-3. **Serverless Azure** - Cost-effective scaling ($0.20/month per tenant)
-4. **Database-per-Tenant** - Complete data isolation for security
-5. **Rich Gamification** - XP, achievements, leaderboards, challenges
-
-### **Why Azure Cosmos DB:**
-- Serverless = pay only what you use
-- JSON native = current data model compatible
-- Multi-tenant ready with partition keys
-- 99.99% SLA
-- Global distribution when you need it
-
-### **Timeline Reality:**
-- MVP (basic multi-tenant): **8-10 weeks**
-- Production-ready: **16-20 weeks**
-- With 2-3 dedicated developers
-- Cost: ~$10-50/month for first 10 tenants
+**Proyecto:** AccessLearn - Multi-Tenant Learning Platform  
+**Repositorio:** [github.com/marqdomi/accesslearn-inclusiv](https://github.com/marqdomi/accesslearn-inclusiv)  
+**Estado:** 🟢 Activo en Desarrollo
 
 ---
 
-**Built with ♿ accessibility, 🎮 gamification, and ☁️ Azure cloud in mind**
+<div align="center">
 
-**Ready to transform corporate training? Start with [RESUMEN_EJECUTIVO.md](./RESUMEN_EJECUTIVO.md)! 🚀**
+**Construido con ♿ accesibilidad, 🎮 gamificación, y ☁️ Azure cloud**
 
+⭐ Si este proyecto te resulta útil, considera darle una estrella en GitHub
+
+</div>
