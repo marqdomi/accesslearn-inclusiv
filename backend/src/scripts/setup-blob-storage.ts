@@ -37,7 +37,7 @@ interface ContainerConfig {
 const CONTAINERS: ContainerConfig[] = [
   {
     name: 'tenant-logos',
-    access: 'blob', // Público con URL, pero requiere autenticación para upload
+    access: undefined, // Private (acceso público deshabilitado por seguridad en Azure)
     cors: {
       allowedOrigins: [
         'http://localhost:5173',
