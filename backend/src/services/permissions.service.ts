@@ -289,6 +289,8 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'courses:read',
     'courses:update',
     'courses:list-own',
+    'content:create',
+    'content:edit',
     'analytics:view-own',
     'analytics:view-course-stats',
     'gamification:create-badges',
