@@ -91,8 +91,8 @@ export function CourseViewerPage() {
       }
     }
 
-    // Check if lesson has a quiz
-    if (lesson.quiz && lesson.quiz.questions && lesson.quiz.questions.length > 0) {
+    // Check if lesson has a quiz (prioritize quiz over blocks)
+    if (lesson.quiz && lesson.quiz.questions && Array.isArray(lesson.quiz.questions) && lesson.quiz.questions.length > 0) {
       return {
         id: lesson.id,
         title: lesson.title,
@@ -103,17 +103,21 @@ export function CourseViewerPage() {
         xpReward: lesson.totalXP || lesson.quiz.totalXP || 0,
         content: {
           quiz: {
-            description: lesson.description || '',
-            questions: lesson.quiz.questions.map((q: any) => ({
-              id: q.id || `q-${Date.now()}-${Math.random()}`,
+            description: lesson.description || lesson.quiz.description || '',
+            questions: lesson.quiz.questions.map((q: any, index: number) => ({
+              id: q.id || `q-${lesson.id}-${index}`,
               question: q.question || q.text || '',
               type: q.type || 'multiple-choice',
-              options: q.options || [],
-              correctAnswer: q.correctAnswer !== undefined ? q.correctAnswer : (q.correctAnswerIndex !== undefined ? q.correctAnswerIndex : 0),
+              options: Array.isArray(q.options) ? q.options : (q.choices || []),
+              correctAnswer: q.correctAnswer !== undefined 
+                ? q.correctAnswer 
+                : (q.correctAnswerIndex !== undefined 
+                  ? q.correctAnswerIndex 
+                  : (typeof q.correctAnswer === 'number' ? q.correctAnswer : 0)),
               points: q.points || 1,
-              explanation: q.explanation
+              explanation: q.explanation || ''
             })),
-            maxLives: lesson.quiz.maxAttempts || 3,
+            maxLives: lesson.quiz.maxAttempts || lesson.quiz.maxLives || 3,
             showTimer: lesson.quiz.showTimer || false,
             passingScore: lesson.quiz.passingScore || 70
           }
@@ -159,11 +163,24 @@ export function CourseViewerPage() {
 
       // Combine all text blocks into markdown
       const textBlocks = lesson.blocks
-        .filter((b: any) => ['text', 'welcome', 'code'].includes(b.type))
+        .filter((b: any) => ['text', 'welcome', 'code', 'challenge'].includes(b.type))
         .sort((a: any, b: any) => (a.order || 0) - (b.order || 0))
       
       if (textBlocks.length > 0) {
-        const markdown = textBlocks.map((b: any) => b.content).join('\n\n')
+        // Build markdown from blocks
+        let markdown = ''
+        textBlocks.forEach((block: any) => {
+          if (block.type === 'welcome') {
+            markdown += `# ${lesson.title}\n\n${block.content}\n\n`
+          } else if (block.type === 'code') {
+            markdown += `\`\`\`\n${block.content}\n\`\`\`\n\n`
+          } else if (block.type === 'challenge') {
+            markdown += `## 🎯 Desafío\n\n${block.content}\n\n`
+          } else {
+            markdown += `${block.content}\n\n`
+          }
+        })
+        
         return {
           id: lesson.id,
           title: lesson.title,
@@ -173,7 +190,7 @@ export function CourseViewerPage() {
           isRequired: true,
           xpReward: lesson.totalXP || 0,
           content: {
-            markdown
+            markdown: markdown.trim()
           }
         }
       }
