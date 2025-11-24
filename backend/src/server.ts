@@ -3,9 +3,11 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
+import multer from 'multer';
 import { initializeAppInsights, trackException, trackMetric, trackEvent } from './services/applicationinsights.service';
 import { trackRequestTelemetry, trackErrorTelemetry } from './middleware/telemetry';
 import { initializeCosmos, getContainer } from './services/cosmosdb.service';
+import { blobStorageService } from './services/blob-storage.service';
 import { authenticateToken } from './middleware/authentication';
 import {
   requireAuth,
@@ -2836,6 +2838,206 @@ app.put('/api/notifications/preferences', requireAuth, async (req, res) => {
   } catch (error: any) {
     console.error('[API] Error updating notification preferences:', error);
     res.status(500).json({ error: error.message });
+  }
+});
+
+// ============================================
+// MEDIA / BLOB STORAGE ENDPOINTS
+// ============================================
+
+// Configurar multer para manejar FormData
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB máximo
+  },
+  fileFilter: (req, file, cb) => {
+    // Validar tipos de archivo permitidos
+    const allowedTypes = [
+      'image/jpeg',
+      'image/png',
+      'image/gif',
+      'image/webp',
+      'image/svg+xml',
+      'video/mp4',
+      'video/webm',
+      'application/pdf',
+      'audio/mpeg',
+      'audio/wav'
+    ];
+    
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error(`Tipo de archivo no permitido: ${file.mimetype}. Tipos permitidos: ${allowedTypes.join(', ')}`));
+    }
+  }
+});
+
+// POST /api/media/upload - Upload file to Blob Storage
+app.post('/api/media/upload', 
+  requireAuth,
+  upload.single('file'),
+  async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const { tenantId } = user;
+      const { type, courseId, lessonId } = req.body; // type: 'logo' | 'avatar' | 'course-cover' | 'lesson-image'
+      const file = req.file;
+
+      if (!file) {
+        return res.status(400).json({ error: 'No se proporcionó ningún archivo' });
+      }
+
+      if (!type) {
+        return res.status(400).json({ error: 'Tipo de upload requerido (logo, avatar, course-cover, lesson-image)' });
+      }
+
+      // Generar nombre único para archivos de lecciones
+      const fileExtension = file.originalname.split('.').pop()?.toLowerCase() || 'bin';
+      const uniqueName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExtension}`;
+
+      // Determinar container y path según tipo
+      let containerName: string;
+      let blobName: string;
+
+      switch (type) {
+        case 'logo':
+          containerName = 'tenant-logos';
+          blobName = `${tenantId}/logo.${fileExtension}`;
+          // Validar permisos: solo admins pueden subir logos
+          if (user.role !== 'super-admin' && user.role !== 'tenant-admin') {
+            return res.status(403).json({ error: 'No tienes permisos para subir logos' });
+          }
+          break;
+        case 'avatar':
+          containerName = 'user-avatars';
+          blobName = `${tenantId}/${user.id}/avatar.${fileExtension}`;
+          break;
+        case 'course-cover':
+          if (!courseId) {
+            return res.status(400).json({ error: 'courseId requerido para course-cover' });
+          }
+          containerName = 'course-media';
+          blobName = `${tenantId}/${courseId}/cover-image.${fileExtension}`;
+          // Validar permisos: instructores, content-managers y admins
+          if (!['instructor', 'content-manager', 'tenant-admin', 'super-admin'].includes(user.role)) {
+            return res.status(403).json({ error: 'No tienes permisos para subir imágenes de cursos' });
+          }
+          break;
+        case 'lesson-image':
+          if (!courseId || !lessonId) {
+            return res.status(400).json({ error: 'courseId y lessonId requeridos para lesson-image' });
+          }
+          containerName = 'course-media';
+          blobName = `${tenantId}/${courseId}/lessons/${lessonId}/images/${uniqueName}`;
+          // Validar permisos: instructores, content-managers y admins
+          if (!['instructor', 'content-manager', 'tenant-admin', 'super-admin'].includes(user.role)) {
+            return res.status(403).json({ error: 'No tienes permisos para subir imágenes de lecciones' });
+          }
+          break;
+        default:
+          return res.status(400).json({ error: `Tipo de upload inválido: ${type}. Tipos válidos: logo, avatar, course-cover, lesson-image` });
+      }
+
+      // Upload a Blob Storage
+      const fileUrl = await blobStorageService.uploadFile(
+        containerName,
+        blobName,
+        file.buffer,
+        file.mimetype
+      );
+
+      // Generar URL con SAS token para acceso inmediato
+      const sasUrl = await blobStorageService.generateSasUrl(
+        containerName,
+        blobName,
+        60 // 60 minutos de validez
+      );
+
+      console.log(`[API] File uploaded: ${blobName} in container ${containerName} by user ${user.id}`);
+
+      res.json({
+        success: true,
+        url: sasUrl, // URL con SAS token para acceso inmediato
+        blobName,
+        containerName,
+        size: file.size,
+        contentType: file.mimetype
+      });
+    } catch (error: any) {
+      console.error('[API] Error uploading file:', error);
+      res.status(500).json({ error: error.message || 'Error al subir el archivo' });
+    }
+  }
+);
+
+// GET /api/media/url/:container/:blobName - Obtener URL con SAS token
+app.get('/api/media/url/:container/:blobName', requireAuth, async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const { tenantId } = user;
+    const { container, blobName } = req.params;
+    
+    // Validar que el usuario tenga acceso al archivo
+    // Verificar que el blob pertenezca al tenant del usuario
+    if (!blobName.startsWith(tenantId)) {
+      return res.status(403).json({ error: 'No tienes acceso a este archivo' });
+    }
+    
+    // Generar SAS URL con 1 hora de validez
+    const sasUrl = await blobStorageService.generateSasUrl(container, blobName, 60);
+    
+    res.json({ 
+      url: sasUrl,
+      expiresIn: 3600 // segundos
+    });
+  } catch (error: any) {
+    console.error('[API] Error generating SAS URL:', error);
+    if (error.message.includes('does not exist')) {
+      res.status(404).json({ error: 'Archivo no encontrado' });
+    } else {
+      res.status(500).json({ error: error.message || 'Error al generar URL' });
+    }
+  }
+});
+
+// DELETE /api/media/:container/:blobName - Eliminar archivo
+app.delete('/api/media/:container/:blobName', requireAuth, async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const { tenantId } = user;
+    const { container, blobName } = req.params;
+    
+    // Validar que el archivo pertenezca al tenant del usuario
+    if (!blobName.startsWith(tenantId)) {
+      return res.status(403).json({ error: 'No tienes permisos para eliminar este archivo' });
+    }
+
+    // Validar permisos según el tipo de archivo
+    const isLogo = container === 'tenant-logos';
+    const isCourseMedia = container === 'course-media';
+    
+    if (isLogo && !['super-admin', 'tenant-admin'].includes(user.role)) {
+      return res.status(403).json({ error: 'Solo administradores pueden eliminar logos' });
+    }
+    
+    if (isCourseMedia && !['instructor', 'content-manager', 'tenant-admin', 'super-admin'].includes(user.role)) {
+      return res.status(403).json({ error: 'No tienes permisos para eliminar archivos de cursos' });
+    }
+    
+    await blobStorageService.deleteFile(container, blobName);
+    
+    console.log(`[API] File deleted: ${blobName} from container ${container} by user ${user.id}`);
+    
+    res.json({ success: true });
+  } catch (error: any) {
+    console.error('[API] Error deleting file:', error);
+    if (error.message.includes('does not exist')) {
+      res.status(404).json({ error: 'Archivo no encontrado' });
+    } else {
+      res.status(500).json({ error: error.message || 'Error al eliminar el archivo' });
+    }
   }
 });
 
