@@ -88,7 +88,16 @@ export function CourseCatalog({ onCourseEnrolled }: CourseCatalogProps) {
     try {
       setEnrolling(course.id)
       console.log(`[CourseCatalog] Enrolling user ${user.id} in course ${course.id} with tenant ${tenantId}`)
-      await ApiService.enrollUserInCourse(user.id, tenantId, course.id)
+      
+      // Use self-enrollment endpoint for students (doesn't require enrollment:assign-individual permission)
+      // Admins can still use the regular endpoint if needed
+      if (user.role === 'student' || user.role === 'mentor') {
+        await ApiService.enrollSelfInCourse(course.id, tenantId)
+      } else {
+        // For admins and other roles, use the regular enrollment endpoint
+        await ApiService.enrollUserInCourse(user.id, tenantId, course.id)
+      }
+      
       toast.success(`¡Te has inscrito en "${course.title}"!`, {
         description: 'El curso ya está disponible en tu biblioteca'
       })
@@ -97,6 +106,8 @@ export function CourseCatalog({ onCourseEnrolled }: CourseCatalogProps) {
       console.error('Error enrolling in course:', error)
       const errorMessage = error.status === 400 && error.message?.includes('no encontrado')
         ? 'Usuario no encontrado. Por favor, contacta al administrador.'
+        : error.status === 403
+        ? 'No tienes permisos para inscribirte en este curso o el curso no está disponible.'
         : error.message || 'Error al inscribirse en el curso'
       toast.error(errorMessage)
     } finally {

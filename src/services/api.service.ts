@@ -212,6 +212,17 @@ class ApiServiceClass {
     })
   }
 
+  /**
+   * Self-enrollment: allows students to enroll themselves in a course
+   * This endpoint doesn't require enrollment:assign-individual permission
+   */
+  async enrollSelfInCourse(courseId: string, tenantId: string) {
+    return this.fetchWithAuth<any>(`/courses/${courseId}/enroll-self`, {
+      method: 'POST',
+      body: JSON.stringify({ tenantId }),
+    })
+  }
+
   async completeCourse(userId: string, tenantId: string, courseId: string) {
     return this.fetchWithAuth<any>(`/users/${userId}/complete`, {
       method: 'POST',

@@ -514,7 +514,7 @@ app.post('/api/users', requireAuth, requirePermission('users:create'), auditCrea
   }
 });
 
-// POST /api/users/:id/enroll - Enroll user in course
+// POST /api/users/:id/enroll - Enroll user in course (requires enrollment:assign-individual permission)
 app.post('/api/users/:id/enroll', requireAuth, requirePermission('enrollment:assign-individual'), async (req, res) => {
   try {
     const { id } = req.params;
@@ -536,6 +536,60 @@ app.post('/api/users/:id/enroll', requireAuth, requirePermission('enrollment:ass
       userId: req.params.id,
       tenantId: req.body.tenantId,
       courseId: req.body.courseId
+    });
+  }
+});
+
+// POST /api/courses/:courseId/enroll-self - Self-enrollment for students (no special permission required)
+app.post('/api/courses/:courseId/enroll-self', requireAuth, async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const { courseId } = req.params;
+    const { tenantId } = req.body;
+
+    if (!user) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    // Use user's tenantId from auth context
+    const userTenantId = tenantId || user.tenantId;
+    if (!userTenantId) {
+      return res.status(400).json({ error: 'tenantId is required' });
+    }
+
+    // Verify tenant access
+    if (user.tenantId !== userTenantId && user.role !== 'super-admin') {
+      return res.status(403).json({ 
+        error: 'Access denied',
+        message: 'You do not have access to this organization'
+      });
+    }
+
+    // Verify course exists and is published
+    const { getCourseById } = await import('./functions/CourseFunctions');
+    const course = await getCourseById(courseId, userTenantId);
+    
+    if (!course) {
+      return res.status(404).json({ error: 'Curso no encontrado' });
+    }
+
+    // Check if course is published (only published courses can be enrolled)
+    if (course.status !== 'published') {
+      return res.status(403).json({ 
+        error: 'Curso no disponible',
+        message: 'Este curso no está disponible para inscripción. Solo los cursos publicados están disponibles.'
+      });
+    }
+
+    console.log(`[API] Self-enrolling user ${user.id} in course ${courseId} for tenant ${userTenantId}`);
+    const enrolledUser = await enrollUserInCourse(user.id, userTenantId, courseId);
+    res.json(enrolledUser);
+  } catch (error: any) {
+    console.error('[API] Error in self-enrollment:', error);
+    const errorMessage = error.message || 'Error al inscribirse en el curso';
+    res.status(400).json({ 
+      error: errorMessage,
+      courseId: req.params.courseId
     });
   }
 });
