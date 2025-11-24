@@ -134,17 +134,14 @@ Frontend
 
 ---
 
-### Fase 2: Backend - Servicio de Blob Storage (2-3 días)
+### Fase 2: Backend - Servicio de Blob Storage (2-3 días) ✅ COMPLETADA
 
-#### 2.1 Instalar Dependencias
-```bash
-cd backend
-npm install @azure/storage-blob
-npm install multer @types/multer  # Para manejo de FormData
-```
+#### 2.1 Instalar Dependencias ✅
+- [x] Instalar `@azure/storage-blob` (ya estaba instalado)
+- [x] Instalar `multer` y `@types/multer` para manejo de FormData
 
-#### 2.2 Crear Servicio de Blob Storage
-**Archivo:** `backend/src/services/blob-storage.service.ts`
+#### 2.2 Crear Servicio de Blob Storage ✅
+**Archivo:** `backend/src/services/blob-storage.service.ts` ✅ CREADO
 
 ```typescript
 import { BlobServiceClient, ContainerClient } from '@azure/storage-blob';
@@ -221,8 +218,13 @@ class BlobStorageService {
 export const blobStorageService = new BlobStorageService();
 ```
 
-#### 2.3 Crear Endpoints de Upload
-**Archivo:** `backend/src/server.ts`
+#### 2.3 Crear Endpoints de Upload ✅
+**Archivo:** `backend/src/server.ts` ✅ IMPLEMENTADO
+
+**Endpoints creados:**
+- ✅ `POST /api/media/upload` - Subir archivos con validación de permisos
+- ✅ `GET /api/media/url/:container/:blobName` - Obtener URL con SAS token
+- ✅ `DELETE /api/media/:container/:blobName` - Eliminar archivos con validación
 
 ```typescript
 import multer from 'multer';
@@ -344,8 +346,12 @@ app.delete('/api/media/:container/:blobName', requireAuth, async (req, res) => {
 });
 ```
 
-#### 2.4 Variables de Entorno
-**Archivo:** `backend/.env.example`
+#### 2.4 Variables de Entorno ✅
+**Archivo:** `backend/.env` ✅ CONFIGURADO
+
+**Variables requeridas:**
+- ✅ `AZURE_STORAGE_CONNECTION_STRING` - Configurada
+- ✅ `FRONTEND_URL` - Opcional, para CORS
 
 ```env
 # Azure Blob Storage
