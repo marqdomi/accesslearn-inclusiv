@@ -4,7 +4,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Shield, Eye, EyeSlash, CheckCircle } from '@phosphor-icons/react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Shield, Eye, EyeSlash, CheckCircle, UserPlus, SignIn } from '@phosphor-icons/react';
+import { ApiService } from '@/services/api.service';
+import { toast } from 'sonner';
 
 /**
  * TenantLoginPage: Página de login con branding del tenant
@@ -17,11 +20,33 @@ import { Shield, Eye, EyeSlash, CheckCircle } from '@phosphor-icons/react';
 export function TenantLoginPage() {
   const { currentTenant } = useTenant();
   const { login } = useAuth();
+  const [activeTab, setActiveTab] = useState<'login' | 'register'>('login');
+  
+  // Login state
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  
+  // Register state
+  const [registerData, setRegisterData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+  });
+  const [showRegisterPassword, setShowRegisterPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [registerErrors, setRegisterErrors] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+  });
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,6 +66,95 @@ export function TenantLoginPage() {
       console.error('[Login] Error:', error);
       setError(error.message || 'Error al iniciar sesión. Verifica tus credenciales.');
       setIsLoading(false);
+    }
+  };
+
+  const validateRegisterForm = () => {
+    const newErrors = {
+      firstName: '',
+      lastName: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
+    };
+
+    if (!registerData.firstName.trim()) {
+      newErrors.firstName = 'El nombre es requerido';
+    }
+
+    if (!registerData.lastName.trim()) {
+      newErrors.lastName = 'El apellido es requerido';
+    }
+
+    if (!registerData.email.trim()) {
+      newErrors.email = 'El email es requerido';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(registerData.email)) {
+      newErrors.email = 'El email no es válido';
+    }
+
+    if (!registerData.password) {
+      newErrors.password = 'La contraseña es requerida';
+    } else if (registerData.password.length < 8) {
+      newErrors.password = 'La contraseña debe tener al menos 8 caracteres';
+    }
+
+    if (!registerData.confirmPassword) {
+      newErrors.confirmPassword = 'Debes confirmar tu contraseña';
+    } else if (registerData.password !== registerData.confirmPassword) {
+      newErrors.confirmPassword = 'Las contraseñas no coinciden';
+    }
+
+    setRegisterErrors(newErrors);
+    return !Object.values(newErrors).some(error => error !== '');
+  };
+
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!currentTenant || !validateRegisterForm()) return;
+
+    try {
+      setIsRegistering(true);
+
+      const result = await ApiService.registerUser({
+        tenantSlug: currentTenant.slug || currentTenant.id,
+        email: registerData.email,
+        firstName: registerData.firstName,
+        lastName: registerData.lastName,
+        password: registerData.password,
+        role: 'student',
+      });
+
+      toast.success('¡Registro exitoso!', {
+        description: 'Tu cuenta ha sido creada. Ya puedes iniciar sesión.',
+      });
+
+      // Cambiar a tab de login y limpiar formulario
+      setActiveTab('login');
+      setRegisterData({
+        firstName: '',
+        lastName: '',
+        email: registerData.email, // Mantener el email para facilitar el login
+        password: '',
+        confirmPassword: '',
+      });
+      setEmail(registerData.email); // Pre-llenar email en login
+    } catch (error: any) {
+      console.error('Error registering user:', error);
+      
+      if (error.message?.includes('ya está registrado')) {
+        toast.error('Email ya registrado', {
+          description: 'Este email ya está registrado. Intenta iniciar sesión.',
+        });
+        setActiveTab('login');
+        setEmail(registerData.email);
+      } else {
+        toast.error('Error al registrar', {
+          description: error.message || 'Por favor intenta nuevamente',
+        });
+      }
+    } finally {
+      setIsRegistering(false);
     }
   };
 
@@ -132,82 +246,221 @@ export function TenantLoginPage() {
             </div>
 
             {/* Error Message */}
-            {error && (
+            {error && activeTab === 'login' && (
               <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-center">
                 <p className="text-sm text-red-800">{error}</p>
               </div>
             )}
 
-            {/* Login Form */}
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Correo Electrónico</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="tu@email.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="w-full"
-                />
-              </div>
+            {/* Tabs for Login/Register */}
+            <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'login' | 'register')} className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="login" className="gap-2">
+                  <SignIn className="w-4 h-4" />
+                  Iniciar Sesión
+                </TabsTrigger>
+                <TabsTrigger value="register" className="gap-2">
+                  <UserPlus className="w-4 h-4" />
+                  Registrarse
+                </TabsTrigger>
+              </TabsList>
 
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="password">Contraseña</Label>
-                  <button
-                    type="button"
-                    className="text-sm text-blue-600 hover:text-blue-700"
-                    onClick={() => alert('🚧 Recuperación de contraseña en desarrollo')}
+              {/* Login Tab */}
+              <TabsContent value="login" className="space-y-4 mt-6">
+                <form onSubmit={handleLogin} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Correo Electrónico</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="tu@email.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                      className="w-full"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="password">Contraseña</Label>
+                      <button
+                        type="button"
+                        className="text-sm text-blue-600 hover:text-blue-700"
+                        onClick={() => alert('🚧 Recuperación de contraseña en desarrollo')}
+                      >
+                        ¿Olvidaste tu contraseña?
+                      </button>
+                    </div>
+                    <div className="relative">
+                      <Input
+                        id="password"
+                        type={showPassword ? 'text' : 'password'}
+                        placeholder="••••••••"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                        className="w-full pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      >
+                        {showPassword ? (
+                          <EyeSlash className="w-5 h-5" />
+                        ) : (
+                          <Eye className="w-5 h-5" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    disabled={isLoading}
+                    style={{ backgroundColor: primaryColor }}
                   >
-                    ¿Olvidaste tu contraseña?
-                  </button>
-                </div>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    type={showPassword ? 'text' : 'password'}
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    className="w-full pr-10"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  >
-                    {showPassword ? (
-                      <EyeSlash className="w-5 h-5" />
-                    ) : (
-                      <Eye className="w-5 h-5" />
+                    {isLoading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
+                  </Button>
+                </form>
+              </TabsContent>
+
+              {/* Register Tab */}
+              <TabsContent value="register" className="space-y-4 mt-6">
+                <form onSubmit={handleRegister} className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="firstName">Nombre</Label>
+                      <Input
+                        id="firstName"
+                        type="text"
+                        placeholder="Juan"
+                        value={registerData.firstName}
+                        onChange={(e) => setRegisterData({ ...registerData, firstName: e.target.value })}
+                        disabled={isRegistering}
+                        className={registerErrors.firstName ? 'border-red-500' : ''}
+                      />
+                      {registerErrors.firstName && (
+                        <p className="text-xs text-red-600">{registerErrors.firstName}</p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="lastName">Apellido</Label>
+                      <Input
+                        id="lastName"
+                        type="text"
+                        placeholder="Pérez"
+                        value={registerData.lastName}
+                        onChange={(e) => setRegisterData({ ...registerData, lastName: e.target.value })}
+                        disabled={isRegistering}
+                        className={registerErrors.lastName ? 'border-red-500' : ''}
+                      />
+                      {registerErrors.lastName && (
+                        <p className="text-xs text-red-600">{registerErrors.lastName}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="registerEmail">Correo Electrónico</Label>
+                    <Input
+                      id="registerEmail"
+                      type="email"
+                      placeholder="juan@ejemplo.com"
+                      value={registerData.email}
+                      onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
+                      disabled={isRegistering}
+                      className={registerErrors.email ? 'border-red-500' : ''}
+                    />
+                    {registerErrors.email && (
+                      <p className="text-xs text-red-600">{registerErrors.email}</p>
                     )}
-                  </button>
-                </div>
-              </div>
+                  </div>
 
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={isLoading}
-                style={{ backgroundColor: primaryColor }}
-              >
-                {isLoading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
-              </Button>
-            </form>
+                  <div className="space-y-2">
+                    <Label htmlFor="registerPassword">Contraseña</Label>
+                    <div className="relative">
+                      <Input
+                        id="registerPassword"
+                        type={showRegisterPassword ? 'text' : 'password'}
+                        placeholder="Mínimo 8 caracteres"
+                        value={registerData.password}
+                        onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
+                        disabled={isRegistering}
+                        className={registerErrors.password ? 'border-red-500 pr-10' : 'pr-10'}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowRegisterPassword(!showRegisterPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        disabled={isRegistering}
+                      >
+                        {showRegisterPassword ? (
+                          <EyeSlash className="w-5 h-5" />
+                        ) : (
+                          <Eye className="w-5 h-5" />
+                        )}
+                      </button>
+                    </div>
+                    {registerErrors.password && (
+                      <p className="text-xs text-red-600">{registerErrors.password}</p>
+                    )}
+                  </div>
 
-            {/* Footer */}
-            <div className="text-center text-sm text-gray-600">
-              ¿No tienes una cuenta?{' '}
-              <button
-                className="text-blue-600 hover:text-blue-700 font-medium"
-                onClick={() => alert('Contacta a tu administrador para solicitar acceso')}
-              >
-                Solicita acceso
-              </button>
-            </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmPassword">Confirmar Contraseña</Label>
+                    <div className="relative">
+                      <Input
+                        id="confirmPassword"
+                        type={showConfirmPassword ? 'text' : 'password'}
+                        placeholder="Confirma tu contraseña"
+                        value={registerData.confirmPassword}
+                        onChange={(e) => setRegisterData({ ...registerData, confirmPassword: e.target.value })}
+                        disabled={isRegistering}
+                        className={registerErrors.confirmPassword ? 'border-red-500 pr-10' : 'pr-10'}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        disabled={isRegistering}
+                      >
+                        {showConfirmPassword ? (
+                          <EyeSlash className="w-5 h-5" />
+                        ) : (
+                          <Eye className="w-5 h-5" />
+                        )}
+                      </button>
+                    </div>
+                    {registerErrors.confirmPassword && (
+                      <p className="text-xs text-red-600">{registerErrors.confirmPassword}</p>
+                    )}
+                  </div>
+
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    disabled={isRegistering}
+                    style={{ backgroundColor: primaryColor }}
+                  >
+                    {isRegistering ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Creando cuenta...
+                      </>
+                    ) : (
+                      <>
+                        <UserPlus className="mr-2 h-4 w-4" />
+                        Crear Cuenta
+                      </>
+                    )}
+                  </Button>
+                </form>
+              </TabsContent>
+            </Tabs>
           </div>
 
           {/* Mobile branding */}
