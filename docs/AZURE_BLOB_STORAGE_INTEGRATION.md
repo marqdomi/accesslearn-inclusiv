@@ -101,21 +101,25 @@ Frontend
 ### Fase 1: Configuración de Azure (1-2 días)
 
 #### 1.1 Crear Storage Account
-- [ ] Crear Azure Storage Account
+- [x] Script de configuración creado (`setup-blob-storage.ts`)
+- [ ] Crear Azure Storage Account (ver [AZURE_BLOB_STORAGE_SETUP_GUIDE.md](./AZURE_BLOB_STORAGE_SETUP_GUIDE.md))
 - [ ] Configurar redundancia (LRS para desarrollo, GRS para producción)
 - [ ] Habilitar soft delete (30 días)
 - [ ] Configurar versionado (opcional)
 - [ ] Configurar lifecycle policies (archivar archivos antiguos)
 
 #### 1.2 Crear Containers
-- [ ] `tenant-logos` (público con CORS)
-- [ ] `user-avatars` (privado)
-- [ ] `course-media` (privado)
-- [ ] `certificates` (privado)
-- [ ] `course-files` (privado)
+- [x] Script automatizado para crear containers
+- [ ] Ejecutar `npm run setup-blob-storage` para crear:
+  - [ ] `tenant-logos` (público con CORS)
+  - [ ] `user-avatars` (privado)
+  - [ ] `course-media` (privado)
+  - [ ] `certificates` (privado)
+  - [ ] `course-files` (privado)
 
 #### 1.3 Configurar CORS
-- [ ] Permitir origen del frontend
+- [x] CORS configurado automáticamente por el script
+- [ ] Verificar que los orígenes del frontend estén incluidos
 - [ ] Métodos: GET, PUT, OPTIONS
 - [ ] Headers permitidos
 
@@ -124,6 +128,9 @@ Frontend
 - [ ] Agregar endpoint apuntando a Storage Account
 - [ ] Configurar custom domain (opcional)
 - [ ] Configurar cache policies
+
+**📚 Guía Completa:** [AZURE_BLOB_STORAGE_SETUP_GUIDE.md](./AZURE_BLOB_STORAGE_SETUP_GUIDE.md)  
+**⚡ Quick Start:** [BLOB_STORAGE_FASE1_QUICKSTART.md](./BLOB_STORAGE_FASE1_QUICKSTART.md)
 
 ---
 

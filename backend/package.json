@@ -26,6 +26,7 @@
     "create-test-users-all-roles": "ts-node src/scripts/create-test-users-all-roles.ts",
     "create-demo-tenants": "ts-node src/scripts/create-demo-tenants.ts",
     "grant-super-admin": "ts-node src/scripts/grant-super-admin.ts",
+    "setup-blob-storage": "ts-node src/scripts/setup-blob-storage.ts",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
