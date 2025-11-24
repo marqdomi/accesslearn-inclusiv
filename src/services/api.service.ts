@@ -425,6 +425,12 @@ class ApiServiceClass {
     })
   }
 
+  async publishCourse(courseId: string) {
+    return this.fetchWithAuth<any>(`/courses/${courseId}/publish`, {
+      method: 'POST',
+    })
+  }
+
   async approveCourse(courseId: string, comments?: string) {
     return this.fetchWithAuth<any>(`/courses/${courseId}/approve`, {
       method: 'POST',

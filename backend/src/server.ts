@@ -44,6 +44,7 @@ import {
   updateCourse,
   submitCourseForReview,
   approveCourse,
+  publishCourse,
   rejectCourse,
   requestCourseChanges,
   archiveCourse,
@@ -1109,7 +1110,25 @@ app.post('/api/courses/:courseId/submit-review',
   }
 );
 
-// POST /api/courses/:courseId/approve - Approve course
+// POST /api/courses/:courseId/publish - Publish course directly (bypass approval)
+app.post('/api/courses/:courseId/publish',
+  requireAuth,
+  requirePermission('courses:publish'),
+  async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const { courseId } = req.params;
+
+      const course = await publishCourse(courseId, user.tenantId, user.id);
+      res.json(course);
+    } catch (error: any) {
+      console.error('[API] Error publishing course:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+);
+
+// POST /api/courses/:courseId/approve - Approve course (from pending-review)
 app.post('/api/courses/:courseId/approve',
   requireAuth,
   requirePermission('content:approve'),

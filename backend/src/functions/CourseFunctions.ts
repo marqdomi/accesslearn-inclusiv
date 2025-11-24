@@ -269,6 +269,57 @@ export async function approveCourse(
 }
 
 /**
+ * Publish course directly (bypass approval workflow)
+ * Transition: draft -> published (for admins/content-managers)
+ * This allows super-admin, tenant-admin, and content-manager to publish directly
+ */
+export async function publishCourse(
+  courseId: string,
+  tenantId: string,
+  userId: string
+): Promise<Course> {
+  const container = getContainer('courses')
+  
+  const course = await getCourseById(courseId, tenantId)
+  if (!course) {
+    throw new Error('Course not found')
+  }
+  
+  // Allow publishing from draft or pending-review
+  if (course.status !== 'draft' && course.status !== 'pending-review') {
+    throw new Error(`Cannot publish course with status: ${course.status}. Course must be in draft or pending-review status.`)
+  }
+  
+  const now = new Date().toISOString()
+  const updatedCourse: Course = {
+    ...course,
+    status: 'published',
+    reviewerId: userId, // Track who published it
+    publishedAt: now,
+    updatedAt: now
+  }
+  
+  const { resource } = await container
+    .item(courseId, tenantId)
+    .replace<Course>(updatedCourse)
+  
+  // Log audit event
+  await logCourseAudit({
+    tenantId,
+    userId,
+    action: course.status === 'draft' ? 'course.published-directly' : 'course.published',
+    resourceId: courseId,
+    metadata: { 
+      title: course.title,
+      previousStatus: course.status,
+      createdBy: course.createdBy
+    }
+  })
+  
+  return resource!
+}
+
+/**
  * Reject course
  * Transition: pending-review -> draft
  */

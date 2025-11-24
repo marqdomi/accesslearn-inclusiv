@@ -311,13 +311,13 @@ export function ModernCourseBuilder({ courseId, onBack }: ModernCourseBuilderPro
   const handlePublishCourse = async () => {
     try {
       await saveToBackend() // Save first
-      await ApiService.approveCourse(course.id)
+      await ApiService.publishCourse(course.id)
       clearLocalStorage()
       toast.success('Curso publicado exitosamente')
       navigate('/my-courses')
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error publishing course:', error)
-      toast.error('Error al publicar el curso')
+      toast.error(error.message || 'Error al publicar el curso')
     }
   }
   
