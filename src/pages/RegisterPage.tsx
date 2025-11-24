@@ -8,7 +8,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Eye, EyeOff, CheckCircle, AlertCircle, UserPlus, Building2 } from 'lucide-react'
 import { toast } from 'sonner'
-import { ApiService } from '@/services/api.service'
 
 export function RegisterPage() {
   const [searchParams] = useSearchParams()
