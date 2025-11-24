@@ -23,7 +23,7 @@
         globalThis.BASE_KV_SERVICE_URL = '';
       }
     </script>
-    <!-- Runtime configuration injected by docker-entrypoint.sh -->
+    <!-- Runtime configuration injected by docker-entrypoint.sh (production) or public/config.js (development) -->
     <script src="/config.js" type="module"></script>
     <script type="module" src="/src/main.tsx"></script>
 </body>
