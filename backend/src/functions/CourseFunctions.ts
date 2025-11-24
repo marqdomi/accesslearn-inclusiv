@@ -287,6 +287,10 @@ export async function publishCourse(
   
   // Allow publishing from draft or pending-review
   if (course.status !== 'draft' && course.status !== 'pending-review') {
+    // If already published, just return it
+    if (course.status === 'published') {
+      return course
+    }
     throw new Error(`Cannot publish course with status: ${course.status}. Course must be in draft or pending-review status.`)
   }
   
@@ -303,18 +307,23 @@ export async function publishCourse(
     .item(courseId, tenantId)
     .replace<Course>(updatedCourse)
   
-  // Log audit event
-  await logCourseAudit({
-    tenantId,
-    userId,
-    action: course.status === 'draft' ? 'course.published-directly' : 'course.published',
-    resourceId: courseId,
-    metadata: { 
-      title: course.title,
-      previousStatus: course.status,
-      createdBy: course.createdBy
-    }
-  })
+  // Log audit event (don't fail if audit logging fails)
+  try {
+    await logCourseAudit({
+      tenantId,
+      userId,
+      action: course.status === 'draft' ? 'course.published-directly' : 'course.published',
+      resourceId: courseId,
+      metadata: { 
+        title: course.title,
+        previousStatus: course.status,
+        createdBy: course.createdBy
+      }
+    })
+  } catch (auditError: any) {
+    console.error('[publishCourse] Error logging audit event:', auditError)
+    // Don't fail the publish if audit logging fails
+  }
   
   return resource!
 }
