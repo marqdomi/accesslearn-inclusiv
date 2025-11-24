@@ -1312,6 +1312,106 @@ class ApiServiceClass {
       body: JSON.stringify({ stats }),
     })
   }
+
+  // ============================================
+  // MEDIA / BLOB STORAGE APIs
+  // ============================================
+
+  /**
+   * Upload file to Azure Blob Storage
+   * @param file File to upload
+   * @param type Type of upload: 'logo' | 'avatar' | 'course-cover' | 'lesson-image'
+   * @param options Optional: courseId, lessonId
+   * @returns Upload response with URL and metadata
+   */
+  async uploadFile(
+    file: File,
+    type: 'logo' | 'avatar' | 'course-cover' | 'lesson-image',
+    options?: {
+      courseId?: string
+      lessonId?: string
+    }
+  ): Promise<{
+    success: boolean
+    url: string
+    blobName: string
+    containerName: string
+    size: number
+    contentType: string
+  }> {
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('type', type)
+    
+    if (options?.courseId) {
+      formData.append('courseId', options.courseId)
+    }
+    if (options?.lessonId) {
+      formData.append('lessonId', options.lessonId)
+    }
+
+    const token = localStorage.getItem('auth-token')
+    if (!token) {
+      throw new Error('No authentication token found')
+    }
+
+    const url = `${API_BASE_URL}/media/upload`
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`
+        // No Content-Type header - let browser set it with boundary for FormData
+      },
+      body: formData
+    })
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Error uploading file' }))
+      throw {
+        message: error.error || `HTTP ${response.status}: ${response.statusText}`,
+        status: response.status,
+      } as ApiError
+    }
+
+    return await response.json()
+  }
+
+  /**
+   * Get secure URL with SAS token for a blob
+   * @param container Container name
+   * @param blobName Blob name (full path)
+   * @returns URL with SAS token and expiration
+   */
+  async getMediaUrl(
+    container: string,
+    blobName: string
+  ): Promise<{
+    url: string
+    expiresIn: number
+  }> {
+    // URL encode the blobName to handle special characters
+    const encodedBlobName = encodeURIComponent(blobName)
+    return this.fetchWithAuth<{
+      url: string
+      expiresIn: number
+    }>(`/media/url/${container}/${encodedBlobName}`)
+  }
+
+  /**
+   * Delete a file from Blob Storage
+   * @param container Container name
+   * @param blobName Blob name (full path)
+   */
+  async deleteMediaFile(
+    container: string,
+    blobName: string
+  ): Promise<{ success: boolean }> {
+    // URL encode the blobName to handle special characters
+    const encodedBlobName = encodeURIComponent(blobName)
+    return this.fetchWithAuth<{ success: boolean }>(`/media/${container}/${encodedBlobName}`, {
+      method: 'DELETE',
+    })
+  }
 }
 
 export const ApiService = new ApiServiceClass()

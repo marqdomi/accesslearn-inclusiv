@@ -77,7 +77,22 @@ export function BrandingSettingsPage() {
         const tenant = await ApiService.getTenantById(tenantId)
         
         if (tenant && isMounted) {
-          setLogoPreview(tenant.logo || null)
+          // Si el logo es un blobName (formato: container/blobName), generar URL con SAS
+          let logoUrl = tenant.logo || null
+          if (logoUrl && !logoUrl.startsWith('http') && !logoUrl.startsWith('data:')) {
+            // Es un blobName, generar URL con SAS token
+            try {
+              const [containerName, ...blobNameParts] = logoUrl.split('/')
+              const blobName = blobNameParts.join('/')
+              const { url } = await ApiService.getMediaUrl(containerName, blobName)
+              logoUrl = url
+            } catch (error) {
+              console.error('Error generating logo URL:', error)
+              // Mantener el blobName si falla la generación de URL
+            }
+          }
+          
+          setLogoPreview(logoUrl)
           setPrimaryColor(tenant.primaryColor || '#4F46E5')
           setSecondaryColor(tenant.secondaryColor || '#10B981')
           setCompanyName(tenant.name || '')
@@ -103,7 +118,7 @@ export function BrandingSettingsPage() {
     }
   }, [authLoading, isAuthenticated, user?.id, user?.tenantId]) // Removed currentTenant to avoid loop
 
-  const handleLogoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleLogoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
 
@@ -119,12 +134,23 @@ export function BrandingSettingsPage() {
       return
     }
 
-    setLogoFile(file)
-    const reader = new FileReader()
-    reader.onloadend = () => {
-      setLogoPreview(reader.result as string)
+    try {
+      setSaving(true)
+      
+      // Upload a Blob Storage
+      const { url } = await ApiService.uploadFile(file, 'logo')
+      
+      // Guardar URL (ya incluye SAS token)
+      setLogoPreview(url)
+      setLogoFile(null) // Ya no necesitamos el archivo local
+      
+      toast.success('Logo subido exitosamente')
+    } catch (error: any) {
+      console.error('Error uploading logo:', error)
+      toast.error(error.message || 'Error al subir el logo')
+    } finally {
+      setSaving(false)
     }
-    reader.readAsDataURL(file)
   }
 
   const handleRemoveLogo = () => {
@@ -174,8 +200,28 @@ export function BrandingSettingsPage() {
       }
 
       // Only include logo if it was changed
+      // logoPreview puede ser:
+      // 1. URL con SAS token (después de upload) - extraer blobName
+      // 2. blobName guardado (formato: container/blobName) - mantener
+      // 3. Base64 o URL externa antigua - mantener
       if (logoPreview) {
-        updates.logo = logoPreview
+        // Si es una URL de blob con SAS token, extraer el blobName
+        if (logoPreview.includes('blob.core.windows.net')) {
+          // Extraer blobName desde la URL (antes del ?)
+          const urlParts = logoPreview.split('?')[0]
+          const blobNameMatch = urlParts.match(/\/([^\/]+)\/(.+)$/)
+          if (blobNameMatch) {
+            // Guardar formato: container/blobName
+            const containerName = blobNameMatch[1]
+            const blobName = blobNameMatch[2]
+            updates.logo = `${containerName}/${blobName}`
+          } else {
+            updates.logo = logoPreview
+          }
+        } else {
+          // Mantener blobName o URL antigua
+          updates.logo = logoPreview
+        }
       } else if (logoPreview === null && currentTenant.logo) {
         // If logo was removed, set to undefined
         updates.logo = undefined
