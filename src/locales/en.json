@@ -1,7 +1,7 @@
 {
-  "app.title": "GameLearn",
+  "app.title": "Kaido",
   "app.subtitle": "Level Up Your Skills",
-  "app.admin.title": "GameLearn Admin",
+  "app.admin.title": "Kaido Admin",
   "app.admin.subtitle": "Content Management",
 
   "nav.dashboard": "Dashboard",
@@ -16,7 +16,7 @@
   "nav.missionLibrary": "Mission Library",
   "nav.myLibrary": "My Library",
 
-  "login.title": "Welcome to GameLearn",
+  "login.title": "Welcome to Kaido",
   "login.subtitle": "Sign in to start your learning adventure!",
   "login.email": "Email Address",
   "login.password": "Password",
@@ -50,7 +50,7 @@
   "passwordChange.error.requirements": "Password does not meet all requirements",
   "passwordChange.success": "Password changed successfully!",
 
-  "onboarding.welcome": "Welcome to GameLearn!",
+  "onboarding.welcome": "Welcome to Kaido!",
   "onboarding.subtitle": "Let's personalize your experience",
   "onboarding.step1.title": "Create Your Player Identity",
   "onboarding.step1.displayName": "Display Name",
@@ -425,8 +425,8 @@
   "achievementsDashboard.noAchievements": "No achievements found in this category.",
   "achievementsDashboard.complete": "Complete",
   "achievementsDashboard.days": "days",
-  "achievementsDashboard.shareTitle": "My GameLearn Achievements",
-  "achievementsDashboard.shareText": "I've unlocked {count} achievements on GameLearn! 🏆\n\nMy stats:\n⚡ Level {level} {rank}\n🎯 {xp} Total XP\n🎓 {courses} courses completed\n📚 {modules} modules completed\n🔥 {streak} day streak\n⭐ {score}% average score",
+  "achievementsDashboard.shareTitle": "My Kaido Achievements",
+  "achievementsDashboard.shareText": "I've unlocked {count} achievements on Kaido! 🏆\n\nMy stats:\n⚡ Level {level} {rank}\n🎯 {xp} Total XP\n🎓 {courses} courses completed\n📚 {modules} modules completed\n🔥 {streak} day streak\n⭐ {score}% average score",
   "achievementsDashboard.shareSuccess": "Shared successfully!",
   "achievementsDashboard.copiedToClipboard": "Achievement stats copied to clipboard!",
 
