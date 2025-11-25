@@ -775,11 +775,11 @@ export function CourseViewerPage() {
                 )}
 
                 {/* Navigation and Complete Button */}
-                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between border rounded-2xl p-4 shadow-sm bg-card">
+                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between border rounded-2xl p-4 shadow-sm bg-card">
                   <div className="text-sm text-muted-foreground">
-                    {nextLessonInfo
-                      ? `Próxima lección: ${nextLessonInfo.lessonTitle}`
-                      : 'Estás en la última lección del curso'}
+                    {sidebarCollapsed
+                      ? 'El mapa está oculto. Puedes volver a mostrarlo desde la tarjeta superior.'
+                      : 'Usa el mapa lateral para saltar a cualquier módulo.'}
                   </div>
                   <div className="flex flex-wrap items-center justify-end gap-3">
                     <Button
