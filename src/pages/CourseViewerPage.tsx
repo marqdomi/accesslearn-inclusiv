@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 import { useAuth } from '@/contexts/AuthContext'
 import { useTenant } from '@/contexts/TenantContext'
 import { ApiService } from '@/services/api.service'
+import { cn } from '@/lib/utils'
 import { ModuleNavigation } from '@/components/course/ModuleNavigation'
 import { LessonContent } from '@/components/course/LessonContent'
 import { CourseCompletionPage } from '@/components/course/CourseCompletionPage'
@@ -11,6 +12,7 @@ import { XPAnimation } from '@/components/gamification/XPAnimation'
 import { ConfettiEffect } from '@/components/gamification/ConfettiEffect'
 import { GameNotificationQueue, GameNotification } from '@/components/gamification/GameNotificationQueue'
 import { CourseMissionPanel } from '@/components/course/CourseMissionPanel'
+import { CourseHeatmapNavigator } from '@/components/course/CourseHeatmapNavigator'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, CheckCircle, ChevronLeft, ChevronRight, Trophy } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -64,6 +66,7 @@ export function CourseViewerPage() {
   const [courseCompleted, setCourseCompleted] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [gameNotifications, setGameNotifications] = useState<GameNotification[]>([])
+  const [navigatorMode, setNavigatorMode] = useState<'heatmap' | 'list'>('heatmap')
   
   // Gamification states
   const [showXPAnimation, setShowXPAnimation] = useState(false)
@@ -640,6 +643,16 @@ export function CourseViewerPage() {
   const nextLessonInfo = getNextLessonInfo()
 
   // Show completion page if course is finished
+  const moduleNavigatorData = (course?.modules || []).map((module) => ({
+    ...module,
+    lessons: (module.lessons || []).map((lesson) => ({
+      ...lesson,
+      isCompleted: isLessonCompleted(lesson.id),
+      isCurrent: lesson.id === currentLessonId,
+    })),
+    isCompleted: (module.lessons || []).every((l) => isLessonCompleted(l.id)),
+  }))
+
   if (courseCompleted && course) {
     return (
       <CourseCompletionPage
@@ -719,19 +732,45 @@ export function CourseViewerPage() {
       <div className="container mx-auto px-4 py-6">
         <div className={`grid grid-cols-1 gap-6 ${sidebarCollapsed ? '' : 'lg:grid-cols-12'}`}>
           {!sidebarCollapsed && (
-            <aside className="lg:col-span-3">
-              <ModuleNavigation
-                modules={(course.modules || []).map(module => ({
-                  ...module,
-                  lessons: (module.lessons || []).map(lesson => ({
-                    ...lesson,
-                    isCompleted: isLessonCompleted(lesson.id),
-                  })),
-                  isCompleted: (module.lessons || []).every(l => isLessonCompleted(l.id)),
-                }))}
-                currentLessonId={currentLessonId}
-                onLessonSelect={handleLessonSelect}
-              />
+            <aside className="lg:col-span-3 space-y-4">
+              <div className="flex items-center rounded-full border bg-muted/40 p-1 text-xs font-medium">
+                <button
+                  className={cn(
+                    'flex-1 rounded-full px-3 py-1 transition',
+                    navigatorMode === 'heatmap'
+                      ? 'bg-background shadow-sm'
+                      : 'text-muted-foreground'
+                  )}
+                  onClick={() => setNavigatorMode('heatmap')}
+                >
+                  Mapa
+                </button>
+                <button
+                  className={cn(
+                    'flex-1 rounded-full px-3 py-1 transition',
+                    navigatorMode === 'list'
+                      ? 'bg-background shadow-sm'
+                      : 'text-muted-foreground'
+                  )}
+                  onClick={() => setNavigatorMode('list')}
+                >
+                  Lista
+                </button>
+              </div>
+
+              {navigatorMode === 'heatmap' ? (
+                <CourseHeatmapNavigator
+                  modules={moduleNavigatorData}
+                  currentLessonId={currentLessonId}
+                  onLessonSelect={handleLessonSelect}
+                />
+              ) : (
+                <ModuleNavigation
+                  modules={moduleNavigatorData}
+                  currentLessonId={currentLessonId}
+                  onLessonSelect={handleLessonSelect}
+                />
+              )}
             </aside>
           )}
 
