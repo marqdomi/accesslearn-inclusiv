@@ -70,14 +70,14 @@ const moduleBadgeStyles: Record<string, string> = {
     <TooltipProvider delayDuration={150}>
       <div className="rounded-2xl border bg-card p-4 shadow-sm">
         <div className="max-h-[65vh] overflow-y-auto pr-1">
-          <div className="space-y-6">
+          <div className="space-y-6 pt-2">
             {modules.map((module, moduleIndex) => (
               <div key={module.id} className="relative pl-8">
                 <div className="flex flex-col items-center gap-2 relative">
                   <span className="absolute left-1/2 top-4 bottom-4 w-px bg-muted/40" />
                   <span
                     className={cn(
-                      'px-3 py-1 text-[10px] font-semibold rounded-full shadow-sm -mt-1',
+                      'px-3 py-1 text-[10px] font-semibold rounded-full shadow-sm',
                       moduleBadgeStyles[getModuleStatus(module)]
                     )}
                   >
@@ -129,27 +129,8 @@ const moduleBadgeStyles: Record<string, string> = {
             ))}
           </div>
         </div>
-        <div className="mt-4 flex items-center justify-center gap-4 text-[11px] text-muted-foreground">
-          <span className="flex items-center gap-1">
-            <LegendDot className="bg-emerald-500" /> Completado
-          </span>
-          <span className="flex items-center gap-1">
-            <LegendDot className="bg-primary" /> Actual
-          </span>
-          <span className="flex items-center gap-1">
-            <LegendDot className="bg-muted" /> Pendiente
-          </span>
-        </div>
       </div>
     </TooltipProvider>
-  )
-}
-
-function LegendDot({ className }: { className?: string }) {
-  return (
-    <span
-      className={cn('inline-block h-3 w-3 rounded-sm border border-white/30', className)}
-    />
   )
 }
 
