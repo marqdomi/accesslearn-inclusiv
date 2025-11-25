@@ -9,6 +9,8 @@ import { LessonContent } from '@/components/course/LessonContent'
 import { CourseCompletionPage } from '@/components/course/CourseCompletionPage'
 import { XPAnimation } from '@/components/gamification/XPAnimation'
 import { ConfettiEffect } from '@/components/gamification/ConfettiEffect'
+import { GameNotificationQueue, GameNotification } from '@/components/gamification/GameNotificationQueue'
+import { CourseMissionPanel } from '@/components/course/CourseMissionPanel'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, CheckCircle, ChevronLeft, ChevronRight, Trophy } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -60,6 +62,8 @@ export function CourseViewerPage() {
   const [loading, setLoading] = useState(true)
   const [completing, setCompleting] = useState(false)
   const [courseCompleted, setCourseCompleted] = useState(false)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [gameNotifications, setGameNotifications] = useState<GameNotification[]>([])
   
   // Gamification states
   const [showXPAnimation, setShowXPAnimation] = useState(false)
@@ -342,6 +346,18 @@ export function CourseViewerPage() {
     setCurrentLessonId(lessonId)
   }
 
+  const pushGameNotification = (notification: Omit<GameNotification, 'id'>) => {
+    setGameNotifications((prev) => [
+      ...prev,
+      {
+        ...notification,
+        id: crypto.randomUUID
+          ? crypto.randomUUID()
+          : `${Date.now()}-${Math.random()}`,
+      },
+    ])
+  }
+
   const handleCompleteLesson = async () => {
     if (!user || !currentLessonId || !courseId) return
 
@@ -371,10 +387,11 @@ export function CourseViewerPage() {
       setEarnedXP(xpReward)
       setShowXPAnimation(true)
 
-      // Show success toast
-      toast.success('¡Lección completada!', {
+      pushGameNotification({
+        title: 'Lección completada',
         description: `Has ganado ${xpReward} XP`,
-        icon: <Trophy className="h-5 w-5 text-yellow-500" />
+        type: 'xp',
+        meta: { value: xpReward, unit: 'XP' },
       })
 
       // Check if module is completed
@@ -386,11 +403,11 @@ export function CourseViewerPage() {
         )
         
         if (allModuleLessonsCompleted) {
-          // Celebrate module completion with confetti
           setShowConfetti(true)
-          toast.success('¡Módulo completado!', {
+          pushGameNotification({
+            title: 'Módulo completado',
             description: `Has completado "${currentModule.title}"`,
-            duration: 5000
+            type: 'module',
           })
 
           // Check if ALL course modules are completed
@@ -469,19 +486,15 @@ export function CourseViewerPage() {
         const breakdown = result.xpAwarded.breakdown
         const totalXpGained = result.xpAwarded.xpEarned
         
-        if (breakdown.improvement > 0) {
-          toast.success('¡Curso completado con mejora!', {
-            description: `Mejoraste ${breakdown.improvement}% y ganaste ${totalXpGained} XP (${breakdown.improvementXP} XP por mejora + ${breakdown.persistenceBonus} XP bonus)`,
-            duration: 8000,
-            icon: <Trophy className="h-5 w-5 text-yellow-500" />
-          })
-        } else {
-          toast.success('¡Curso completado!', {
-            description: `Ganaste ${totalXpGained} XP. Calificación: ${finalScore}%`,
-            duration: 6000,
-            icon: <Trophy className="h-5 w-5 text-yellow-500" />
-          })
-        }
+        pushGameNotification({
+          title: breakdown.improvement > 0 ? 'Mejoraste tu récord' : 'Curso completado',
+          description:
+            breakdown.improvement > 0
+              ? `Aumentaste ${breakdown.improvement}% respecto al intento anterior`
+              : `Calificación final: ${finalScore}%`,
+          type: 'course',
+          meta: { value: totalXpGained, unit: 'XP' },
+        })
         
         setEarnedXP(totalXpGained)
         setShowXPAnimation(true)
@@ -586,6 +599,7 @@ export function CourseViewerPage() {
   }
 
   const currentLesson = getCurrentLesson()
+  const currentModule = course?.modules.find(m => m.id === currentModuleId)
   const isCurrentLessonCompleted = currentLessonId
     ? isLessonCompleted(currentLessonId)
     : false
@@ -595,8 +609,35 @@ export function CourseViewerPage() {
   const isQuizCompleted = currentLessonId ? completedQuizzes.has(currentLessonId) : false
   const canCompleteLesson = !isCurrentLessonQuiz || isQuizCompleted
 
-  // Calculate total lessons (used in multiple places)
-  const totalLessons = course ? course.modules.reduce((acc, m) => acc + (m.lessons?.length || 0), 0) : 0
+  const totalLessons = course
+    ? course.modules.reduce((acc, module) => acc + (module.lessons?.length || 0), 0)
+    : 0
+  const progressPercentage = totalLessons > 0 ? (completedLessons.size / totalLessons) * 100 : 0
+
+  const getNextLessonInfo = () => {
+    if (!course || !currentModule) return null
+    const currentLessonIndex = currentModule.lessons.findIndex(l => l.id === currentLessonId)
+    if (currentLessonIndex >= 0 && currentLessonIndex < currentModule.lessons.length - 1) {
+      const lesson = currentModule.lessons[currentLessonIndex + 1]
+      return {
+        moduleTitle: currentModule.title,
+        lessonTitle: lesson.title,
+      }
+    }
+    const moduleIndex = course.modules.findIndex(m => m.id === currentModuleId)
+    if (moduleIndex >= 0 && moduleIndex < course.modules.length - 1) {
+      const nextModule = course.modules[moduleIndex + 1]
+      if (nextModule.lessons && nextModule.lessons.length > 0) {
+        return {
+          moduleTitle: nextModule.title,
+          lessonTitle: nextModule.lessons[0].title,
+        }
+      }
+    }
+    return null
+  }
+
+  const nextLessonInfo = getNextLessonInfo()
 
   // Show completion page if course is finished
   if (courseCompleted && course) {
@@ -676,25 +717,35 @@ export function CourseViewerPage() {
 
       {/* Main Content */}
       <div className="container mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Sidebar Navigation */}
-          <aside className="lg:col-span-3">
-            <ModuleNavigation
-              modules={(course.modules || []).map(module => ({
-                ...module,
-                lessons: (module.lessons || []).map(lesson => ({
-                  ...lesson,
-                  isCompleted: isLessonCompleted(lesson.id),
-                })),
-                isCompleted: (module.lessons || []).every(l => isLessonCompleted(l.id)),
-              }))}
-              currentLessonId={currentLessonId}
-              onLessonSelect={handleLessonSelect}
-            />
-          </aside>
+        <div className={`grid grid-cols-1 gap-6 ${sidebarCollapsed ? '' : 'lg:grid-cols-12'}`}>
+          {!sidebarCollapsed && (
+            <aside className="lg:col-span-3">
+              <ModuleNavigation
+                modules={(course.modules || []).map(module => ({
+                  ...module,
+                  lessons: (module.lessons || []).map(lesson => ({
+                    ...lesson,
+                    isCompleted: isLessonCompleted(lesson.id),
+                  })),
+                  isCompleted: (module.lessons || []).every(l => isLessonCompleted(l.id)),
+                }))}
+                currentLessonId={currentLessonId}
+                onLessonSelect={handleLessonSelect}
+              />
+            </aside>
+          )}
 
           {/* Main Content Area */}
-          <main className="lg:col-span-9">
+          <main className={sidebarCollapsed ? 'lg:col-span-12' : 'lg:col-span-9'}>
+            <CourseMissionPanel
+              courseTitle={course.title}
+              currentModuleTitle={currentModule?.title}
+              currentLessonTitle={currentLesson?.title}
+              nextLessonTitle={nextLessonInfo?.lessonTitle}
+              progressPercentage={progressPercentage}
+              sidebarCollapsed={sidebarCollapsed}
+              onToggleSidebar={() => setSidebarCollapsed(prev => !prev)}
+            />
             <AnimatePresence mode="wait">
               <motion.div
                 key={currentLessonId}
@@ -724,26 +775,35 @@ export function CourseViewerPage() {
                 )}
 
                 {/* Navigation and Complete Button */}
-                <div className="flex items-center justify-between">
-                  <Button
-                    variant="outline"
-                    onClick={goToPreviousLesson}
-                    disabled={isFirstLesson()}
-                  >
-                    <ChevronLeft className="h-4 w-4 mr-2" />
-                    Anterior
-                  </Button>
-
-                  <div className="flex items-center gap-3">
+                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between border rounded-2xl p-4 shadow-sm bg-card">
+                  <div className="text-sm text-muted-foreground">
+                    {nextLessonInfo
+                      ? `Próxima lección: ${nextLessonInfo.lessonTitle}`
+                      : 'Estás en la última lección del curso'}
+                  </div>
+                  <div className="flex flex-wrap items-center justify-end gap-3">
+                    <Button
+                      variant="outline"
+                      onClick={goToPreviousLesson}
+                      disabled={isFirstLesson()}
+                      className="min-w-[120px]"
+                    >
+                      <ChevronLeft className="h-4 w-4 mr-2" />
+                      Anterior
+                    </Button>
                     {!isCurrentLessonCompleted && (
                       <Button
                         onClick={handleCompleteLesson}
                         disabled={completing || !canCompleteLesson}
-                        className="gap-2"
-                        title={isCurrentLessonQuiz && !isQuizCompleted ? 'Debes completar el quiz antes de marcar la lección como completada' : ''}
+                        className="gap-2 min-w-[190px]"
+                        title={
+                          isCurrentLessonQuiz && !isQuizCompleted
+                            ? 'Debes completar el quiz antes de marcar la lección como completada'
+                            : ''
+                        }
                       >
                         <CheckCircle className="h-4 w-4" />
-                        {completing ? 'Completando...' : 'Marcar como Completado'}
+                        {completing ? 'Completando...' : 'Marcar como completada'}
                       </Button>
                     )}
 
@@ -751,6 +811,7 @@ export function CourseViewerPage() {
                       variant={isCurrentLessonCompleted ? 'default' : 'outline'}
                       onClick={goToNextLesson}
                       disabled={isLastLesson()}
+                      className="min-w-[140px]"
                     >
                       Siguiente
                       <ChevronRight className="h-4 w-4 ml-2" />
@@ -771,6 +832,12 @@ export function CourseViewerPage() {
         />
       )}
       <ConfettiEffect trigger={showConfetti} type="realistic" />
+      <GameNotificationQueue
+        notifications={gameNotifications}
+        onRemove={(id) =>
+          setGameNotifications((prev) => prev.filter((notification) => notification.id !== id))
+        }
+      />
     </div>
   )
 }
