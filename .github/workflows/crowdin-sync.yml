@@ -24,6 +24,7 @@ jobs:
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
+          persist-credentials: true
       
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -43,10 +44,11 @@ jobs:
           crowdin_branch_name: ${{ github.head_ref || 'main' }}
           skip_untranslated_strings: false
           skip_untranslated_files: false
+          push_translations: false
+          commit_message: ""
         env:
           CROWDIN_PROJECT_ID: ${{ secrets.CROWDIN_PROJECT_ID }}
           CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Check for changes
         id: git-check
@@ -55,12 +57,10 @@ jobs:
       
       - name: Commit and push translations
         if: steps.git-check.outputs.changes == 'true'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add public/locales/
           git commit -m "chore(i18n): actualizar traducciones desde Crowdin [skip ci]" || exit 0
-          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:${{ github.ref }}
+          git push
 
