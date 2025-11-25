@@ -1355,8 +1355,14 @@ class ApiServiceClass {
       throw new Error('No authentication token found')
     }
 
-    // API_BASE_URL ya incluye /api, entonces /media/upload se convierte en /api/media/upload
-    const url = `${API_BASE_URL}/media/upload`
+    // Construir URL correctamente: asegurar que tenga /api/media/upload
+    // Si API_BASE_URL ya incluye /api, no duplicar
+    const baseUrl = API_BASE_URL.endsWith('/api') 
+      ? API_BASE_URL 
+      : API_BASE_URL.endsWith('/') 
+        ? `${API_BASE_URL}api` 
+        : `${API_BASE_URL}/api`
+    const url = `${baseUrl}/media/upload`
     console.log('[ApiService] Uploading file to:', url, 'with token:', token ? 'present' : 'missing')
     
     const response = await fetch(url, {
@@ -1369,9 +1375,25 @@ class ApiServiceClass {
     })
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ error: 'Error uploading file' }))
+      let errorMessage = `HTTP ${response.status}: ${response.statusText}`
+      try {
+        const error = await response.json()
+        errorMessage = error.error || error.message || errorMessage
+      } catch {
+        // Si no se puede parsear JSON, usar el texto de respuesta
+        const text = await response.text().catch(() => '')
+        errorMessage = text || errorMessage
+      }
+      
+      console.error('[ApiService] Upload error:', {
+        url,
+        status: response.status,
+        statusText: response.statusText,
+        error: errorMessage
+      })
+      
       throw {
-        message: error.error || `HTTP ${response.status}: ${response.statusText}`,
+        message: errorMessage,
         status: response.status,
       } as ApiError
     }
