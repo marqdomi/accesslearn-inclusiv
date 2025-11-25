@@ -1355,7 +1355,10 @@ class ApiServiceClass {
       throw new Error('No authentication token found')
     }
 
+    // API_BASE_URL ya incluye /api, entonces /media/upload se convierte en /api/media/upload
     const url = `${API_BASE_URL}/media/upload`
+    console.log('[ApiService] Uploading file to:', url, 'with token:', token ? 'present' : 'missing')
+    
     const response = await fetch(url, {
       method: 'POST',
       headers: {

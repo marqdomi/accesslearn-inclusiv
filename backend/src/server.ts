@@ -2876,14 +2876,21 @@ const upload = multer({
 
 // POST /api/media/upload - Upload file to Blob Storage
 app.post('/api/media/upload', 
-  requireAuth,
+  authenticateToken, // Primero autenticar (opcional)
+  requireAuth, // Luego requerir autenticación
   upload.single('file'),
   async (req, res) => {
     try {
       const user = (req as any).user;
+      if (!user) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
       const { tenantId } = user;
       const { type, courseId, lessonId } = req.body; // type: 'logo' | 'avatar' | 'course-cover' | 'lesson-image'
       const file = req.file;
+
+      console.log(`[API] Media upload request - type: ${type}, tenantId: ${tenantId}, userId: ${user.id}`);
 
       if (!file) {
         return res.status(400).json({ error: 'No se proporcionó ningún archivo' });
@@ -2973,15 +2980,24 @@ app.post('/api/media/upload',
 );
 
 // GET /api/media/url/:container/:blobName - Obtener URL con SAS token
-app.get('/api/media/url/:container/:blobName', requireAuth, async (req, res) => {
+app.get('/api/media/url/:container/:blobName', 
+  authenticateToken,
+  requireAuth, 
+  async (req, res) => {
   try {
     const user = (req as any).user;
     const { tenantId } = user;
-    const { container, blobName } = req.params;
+    const { container, blobName: encodedBlobName } = req.params;
+    
+    // Decodificar blobName (viene codificado desde el frontend)
+    const blobName = decodeURIComponent(encodedBlobName);
+    
+    console.log(`[API] Getting media URL for container: ${container}, blobName: ${blobName}`);
     
     // Validar que el usuario tenga acceso al archivo
     // Verificar que el blob pertenezca al tenant del usuario
     if (!blobName.startsWith(tenantId)) {
+      console.warn(`[API] Access denied: blobName ${blobName} does not start with tenantId ${tenantId}`);
       return res.status(403).json({ error: 'No tienes acceso a este archivo' });
     }
     
@@ -3003,11 +3019,17 @@ app.get('/api/media/url/:container/:blobName', requireAuth, async (req, res) => 
 });
 
 // DELETE /api/media/:container/:blobName - Eliminar archivo
-app.delete('/api/media/:container/:blobName', requireAuth, async (req, res) => {
+app.delete('/api/media/:container/:blobName', 
+  authenticateToken,
+  requireAuth, 
+  async (req, res) => {
   try {
     const user = (req as any).user;
     const { tenantId } = user;
-    const { container, blobName } = req.params;
+    const { container, blobName: encodedBlobName } = req.params;
+    
+    // Decodificar blobName (viene codificado desde el frontend)
+    const blobName = decodeURIComponent(encodedBlobName);
     
     // Validar que el archivo pertenezca al tenant del usuario
     if (!blobName.startsWith(tenantId)) {
