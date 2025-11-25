@@ -1,0 +1,62 @@
+name: Crowdin Sync
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'public/locales/es/**'
+      - 'crowdin.yml'
+  workflow_dispatch: # Permite ejecución manual
+  schedule:
+    # Sincronizar diariamente a las 2 AM UTC
+    - cron: '0 2 * * *'
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Upload to Crowdin
+        uses: crowdin/github-action@master
+        with:
+          upload_sources: true
+          upload_translations: false
+          download_translations: true
+          crowdin_branch_name: ${{ github.head_ref || 'main' }}
+          skip_untranslated_strings: false
+          skip_untranslated_files: false
+        env:
+          CROWDIN_PROJECT_ID: ${{ secrets.CROWDIN_PROJECT_ID }}
+          CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
+      
+      - name: Check for changes
+        id: git-check
+        run: |
+          git diff --exit-code public/locales/ || echo "changes=true" >> $GITHUB_OUTPUT
+      
+      - name: Commit and push translations
+        if: steps.git-check.outputs.changes == 'true'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add public/locales/
+          git commit -m "chore(i18n): actualizar traducciones desde Crowdin [skip ci]" || exit 0
+          git push
+

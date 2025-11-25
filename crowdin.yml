@@ -1,0 +1,64 @@
+# Crowdin Configuration for Kaido Platform
+# Documentation: https://support.crowdin.com/configuration-file/
+
+project_id: "" # Se llenará después de crear el proyecto en Crowdin
+api_token_env: CROWDIN_PERSONAL_TOKEN
+
+preserve_hierarchy: true
+export_only_approved: false
+
+files:
+  # Common namespace
+  - source: /public/locales/es/common.json
+    translation: /public/locales/%two_letters_code%/common.json
+    type: json
+    update_option: update_as_unapproved
+    
+  # Auth namespace
+  - source: /public/locales/es/auth.json
+    translation: /public/locales/%two_letters_code%/auth.json
+    type: json
+    update_option: update_as_unapproved
+    
+  # Dashboard namespace
+  - source: /public/locales/es/dashboard.json
+    translation: /public/locales/%two_letters_code%/dashboard.json
+    type: json
+    update_option: update_as_unapproved
+    
+  # Courses namespace
+  - source: /public/locales/es/courses.json
+    translation: /public/locales/%two_letters_code%/courses.json
+    type: json
+    update_option: update_as_unapproved
+    
+  # Admin namespace
+  - source: /public/locales/es/admin.json
+    translation: /public/locales/%two_letters_code%/admin.json
+    type: json
+    update_option: update_as_unapproved
+    
+  # Community namespace
+  - source: /public/locales/es/community.json
+    translation: /public/locales/%two_letters_code%/community.json
+    type: json
+    update_option: update_as_unapproved
+    
+  # Accessibility namespace
+  - source: /public/locales/es/accessibility.json
+    translation: /public/locales/%two_letters_code%/accessibility.json
+    type: json
+    update_option: update_as_unapproved
+    
+  # Certificates namespace
+  - source: /public/locales/es/certificates.json
+    translation: /public/locales/%two_letters_code%/certificates.json
+    type: json
+    update_option: update_as_unapproved
+    
+  # Notifications namespace
+  - source: /public/locales/es/notifications.json
+    translation: /public/locales/%two_letters_code%/notifications.json
+    type: json
+    update_option: update_as_unapproved
+

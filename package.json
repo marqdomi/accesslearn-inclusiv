@@ -12,7 +12,10 @@
         "preview": "vite preview",
         "test": "vitest",
         "test:ui": "vitest --ui",
-        "test:coverage": "vitest --coverage"
+        "test:coverage": "vitest --coverage",
+        "crowdin:upload": "node scripts/crowdin-sync.js upload",
+        "crowdin:download": "node scripts/crowdin-sync.js download",
+        "crowdin:sync": "node scripts/crowdin-sync.js sync"
     },
     "dependencies": {
         "@heroicons/react": "^2.2.0",
@@ -90,6 +93,7 @@
         "zod": "^3.25.76"
     },
     "devDependencies": {
+        "@crowdin/cli": "^4.11.0",
         "@eslint/js": "^9.21.0",
         "@playwright/test": "^1.56.1",
         "@tailwindcss/postcss": "^4.1.8",
