@@ -25,12 +25,6 @@ interface CourseHeatmapNavigatorProps {
   modules: ModuleColumn[]
   currentLessonId: string
   onLessonSelect: (moduleId: string, lessonId: string) => void
-}
-
-interface CourseHeatmapNavigatorProps {
-  modules: ModuleColumn[]
-  currentLessonId: string
-  onLessonSelect: (moduleId: string, lessonId: string) => void
   onToggleSidebar?: () => void
   isCollapsed?: boolean
 }
@@ -39,8 +33,6 @@ export function CourseHeatmapNavigator({
   modules,
   currentLessonId,
   onLessonSelect,
-  onToggleSidebar,
-  isCollapsed = false,
 }: CourseHeatmapNavigatorProps) {
   const getStatus = (lesson: LessonCell) => {
     if (lesson.isCurrent) return 'current'
@@ -77,17 +69,6 @@ const moduleBadgeStyles: Record<string, string> = {
   return (
     <TooltipProvider delayDuration={150}>
       <div className="rounded-2xl border bg-card p-4 shadow-sm">
-        {onToggleSidebar && (
-          <div className="flex justify-end mb-3">
-            <button
-              onClick={onToggleSidebar}
-              className="text-[11px] font-semibold text-muted-foreground hover:text-foreground transition"
-            >
-              {isCollapsed ? 'Mostrar mapa' : 'Ocultar mapa'}
-            </button>
-          </div>
-        )}
-
         <div className="max-h-[65vh] overflow-y-auto pr-1">
           <div className="space-y-6">
             {modules.map((module, moduleIndex) => (
@@ -131,7 +112,7 @@ const moduleBadgeStyles: Record<string, string> = {
                               <p className="text-sm font-medium">
                                 {lesson.title}
                               </p>
-                              <p className="text-xs text-muted-foreground">
+                              <p className="text-xs font-medium text-foreground/80">
                                 {lesson.duration
                                   ? `${lesson.duration} min`
                                   : 'Sin duración'}
