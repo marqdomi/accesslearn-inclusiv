@@ -55,14 +55,6 @@ const statusStyles: Record<string, string> = {
             <p className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">
               Mapa de progreso
             </p>
-            <p className="text-xs text-muted-foreground">
-              Celdas compactas; el texto aparece al pasar el cursor.
-            </p>
-          </div>
-          <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-            <LegendDot className="bg-emerald-500" /> Completado
-            <LegendDot className="bg-primary" /> Actual
-            <LegendDot className="bg-muted" /> Pendiente
           </div>
         </div>
 
@@ -70,11 +62,11 @@ const statusStyles: Record<string, string> = {
           <div className="space-y-6">
             {modules.map((module, moduleIndex) => (
               <div key={module.id} className="relative pl-8">
-                <div className="absolute left-0 top-1 text-[11px] font-semibold text-muted-foreground">
-                  M{moduleIndex + 1}
-                </div>
                 <div className="flex flex-col items-center gap-2 relative">
                   <span className="absolute left-1/2 top-4 bottom-4 w-px bg-muted/40" />
+                  <span className="px-3 py-1 text-[10px] font-semibold rounded-full bg-card border text-muted-foreground shadow-sm -mt-1">
+                    M{moduleIndex + 1}
+                  </span>
                   {module.lessons.map((lesson, lessonIndex) => {
                     const status = getStatus(lesson)
                     const disabled = status === 'locked'
@@ -120,6 +112,17 @@ const statusStyles: Record<string, string> = {
               </div>
             ))}
           </div>
+        </div>
+        <div className="mt-4 flex items-center justify-center gap-4 text-[11px] text-muted-foreground">
+          <span className="flex items-center gap-1">
+            <LegendDot className="bg-emerald-500" /> Completado
+          </span>
+          <span className="flex items-center gap-1">
+            <LegendDot className="bg-primary" /> Actual
+          </span>
+          <span className="flex items-center gap-1">
+            <LegendDot className="bg-muted" /> Pendiente
+          </span>
         </div>
       </div>
     </TooltipProvider>
