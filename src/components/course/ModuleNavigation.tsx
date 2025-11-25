@@ -117,7 +117,10 @@ export function ModuleNavigation({
                           {lessonIndex + 1}. {lesson.title}
                         </span>
                         {lesson.duration && (
-                          <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                          <Badge 
+                            variant="outline" 
+                            className="text-[10px] px-1.5 py-0 bg-muted/50 border-emerald-500 text-emerald-600"
+                          >
                             {lesson.duration}min
                           </Badge>
                         )}
