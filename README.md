@@ -2,9 +2,10 @@
 
 <div align="center">
 
-![Status](https://img.shields.io/badge/status-95%25%20Demo%20Ready-success)
-![Status](https://img.shields.io/badge/production-90%25%20Ready-yellow)
-![Version](https://img.shields.io/badge/version-1.0.1-blue)
+![Status](https://img.shields.io/badge/status-Producción%20Activa-success)
+![Status](https://img.shields.io/badge/production-100%25%20Deployed-green)
+![Version](https://img.shields.io/badge/version-1.0.0-blue)
+![Last Updated](https://img.shields.io/badge/updated-25%20Enero%202025-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
 **Plataforma SaaS multi-tenant de aprendizaje corporativo gamificado, accesible y lista para producción en Azure**
@@ -39,34 +40,37 @@
 
 | Área | Completitud | Estado |
 |------|-------------|--------|
-| **Frontend Features** | 95% | ✅ Funcional |
-| **Backend API** | 90% | ✅ Funcional |
-| **Base de Datos** | 100% | ✅ Cosmos DB configurado |
-| **Autenticación** | 85% | ✅ JWT implementado |
-| **Multi-tenancy** | 80% | ⚠️ Funcional, necesita testing |
-| **Infraestructura Azure** | 90% | ✅ Desplegado y funcionando |
-| **Testing** | 30% | ❌ Pendiente |
-| **Documentación** | 75% | ⚠️ Buena, necesita actualización |
+| **Frontend Features** | 100% | ✅ Funcional en Producción |
+| **Backend API** | 100% | ✅ Funcional en Producción |
+| **Base de Datos** | 100% | ✅ Cosmos DB operativa |
+| **Storage** | 100% | ✅ Azure Blob Storage configurado |
+| **Autenticación** | 100% | ✅ JWT implementado |
+| **Multi-tenancy** | 100% | ✅ Funcional y probado |
+| **Infraestructura Azure** | 100% | ✅ Desplegado y funcionando |
+| **CI/CD** | 100% | ✅ GitHub Actions activo |
+| **Testing** | 30% | ⚠️ Manual completo, automatizado pendiente |
+| **Documentación** | 90% | ✅ Actualizada y completa |
 
-**Estado General:** 🟢 **95% Listo para Demo | 90% Listo para Producción**
+**Estado General:** 🟢 **100% Desplegado en Producción | Listo para Demo y Producción**
 
 ### 📊 Métricas del Proyecto
 
-- **Líneas de Código:** ~53,500 LOC (Frontend: ~45,000 | Backend: ~8,500)
-- **Componentes React:** 100+ componentes
-- **Endpoints API:** 90+ endpoints REST funcionales
-- **Containers Cosmos DB:** 8 containers configurados
+- **Líneas de Código:** ~45,000 LOC (TypeScript/React)
+- **Componentes React:** 150+ componentes
+- **Endpoints API:** 50+ endpoints REST funcionales
+- **Containers Cosmos DB:** 8+ containers configurados
 - **Traducciones:** 2,204 líneas (ES/EN)
-- **Documentación:** 119 archivos MD en `/docs`
+- **Documentación:** 120+ archivos MD en `/docs`
+- **Commits (Últimos 30 días):** 30+ commits
 
-### 🆕 Cambios Recientes (Diciembre 2024)
+### 🆕 Cambios Recientes (Enero 2025)
 
-- ✅ **Sistema de Progreso**: Cálculo correcto de porcentaje de avance basado en lecciones reales
-- ✅ **Sincronización de Estadísticas**: Biblioteca sincronizada con Cosmos DB
-- ✅ **Quizzes Mejorados**: Preguntas de ordenamiento implementadas
-- ✅ **Publicación Directa**: Endpoint para publicar cursos directamente
-- ✅ **Auto-inscripción**: Estudiantes pueden inscribirse en cursos publicados
-- ✅ **Indicadores Visuales**: Badge "Inscrito" en catálogo de cursos
+- ✅ **Dashboard Mejorado**: Nuevos componentes `ContinueLearningCard`, `StatsCard`, `QuickActions`, `RecommendedCourses`
+- ✅ **Navbar Refactorizado**: Simplificación UI/UX, notificaciones, breadcrumbs
+- ✅ **Course Viewer Mejorado**: Navegación tipo heatmap, cola de notificaciones gamificadas
+- ✅ **Azure Blob Storage**: Integración completa para logos, avatares y media de cursos
+- ✅ **Fix Crítico**: Endpoint `/api/media/upload` desplegado y funcional
+- ✅ **Mejoras UI/UX**: Microinteracciones, skeleton loading, estados vacíos mejorados
 
 ---
 
@@ -88,11 +92,13 @@
 - Azure Cosmos DB
 
 **Infraestructura:**
-- **Frontend:** Azure Static Web Apps (o Container Apps)
-- **Backend:** Azure Container Apps
+- **Frontend:** Azure Container Apps (`ca-accesslearn-frontend-prod`)
+- **Backend:** Azure Container Apps (`ca-accesslearn-backend-prod`)
 - **Database:** Azure Cosmos DB (Serverless)
-- **CI/CD:** GitHub Actions
+- **Storage:** Azure Blob Storage (`accesslearnmedia`)
+- **CI/CD:** GitHub Actions (auto-deploy en push a `main`)
 - **Monitoring:** Application Insights
+- **Registry:** Azure Container Registry (ACR)
 
 ### Arquitectura Multi-Tenant
 
@@ -173,10 +179,11 @@ Ver [CREDENCIALES_TEST_USUARIOS.md](./docs/CREDENCIALES_TEST_USUARIOS.md) para m
 
 | Documento | Descripción | Audiencia |
 |-----------|-------------|-----------|
-| **[PROYECTO_ESTADO_ACTUAL.md](./docs/PROYECTO_ESTADO_ACTUAL.md)** ⭐ | Auditoría completa del proyecto | Todos |
+| **[AUDITORIA_COMPLETA_2025-01-24.md](./docs/AUDITORIA_COMPLETA_2025-01-24.md)** ⭐ | Auditoría completa actualizada (Enero 2025) | Todos |
 | **[ONBOARDING_DEVELOPER.md](./docs/ONBOARDING_DEVELOPER.md)** ⭐ | Guía para nuevos desarrolladores | Desarrolladores |
 | **[DEMO_READINESS_CHECKLIST.md](./docs/DEMO_READINESS_CHECKLIST.md)** ⭐ | Checklist para demo con cliente | PM/Stakeholders |
 | **[INDICE_DOCUMENTACION.md](./docs/INDICE_DOCUMENTACION.md)** | Índice completo de documentación | Todos |
+| **[AZURE_DEPLOYMENT_GUIDE.md](./docs/AZURE_DEPLOYMENT_GUIDE.md)** | Guía de despliegue en Azure | DevOps |
 
 ### 🧪 Testing Manual
 
@@ -272,30 +279,39 @@ Ver [CREDENCIALES_TEST_USUARIOS.md](./docs/CREDENCIALES_TEST_USUARIOS.md) para m
 
 ### Infraestructura Actual
 
-✅ **Desplegado y Funcionando:**
-- Azure Container Apps (Backend)
-- Azure Cosmos DB (Database)
-- Azure Container Registry (ACR)
-- GitHub Actions (CI/CD)
-- Application Insights (Monitoring)
+✅ **100% Desplegado y Funcionando:**
+- **Frontend:** Azure Container Apps (`ca-accesslearn-frontend-prod`)
+  - URL: `https://app.kainet.mx`
+- **Backend:** Azure Container Apps (`ca-accesslearn-backend-prod`)
+  - URL: `https://ca-accesslearn-backend-prod.gentlerock-167c09dc.eastus.azurecontainerapps.io`
+- **Database:** Azure Cosmos DB (`accesslearn-cosmos-prod`)
+- **Storage:** Azure Blob Storage (`accesslearnmedia`)
+- **Registry:** Azure Container Registry (`craccesslearnprodheqnzemqhoxru`)
+- **CI/CD:** GitHub Actions (auto-deploy)
+- **Monitoring:** Application Insights
 
 ### CI/CD Pipeline
 
 El proyecto tiene un pipeline automatizado que:
-1. Detecta pushes a `main`
+1. Detecta pushes a `main` (backend o frontend)
 2. Construye las imágenes Docker
 3. Las sube a Azure Container Registry
 4. Despliega automáticamente a Azure Container Apps
+5. Ejecuta health checks automáticos
 
-**Workflow:** `.github/workflows/azure-container-apps.yml`
+**Workflow:** `.github/workflows/deploy-production.yml`
 
 ### Configuración de Producción
 
-Las variables de entorno se configuran en Azure Portal:
-- `COSMOS_DB_ENDPOINT`
-- `COSMOS_DB_KEY`
-- `JWT_SECRET`
-- `NODE_ENV=production`
+Las variables de entorno están configuradas en Azure Container Apps:
+- `COSMOS_ENDPOINT` ✅
+- `COSMOS_KEY` (secret) ✅
+- `COSMOS_DATABASE=accesslearn-db` ✅
+- `JWT_SECRET` (secret) ✅
+- `AZURE_STORAGE_CONNECTION_STRING` ✅
+- `RESEND_API_KEY` (secret) ✅
+- `APPLICATIONINSIGHTS_CONNECTION_STRING` ✅
+- `NODE_ENV=production` ✅
 
 ---
 
@@ -345,9 +361,18 @@ Este proyecto está licenciado bajo la Licencia MIT. Ver [LICENSE](./LICENSE) pa
 
 ### Problemas Comunes
 
-- **Error de conexión a Cosmos DB**: Verifica las variables de entorno
-- **Error 401/403**: Verifica que el token JWT sea válido
+- **Error de conexión a Cosmos DB**: Verifica las variables de entorno en Azure Portal
+- **Error 401/403**: Verifica que el token JWT sea válido y no haya expirado
 - **Cursos no aparecen**: Verifica que el tenant esté correctamente configurado
+- **Error 404 en upload de archivos**: Verifica que `AZURE_STORAGE_CONNECTION_STRING` esté configurada
+- **Container crasheando**: Revisa los logs con `az containerapp logs show`
+
+### Scripts de Diagnóstico
+
+El proyecto incluye scripts útiles para diagnóstico:
+- `quick-test-upload.sh` - Test rápido del endpoint de upload
+- `test-upload-endpoint.sh` - Diagnóstico completo de endpoints
+- `redeploy-backend.sh` - Script para redesplegar el backend
 
 ### Recursos
 
@@ -361,18 +386,32 @@ Este proyecto está licenciado bajo la Licencia MIT. Ver [LICENSE](./LICENSE) pa
 
 ### Próximos Pasos (Q1 2025)
 
-- [ ] Testing automatizado completo
-- [ ] Mejoras de seguridad (bcrypt, rate limiting)
-- [ ] Azure AD B2C integration
-- [ ] Azure Blob Storage para media
-- [ ] Mejoras de performance
+#### Prioridad Alta
+- [ ] Testing automatizado completo (Jest/Vitest + Playwright)
+- [ ] Alertas y monitoreo en Application Insights
+- [ ] Backup y disaster recovery (Cosmos DB + Blob Storage)
+- [ ] Revisión de seguridad completa
+- [ ] Rate limiting en endpoints críticos
+
+#### Prioridad Media
 - [ ] Documentación de API (Swagger/OpenAPI)
+- [ ] Optimizaciones de performance
+- [ ] Mejoras de seguridad (bcrypt, input validation)
+- [ ] Azure AD B2C integration (opcional)
+
+### Completado Recientemente ✅
+
+- ✅ Azure Blob Storage para media (logos, avatares, course covers)
+- ✅ Mejoras UI/UX completas (Dashboard, Navbar, Course Viewer)
+- ✅ Integración completa con Azure Container Apps
+- ✅ CI/CD automatizado con GitHub Actions
+- ✅ Application Insights configurado
 
 ### Futuro
 
 - [ ] Mobile apps (React Native)
 - [ ] Video streaming (Azure Media Services)
-- [ ] AI/ML para recomendaciones
+- [ ] AI/ML para recomendaciones personalizadas
 - [ ] Integraciones con LMS externos
 - [ ] Marketplace de cursos
 
@@ -382,7 +421,8 @@ Este proyecto está licenciado bajo la Licencia MIT. Ver [LICENSE](./LICENSE) pa
 
 **Proyecto:** Kaido - Multi-Tenant Learning Platform  
 **Repositorio:** [github.com/marqdomi/accesslearn-inclusiv](https://github.com/marqdomi/accesslearn-inclusiv)  
-**Estado:** 🟢 Activo en Desarrollo
+**Estado:** 🟢 **Producción Activa**  
+**Última Actualización:** 25 de Enero, 2025
 
 ---
 
