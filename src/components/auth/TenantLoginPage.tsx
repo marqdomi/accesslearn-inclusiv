@@ -180,7 +180,7 @@ export function TenantLoginPage() {
             />
           </div>
           <h1 className="text-4xl font-bold mb-2">
-            {currentTenant?.name || 'AccessLearn'}
+            {currentTenant?.name || 'Kaido'}
           </h1>
           <p className="text-lg opacity-90">
             Plataforma de Aprendizaje Inclusivo
@@ -218,7 +218,7 @@ export function TenantLoginPage() {
         </div>
 
         <div className="text-sm opacity-75">
-          © {new Date().getFullYear()} {currentTenant?.name || 'AccessLearn'}. Todos los derechos reservados.
+          © {new Date().getFullYear()} {currentTenant?.name || 'Kaido'}. Todos los derechos reservados.
         </div>
       </div>
 
@@ -480,7 +480,7 @@ export function TenantLoginPage() {
 
           {/* Mobile branding */}
           <div className="lg:hidden mt-6 text-center text-sm text-gray-600">
-            © {new Date().getFullYear()} {currentTenant?.name || 'AccessLearn'}
+            © {new Date().getFullYear()} {currentTenant?.name || 'Kaido'}
           </div>
         </div>
       </div>

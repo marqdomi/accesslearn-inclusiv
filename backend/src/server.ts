@@ -270,7 +270,7 @@ app.use(trackRequestTelemetry);
 app.get('/health', (req, res) => {
   res.json({
     status: 'OK',
-    message: 'AccessLearn Backend API',
+    message: 'Kaido Backend API',
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'development',
   });
@@ -279,7 +279,7 @@ app.get('/health', (req, res) => {
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'OK',
-    message: 'AccessLearn Backend API',
+    message: 'Kaido Backend API',
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'development',
   });
@@ -783,7 +783,7 @@ app.post('/api/users/invite', requireAuth, requirePermission('users:create'), as
         recipientEmail: email,
         recipientName: `${firstName} ${lastName}`,
         inviterName: inviter ? `${inviter.firstName} ${inviter.lastName}` : 'Administrador',
-        tenantName: tenant?.name || 'AccessLearn',
+        tenantName: tenant?.name || 'Kaido',
         role,
         invitationUrl
       });
@@ -861,7 +861,7 @@ app.post('/api/users/accept-invitation', async (req, res) => {
       await emailService.sendWelcomeEmail({
         recipientEmail: user.email,
         recipientName: `${user.firstName} ${user.lastName}`,
-        tenantName: tenant?.name || 'AccessLearn',
+        tenantName: tenant?.name || 'Kaido',
         loginUrl
       });
       
@@ -3115,7 +3115,7 @@ app.use((error: any, req: express.Request, res: express.Response, next: express.
 
 async function startServer() {
   try {
-    console.log('\n🚀 Iniciando AccessLearn Backend API...\n');
+    console.log('\n🚀 Iniciando Kaido Backend API...\n');
 
     // Initialize Application Insights (must be done before anything else)
     console.log('📊 Inicializando Application Insights...');

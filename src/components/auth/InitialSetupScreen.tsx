@@ -116,7 +116,7 @@ export function InitialSetupScreen({ onSetupComplete }: InitialSetupScreenProps)
             </motion.div>
             <div>
               <CardTitle className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                Welcome to AccessLearn!
+                Welcome to Kaido!
               </CardTitle>
               <CardDescription className="text-lg mt-2">
                 Let's set up your administrator account

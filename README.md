@@ -1,4 +1,4 @@
-# 🎓 AccessLearn - Plataforma Multi-Tenant de Aprendizaje Corporativo
+# 🎓 Kaido - Plataforma Multi-Tenant de Aprendizaje Corporativo
 
 <div align="center">
 
@@ -17,7 +17,7 @@
 
 ## 📋 Descripción
 
-**AccessLearn** es una plataforma SaaS multi-tenant diseñada para transformar el aprendizaje corporativo en una experiencia gamificada, accesible e inclusiva. La plataforma combina elementos de gamificación (XP, logros, niveles) con cumplimiento completo de **WCAG 2.1 Level AA** para garantizar accesibilidad universal.
+**Kaido** es una plataforma SaaS multi-tenant diseñada para transformar el aprendizaje corporativo en una experiencia gamificada, accesible e inclusiva. La plataforma combina elementos de gamificación (XP, logros, niveles) con cumplimiento completo de **WCAG 2.1 Level AA** para garantizar accesibilidad universal.
 
 ### 🎯 Características Principales
 
@@ -380,7 +380,7 @@ Este proyecto está licenciado bajo la Licencia MIT. Ver [LICENSE](./LICENSE) pa
 
 ## 📞 Contacto
 
-**Proyecto:** AccessLearn - Multi-Tenant Learning Platform  
+**Proyecto:** Kaido - Multi-Tenant Learning Platform  
 **Repositorio:** [github.com/marqdomi/accesslearn-inclusiv](https://github.com/marqdomi/accesslearn-inclusiv)  
 **Estado:** 🟢 Activo en Desarrollo
 

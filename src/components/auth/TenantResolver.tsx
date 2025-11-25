@@ -10,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { TenantLogo } from '@/components/branding/TenantLogo';
 
 interface TenantResolverProps {
   children: React.ReactNode;
@@ -321,12 +322,52 @@ export function TenantResolver({ children }: TenantResolverProps) {
 
           {/* Logo y header */}
           <div className="text-center space-y-4">
-            <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg">
-              <span className="text-4xl">📚</span>
-            </div>
+            {/* Usar TenantLogo si hay tenant cargado, sino mostrar logo de Kaido */}
+            {currentTenant ? (
+              <div className="flex justify-center">
+                <TenantLogo 
+                  size="xl" 
+                  className="rounded-2xl"
+                  fallbackIcon={
+                    <img 
+                      src="/logos/kaido-logo.png" 
+                      alt="Kaido" 
+                      className="h-20 w-auto object-contain"
+                      onError={(e) => {
+                        // Si no existe la imagen, mostrar fallback
+                        (e.target as HTMLImageElement).style.display = 'none';
+                        const fallback = (e.target as HTMLImageElement).nextElementSibling as HTMLElement;
+                        if (fallback) fallback.style.display = 'flex';
+                      }}
+                    />
+                    <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg hidden">
+                      <span className="text-4xl">📚</span>
+                    </div>
+                  }
+                />
+              </div>
+            ) : (
+              <div className="flex justify-center">
+                {/* Logo de Kaido por defecto */}
+                <img 
+                  src="/logos/kaido-logo.png" 
+                  alt="Kaido" 
+                  className="h-20 w-auto object-contain"
+                  onError={(e) => {
+                    // Si no existe la imagen, mostrar fallback
+                    (e.target as HTMLImageElement).style.display = 'none';
+                    const fallback = (e.target as HTMLImageElement).nextElementSibling as HTMLElement;
+                    if (fallback) fallback.style.display = 'flex';
+                  }}
+                />
+                <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg hidden">
+                  <span className="text-4xl">📚</span>
+                </div>
+              </div>
+            )}
             <div className="space-y-2">
               <h1 className="text-3xl font-bold text-gray-900">
-                AccessLearn
+                {currentTenant?.name || 'Kaido'}
               </h1>
               <p className="text-sm text-blue-600 font-medium">
                 Plataforma de Capacitación y Desarrollo
@@ -430,7 +471,18 @@ export function TenantResolver({ children }: TenantResolverProps) {
           <div className="pt-6 border-t border-gray-100">
             <div className="flex items-center justify-center space-x-2 text-gray-500">
               <span className="text-sm">Desarrollado por</span>
-              <span className="text-sm font-semibold text-blue-600">Kainet</span>
+              <img 
+                src="/logos/kainet-logo.png" 
+                alt="Kainet" 
+                className="h-4 w-auto object-contain"
+                onError={(e) => {
+                  // Si no existe la imagen, mostrar texto
+                  (e.target as HTMLImageElement).style.display = 'none';
+                  const fallback = (e.target as HTMLImageElement).nextElementSibling as HTMLElement;
+                  if (fallback) fallback.style.display = 'inline';
+                }}
+              />
+              <span className="text-sm font-semibold text-blue-600 hidden">Kainet</span>
             </div>
             <p className="text-xs text-center text-gray-400 mt-2">
               © {new Date().getFullYear()} Kainet. Todos los derechos reservados.

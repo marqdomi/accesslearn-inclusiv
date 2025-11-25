@@ -3,8 +3,8 @@
  * 
  * Provides current tenant information across the entire app.
  * In a real multi-tenant SaaS, the tenant would be determined by:
- * - Subdomain (tenant-demo.accesslearn.com)
- * - Custom domain (kainet.accesslearn.com)
+ * - Subdomain (tenant-demo.kaido.com)
+ * - Custom domain (kainet.kaido.com)
  * - URL parameter (?tenant=kainet)
  * 
  * For now, we'll use localStorage to simulate tenant selection.
