@@ -14,7 +14,13 @@ import { GameNotificationQueue, GameNotification } from '@/components/gamificati
 import { CourseMissionPanel } from '@/components/course/CourseMissionPanel'
 import { CourseHeatmapNavigator } from '@/components/course/CourseHeatmapNavigator'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, CheckCircle, ChevronLeft, ChevronRight, Trophy } from 'lucide-react'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
+import { ArrowLeft, CheckCircle, ChevronLeft, ChevronRight, Trophy, PanelRightClose, PanelLeftClose } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 interface Lesson {
@@ -707,29 +713,46 @@ export function CourseViewerPage() {
         <div className={`grid grid-cols-1 gap-6 ${sidebarCollapsed ? '' : 'lg:grid-cols-12'}`}>
           {!sidebarCollapsed && (
             <aside className="lg:col-span-3 space-y-4 max-w-[260px]">
-              <div className="flex items-center rounded-full border bg-muted/40 p-1 text-xs font-medium">
-                <button
-                  className={cn(
-                    'flex-1 rounded-full px-3 py-1 transition',
-                    navigatorMode === 'heatmap'
-                      ? 'bg-background shadow-sm'
-                      : 'text-muted-foreground'
-                  )}
-                  onClick={() => setNavigatorMode('heatmap')}
-                >
-                  Mapa
-                </button>
-                <button
-                  className={cn(
-                    'flex-1 rounded-full px-3 py-1 transition',
-                    navigatorMode === 'list'
-                      ? 'bg-background shadow-sm'
-                      : 'text-muted-foreground'
-                  )}
-                  onClick={() => setNavigatorMode('list')}
-                >
-                  Lista
-                </button>
+              <div className="flex items-center justify-between gap-2 mb-3">
+                <div className="flex items-center rounded-full border bg-muted/40 p-1 text-xs font-medium flex-1">
+                  <button
+                    className={cn(
+                      'flex-1 rounded-full px-3 py-1 transition',
+                      navigatorMode === 'heatmap'
+                        ? 'bg-background shadow-sm'
+                        : 'text-muted-foreground'
+                    )}
+                    onClick={() => setNavigatorMode('heatmap')}
+                  >
+                    Mapa
+                  </button>
+                  <button
+                    className={cn(
+                      'flex-1 rounded-full px-3 py-1 transition',
+                      navigatorMode === 'list'
+                        ? 'bg-background shadow-sm'
+                        : 'text-muted-foreground'
+                    )}
+                    onClick={() => setNavigatorMode('list')}
+                  >
+                    Lista
+                  </button>
+                </div>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={() => setSidebarCollapsed(true)}
+                        className="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 transition"
+                      >
+                        <PanelLeftClose className="h-4 w-4" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Ocultar navegación</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
 
               {navigatorMode === 'heatmap' ? (
@@ -752,6 +775,27 @@ export function CourseViewerPage() {
 
           {/* Main Content Area */}
           <main className={sidebarCollapsed ? 'lg:col-span-12' : 'lg:col-span-9'}>
+            {sidebarCollapsed && (
+              <div className="mb-4">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setSidebarCollapsed(false)}
+                        className="p-2"
+                      >
+                        <PanelRightClose className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Mostrar navegación</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+            )}
             <div className="mb-6">
               <CourseMissionPanel
                 courseTitle={course.title}
