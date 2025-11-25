@@ -428,7 +428,7 @@ export function TenantResolver({ children }: TenantResolverProps) {
             {/* Help text */}
             <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
               <p className="text-sm text-blue-900">
-                <strong className="font-semibold">💡 ¿No encuentras tu organización?</strong>
+                <strong className="font-semibold">¿No encuentras tu organización?</strong>
                 <br />
                 Contacta a tu administrador para obtener acceso.
               </p>
