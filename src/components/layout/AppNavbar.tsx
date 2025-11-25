@@ -18,7 +18,6 @@ import {
 import {
   Sheet,
   SheetContent,
-  SheetDescription,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
@@ -28,10 +27,13 @@ import {
   LogOut,
   Settings,
   Menu,
-  X,
-  Bell,
+  Globe,
+  Building2,
+  Trophy,
+  ChevronDown,
 } from 'lucide-react'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
+import { useTranslation } from 'react-i18next'
 
 function getRoleColor(role: string): string {
   const colors: Record<string, string> = {
@@ -63,6 +65,7 @@ export function AppNavbar({ userXP = 0 }: AppNavbarProps) {
   const navigate = useNavigate()
   const { user, logout } = useAuth()
   const { currentTenant } = useTenant()
+  const { i18n } = useTranslation()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const handleLogout = async () => {
@@ -70,23 +73,14 @@ export function AppNavbar({ userXP = 0 }: AppNavbarProps) {
     navigate('/login')
   }
 
-  const userMenuItems = (
-    <>
-      <DropdownMenuItem onClick={() => navigate('/profile')}>
-        <User className="mr-2 h-4 w-4" />
-        Mi Perfil
-      </DropdownMenuItem>
-      <DropdownMenuItem onClick={() => navigate('/settings')}>
-        <Settings className="mr-2 h-4 w-4" />
-        Configuración
-      </DropdownMenuItem>
-      <DropdownMenuSeparator />
-      <DropdownMenuItem onClick={handleLogout} className="text-red-600 dark:text-red-400">
-        <LogOut className="mr-2 h-4 w-4" />
-        Cerrar Sesión
-      </DropdownMenuItem>
-    </>
-  )
+  // Calculate level from XP (simplified - adjust based on your gamification system)
+  const calculateLevel = (xp: number): number => {
+    // Simple calculation: 100 XP per level
+    return Math.floor(xp / 100) + 1
+  }
+
+  const currentLevel = calculateLevel(userXP)
+  const currentLanguage = i18n.language || 'es'
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -105,28 +99,32 @@ export function AppNavbar({ userXP = 0 }: AppNavbarProps) {
             </div>
           </div>
 
-          {/* Right: Desktop Actions */}
-          <div className="hidden md:flex items-center gap-2 flex-shrink-0">
-            {/* Language Switcher */}
-            <LanguageSwitcher variant="outline" />
-            
-            {/* Level Badge */}
-            <LevelBadge xp={userXP} size="sm" />
-            
-            {/* Tenant Switcher */}
-            <TenantSwitcher />
-            
-            {/* User Menu */}
+          {/* Right: Desktop Actions - Simplified */}
+          <div className="hidden md:flex items-center gap-3 flex-shrink-0">
+            {/* User Menu - Only Avatar */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="gap-2 h-9 px-3">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <User className="h-4 w-4 text-primary" />
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  className="h-9 w-9 rounded-full p-0 hover:bg-primary/10"
+                >
+                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                    <User className="h-4 w-4 text-primary" />
+                  </div>
+                  <span className="sr-only">Menú de usuario</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-64">
+                {/* User Info Header */}
+                <DropdownMenuLabel className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <User className="h-5 w-5 text-primary" />
                     </div>
-                    <div className="text-left min-w-0 hidden lg:block">
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm font-medium truncate max-w-[120px]">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <p className="text-sm font-medium truncate">
                           {user?.firstName} {user?.lastName}
                         </p>
                         <Badge 
@@ -136,34 +134,84 @@ export function AppNavbar({ userXP = 0 }: AppNavbarProps) {
                           {getRoleLabel(user?.role || '')}
                         </Badge>
                       </div>
-                      <p className="text-xs text-muted-foreground truncate max-w-[150px]">
+                      <p className="text-xs text-muted-foreground truncate">
                         {user?.email}
                       </p>
                     </div>
                   </div>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>
-                  <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium">
-                      {user?.firstName} {user?.lastName}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {user?.email}
-                    </p>
-                  </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                {userMenuItems}
+
+                {/* Profile Actions */}
+                <DropdownMenuItem onClick={() => navigate('/profile')}>
+                  <User className="mr-2 h-4 w-4" />
+                  Mi Perfil
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/settings')}>
+                  <Settings className="mr-2 h-4 w-4" />
+                  Configuración
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+
+                {/* Level/XP Section */}
+                <div className="px-2 py-1.5">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Trophy className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+                    <span className="text-xs font-medium text-muted-foreground">
+                      Nivel {currentLevel} - {userXP} XP
+                    </span>
+                  </div>
+                  <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-gradient-to-r from-yellow-400 to-yellow-600 rounded-full transition-all"
+                      style={{ width: `${(userXP % 100)}%` }}
+                    />
+                  </div>
+                </div>
+                <DropdownMenuSeparator />
+
+                {/* Organization Section */}
+                <div className="px-2 py-1.5">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Building2 className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-xs font-medium text-muted-foreground">
+                      Organización
+                    </span>
+                  </div>
+                  <div className="pl-6">
+                    <TenantSwitcher />
+                  </div>
+                </div>
+                <DropdownMenuSeparator />
+
+                {/* Language Section */}
+                <div className="px-2 py-1.5">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Globe className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-xs font-medium text-muted-foreground">
+                      Idioma
+                    </span>
+                  </div>
+                  <div className="pl-6">
+                    <LanguageSwitcher variant="ghost" showLabel={true} />
+                  </div>
+                </div>
+                <DropdownMenuSeparator />
+
+                {/* Logout */}
+                <DropdownMenuItem 
+                  onClick={handleLogout} 
+                  className="text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400"
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Cerrar Sesión
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
 
           {/* Mobile: Menu Button */}
           <div className="flex md:hidden items-center gap-2">
-            <LanguageSwitcher variant="ghost" showLabel={false} />
-            <LevelBadge xp={userXP} size="sm" />
             <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon" className="h-9 w-9">
@@ -278,4 +326,3 @@ export function AppNavbar({ userXP = 0 }: AppNavbarProps) {
     </header>
   )
 }
-
