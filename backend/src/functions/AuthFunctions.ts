@@ -1,5 +1,5 @@
 /**
- * Auth Functions - AccessLearn Backend
+ * Auth Functions - Kaido Backend
  * JWT-based authentication for production-ready security
  */
 

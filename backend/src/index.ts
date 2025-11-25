@@ -1,5 +1,5 @@
 /**
- * AccessLearn Backend - Entry Point
+ * Kaido Backend - Entry Point
  * 
  * This file imports and starts the Express server
  */

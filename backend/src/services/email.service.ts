@@ -38,7 +38,7 @@ export class EmailService {
     this.config = {
       apiKey: config?.apiKey || process.env.RESEND_API_KEY || '',
       fromEmail: config?.fromEmail || process.env.EMAIL_FROM || 'newsletter@kainet.mx',
-      fromName: config?.fromName || 'AccessLearn Inclusiv',
+      fromName: config?.fromName || 'Kaido',
       frontendUrl: config?.frontendUrl || process.env.FRONTEND_URL || 'http://localhost:5173',
     }
 
@@ -77,7 +77,7 @@ export class EmailService {
       await this.resend.emails.send({
         from: `${this.config.fromName} <${this.config.fromEmail}>`,
         to: data.recipientEmail,
-        subject: `Invitación a ${data.tenantName} - AccessLearn Inclusiv`,
+        subject: `Invitación a ${data.tenantName} - Kaido`,
         html: `
 <!DOCTYPE html>
 <html>
@@ -141,7 +141,7 @@ export class EmailService {
   <div class="content">
     <p><strong>Hola ${data.recipientName},</strong></p>
     
-    <p>${data.inviterName} te ha invitado a unirte a <strong>${data.tenantName}</strong> en AccessLearn Inclusiv.</p>
+    <p>${data.inviterName} te ha invitado a unirte a <strong>${data.tenantName}</strong> en Kaido.</p>
     
     <div class="info-box">
       <p><strong>Rol asignado:</strong> ${roleLabel}</p>
@@ -165,7 +165,7 @@ export class EmailService {
   </div>
   
   <div class="footer">
-    <p>© ${new Date().getFullYear()} AccessLearn Inclusiv - Plataforma de Capacitación Corporativa</p>
+    <p>© ${new Date().getFullYear()} Kaido - Plataforma de Capacitación Corporativa</p>
     <p>Powered by kainet.mx</p>
   </div>
 </body>
@@ -174,7 +174,7 @@ export class EmailService {
       text: `
 Hola ${data.recipientName},
 
-${data.inviterName} te ha invitado a unirte a ${data.tenantName} en AccessLearn Inclusiv.
+${data.inviterName} te ha invitado a unirte a ${data.tenantName} en Kaido.
 
 Rol asignado: ${roleLabel}
 Organización: ${data.tenantName}
@@ -187,7 +187,7 @@ ${data.invitationUrl}
 Si no solicitaste esta invitación, puedes ignorar este mensaje.
 
 ---
-© ${new Date().getFullYear()} AccessLearn Inclusiv
+© ${new Date().getFullYear()} Kaido
 Powered by kainet.mx
       `,
       })
@@ -288,7 +288,7 @@ Powered by kainet.mx
   </div>
   
   <div class="footer">
-    <p>© ${new Date().getFullYear()} AccessLearn Inclusiv</p>
+    <p>© ${new Date().getFullYear()} Kaido</p>
     <p>Powered by kainet.mx</p>
   </div>
 </body>
@@ -307,7 +307,7 @@ ${data.verificationUrl}
 Si no creaste esta cuenta, puedes ignorar este mensaje.
 
 ---
-© ${new Date().getFullYear()} AccessLearn Inclusiv
+© ${new Date().getFullYear()} Kaido
 Powered by kainet.mx
       `,
       })
@@ -425,7 +425,7 @@ Powered by kainet.mx
   </div>
   
   <div class="footer">
-    <p>© ${new Date().getFullYear()} AccessLearn Inclusiv</p>
+    <p>© ${new Date().getFullYear()} Kaido</p>
     <p>Powered by kainet.mx</p>
   </div>
 </body>
@@ -452,7 +452,7 @@ Si necesitas ayuda o tienes alguna pregunta, no dudes en contactar al administra
 ¡Que disfrutes tu experiencia de aprendizaje! 🌟
 
 ---
-© ${new Date().getFullYear()} AccessLearn Inclusiv
+© ${new Date().getFullYear()} Kaido
 Powered by kainet.mx
       `,
       })

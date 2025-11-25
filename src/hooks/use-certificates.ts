@@ -96,12 +96,12 @@ export function useCertificates(userId?: string) {
 
 export function useCompanySettings() {
   const [companySettings, setCompanySettings] = useKV<CompanySettings>('company-settings', {
-    companyName: 'GameLearn',
+    companyName: 'Kaido',
     companyLogo: undefined
   })
 
   return {
-    companySettings: companySettings || { companyName: 'GameLearn' },
+    companySettings: companySettings || { companyName: 'Kaido' },
     setCompanySettings
   }
 }

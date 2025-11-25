@@ -2,7 +2,7 @@
  * Permissions Service - Sistema de Permisos Granular
  * 
  * Este servicio define y gestiona todos los permisos disponibles
- * en la plataforma AccessLearn.
+ * en la plataforma Kaido.
  */
 
 import { UserRole } from '../models/User';

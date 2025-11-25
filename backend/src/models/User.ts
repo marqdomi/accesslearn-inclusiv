@@ -1,5 +1,5 @@
 /**
- * User Model - AccessLearn Backend
+ * User Model - Kaido Backend
  * 
  * Cumplimiento Mexicano:
  * - CURP: Clave Única de Registro de Población (18 caracteres)

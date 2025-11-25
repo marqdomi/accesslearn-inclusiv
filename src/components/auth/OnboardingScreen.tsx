@@ -46,7 +46,7 @@ export function OnboardingScreen({ userEmail, onComplete }: OnboardingScreenProp
   const steps = [
     {
       title: 'Create Your Identity',
-      description: 'Choose how you want to appear in GameLearn',
+      description: 'Choose how you want to appear in Kaido',
       content: (
         <div className="space-y-6">
           <div className="space-y-3">
@@ -270,7 +270,7 @@ export function OnboardingScreen({ userEmail, onComplete }: OnboardingScreenProp
               <User size={32} weight="fill" className="text-white" aria-hidden="true" />
             </motion.div>
           )}
-          <h1 className="text-3xl font-bold">Welcome to {branding?.companyName || 'GameLearn'}!</h1>
+          <h1 className="text-3xl font-bold">Welcome to {branding?.companyName || 'Kaido'}!</h1>
           <p className="text-muted-foreground mt-2">Let's set up your learning experience</p>
         </div>
 

@@ -1,7 +1,7 @@
 {
-  "app.title": "GameLearn",
+  "app.title": "Kaido",
   "app.subtitle": "Sube de Nivel Tus Habilidades",
-  "app.admin.title": "GameLearn Admin",
+  "app.admin.title": "Kaido Admin",
   "app.admin.subtitle": "Gestión de Contenidos",
 
   "nav.dashboard": "Panel Principal",
@@ -16,7 +16,7 @@
   "nav.missionLibrary": "Biblioteca de Misiones",
   "nav.myLibrary": "Mi Biblioteca",
 
-  "login.title": "Bienvenido a GameLearn",
+  "login.title": "Bienvenido a Kaido",
   "login.subtitle": "¡Inicia sesión para comenzar tu aventura de aprendizaje!",
   "login.email": "Correo Electrónico",
   "login.password": "Contraseña",
@@ -50,7 +50,7 @@
   "passwordChange.error.requirements": "La contraseña no cumple con todos los requisitos",
   "passwordChange.success": "¡Contraseña cambiada exitosamente!",
 
-  "onboarding.welcome": "¡Bienvenido a GameLearn!",
+  "onboarding.welcome": "¡Bienvenido a Kaido!",
   "onboarding.subtitle": "Vamos a personalizar tu experiencia",
   "onboarding.step1.title": "Crea Tu Identidad de Jugador",
   "onboarding.step1.displayName": "Nombre para Mostrar",
@@ -425,7 +425,7 @@
   "achievementsDashboard.noAchievements": "No se encontraron logros en esta categoría.",
   "achievementsDashboard.complete": "Completo",
   "achievementsDashboard.days": "días",
-  "achievementsDashboard.shareTitle": "Mis Logros de GameLearn",
+  "achievementsDashboard.shareTitle": "Mis Logros de Kaido",
   "achievementsDashboard.shareText": "¡He desbloqueado {count} logros en GameLearn! 🏆\n\nMis estadísticas:\n⚡ Nivel {level} {rank}\n🎯 {xp} XP Total\n🎓 {courses} cursos completados\n📚 {modules} módulos completados\n🔥 {streak} días de racha\n⭐ {score}% puntuación promedio",
   "achievementsDashboard.shareSuccess": "¡Compartido exitosamente!",
   "achievementsDashboard.copiedToClipboard": "¡Estadísticas de logros copiadas al portapapeles!",

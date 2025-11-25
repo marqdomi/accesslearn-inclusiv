@@ -1,5 +1,5 @@
 /**
- * Audit Functions - Sistema de auditoría para AccessLearn
+ * Audit Functions - Sistema de auditoría para Kaido
  * 
  * Registra eventos críticos del sistema para compliance y seguridad
  */

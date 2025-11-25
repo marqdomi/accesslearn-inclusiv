@@ -1,5 +1,5 @@
 /**
- * User Functions - AccessLearn Backend
+ * User Functions - Kaido Backend
  * CRUD operations for user management with Mexican compliance
  */
 
