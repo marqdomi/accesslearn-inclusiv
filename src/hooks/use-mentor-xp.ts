@@ -3,7 +3,7 @@ import { ApiService } from '@/services/api.service'
 import { useAuth } from '@/contexts/AuthContext'
 import { useTenant } from '@/contexts/TenantContext'
 import { toast } from 'sonner'
-import { useTranslation } from '@/lib/i18n'
+import { useTranslation } from 'react-i18next'
 
 /**
  * Hook to award XP bonus to mentors when their mentees earn XP

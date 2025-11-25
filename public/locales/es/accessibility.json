@@ -1,0 +1,11 @@
+{
+  "panel": "Panel de Accesibilidad",
+  "highContrast": "Alto Contraste",
+  "textSize": "Tamaño de Texto",
+  "reduceMotion": "Reducir Movimiento",
+  "disableSound": "Desactivar Sonidos",
+  "settings": "Configuración de Accesibilidad",
+  "captionsEnabled": "Subtítulos Activados",
+  "playbackSpeed": "Velocidad de Reproducción",
+  "languageLabel": "Idioma / Language"
+}

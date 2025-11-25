@@ -15,7 +15,7 @@ import { Separator } from '@/components/ui/separator'
 import { Bell, Check, X, At, Trophy, ChatCircle, GraduationCap } from '@phosphor-icons/react'
 import { formatDistanceToNow } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { useTranslation } from '@/lib/i18n'
+import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'framer-motion'
 
 interface NotificationsViewerProps {

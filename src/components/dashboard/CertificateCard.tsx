@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Certificate, CompanySettings } from '@/lib/types'
 import { generateCertificatePDF, downloadCertificate } from '@/lib/certificate-generator'
-import { useTranslation } from '@/lib/i18n'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Certificate as CertificateIcon, Download, Check } from '@phosphor-icons/react'

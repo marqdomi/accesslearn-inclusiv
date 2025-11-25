@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button'
 import { DownloadSimple } from '@phosphor-icons/react'
-import { useTranslation } from '@/lib/i18n'
+import { useTranslation } from 'react-i18next'
 
 interface ExportButtonProps {
     data: any[]

@@ -9,7 +9,7 @@ import { ApiService } from '@/services/api.service'
 import { useTenant } from '@/contexts/TenantContext'
 import { CourseStatus } from '@/lib/types'
 import { MagnifyingGlass, DownloadSimple, ChartBar, Table as TableIcon } from '@phosphor-icons/react'
-import { useTranslation } from '@/lib/i18n'
+import { useTranslation } from 'react-i18next'
 
 export function UserProgressReport() {
   const { t } = useTranslation()

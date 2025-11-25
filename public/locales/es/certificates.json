@@ -1,0 +1,19 @@
+{
+  "title": "Mis Certificados",
+  "awardedTo": "Este certificado se otorga a",
+  "completion": "por la finalización exitosa de",
+  "courseLabel": "Curso",
+  "dateLabel": "Fecha de Finalización",
+  "companyLabel": "Empresa",
+  "certificateId": "ID de Certificado",
+  "signature": "Firma Autorizada",
+  "download": "Descargar",
+  "downloading": "Descargando...",
+  "downloadCertificate": "Descargar Tu Certificado",
+  "downloadSuccess": "Certificado descargado exitosamente",
+  "downloadError": "Error al descargar el certificado",
+  "completedOn": "Completado el",
+  "subtitle": "{count} certificados obtenidos",
+  "noCertificates": "Aún No Tienes Certificados",
+  "noCertificatesDesc": "¡Completa misiones con emisión de certificados habilitada para ganar tu primer certificado!"
+}

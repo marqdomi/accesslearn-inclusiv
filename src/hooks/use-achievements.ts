@@ -3,7 +3,7 @@ import { UserStats, UserAchievement } from '@/lib/types'
 import { ApiService } from '@/services/api.service'
 import { useTenant } from '@/contexts/TenantContext'
 import { ACHIEVEMENTS } from '@/lib/achievements'
-import { useTranslation } from '@/lib/i18n'
+import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { useActivityFeed } from './use-activity-feed'
 

@@ -1,6 +1,9 @@
 // Import polyfills first to set up environment
 import './polyfills/kv-polyfill'
 
+// Initialize i18n before anything else
+import './i18n/config'
+
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { ErrorBoundary } from "react-error-boundary";

@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { useCertificates, useCompanySettings } from '@/hooks/use-certificates'
 import { CertificateCard } from './CertificateCard'
-import { useTranslation } from '@/lib/i18n'
+import { useTranslation } from 'react-i18next'
 import { Card, CardContent } from '@/components/ui/card'
 import { Certificate as CertificateIcon } from '@phosphor-icons/react'
 import { motion } from 'framer-motion'

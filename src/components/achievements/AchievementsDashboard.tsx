@@ -11,10 +11,10 @@ import { Button } from '@/components/ui/button'
 import { Trophy, Fire, Target, ShareNetwork } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { motion } from 'framer-motion'
-import { useTranslation } from '@/lib/i18n'
+import { useTranslation } from 'react-i18next'
 
 export function AchievementsDashboard({ userId }: { userId?: string }) {
-  const { t } = useTranslation()
+  const { t } = useTranslation('community')
   const { userStats } = useAchievements(userId)
   const { totalXP, currentLevel, getRankName } = useXP(userId)
   const [filter, setFilter] = useState<'all' | 'unlocked' | 'locked'>('all')

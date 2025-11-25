@@ -1,6 +1,6 @@
 import { CourseRatingSummary } from '@/lib/types'
 import { StarRating } from './StarRating'
-import { useTranslation } from '@/lib/i18n'
+import { useTranslation } from 'react-i18next'
 import { Star } from '@phosphor-icons/react'
 
 interface RatingSummaryProps {

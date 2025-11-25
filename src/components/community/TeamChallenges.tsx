@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useWeeklyChallenge } from '@/hooks/use-weekly-challenge'
-import { useTranslation } from '@/lib/i18n'
+import { useTranslation } from 'react-i18next'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'

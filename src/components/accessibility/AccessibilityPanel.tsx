@@ -6,11 +6,11 @@ import { Slider } from '@/components/ui/slider'
 import { useAccessibilityPreferences } from '@/hooks/use-accessibility-preferences'
 import { Gear, TextAa, Gauge, X } from '@phosphor-icons/react'
 import { useState, useEffect } from 'react'
-import { useTranslation } from '@/lib/i18n'
+import { useTranslation } from 'react-i18next'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 
 export function AccessibilityPanel() {
-  const { t } = useTranslation()
+  const { t } = useTranslation('accessibility')
   const { preferences: rawPreferences, updatePreference } = useAccessibilityPreferences()
   const [isOpen, setIsOpen] = useState(false)
   

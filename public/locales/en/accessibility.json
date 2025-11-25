@@ -1,0 +1,11 @@
+{
+  "panel": "Accessibility Panel",
+  "highContrast": "High Contrast",
+  "textSize": "Text Size",
+  "reduceMotion": "Reduce Motion",
+  "disableSound": "Disable Sound",
+  "settings": "Accessibility Settings",
+  "captionsEnabled": "Captions Enabled",
+  "playbackSpeed": "Playback Speed",
+  "languageLabel": "Language / Idioma"
+}

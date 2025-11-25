@@ -12,7 +12,7 @@ import { toast } from 'sonner'
 import { motion } from 'framer-motion'
 import { EmployeeCredentials } from '@/lib/types'
 import { generateTemporaryPassword, isValidEmail, validatePassword } from '@/lib/auth-utils'
-import { useTranslation } from '@/lib/i18n'
+import { useTranslation } from 'react-i18next'
 
 export function ManualEmployeeEnrollment() {
   const { t } = useTranslation()

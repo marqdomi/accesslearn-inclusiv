@@ -5,7 +5,7 @@ import { Progress } from '@/components/ui/progress'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Lightning, Trophy } from '@phosphor-icons/react'
 import { motion } from 'framer-motion'
-import { useTranslation } from '@/lib/i18n'
+import { useTranslation } from 'react-i18next'
 import { useMemo } from 'react'
 
 export function PlayerIdentity({ userId }: { userId?: string }) {

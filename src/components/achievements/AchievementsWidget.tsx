@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Trophy, Fire, Target, ArrowRight } from '@phosphor-icons/react'
 import { Progress } from '@/components/ui/progress'
-import { useTranslation } from '@/lib/i18n'
+import { useTranslation } from 'react-i18next'
 
 interface AchievementsWidgetProps {
   onViewAll: () => void

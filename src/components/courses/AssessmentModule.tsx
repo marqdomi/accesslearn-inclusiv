@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Assessment, Certificate } from '@/lib/types'
 import { Check, X, House, ArrowRight, Certificate as CertificateIcon, Download } from '@phosphor-icons/react'
-import { useTranslation } from '@/lib/i18n'
+import { useTranslation } from 'react-i18next'
 
 interface AssessmentModuleProps {
   assessments: Assessment[]

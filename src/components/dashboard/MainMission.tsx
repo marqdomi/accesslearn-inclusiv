@@ -5,7 +5,7 @@ import { Progress } from '@/components/ui/progress'
 import { Course, UserProgress } from '@/lib/types'
 import { PlayCircle, Clock, Lightning, Target } from '@phosphor-icons/react'
 import { motion } from 'framer-motion'
-import { useTranslation } from '@/lib/i18n'
+import { useTranslation } from 'react-i18next'
 
 interface MainMissionProps {
   course: Course | null
@@ -14,7 +14,7 @@ interface MainMissionProps {
 }
 
 export function MainMission({ course, progress, onContinue }: MainMissionProps) {
-  const { t } = useTranslation()
+  const { t } = useTranslation('dashboard')
   
   if (!course) {
     return (

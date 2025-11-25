@@ -6,7 +6,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { useLanguage, SUPPORTED_LANGUAGES, Language } from '@/lib/i18n'
+import { useTranslation } from 'react-i18next'
+
+const SUPPORTED_LANGUAGES = {
+  es: 'Español',
+  en: 'English'
+} as const
+
+type Language = keyof typeof SUPPORTED_LANGUAGES
 
 interface LanguageSwitcherProps {
   variant?: 'default' | 'outline' | 'ghost'
@@ -14,10 +21,11 @@ interface LanguageSwitcherProps {
 }
 
 export function LanguageSwitcher({ variant = 'outline', showLabel = false }: LanguageSwitcherProps) {
-  const { language, setLanguage } = useLanguage()
+  const { i18n } = useTranslation()
+  const language = (i18n.language || 'es') as Language
 
   const handleLanguageChange = (newLanguage: Language) => {
-    setLanguage(newLanguage)
+    i18n.changeLanguage(newLanguage)
   }
 
   return (

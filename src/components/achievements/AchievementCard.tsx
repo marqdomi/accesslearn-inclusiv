@@ -25,7 +25,7 @@ import {
   Crown
 } from '@phosphor-icons/react'
 import { motion } from 'framer-motion'
-import { useTranslation } from '@/lib/i18n'
+import { useTranslation } from 'react-i18next'
 
 interface AchievementCardProps {
   achievement: Achievement
@@ -67,7 +67,7 @@ function getTierGradient(tier: AchievementTier): string {
 }
 
 export function AchievementCard({ achievement, isUnlocked, unlockedAt, progress }: AchievementCardProps) {
-  const { t } = useTranslation()
+  const { t } = useTranslation('community')
   const IconComponent = iconMap[achievement.icon] || Trophy
   const colors = TIER_COLORS[achievement.tier]
   const tierLabel = t(`achievements.${achievement.tier}`)

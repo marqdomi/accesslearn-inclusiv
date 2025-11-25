@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Course, UserProgress, CourseStructure } from '@/lib/types'
 import { BookOpen, Clock, Lightning, CheckCircle, BookBookmark, Play, X } from '@phosphor-icons/react'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { useTranslation } from '@/lib/i18n'
+import { useTranslation } from 'react-i18next'
 import { useUserLibrary } from '@/hooks/use-user-library'
 import { toast } from 'sonner'
 

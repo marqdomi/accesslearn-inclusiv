@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { Course, ContentModule } from '@/lib/types'
 import { useQandA } from '@/hooks/use-qanda'
-import { useTranslation } from '@/lib/i18n'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'

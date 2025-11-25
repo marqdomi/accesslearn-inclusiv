@@ -8,7 +8,7 @@ import { Trophy, Star, Fire, HandsClapping, Sparkle, Lightbulb, ChatCircle } fro
 import { motion, AnimatePresence } from 'framer-motion'
 import { formatDistanceToNow } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { useTranslation } from '@/lib/i18n'
+import { useTranslation } from 'react-i18next'
 import { useActivityFeed } from '@/hooks/use-activity-feed'
 
 interface ActivityFeedProps {

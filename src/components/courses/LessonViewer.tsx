@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useAccessibilityPreferences } from '@/hooks/use-accessibility-preferences'
 import { useXP } from '@/hooks/use-xp'
 import { toast } from 'sonner'
-import { useTranslation } from '@/lib/i18n'
+import { useTranslation } from 'react-i18next'
 import { translateLesson } from '@/lib/translate-course'
 
 import { WelcomeBlock } from './lesson-blocks/WelcomeBlock'

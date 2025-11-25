@@ -6,7 +6,7 @@ import { ACHIEVEMENTS } from '@/lib/achievements'
 import { Trophy, Fire, Star, Lock } from '@phosphor-icons/react'
 import { motion } from 'framer-motion'
 import { Achievement } from '@/lib/types'
-import { useTranslation } from '@/lib/i18n'
+import { useTranslation } from 'react-i18next'
 
 export function ProgressGoals({ userId }: { userId?: string }) {
   const { t } = useTranslation()

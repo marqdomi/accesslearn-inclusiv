@@ -17,7 +17,7 @@ import {
   Medal
 } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { useTranslation } from '@/lib/i18n'
+import { useTranslation } from 'react-i18next'
 
 interface LevelProgressDashboardProps {
   userId?: string

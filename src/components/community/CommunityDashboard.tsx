@@ -5,7 +5,7 @@ import { TeamChallenges } from '@/components/community/TeamChallenges'
 import { NotificationSettings } from '@/components/community/NotificationSettings'
 import { Sparkle, Trophy, Bell, Users } from '@phosphor-icons/react'
 import { motion } from 'framer-motion'
-import { useTranslation } from '@/lib/i18n'
+import { useTranslation } from 'react-i18next'
 
 interface CommunityDashboardProps {
   currentUserId: string

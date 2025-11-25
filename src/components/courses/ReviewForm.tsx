@@ -3,7 +3,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/componen
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { StarRating } from './StarRating'
-import { useTranslation } from '@/lib/i18n'
+import { useTranslation } from 'react-i18next'
 import { PencilSimple, X } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 

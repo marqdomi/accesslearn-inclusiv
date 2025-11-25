@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Users, BookOpen, TrendUp, Trophy, Plus, FileText, UserPlus, Target, UsersThree, ChartBar, UsersFour, Certificate, Palette } from '@phosphor-icons/react'
 import { motion } from 'framer-motion'
-import { useTranslation } from '@/lib/i18n'
+import { useTranslation } from 'react-i18next'
 
 interface AdminDashboardProps {
   onNavigate: (section: 'courses' | 'users' | 'reports' | 'gamification' | 'enrollment' | 'manual-enrollment' | 'corporate-reports' | 'assignments' | 'groups' | 'mentorship' | 'teams' | 'analytics' | 'company-settings' | 'branding') => void

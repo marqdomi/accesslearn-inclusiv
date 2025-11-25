@@ -13,7 +13,7 @@ import {
 } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { WYSIWYGEditor } from './WYSIWYGEditor'
-import { useTranslation } from '@/lib/i18n'
+import { useTranslation } from 'react-i18next'
 
 interface RichLessonEditorProps {
   lesson: Lesson | null

@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Label } from '@/components/ui/label'
 import { ArrowLeft, MagnifyingGlass, Users, UserPlus, Download, Trash, PencilSimple, Warning } from '@phosphor-icons/react'
 import { toast } from 'sonner'
-import { useTranslation } from '@/lib/i18n'
+import { useTranslation } from 'react-i18next'
 
 interface EmployeeManagementProps {
   onBack: () => void

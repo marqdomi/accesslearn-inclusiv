@@ -15,7 +15,7 @@ import { UserGroup, EmployeeCredentials } from '@/lib/types'
 import { Sparkle, Check, X, UsersThree, PencilSimple, UserMinus, UserPlus } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useTranslation } from '@/lib/i18n'
+import { useTranslation } from 'react-i18next'
 
 interface GroupSuggestion {
   name: string
@@ -25,7 +25,7 @@ interface GroupSuggestion {
 }
 
 export function GroupSuggestions() {
-  const { t } = useTranslation()
+  const { t } = useTranslation('admin')
   const [employees] = useKV<EmployeeCredentials[]>('employee-credentials', [])
   const [groups, setGroups] = useKV<UserGroup[]>('user-groups', [])
   

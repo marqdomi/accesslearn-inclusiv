@@ -11,7 +11,7 @@ import { toast } from 'sonner'
 import { motion } from 'framer-motion'
 import { EmployeeCredentials, BulkUploadResult } from '@/lib/types'
 import { parseCSVEmployees, generateTemporaryPassword, formatCredentialsForDownload } from '@/lib/auth-utils'
-import { useTranslation } from '@/lib/i18n'
+import { useTranslation } from 'react-i18next'
 
 type UploadStage = 'initial' | 'preview' | 'confirmed'
 
