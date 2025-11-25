@@ -49,10 +49,10 @@ export function ModuleNavigation({
     <Card className="p-4 sticky top-4">
       <div className="space-y-6">
         <div>
-          <h2 className="text-lg font-semibold mb-1">Contenido del Curso</h2>
-          <p className="text-sm text-muted-foreground">
-            {modules.length} módulos
-          </p>
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+            Contenido del curso
+          </h2>
+          <p className="text-xs text-muted-foreground">{modules.length} módulos</p>
         </div>
 
         <div className="space-y-4">
@@ -74,7 +74,10 @@ export function ModuleNavigation({
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="font-medium text-sm leading-tight">
-                      Módulo {moduleIndex + 1}: {module.title}
+                      <span className="text-xs text-muted-foreground">
+                        M{moduleIndex + 1}
+                      </span>{' '}
+                      {module.title}
                     </h3>
                     <div className="flex items-center gap-2 mt-1">
                       <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">

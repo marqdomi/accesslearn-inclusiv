@@ -705,18 +705,6 @@ export function CourseViewerPage() {
       {/* Main Content */}
       <div className="container mx-auto px-4 py-6">
         <div className={`grid grid-cols-1 gap-6 ${sidebarCollapsed ? '' : 'lg:grid-cols-12'}`}>
-          {sidebarCollapsed && (
-            <div className="flex justify-start">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-xs gap-2"
-                onClick={() => setSidebarCollapsed(false)}
-              >
-                Mostrar mapa
-              </Button>
-            </div>
-          )}
           {!sidebarCollapsed && (
             <aside className="lg:col-span-3 space-y-4 max-w-[260px]">
               <div className="flex items-center rounded-full border bg-muted/40 p-1 text-xs font-medium">
@@ -749,8 +737,6 @@ export function CourseViewerPage() {
                   modules={moduleNavigatorData}
                   currentLessonId={currentLessonId}
                   onLessonSelect={handleLessonSelect}
-                  onToggleSidebar={() => setSidebarCollapsed((prev) => !prev)}
-                  isCollapsed={sidebarCollapsed}
                 />
               ) : (
                 <div className="rounded-2xl border bg-card p-4 shadow-sm max-h-[65vh] overflow-y-auto">
