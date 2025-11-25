@@ -162,7 +162,7 @@ export function AppNavbar({ userXP = 0 }: AppNavbarProps) {
 
   const handleSettingsAccess = () => {
     if (canAccessSettings) {
-      navigate('/settings')
+      navigate('/admin/settings')
     } else {
       toast.error('No tienes permisos para acceder a Configuración')
     }
