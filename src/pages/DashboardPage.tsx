@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { useTenant } from '@/contexts/TenantContext'
 import { ApiService } from '@/services/api.service'
-import { LevelBadge } from '@/components/gamification/LevelBadge'
 import { LevelProgressDashboard } from '@/components/gamification/LevelProgressDashboard'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -12,30 +11,22 @@ import {
   BookOpen,
   Clock,
   CheckCircle2,
-  LogOut,
-  Users,
-  Calendar,
-  ClipboardList,
-  Library,
-  Settings,
-  BarChart3,
-  UserCog,
-  Sparkles,
   GraduationCap,
   Zap,
-  Target,
   TrendingUp,
-  Medal,
   PlayCircle,
   ChevronRight,
   ArrowRight,
-  User,
+  UserCog,
+  Settings,
 } from 'lucide-react'
 import { RequireRole } from '@/components/auth/RequireRole'
-import { RequirePermission } from '@/components/auth/RequirePermission'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { TenantSwitcher } from '@/components/dashboard/TenantSwitcher'
-import { TenantLogo } from '@/components/branding/TenantLogo'
+import { AppNavbar } from '@/components/layout/AppNavbar'
+import { ContinueLearningCard } from '@/components/dashboard/ContinueLearningCard'
+import { StatsCard } from '@/components/dashboard/StatsCard'
+import { QuickActions } from '@/components/dashboard/QuickActions'
+import { useTranslation } from 'react-i18next'
 
 interface Course {
   id: string
@@ -46,6 +37,15 @@ interface Course {
   estimatedHours: number
   modules: any[]
   totalXP?: number
+  coverImage?: string
+}
+
+interface CourseProgress {
+  courseId: string
+  status: string
+  completedLessons?: string[]
+  lastAccessedAt?: string
+  progress?: number
 }
 
 interface DashboardStats {
@@ -58,10 +58,13 @@ interface DashboardStats {
 
 export function DashboardPage() {
   const navigate = useNavigate()
-  const { user, logout } = useAuth()
+  const { user } = useAuth()
   const { currentTenant } = useTenant()
+  const { t } = useTranslation('dashboard')
   const [courses, setCourses] = useState<Course[]>([])
   const [loading, setLoading] = useState(true)
+  const [currentCourse, setCurrentCourse] = useState<Course | null>(null)
+  const [currentProgress, setCurrentProgress] = useState<CourseProgress | null>(null)
   const [stats, setStats] = useState<DashboardStats>({
     totalCourses: 0,
     enrolledCourses: 0,
@@ -88,6 +91,14 @@ export function DashboardPage() {
       const activeCourses = data.filter((c: Course) => c.status === 'active')
       setCourses(activeCourses)
 
+      // Find current course in progress (most recently accessed, not completed)
+      let enrolledCoursesWithProgress: Array<{
+        course: Course
+        progress: CourseProgress
+        progressPercent: number
+        lastAccessed: number
+      }> = []
+
       // Calculate real progress from user's enrolled courses
       let totalProgress = 0
       let enrolledCount = 0
@@ -110,12 +121,35 @@ export function DashboardPage() {
             // Consider completed if 100% or all lessons completed
             if (courseProgress === 100 || completedLessons >= totalLessons) {
               completedCount++
+            } else {
+              // Course in progress - add to list
+              const lastAccessed = progress.lastAccessedAt 
+                ? new Date(progress.lastAccessedAt).getTime()
+                : Date.now()
+              
+              enrolledCoursesWithProgress.push({
+                course,
+                progress,
+                progressPercent: courseProgress,
+                lastAccessed,
+              })
             }
           }
         } catch (err) {
           // Course not enrolled or no progress, skip
           console.debug(`No progress found for course ${course.id}`)
         }
+      }
+
+      // Find most recently accessed course in progress
+      if (enrolledCoursesWithProgress.length > 0) {
+        enrolledCoursesWithProgress.sort((a, b) => b.lastAccessed - a.lastAccessed)
+        const mostRecent = enrolledCoursesWithProgress[0]
+        setCurrentCourse(mostRecent.course)
+        setCurrentProgress(mostRecent.progress)
+      } else {
+        setCurrentCourse(null)
+        setCurrentProgress(null)
       }
 
       const averageProgress = enrolledCount > 0
@@ -142,7 +176,7 @@ export function DashboardPage() {
         totalCourses: activeCourses.length,
         enrolledCourses: enrolledCount,
         completedCourses: completedCount,
-        totalXP: userTotalXP, // Use actual user XP from backend
+        totalXP: userTotalXP,
         averageProgress,
       })
 
@@ -173,35 +207,6 @@ export function DashboardPage() {
     }
   }
 
-  const handleLogout = () => {
-    logout()
-    window.location.reload()
-  }
-
-  const getRoleColor = (role: string) => {
-    const colors: { [key: string]: string } = {
-      'student': 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100',
-      'instructor': 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-100',
-      'mentor': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100',
-      'content-manager': 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-100',
-      'tenant-admin': 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100',
-      'super-admin': 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-100',
-    }
-    return colors[role] || 'bg-gray-100 text-gray-800'
-  }
-
-  const getRoleLabel = (role: string) => {
-    const labels: { [key: string]: string } = {
-      'student': 'Estudiante',
-      'instructor': 'Instructor',
-      'mentor': 'Mentor',
-      'content-manager': 'Content Manager',
-      'tenant-admin': 'Admin del Tenant',
-      'super-admin': 'Super Admin',
-    }
-    return labels[role] || role
-  }
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -213,254 +218,96 @@ export function DashboardPage() {
     )
   }
 
+  // Get greeting based on time of day
+  const getGreeting = () => {
+    const hour = new Date().getHours()
+    if (hour < 12) return 'Buenos días'
+    if (hour < 18) return 'Buenas tardes'
+    return 'Buenas noches'
+  }
+
   return (
-    <div className="min-h-screen bg-linear-to-br from-background via-muted/20 to-background">
-      {/* Header */}
-      <header className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-10">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <TenantLogo size="md" className="flex-shrink-0" />
-              <div>
-                <h1 className="text-2xl font-bold">{currentTenant?.name}</h1>
-                <p className="text-sm text-muted-foreground">Plataforma de Aprendizaje</p>
-              </div>
-            </div>
+    <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background">
+      <AppNavbar userXP={stats.totalXP} />
 
-            <div className="flex items-center gap-2">
-              <div className="text-right pr-4">
-                <div className="flex items-center gap-2 justify-end mb-1">
-                  <p className="text-sm font-medium">{user?.firstName} {user?.lastName}</p>
-                  <Badge className={getRoleColor(user?.role || '')}>
-                    {getRoleLabel(user?.role || '')}
-                  </Badge>
-                </div>
-                <p className="text-xs text-muted-foreground">{user?.email}</p>
-              </div>
-              <LevelBadge xp={stats.totalXP} size="md" />
-              <TenantSwitcher />
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigate('/profile')}
-                title="Ver mi perfil"
-              >
-                <User className="h-4 w-4 mr-2" />
-                Perfil
-              </Button>
-              <Button variant="outline" size="sm" onClick={handleLogout}>
-                <LogOut className="h-4 w-4 mr-2" />
-                Salir
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
-        {/* Welcome Section */}
-        <div className="mb-12">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-4xl font-bold mb-2">¡Bienvenido de vuelta, {user?.firstName}! 👋</h2>
-              <p className="text-lg text-muted-foreground">
-                Continúa tu viaje de aprendizaje y alcanza nuevas metas
-              </p>
-            </div>
-          </div>
+      <main className="container mx-auto px-4 py-6 md:py-8">
+        {/* Welcome Section - More Compact */}
+        <div className="mb-6 md:mb-8">
+          <h1 className="text-2xl md:text-3xl font-bold mb-1">
+            {getGreeting()}, {user?.firstName}! 👋
+          </h1>
+          <p className="text-sm md:text-base text-muted-foreground">
+            Continúa tu viaje de aprendizaje y alcanza nuevas metas
+          </p>
         </div>
 
-        {/* Stats Grid - Responsive */}
-        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 mb-8">
-          <Card className="bg-linear-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 border-0">
-            <CardContent className="pt-6">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground mb-1">Total de Cursos</p>
-                  <p className="text-3xl font-bold">{stats.totalCourses}</p>
-                </div>
-                <div className="p-3 bg-blue-500/20 rounded-lg">
-                  <BookOpen className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Continue Learning Card - PRIMARY ACTION */}
+        <div className="mb-6 md:mb-8">
+          <ContinueLearningCard 
+            course={currentCourse}
+            progress={currentProgress}
+            loading={loading}
+          />
+        </div>
 
-          <Card className="bg-linear-to-br from-purple-50 to-purple-100 dark:from-purple-950 dark:to-purple-900 border-0">
-            <CardContent className="pt-6">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground mb-1">Inscrito</p>
-                  <p className="text-3xl font-bold">{stats.enrolledCourses}</p>
-                </div>
-                <div className="p-3 bg-purple-500/20 rounded-lg">
-                  <PlayCircle className="h-6 w-6 text-purple-600 dark:text-purple-400" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Stats Grid - More Compact */}
+        <div className="grid gap-3 md:gap-4 grid-cols-2 lg:grid-cols-4 mb-6 md:mb-8">
+          <StatsCard
+            title="Total de Cursos"
+            value={stats.totalCourses}
+            icon={BookOpen}
+            color="blue"
+            loading={loading}
+          />
+          <StatsCard
+            title="Inscrito"
+            value={stats.enrolledCourses}
+            icon={PlayCircle}
+            color="purple"
+            loading={loading}
+          />
+          <StatsCard
+            title="Completado"
+            value={stats.completedCourses}
+            icon={CheckCircle2}
+            color="green"
+            loading={loading}
+          />
+          <StatsCard
+            title="XP Total"
+            value={stats.totalXP}
+            icon={Zap}
+            color="yellow"
+            loading={loading}
+          />
+        </div>
 
-          <Card className="bg-linear-to-br from-green-50 to-green-100 dark:from-green-950 dark:to-green-900 border-0">
-            <CardContent className="pt-6">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground mb-1">Completado</p>
-                  <p className="text-3xl font-bold">{stats.completedCourses}</p>
-                </div>
-                <div className="p-3 bg-green-500/20 rounded-lg">
-                  <CheckCircle2 className="h-6 w-6 text-green-600 dark:text-green-400" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-linear-to-br from-yellow-50 to-yellow-100 dark:from-yellow-950 dark:to-yellow-900 border-0">
-            <CardContent className="pt-6">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground mb-1">XP Total</p>
-                  <p className="text-3xl font-bold">{stats.totalXP}</p>
-                </div>
-                <div className="p-3 bg-yellow-500/20 rounded-lg">
-                  <Zap className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-linear-to-br from-orange-50 to-orange-100 dark:from-orange-950 dark:to-orange-900 border-0">
-            <CardContent className="pt-6">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground mb-1">Progreso</p>
-                  <p className="text-3xl font-bold">{stats.averageProgress}%</p>
-                </div>
-                <div className="p-3 bg-orange-500/20 rounded-lg">
-                  <TrendingUp className="h-6 w-6 text-orange-600 dark:text-orange-400" />
-                </div>
-              </div>
+        {/* Quick Actions */}
+        <div className="mb-6 md:mb-8">
+          <Card className="border-2">
+            <CardHeader>
+              <CardTitle>Acciones Rápidas</CardTitle>
+              <CardDescription>Accede a las funciones más importantes</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <QuickActions notificationCounts={notificationCounts} />
             </CardContent>
           </Card>
         </div>
 
-        {/* Level Progress Dashboard */}
+        {/* Main Content Tabs */}
         <Tabs defaultValue="overview" className="mb-8">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-2 max-w-md">
             <TabsTrigger value="overview">Resumen</TabsTrigger>
             <TabsTrigger value="progress">Progreso de Nivel</TabsTrigger>
           </TabsList>
+          
           <TabsContent value="overview" className="mt-6">
-            <div className="grid gap-6 lg:grid-cols-3 mb-8">
-              {/* Featured Section - 2 columns */}
-              <div className="lg:col-span-2 space-y-6">
-                {/* Quick Actions */}
+            <div className="grid gap-6 lg:grid-cols-3">
+              {/* Featured Courses - 2 columns */}
+              <div className="lg:col-span-2">
                 <Card className="overflow-hidden border-2">
-                  <CardHeader className="bg-linear-to-r from-primary/5 to-primary/10">
-                    <div className="flex items-center gap-2">
-                      <Sparkles className="h-5 w-5 text-primary" />
-                      <CardTitle>Acciones Rápidas</CardTitle>
-                    </div>
-                    <CardDescription>Accede a las funciones más importantes</CardDescription>
-                  </CardHeader>
-                  <CardContent className="pt-6">
-                    <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
-                      <Button
-                        variant="outline"
-                        className="h-auto py-4 flex flex-col items-center gap-2"
-                        onClick={() => navigate('/catalog')}
-                      >
-                        <BookOpen className="h-5 w-5" />
-                        <span className="text-xs">Catálogo de Cursos</span>
-                      </Button>
-
-                      <Button
-                        variant="outline"
-                        className="h-auto py-4 flex flex-col items-center gap-2"
-                        onClick={() => navigate('/library')}
-                      >
-                        <Library className="h-5 w-5" />
-                        <span className="text-xs">Mi Biblioteca</span>
-                      </Button>
-
-                      <Button
-                        variant="outline"
-                        className="h-auto py-4 flex flex-col items-center gap-2"
-                        onClick={() => navigate('/mentors')}
-                      >
-                        <Users className="h-5 w-5" />
-                        <span className="text-xs">Buscar Mentor</span>
-                      </Button>
-
-                      <RequireRole roles={['super-admin', 'tenant-admin', 'content-manager', 'instructor']}>
-                        <Button
-                          variant="outline"
-                          className="h-auto py-4 flex flex-col items-center gap-2"
-                          onClick={() => navigate('/my-courses')}
-                        >
-                          <BookOpen className="h-5 w-5" />
-                          <span className="text-xs">Mis Cursos</span>
-                        </Button>
-                      </RequireRole>
-
-                      <RequireRole roles={['super-admin', 'tenant-admin', 'content-manager']}>
-                        <Button
-                          variant="outline"
-                          className="h-auto py-4 flex flex-col items-center gap-2"
-                          onClick={() => navigate('/content-manager')}
-                        >
-                          <CheckCircle2 className="h-5 w-5" />
-                          <span className="text-xs">Aprobar Cursos</span>
-                        </Button>
-                      </RequireRole>
-
-                      {user?.role === 'mentor' ? (
-                        <Button
-                          variant="outline"
-                          className="h-auto py-4 flex flex-col items-center gap-2 relative"
-                          onClick={() => navigate('/mentor/dashboard')}
-                        >
-                          <Calendar className="h-5 w-5" />
-                          <span className="text-xs">Mentorados</span>
-                          {notificationCounts.pendingRequests > 0 && (
-                            <Badge variant="destructive" className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center text-xs">
-                              {notificationCounts.pendingRequests}
-                            </Badge>
-                          )}
-                        </Button>
-                      ) : (
-                        <Button
-                          variant="outline"
-                          className="h-auto py-4 flex flex-col items-center gap-2 relative"
-                          onClick={() => navigate('/my-mentorships')}
-                        >
-                          <ClipboardList className="h-5 w-5" />
-                          <span className="text-xs">Solicitudes</span>
-                          {notificationCounts.acceptedSessions > 0 && (
-                            <Badge variant="default" className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center text-xs">
-                              {notificationCounts.acceptedSessions}
-                            </Badge>
-                          )}
-                        </Button>
-                      )}
-
-                      <RequirePermission permission="analytics:view-all">
-                        <Button
-                          variant="outline"
-                          className="h-auto py-4 flex flex-col items-center gap-2"
-                          onClick={() => navigate('/admin/analytics')}
-                        >
-                          <BarChart3 className="h-5 w-5" />
-                          <span className="text-xs">Analytics</span>
-                        </Button>
-                      </RequirePermission>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Featured Courses */}
-                <Card className="overflow-hidden border-2">
-                  <CardHeader className="bg-linear-to-r from-purple-50 to-purple-100 dark:from-purple-950 dark:to-purple-900">
+                  <CardHeader className="bg-gradient-to-r from-purple-50 to-purple-100 dark:from-purple-950 dark:to-purple-900">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <GraduationCap className="h-5 w-5 text-purple-600 dark:text-purple-400" />
@@ -480,23 +327,34 @@ export function DashboardPage() {
                   </CardHeader>
                   <CardContent className="pt-6">
                     {courses.length === 0 ? (
-                      <div className="text-center py-8">
-                        <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
-                        <p className="text-muted-foreground">No hay cursos disponibles</p>
+                      <div className="text-center py-12">
+                        <BookOpen className="h-16 w-16 text-muted-foreground mx-auto mb-4 opacity-50" />
+                        <h3 className="text-lg font-semibold mb-2">No hay cursos disponibles</h3>
+                        <p className="text-sm text-muted-foreground mb-4">
+                          Explora el catálogo para encontrar cursos interesantes
+                        </p>
+                        <Button onClick={() => navigate('/catalog')} className="gap-2">
+                          <BookOpen className="h-4 w-4" />
+                          Explorar Catálogo
+                        </Button>
                       </div>
                     ) : (
                       <div className="space-y-3">
                         {courses.slice(0, 3).map((course) => (
                           <div
                             key={course.id}
-                            className="p-4 rounded-lg border border-border/50 hover:border-primary/50 transition-colors cursor-pointer group"
+                            className="p-4 rounded-lg border border-border/50 hover:border-primary/50 transition-all cursor-pointer group"
                             onClick={() => navigate(`/courses/${course.id}`)}
                           >
                             <div className="flex items-start justify-between">
-                              <div className="flex-1">
-                                <h4 className="font-semibold group-hover:text-primary transition-colors line-clamp-1">{course.title}</h4>
-                                <p className="text-sm text-muted-foreground line-clamp-1">{course.description}</p>
-                                <div className="flex items-center gap-4 mt-2">
+                              <div className="flex-1 min-w-0">
+                                <h4 className="font-semibold group-hover:text-primary transition-colors line-clamp-1 mb-1">
+                                  {course.title}
+                                </h4>
+                                <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+                                  {course.description}
+                                </p>
+                                <div className="flex items-center gap-4 flex-wrap">
                                   <div className="flex items-center gap-1 text-xs text-muted-foreground">
                                     <Clock className="h-3 w-3" />
                                     {course.estimatedHours}h
@@ -505,10 +363,18 @@ export function DashboardPage() {
                                     <BookOpen className="h-3 w-3" />
                                     {course.modules?.length || 0} módulos
                                   </div>
-                                  <Badge variant="outline" className="text-xs">{course.difficulty}</Badge>
+                                  {course.totalXP && (
+                                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                      <Zap className="h-3 w-3" />
+                                      {course.totalXP} XP
+                                    </div>
+                                  )}
+                                  <Badge variant="outline" className="text-xs">
+                                    {course.difficulty}
+                                  </Badge>
                                 </div>
                               </div>
-                              <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors ml-2 shrink-0" />
+                              <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors ml-3 shrink-0" />
                             </div>
                           </div>
                         ))}
@@ -518,62 +384,8 @@ export function DashboardPage() {
                 </Card>
               </div>
 
-              {/* Sidebar - 1 column */}
+              {/* Sidebar - Admin Section Only */}
               <div className="space-y-6">
-                {/* Features Widget */}
-                <Card className="overflow-hidden border-2">
-                  <CardHeader className="bg-linear-to-r from-green-50 to-green-100 dark:from-green-950 dark:to-green-900">
-                    <div className="flex items-center gap-2">
-                      <Medal className="h-5 w-5 text-green-600 dark:text-green-400" />
-                      <CardTitle className="text-sm">Características</CardTitle>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="pt-4">
-                    <div className="space-y-3">
-                      <div className="flex items-start gap-3">
-                        <div className="h-6 w-6 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center mt-1 shrink-0">
-                          <Target className="h-3 w-3 text-blue-600 dark:text-blue-400" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-semibold">Cursos Interactivos</p>
-                          <p className="text-xs text-muted-foreground">Aprende con contenido multimedia</p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-start gap-3">
-                        <div className="h-6 w-6 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center mt-1 shrink-0">
-                          <Zap className="h-3 w-3 text-purple-600 dark:text-purple-400" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-semibold">Sistema XP</p>
-                          <p className="text-xs text-muted-foreground">Gana puntos y sube de nivel</p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-start gap-3">
-                        <div className="h-6 w-6 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center mt-1 shrink-0">
-                          <Users className="h-3 w-3 text-green-600 dark:text-green-400" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-semibold">Mentoría Personalizada</p>
-                          <p className="text-xs text-muted-foreground">Conéctate con expertos</p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-start gap-3">
-                        <div className="h-6 w-6 rounded-full bg-orange-100 dark:bg-orange-900 flex items-center justify-center mt-1 shrink-0">
-                          <TrendingUp className="h-3 w-3 text-orange-600 dark:text-orange-400" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-semibold">Progreso Detallado</p>
-                          <p className="text-xs text-muted-foreground">Monitorea tu desarrollo</p>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Admin Section - Conditional */}
                 <RequireRole roles={['super-admin', 'tenant-admin', 'user-manager']}>
                   <Card className="overflow-hidden border-2 border-destructive/30">
                     <CardHeader className="bg-destructive/5">
@@ -607,6 +419,7 @@ export function DashboardPage() {
               </div>
             </div>
           </TabsContent>
+          
           <TabsContent value="progress" className="mt-6">
             <LevelProgressDashboard userId={user?.id} />
           </TabsContent>
