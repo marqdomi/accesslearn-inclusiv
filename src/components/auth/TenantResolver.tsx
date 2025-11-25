@@ -320,70 +320,36 @@ export function TenantResolver({ children }: TenantResolverProps) {
             </Button>
           </div>
 
-          {/* Logo y header */}
-          <div className="text-center space-y-4">
-            {/* Usar TenantLogo si hay tenant cargado, sino mostrar logo de Kaido */}
-            {currentTenant ? (
-              <div className="flex justify-center">
-                <TenantLogo 
-                  size="xl" 
-                  className="rounded-2xl"
-                  fallbackIcon={
-                    <>
-                      <img 
-                        src="/logos/kaido-logo.png" 
-                        alt="Kaido" 
-                        className="h-20 w-auto object-contain"
-                        onError={(e) => {
-                          // Si no existe la imagen, mostrar fallback
-                          (e.target as HTMLImageElement).style.display = 'none';
-                          const fallback = (e.target as HTMLImageElement).nextElementSibling as HTMLElement;
-                          if (fallback) fallback.style.display = 'flex';
-                        }}
-                      />
-                      <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg hidden">
-                        <span className="text-4xl">📚</span>
-                      </div>
-                    </>
-                  }
-                />
-              </div>
-            ) : (
-              <div className="flex justify-center">
-                {/* Logo de Kaido por defecto */}
+          {/* Logo y header - Diseño moderno */}
+          <div className="text-center space-y-6 mb-8">
+            {/* Logo único - siempre mostrar Kaido en selector */}
+            <div className="flex justify-center">
+              <div className="relative">
                 <img 
                   src="/logos/kaido-logo.png" 
                   alt="Kaido" 
-                  className="h-20 w-auto object-contain"
+                  className="h-24 w-auto object-contain drop-shadow-lg"
                   onError={(e) => {
-                    // Si no existe la imagen, mostrar fallback
+                    // Si falla, ocultar y mostrar fallback
                     (e.target as HTMLImageElement).style.display = 'none';
-                    const fallback = (e.target as HTMLImageElement).nextElementSibling as HTMLElement;
-                    if (fallback) fallback.style.display = 'flex';
                   }}
                 />
-                <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg hidden">
-                  <span className="text-4xl">📚</span>
-                </div>
               </div>
-            )}
+            </div>
             <div className="space-y-2">
-              <h1 className="text-3xl font-bold text-gray-900">
-                {currentTenant?.name || 'Kaido'}
-              </h1>
-              <p className="text-sm text-blue-600 font-medium">
+              <p className="text-sm text-gray-600 font-medium tracking-wide">
                 Plataforma de Capacitación y Desarrollo
               </p>
             </div>
           </div>
 
-          {/* Divider */}
-          <div className="relative">
+          {/* Divider moderno */}
+          <div className="relative py-2">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-gray-200"></div>
             </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-4 bg-white text-gray-500">Selecciona tu organización</span>
+            <div className="relative flex justify-center">
+              <span className="px-4 bg-white/95 text-sm font-medium text-gray-500 tracking-wide">Selecciona tu organización</span>
             </div>
           </div>
 
@@ -395,29 +361,29 @@ export function TenantResolver({ children }: TenantResolverProps) {
           )}
 
           <div className="space-y-6">
-            {/* Continue with saved tenant option */}
+            {/* Continue with saved tenant option - diseño moderno */}
             {savedTenantId && availableTenants.find(t => t.id === savedTenantId) && (
-              <div className="space-y-3">
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="space-y-4">
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/50 rounded-xl p-4 shadow-sm">
                   <p className="text-sm text-blue-900">
                     <strong className="font-semibold">Última organización utilizada:</strong>
                     <br />
-                    {availableTenants.find(t => t.id === savedTenantId)?.name}
+                    <span className="text-blue-700 font-medium">{availableTenants.find(t => t.id === savedTenantId)?.name}</span>
                   </p>
                 </div>
                 <Button
                   onClick={() => handleTenantSelect(savedTenantId)}
-                  className="w-full h-12"
+                  className="w-full h-14 text-base font-semibold rounded-xl shadow-md hover:shadow-lg transition-all duration-200 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
                   variant="default"
                 >
                   Continuar con {availableTenants.find(t => t.id === savedTenantId)?.name}
                 </Button>
-                <div className="relative">
+                <div className="relative py-2">
                   <div className="absolute inset-0 flex items-center">
                     <div className="w-full border-t border-gray-200"></div>
                   </div>
-                  <div className="relative flex justify-center text-xs">
-                    <span className="px-2 bg-white text-gray-500">o selecciona otra organización</span>
+                  <div className="relative flex justify-center">
+                    <span className="px-3 bg-white/95 text-xs font-medium text-gray-500">o selecciona otra organización</span>
                   </div>
                 </div>
               </div>
