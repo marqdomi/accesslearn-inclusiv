@@ -1355,15 +1355,11 @@ class ApiServiceClass {
       throw new Error('No authentication token found')
     }
 
-    // Construir URL correctamente: asegurar que tenga /api/media/upload
-    // Si API_BASE_URL ya incluye /api, no duplicar
-    const baseUrl = API_BASE_URL.endsWith('/api') 
-      ? API_BASE_URL 
-      : API_BASE_URL.endsWith('/') 
-        ? `${API_BASE_URL}api` 
-        : `${API_BASE_URL}/api`
-    const url = `${baseUrl}/media/upload`
-    console.log('[ApiService] Uploading file to:', url, 'with token:', token ? 'present' : 'missing')
+    // Usar la misma lógica que el método fetch() interno para consistencia
+    // El endpoint debe empezar con / para que se concatene correctamente
+    const endpoint = '/media/upload'
+    const url = `${API_BASE_URL}${endpoint}`
+    console.log('[ApiService] Uploading file to:', url, 'API_BASE_URL:', API_BASE_URL, 'endpoint:', endpoint, 'with token:', token ? 'present' : 'missing')
     
     const response = await fetch(url, {
       method: 'POST',
