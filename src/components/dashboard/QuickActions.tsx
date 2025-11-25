@@ -141,15 +141,6 @@ export function QuickActions({ notificationCounts = {} }: QuickActionsProps) {
 
   return (
     <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-lg font-semibold">Acciones Rápidas</h3>
-          <p className="text-sm text-muted-foreground">
-            Accede a las funciones más importantes
-          </p>
-        </div>
-      </div>
-
       {/* Desktop: Grid */}
       <div className="hidden md:grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
         {allActions.map((action) => {

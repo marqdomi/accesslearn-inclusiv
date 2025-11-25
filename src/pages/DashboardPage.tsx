@@ -246,7 +246,7 @@ export function DashboardPage() {
         {/* Welcome Section - More Compact */}
         <div className="mb-6 md:mb-8">
           <h1 className="text-2xl md:text-3xl font-bold mb-1">
-            {getGreeting()}, {user?.firstName}! 👋
+            {getGreeting()}, {user?.firstName}!
           </h1>
           <p className="text-sm md:text-base text-muted-foreground">
             Continúa tu viaje de aprendizaje y alcanza nuevas metas
