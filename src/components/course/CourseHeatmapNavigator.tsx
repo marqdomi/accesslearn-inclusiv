@@ -66,56 +66,107 @@ const statusStyles: Record<string, string> = {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <div
-            className="grid gap-3"
-            style={{
-              gridTemplateColumns: `repeat(${modules.length}, minmax(60px, 1fr))`,
-            }}
-          >
+        <div className="max-h-[65vh] overflow-y-auto pr-1">
+          <div className="space-y-6">
             {modules.map((module, moduleIndex) => (
-              <div key={module.id} className="space-y-2">
-                <p className="text-[11px] font-semibold text-muted-foreground text-center">
+              <div key={module.id} className="relative pl-8">
+                <div className="absolute left-0 top-1 text-[11px] font-semibold text-muted-foreground">
                   M{moduleIndex + 1}
-                </p>
-                <div className="flex flex-col items-center gap-2">
+                </div>
+                <div className="flex flex-col items-center gap-2 relative">
+                  <span className="absolute left-1/2 top-4 bottom-4 w-px bg-muted/40" />
                   {module.lessons.map((lesson, lessonIndex) => {
                     const status = getStatus(lesson)
                     const disabled = status === 'locked'
+                    const isLast = lessonIndex === module.lessons.length - 1
 
                     return (
-                      <Tooltip key={lesson.id}>
-                        <TooltipTrigger asChild>
-                          <button
-                            className={cn(
-                              'h-8 w-8 rounded-md text-[11px] font-semibold flex items-center justify-center transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary shadow-sm',
-                              statusStyles[status],
-                              status === 'current' && 'animate-pulse'
-                            )}
-                            disabled={disabled}
-                            onClick={() => onLessonSelect(module.id, lesson.id)}
-                          >
-                            {lessonIndex + 1}
-                          </button>
-                        </TooltipTrigger>
-                        <TooltipContent side="right" align="center">
-                          <div className="space-y-1">
-                            <p className="text-xs font-semibold">
-                              {module.title}
-                            </p>
-                            <p className="text-sm font-medium">
-                              {lesson.title}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {lesson.duration
-                                ? `${lesson.duration} min`
-                                : 'Sin duración'}
-                            </p>
-                          </div>
-                        </TooltipContent>
-                      </Tooltip>
+                      <div key={lesson.id} className="flex flex-col items-center gap-2">
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              className={cn(
+                                'h-9 w-9 rounded-full text-[11px] font-semibold flex items-center justify-center transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary shadow-sm border border-white/30',
+                                statusStyles[status],
+                                status === 'current' && 'animate-pulse'
+                              )}
+                              disabled={disabled}
+                              onClick={() => onLessonSelect(module.id, lesson.id)}
+                            >
+                              {lessonIndex + 1}
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent side="right" align="center">
+                            <div className="space-y-1">
+                              <p className="text-xs font-semibold">
+                                {module.title}
+                              </p>
+                              <p className="text-sm font-medium">
+                                {lesson.title}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {lesson.duration
+                                  ? `${lesson.duration} min`
+                                  : 'Sin duración'}
+                              </p>
+                            </div>
+                          </TooltipContent>
+                        </Tooltip>
+                        {!isLast && <div className="w-[3px] h-3 bg-muted/40 rounded-full" />}
+                      </div>
                     )
                   })}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </TooltipProvider>
+  )
+}
+                    {module.lessons.map((lesson, lessonIndex) => {
+                      const status = getStatus(lesson)
+                      const disabled = status === 'locked'
+                      const isLast = lessonIndex === module.lessons.length - 1
+
+                      return (
+                        <div key={lesson.id} className="flex flex-col items-center gap-2">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <button
+                                className={cn(
+                                  'h-9 w-9 rounded-full text-[11px] font-semibold flex items-center justify-center transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary shadow-sm',
+                                  statusStyles[status],
+                                  status === 'current' && 'animate-pulse'
+                                )}
+                                disabled={disabled}
+                                onClick={() => onLessonSelect(module.id, lesson.id)}
+                              >
+                                {lessonIndex + 1}
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent side="right" align="center">
+                              <div className="space-y-1">
+                                <p className="text-xs font-semibold">
+                                  {module.title}
+                                </p>
+                                <p className="text-sm font-medium">
+                                  {lesson.title}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  {lesson.duration
+                                    ? `${lesson.duration} min`
+                                    : 'Sin duración'}
+                                </p>
+                              </div>
+                            </TooltipContent>
+                          </Tooltip>
+                          {!isLast && <div className="w-px h-3 bg-muted/50 rounded-full" />}
+                        </div>
+                      )
+                    })}
+                  </div>
                 </div>
               </div>
             ))}
