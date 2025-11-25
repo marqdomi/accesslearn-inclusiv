@@ -26,7 +26,10 @@ import { AppNavbar } from '@/components/layout/AppNavbar'
 import { ContinueLearningCard } from '@/components/dashboard/ContinueLearningCard'
 import { StatsCard } from '@/components/dashboard/StatsCard'
 import { QuickActions } from '@/components/dashboard/QuickActions'
+import { RecommendedCourses } from '@/components/dashboard/RecommendedCourses'
+import { useDashboardTrends } from '@/hooks/use-dashboard-trends'
 import { useTranslation } from 'react-i18next'
+import { motion } from 'framer-motion'
 
 interface Course {
   id: string
@@ -65,6 +68,7 @@ export function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [currentCourse, setCurrentCourse] = useState<Course | null>(null)
   const [currentProgress, setCurrentProgress] = useState<CourseProgress | null>(null)
+  const [enrolledCourseIds, setEnrolledCourseIds] = useState<string[]>([])
   const [stats, setStats] = useState<DashboardStats>({
     totalCourses: 0,
     enrolledCourses: 0,
@@ -77,6 +81,9 @@ export function DashboardPage() {
     acceptedSessions: 0,
     rejectedRequests: 0
   })
+
+  // Calculate trends for stats
+  const trends = useDashboardTrends(stats)
 
   useEffect(() => {
     loadDashboard()
@@ -98,6 +105,7 @@ export function DashboardPage() {
         progressPercent: number
         lastAccessed: number
       }> = []
+      const enrolledIds: string[] = []
 
       // Calculate real progress from user's enrolled courses
       let totalProgress = 0
@@ -108,6 +116,7 @@ export function DashboardPage() {
         try {
           const progress = await ApiService.getCourseProgress(user.id, course.id)
           if (progress && progress.completedLessons) {
+            enrolledIds.push(course.id)
             enrolledCount++
             // Calculate progress percentage based on completed lessons
             const totalLessons = course.modules?.reduce((sum: number, m: any) =>
@@ -179,6 +188,9 @@ export function DashboardPage() {
         totalXP: userTotalXP,
         averageProgress,
       })
+
+      // Store enrolled course IDs for recommendations
+      setEnrolledCourseIds(enrolledIds)
 
       loadNotifications()
     } catch (error) {
@@ -257,6 +269,7 @@ export function DashboardPage() {
             value={stats.totalCourses}
             icon={BookOpen}
             color="blue"
+            trend={trends.totalCourses || undefined}
             loading={loading}
           />
           <StatsCard
@@ -264,6 +277,7 @@ export function DashboardPage() {
             value={stats.enrolledCourses}
             icon={PlayCircle}
             color="purple"
+            trend={trends.enrolledCourses || undefined}
             loading={loading}
           />
           <StatsCard
@@ -271,6 +285,7 @@ export function DashboardPage() {
             value={stats.completedCourses}
             icon={CheckCircle2}
             color="green"
+            trend={trends.completedCourses || undefined}
             loading={loading}
           />
           <StatsCard
@@ -278,6 +293,7 @@ export function DashboardPage() {
             value={stats.totalXP}
             icon={Zap}
             color="yellow"
+            trend={trends.totalXP || undefined}
             loading={loading}
           />
         </div>
@@ -297,12 +313,23 @@ export function DashboardPage() {
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="overview" className="mb-8">
-          <TabsList className="grid w-full grid-cols-2 max-w-md">
-            <TabsTrigger value="overview">Resumen</TabsTrigger>
-            <TabsTrigger value="progress">Progreso de Nivel</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 max-w-md mb-6">
+            <TabsTrigger value="overview" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              Inicio
+            </TabsTrigger>
+            <TabsTrigger value="progress" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              Progreso de Nivel
+            </TabsTrigger>
           </TabsList>
           
-          <TabsContent value="overview" className="mt-6">
+          <TabsContent value="overview" className="mt-6 space-y-6">
+            {/* Recommended Courses */}
+            <RecommendedCourses
+              courses={courses}
+              currentEnrolledCourseIds={enrolledCourseIds}
+              loading={loading}
+            />
+
             <div className="grid gap-6 lg:grid-cols-3">
               {/* Featured Courses - 2 columns */}
               <div className="lg:col-span-2">
@@ -327,17 +354,33 @@ export function DashboardPage() {
                   </CardHeader>
                   <CardContent className="pt-6">
                     {courses.length === 0 ? (
-                      <div className="text-center py-12">
-                        <BookOpen className="h-16 w-16 text-muted-foreground mx-auto mb-4 opacity-50" />
-                        <h3 className="text-lg font-semibold mb-2">No hay cursos disponibles</h3>
-                        <p className="text-sm text-muted-foreground mb-4">
-                          Explora el catálogo para encontrar cursos interesantes
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="text-center py-12"
+                      >
+                        <motion.div
+                          initial={{ scale: 0.8 }}
+                          animate={{ scale: 1 }}
+                          transition={{ delay: 0.2, type: 'spring' }}
+                          className="mx-auto w-20 h-20 rounded-full bg-gradient-to-br from-muted/50 to-muted/30 flex items-center justify-center mb-6"
+                        >
+                          <BookOpen className="h-10 w-10 text-muted-foreground" />
+                        </motion.div>
+                        <h3 className="text-xl font-bold mb-2">No hay cursos disponibles</h3>
+                        <p className="text-sm text-muted-foreground mb-6 max-w-md mx-auto">
+                          Explora el catálogo para encontrar cursos interesantes y comienza tu viaje de aprendizaje
                         </p>
-                        <Button onClick={() => navigate('/catalog')} className="gap-2">
+                        <Button 
+                          onClick={() => navigate('/catalog')} 
+                          className="gap-2"
+                          size="lg"
+                        >
                           <BookOpen className="h-4 w-4" />
                           Explorar Catálogo
+                          <ArrowRight className="h-4 w-4" />
                         </Button>
-                      </div>
+                      </motion.div>
                     ) : (
                       <div className="space-y-3">
                         {courses.slice(0, 3).map((course) => (

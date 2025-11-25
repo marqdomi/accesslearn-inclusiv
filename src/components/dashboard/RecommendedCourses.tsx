@@ -1,0 +1,184 @@
+import { useNavigate } from 'react-router-dom'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import {
+  BookOpen,
+  Clock,
+  Zap,
+  TrendingUp,
+  Star,
+  ArrowRight,
+  ChevronRight,
+} from 'lucide-react'
+import { motion } from 'framer-motion'
+import { cn } from '@/lib/utils'
+
+interface Course {
+  id: string
+  title: string
+  description: string
+  difficulty: string
+  estimatedHours: number
+  modules: any[]
+  totalXP?: number
+  coverImage?: string
+  enrollments?: number
+  rating?: number
+}
+
+interface RecommendedCoursesProps {
+  courses: Course[]
+  currentEnrolledCourseIds?: string[]
+  loading?: boolean
+}
+
+export function RecommendedCourses({
+  courses,
+  currentEnrolledCourseIds = [],
+  loading = false,
+}: RecommendedCoursesProps) {
+  const navigate = useNavigate()
+
+  // Filter out already enrolled courses and get top 3-4 recommendations
+  const recommended = courses
+    .filter((course) => !currentEnrolledCourseIds.includes(course.id))
+    .slice(0, 4)
+
+  if (loading) {
+    return (
+      <Card className="border-2">
+        <CardHeader>
+          <div className="h-6 bg-muted rounded w-1/3 animate-pulse"></div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4 md:grid-cols-2">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="h-32 bg-muted rounded animate-pulse"></div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (recommended.length === 0) {
+    return (
+      <Card className="border-2 border-dashed">
+        <CardContent className="p-8">
+          <div className="text-center space-y-4">
+            <div className="mx-auto w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center">
+              <Star className="h-8 w-8 text-muted-foreground" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold mb-2">
+                ¡Has explorado todos los cursos disponibles!
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                Nuevos cursos estarán disponibles pronto
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  return (
+    <Card className="border-2 overflow-hidden">
+      <CardHeader className="bg-gradient-to-r from-primary/5 to-primary/10">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Star className="h-5 w-5 text-primary" />
+            <CardTitle>Recomendados para Ti</CardTitle>
+          </div>
+          {courses.length > recommended.length && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/catalog')}
+              className="gap-1"
+            >
+              Ver todos
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
+      </CardHeader>
+      <CardContent className="pt-6">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {recommended.map((course, index) => (
+            <motion.div
+              key={course.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
+            >
+              <div
+                className={cn(
+                  "group relative p-4 rounded-lg border-2 border-border/50",
+                  "hover:border-primary/50 hover:shadow-md transition-all cursor-pointer",
+                  "bg-card"
+                )}
+                onClick={() => navigate(`/courses/${course.id}`)}
+              >
+                <div className="space-y-3">
+                  {/* Header */}
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-semibold text-sm line-clamp-2 group-hover:text-primary transition-colors mb-1">
+                        {course.title}
+                      </h4>
+                      <p className="text-xs text-muted-foreground line-clamp-2">
+                        {course.description}
+                      </p>
+                    </div>
+                    <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0 mt-1" />
+                  </div>
+
+                  {/* Stats */}
+                  <div className="flex items-center gap-2 flex-wrap text-xs">
+                    {course.estimatedHours && (
+                      <div className="flex items-center gap-1 text-muted-foreground">
+                        <Clock className="h-3 w-3" />
+                        <span>{course.estimatedHours}h</span>
+                      </div>
+                    )}
+                    {course.totalXP && (
+                      <div className="flex items-center gap-1 text-muted-foreground">
+                        <Zap className="h-3 w-3" />
+                        <span>{course.totalXP} XP</span>
+                      </div>
+                    )}
+                    {course.rating && (
+                      <div className="flex items-center gap-1 text-muted-foreground">
+                        <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                        <span>{course.rating.toFixed(1)}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Footer */}
+                  <div className="flex items-center justify-between pt-2 border-t border-border/50">
+                    <Badge variant="outline" className="text-xs">
+                      {course.difficulty}
+                    </Badge>
+                    {course.enrollments && course.enrollments > 0 && (
+                      <span className="text-xs text-muted-foreground">
+                        {course.enrollments} estudiantes
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Hover effect overlay */}
+                <div className="absolute inset-0 rounded-lg bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+

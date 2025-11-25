@@ -58,25 +58,42 @@ export function ContinueLearningCard({ course, progress, loading }: ContinueLear
 
   if (!course) {
     return (
-      <Card className="border-2 border-dashed border-muted">
-        <CardContent className="p-8">
-          <div className="text-center space-y-4">
-            <div className="mx-auto w-16 h-16 rounded-full bg-muted flex items-center justify-center">
-              <BookOpen className="h-8 w-8 text-muted-foreground" />
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+      >
+        <Card className="border-2 border-dashed border-muted hover:border-primary/50 transition-colors">
+          <CardContent className="p-8 md:p-12">
+            <div className="text-center space-y-6">
+              <motion.div
+                initial={{ scale: 0.8 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
+                className="mx-auto w-20 h-20 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center"
+              >
+                <BookOpen className="h-10 w-10 text-primary" />
+              </motion.div>
+              <div className="space-y-3">
+                <h3 className="text-xl font-bold">¡Comienza tu aprendizaje!</h3>
+                <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                  Explora el catálogo de cursos y encuentra el perfecto para ti. 
+                  Cada curso te acerca más a tus objetivos profesionales.
+                </p>
+                <Button 
+                  onClick={() => navigate('/catalog')} 
+                  className="gap-2 mt-4"
+                  size="lg"
+                >
+                  <BookOpen className="h-4 w-4" />
+                  Explorar Catálogo
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
-            <div>
-              <h3 className="text-lg font-semibold mb-2">¡Comienza tu aprendizaje!</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Explora el catálogo de cursos y encuentra el perfecto para ti
-              </p>
-              <Button onClick={() => navigate('/catalog')} className="gap-2">
-                <BookOpen className="h-4 w-4" />
-                Explorar Cursos
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </motion.div>
     )
   }
 
@@ -151,19 +168,21 @@ export function ContinueLearningCard({ course, progress, loading }: ContinueLear
 
               {/* Actions */}
               <div className="flex items-center gap-3 pt-2">
-                <Button 
-                  onClick={handleContinue}
-                  size="lg"
-                  className="gap-2 flex-1 md:flex-initial"
-                >
-                  <PlayCircle className="h-4 w-4" />
-                  Continuar Curso
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
+                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                  <Button 
+                    onClick={handleContinue}
+                    size="lg"
+                    className="gap-2 flex-1 md:flex-initial shadow-md hover:shadow-lg transition-shadow"
+                  >
+                    <PlayCircle className="h-4 w-4" />
+                    Continuar Curso
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </motion.div>
                 <Button
                   variant="outline"
                   onClick={() => navigate(`/courses/${course.id}`)}
-                  className="hidden md:flex gap-2"
+                  className="hidden md:flex gap-2 hover:bg-primary/5 transition-colors"
                 >
                   Ver Detalles
                 </Button>
