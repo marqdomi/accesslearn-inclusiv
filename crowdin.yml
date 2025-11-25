@@ -1,7 +1,7 @@
 # Crowdin Configuration for Kaido Platform
 # Documentation: https://support.crowdin.com/configuration-file/
 
-project_id: "" # Se llenará después de crear el proyecto en Crowdin
+project_id: "849136"
 api_token_env: CROWDIN_PERSONAL_TOKEN
 
 preserve_hierarchy: true
