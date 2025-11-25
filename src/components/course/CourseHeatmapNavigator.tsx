@@ -49,6 +49,16 @@ export function CourseHeatmapNavigator({
     return 'locked'
   }
 
+  const getModuleStatus = (module: ModuleColumn) => {
+    const hasCurrent = module.lessons.some((lesson) => lesson.isCurrent)
+    if (hasCurrent) return 'current'
+    const allCompleted = module.lessons.every((lesson) => lesson.isCompleted)
+    if (allCompleted) return 'completed'
+    const anyCompleted = module.lessons.some((lesson) => lesson.isCompleted)
+    if (anyCompleted) return 'in-progress'
+    return 'pending'
+  }
+
 const statusStyles: Record<string, string> = {
   completed: 'bg-emerald-500/90 hover:bg-emerald-500 text-white',
   current:
@@ -57,22 +67,26 @@ const statusStyles: Record<string, string> = {
   locked: 'bg-muted/60 text-muted-foreground cursor-not-allowed',
 }
 
+const moduleBadgeStyles: Record<string, string> = {
+  completed: 'bg-emerald-50 text-emerald-700 border border-emerald-100',
+  current: 'bg-primary/10 text-primary border border-primary/20 shadow-sm',
+  'in-progress': 'bg-muted text-muted-foreground border border-transparent',
+  pending: 'bg-muted text-muted-foreground border border-transparent',
+}
+
   return (
     <TooltipProvider delayDuration={150}>
       <div className="rounded-2xl border bg-card p-4 shadow-sm">
-        <div className="flex items-center justify-between mb-4">
-          <p className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">
-            Mapa de progreso
-          </p>
-          {onToggleSidebar && (
+        {onToggleSidebar && (
+          <div className="flex justify-end mb-3">
             <button
               onClick={onToggleSidebar}
               className="text-[11px] font-semibold text-muted-foreground hover:text-foreground transition"
             >
               {isCollapsed ? 'Mostrar mapa' : 'Ocultar mapa'}
             </button>
-          )}
-        </div>
+          </div>
+        )}
 
         <div className="max-h-[65vh] overflow-y-auto pr-1">
           <div className="space-y-6">
@@ -80,7 +94,12 @@ const statusStyles: Record<string, string> = {
               <div key={module.id} className="relative pl-8">
                 <div className="flex flex-col items-center gap-2 relative">
                   <span className="absolute left-1/2 top-4 bottom-4 w-px bg-muted/40" />
-                  <span className="px-3 py-1 text-[10px] font-semibold rounded-full bg-card border text-muted-foreground shadow-sm -mt-1">
+                  <span
+                    className={cn(
+                      'px-3 py-1 text-[10px] font-semibold rounded-full shadow-sm -mt-1',
+                      moduleBadgeStyles[getModuleStatus(module)]
+                    )}
+                  >
                     M{moduleIndex + 1}
                   </span>
                   {module.lessons.map((lesson, lessonIndex) => {
