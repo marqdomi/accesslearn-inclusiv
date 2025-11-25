@@ -125,57 +125,6 @@ const statusStyles: Record<string, string> = {
     </TooltipProvider>
   )
 }
-                    {module.lessons.map((lesson, lessonIndex) => {
-                      const status = getStatus(lesson)
-                      const disabled = status === 'locked'
-                      const isLast = lessonIndex === module.lessons.length - 1
-
-                      return (
-                        <div key={lesson.id} className="flex flex-col items-center gap-2">
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <button
-                                className={cn(
-                                  'h-9 w-9 rounded-full text-[11px] font-semibold flex items-center justify-center transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary shadow-sm',
-                                  statusStyles[status],
-                                  status === 'current' && 'animate-pulse'
-                                )}
-                                disabled={disabled}
-                                onClick={() => onLessonSelect(module.id, lesson.id)}
-                              >
-                                {lessonIndex + 1}
-                              </button>
-                            </TooltipTrigger>
-                            <TooltipContent side="right" align="center">
-                              <div className="space-y-1">
-                                <p className="text-xs font-semibold">
-                                  {module.title}
-                                </p>
-                                <p className="text-sm font-medium">
-                                  {lesson.title}
-                                </p>
-                                <p className="text-xs text-muted-foreground">
-                                  {lesson.duration
-                                    ? `${lesson.duration} min`
-                                    : 'Sin duración'}
-                                </p>
-                              </div>
-                            </TooltipContent>
-                          </Tooltip>
-                          {!isLast && <div className="w-px h-3 bg-muted/50 rounded-full" />}
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </TooltipProvider>
-  )
-}
 
 function LegendDot({ className }: { className?: string }) {
   return (
