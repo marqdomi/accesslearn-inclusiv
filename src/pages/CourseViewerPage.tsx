@@ -615,32 +615,6 @@ export function CourseViewerPage() {
   const totalLessons = course
     ? course.modules.reduce((acc, module) => acc + (module.lessons?.length || 0), 0)
     : 0
-  const progressPercentage = totalLessons > 0 ? (completedLessons.size / totalLessons) * 100 : 0
-
-  const getNextLessonInfo = () => {
-    if (!course || !currentModule) return null
-    const currentLessonIndex = currentModule.lessons.findIndex(l => l.id === currentLessonId)
-    if (currentLessonIndex >= 0 && currentLessonIndex < currentModule.lessons.length - 1) {
-      const lesson = currentModule.lessons[currentLessonIndex + 1]
-      return {
-        moduleTitle: currentModule.title,
-        lessonTitle: lesson.title,
-      }
-    }
-    const moduleIndex = course.modules.findIndex(m => m.id === currentModuleId)
-    if (moduleIndex >= 0 && moduleIndex < course.modules.length - 1) {
-      const nextModule = course.modules[moduleIndex + 1]
-      if (nextModule.lessons && nextModule.lessons.length > 0) {
-        return {
-          moduleTitle: nextModule.title,
-          lessonTitle: nextModule.lessons[0].title,
-        }
-      }
-    }
-    return null
-  }
-
-  const nextLessonInfo = getNextLessonInfo()
 
   // Show completion page if course is finished
   const moduleNavigatorData = (course?.modules || []).map((module) => ({
@@ -731,8 +705,20 @@ export function CourseViewerPage() {
       {/* Main Content */}
       <div className="container mx-auto px-4 py-6">
         <div className={`grid grid-cols-1 gap-6 ${sidebarCollapsed ? '' : 'lg:grid-cols-12'}`}>
+          {sidebarCollapsed && (
+            <div className="flex justify-start">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-xs gap-2"
+                onClick={() => setSidebarCollapsed(false)}
+              >
+                Mostrar mapa
+              </Button>
+            </div>
+          )}
           {!sidebarCollapsed && (
-            <aside className="lg:col-span-3 space-y-4">
+            <aside className="lg:col-span-3 space-y-4 max-w-[260px]">
               <div className="flex items-center rounded-full border bg-muted/40 p-1 text-xs font-medium">
                 <button
                   className={cn(
@@ -763,13 +749,17 @@ export function CourseViewerPage() {
                   modules={moduleNavigatorData}
                   currentLessonId={currentLessonId}
                   onLessonSelect={handleLessonSelect}
+                  onToggleSidebar={() => setSidebarCollapsed((prev) => !prev)}
+                  isCollapsed={sidebarCollapsed}
                 />
               ) : (
-                <ModuleNavigation
-                  modules={moduleNavigatorData}
-                  currentLessonId={currentLessonId}
-                  onLessonSelect={handleLessonSelect}
-                />
+                <div className="rounded-2xl border bg-card p-4 shadow-sm max-h-[65vh] overflow-y-auto">
+                  <ModuleNavigation
+                    modules={moduleNavigatorData}
+                    currentLessonId={currentLessonId}
+                    onLessonSelect={handleLessonSelect}
+                  />
+                </div>
               )}
             </aside>
           )}
@@ -780,10 +770,6 @@ export function CourseViewerPage() {
               courseTitle={course.title}
               currentModuleTitle={currentModule?.title}
               currentLessonTitle={currentLesson?.title}
-              nextLessonTitle={nextLessonInfo?.lessonTitle}
-              progressPercentage={progressPercentage}
-              sidebarCollapsed={sidebarCollapsed}
-              onToggleSidebar={() => setSidebarCollapsed(prev => !prev)}
             />
             <AnimatePresence mode="wait">
               <motion.div

@@ -27,10 +27,20 @@ interface CourseHeatmapNavigatorProps {
   onLessonSelect: (moduleId: string, lessonId: string) => void
 }
 
+interface CourseHeatmapNavigatorProps {
+  modules: ModuleColumn[]
+  currentLessonId: string
+  onLessonSelect: (moduleId: string, lessonId: string) => void
+  onToggleSidebar?: () => void
+  isCollapsed?: boolean
+}
+
 export function CourseHeatmapNavigator({
   modules,
   currentLessonId,
   onLessonSelect,
+  onToggleSidebar,
+  isCollapsed = false,
 }: CourseHeatmapNavigatorProps) {
   const getStatus = (lesson: LessonCell) => {
     if (lesson.isCurrent) return 'current'
@@ -51,11 +61,17 @@ const statusStyles: Record<string, string> = {
     <TooltipProvider delayDuration={150}>
       <div className="rounded-2xl border bg-card p-4 shadow-sm">
         <div className="flex items-center justify-between mb-4">
-          <div>
-            <p className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">
-              Mapa de progreso
-            </p>
-          </div>
+          <p className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">
+            Mapa de progreso
+          </p>
+          {onToggleSidebar && (
+            <button
+              onClick={onToggleSidebar}
+              className="text-[11px] font-semibold text-muted-foreground hover:text-foreground transition"
+            >
+              {isCollapsed ? 'Mostrar mapa' : 'Ocultar mapa'}
+            </button>
+          )}
         </div>
 
         <div className="max-h-[65vh] overflow-y-auto pr-1">
