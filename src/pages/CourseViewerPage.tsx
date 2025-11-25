@@ -752,11 +752,13 @@ export function CourseViewerPage() {
 
           {/* Main Content Area */}
           <main className={sidebarCollapsed ? 'lg:col-span-12' : 'lg:col-span-9'}>
-            <CourseMissionPanel
-              courseTitle={course.title}
-              currentModuleTitle={currentModule?.title}
-              currentLessonTitle={currentLesson?.title}
-            />
+            <div className="mb-6">
+              <CourseMissionPanel
+                courseTitle={course.title}
+                currentModuleTitle={currentModule?.title}
+                currentLessonTitle={currentLesson?.title}
+              />
+            </div>
             <AnimatePresence mode="wait">
               <motion.div
                 key={currentLessonId}
@@ -786,12 +788,7 @@ export function CourseViewerPage() {
                 )}
 
                 {/* Navigation and Complete Button */}
-                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between border rounded-2xl p-4 shadow-sm bg-card">
-                  <div className="text-sm text-muted-foreground">
-                    {sidebarCollapsed
-                      ? 'El mapa está oculto. Puedes volver a mostrarlo desde la tarjeta superior.'
-                      : 'Usa el mapa lateral para saltar a cualquier módulo.'}
-                  </div>
+                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-end border rounded-2xl p-4 shadow-sm bg-card">
                   <div className="flex flex-wrap items-center justify-end gap-3">
                     <Button
                       variant="outline"
