@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
-import { LayoutSidebar, LayoutSidebarRight } from 'lucide-react'
+import { PanelLeftClose, PanelRightClose } from 'lucide-react'
 
 interface CourseMissionPanelProps {
   courseTitle: string
@@ -66,12 +66,12 @@ export function CourseMissionPanel({
       >
         {sidebarCollapsed ? (
           <>
-            <LayoutSidebarRight className="h-4 w-4" />
+            <PanelRightClose className="h-4 w-4" />
             Mostrar mapa
           </>
         ) : (
           <>
-            <LayoutSidebar className="h-4 w-4" />
+            <PanelLeftClose className="h-4 w-4" />
             Ocultar mapa
           </>
         )}
