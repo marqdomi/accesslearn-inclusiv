@@ -329,20 +329,22 @@ export function TenantResolver({ children }: TenantResolverProps) {
                   size="xl" 
                   className="rounded-2xl"
                   fallbackIcon={
-                    <img 
-                      src="/logos/kaido-logo.png" 
-                      alt="Kaido" 
-                      className="h-20 w-auto object-contain"
-                      onError={(e) => {
-                        // Si no existe la imagen, mostrar fallback
-                        (e.target as HTMLImageElement).style.display = 'none';
-                        const fallback = (e.target as HTMLImageElement).nextElementSibling as HTMLElement;
-                        if (fallback) fallback.style.display = 'flex';
-                      }}
-                    />
-                    <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg hidden">
-                      <span className="text-4xl">📚</span>
-                    </div>
+                    <>
+                      <img 
+                        src="/logos/kaido-logo.png" 
+                        alt="Kaido" 
+                        className="h-20 w-auto object-contain"
+                        onError={(e) => {
+                          // Si no existe la imagen, mostrar fallback
+                          (e.target as HTMLImageElement).style.display = 'none';
+                          const fallback = (e.target as HTMLImageElement).nextElementSibling as HTMLElement;
+                          if (fallback) fallback.style.display = 'flex';
+                        }}
+                      />
+                      <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg hidden">
+                        <span className="text-4xl">📚</span>
+                      </div>
+                    </>
                   }
                 />
               </div>
