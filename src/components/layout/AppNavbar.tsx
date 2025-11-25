@@ -6,6 +6,7 @@ import { TenantLogo } from '@/components/branding/TenantLogo'
 import { TenantSwitcher } from '@/components/dashboard/TenantSwitcher'
 import { LevelBadge } from '@/components/gamification/LevelBadge'
 import { useNotifications } from '@/hooks/use-notifications'
+import { usePermissions, type Permission } from '@/hooks/use-permissions'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -34,6 +35,7 @@ import {
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { useTranslation } from 'react-i18next'
 import type { UserNotification } from '@/lib/types'
+import { toast } from 'sonner'
 
 function getRoleColor(role: string): string {
   const colors: Record<string, string> = {
@@ -77,12 +79,21 @@ const breadcrumbNameMap: Record<string, string> = {
   accessibility: 'Accesibilidad',
 }
 
+const SETTINGS_PERMISSIONS: Permission[] = [
+  'settings:branding',
+  'settings:notifications',
+  'settings:integrations',
+  'settings:languages',
+  'settings:compliance',
+]
+
 export function AppNavbar({ userXP = 0 }: AppNavbarProps) {
   const navigate = useNavigate()
   const location = useLocation()
   const { user, logout } = useAuth()
   const { currentTenant } = useTenant()
   const { i18n } = useTranslation()
+  const { hasAnyPermission } = usePermissions()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [notificationsOpen, setNotificationsOpen] = useState(false)
 
@@ -125,6 +136,7 @@ export function AppNavbar({ userXP = 0 }: AppNavbarProps) {
   }, [location.pathname])
 
   const notificationItems = notifications.slice(0, 5)
+  const canAccessSettings = hasAnyPermission(SETTINGS_PERMISSIONS as unknown as string[])
 
   const handleNotificationClick = async (notification: UserNotification) => {
     try {
@@ -148,6 +160,14 @@ export function AppNavbar({ userXP = 0 }: AppNavbarProps) {
     })
   }
 
+  const handleSettingsAccess = () => {
+    if (canAccessSettings) {
+      navigate('/settings')
+    } else {
+      toast.error('No tienes permisos para acceder a Configuración')
+    }
+  }
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto px-4 py-2">
@@ -167,6 +187,17 @@ export function AppNavbar({ userXP = 0 }: AppNavbarProps) {
 
           {/* Right: Desktop Actions - Simplified */}
           <div className="hidden md:flex items-center gap-3 flex-shrink-0">
+            <Button
+              variant="ghost"
+              size="icon"
+              className={`h-9 w-9 ${!canAccessSettings ? 'opacity-60' : ''}`}
+              onClick={handleSettingsAccess}
+              aria-disabled={!canAccessSettings}
+              aria-label="Configuración"
+            >
+              <Settings className="h-4 w-4" />
+            </Button>
+
             {user?.id && (
               <DropdownMenu open={notificationsOpen} onOpenChange={setNotificationsOpen}>
                 <DropdownMenuTrigger asChild>
@@ -309,9 +340,14 @@ export function AppNavbar({ userXP = 0 }: AppNavbarProps) {
                   <User className="mr-2 h-4 w-4" />
                   Mi Perfil
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate('/settings')}>
+                <DropdownMenuItem onClick={handleSettingsAccess}>
                   <Settings className="mr-2 h-4 w-4" />
                   Configuración
+                  {!canAccessSettings && (
+                    <Badge variant="outline" className="ml-auto text-[10px]">
+                      Sin acceso
+                    </Badge>
+                  )}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
 
@@ -473,12 +509,17 @@ export function AppNavbar({ userXP = 0 }: AppNavbarProps) {
                       variant="ghost"
                       className="w-full justify-start"
                       onClick={() => {
-                        navigate('/settings')
+                        handleSettingsAccess()
                         setMobileMenuOpen(false)
                       }}
                     >
                       <Settings className="mr-2 h-4 w-4" />
                       Configuración
+                      {!canAccessSettings && (
+                        <Badge variant="outline" className="ml-auto text-[10px]">
+                          Sin acceso
+                        </Badge>
+                      )}
                     </Button>
                     <Button
                       variant="ghost"
