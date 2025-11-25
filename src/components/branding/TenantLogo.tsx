@@ -46,12 +46,22 @@ export function TenantLogo({
           return
         }
 
-        // Es un blobName (formato: container/blobName), generar URL con SAS
+        // Si es un blobName, el backend ya debería haber generado la URL con SAS token
+        // cuando se cargó el tenant desde /api/tenants/slug/:slug
+        // Si por alguna razón no es una URL, intentar generar una (requiere auth)
+        // Pero esto solo funcionará si el usuario está autenticado
         if (currentTenant.logo.includes('/')) {
-          const [containerName, ...blobNameParts] = currentTenant.logo.split('/')
-          const blobName = blobNameParts.join('/')
-          const { url } = await ApiService.getMediaUrl(containerName, blobName)
-          setLogoUrl(url)
+          try {
+            const [containerName, ...blobNameParts] = currentTenant.logo.split('/')
+            const blobName = blobNameParts.join('/')
+            const { url } = await ApiService.getMediaUrl(containerName, blobName)
+            setLogoUrl(url)
+          } catch (authError) {
+            // Si falla por autenticación, el logo no se puede cargar sin auth
+            // Esto es normal en la página de login
+            console.warn('[TenantLogo] Cannot generate logo URL without authentication:', authError)
+            setLogoUrl(null)
+          }
         } else {
           setLogoUrl(currentTenant.logo)
         }

@@ -372,7 +372,24 @@ app.get('/api/tenants/slug/:slug', async (req, res) => {
       return res.status(404).json({ error: `Tenant with slug "${slug}" not found` });
     }
 
-    res.json(tenant);
+    // Si el tenant tiene un logo en Blob Storage, generar URL con SAS token
+    let tenantWithLogo = { ...tenant };
+    if (tenant.logo && !tenant.logo.startsWith('http') && !tenant.logo.startsWith('data:')) {
+      // Es un blobName, intentar generar URL con SAS token
+      try {
+        if (tenant.logo.includes('/')) {
+          const [containerName, ...blobNameParts] = tenant.logo.split('/');
+          const blobName = blobNameParts.join('/');
+          const sasUrl = await blobStorageService.generateSasUrl(containerName, blobName, 60);
+          tenantWithLogo.logo = sasUrl;
+        }
+      } catch (error: any) {
+        console.warn(`[API] Could not generate SAS URL for tenant logo: ${error.message}`);
+        // Mantener el blobName si falla la generación de URL
+      }
+    }
+
+    res.json(tenantWithLogo);
   } catch (error: any) {
     console.error('[API] Error getting tenant by slug:', error);
     res.status(500).json({ error: error.message });
@@ -2992,12 +3009,14 @@ app.get('/api/media/url/:container/:blobName',
     // Decodificar blobName (viene codificado desde el frontend)
     const blobName = decodeURIComponent(encodedBlobName);
     
-    console.log(`[API] Getting media URL for container: ${container}, blobName: ${blobName}`);
+    console.log(`[API] Getting media URL for container: ${container}, blobName: ${blobName}, tenantId: ${tenantId}`);
     
     // Validar que el usuario tenga acceso al archivo
+    // El blobName puede venir en formato "tenant-id/path" o "container/tenant-id/path"
     // Verificar que el blob pertenezca al tenant del usuario
-    if (!blobName.startsWith(tenantId)) {
-      console.warn(`[API] Access denied: blobName ${blobName} does not start with tenantId ${tenantId}`);
+    const blobNameStartsWithTenant = blobName.startsWith(tenantId) || blobName.startsWith(`${tenantId}/`) || blobName.includes(`/${tenantId}/`);
+    if (!blobNameStartsWithTenant && !blobName.includes(tenantId)) {
+      console.warn(`[API] Access denied: blobName ${blobName} does not belong to tenantId ${tenantId}`);
       return res.status(403).json({ error: 'No tienes acceso a este archivo' });
     }
     
@@ -3032,7 +3051,9 @@ app.delete('/api/media/:container/:blobName',
     const blobName = decodeURIComponent(encodedBlobName);
     
     // Validar que el archivo pertenezca al tenant del usuario
-    if (!blobName.startsWith(tenantId)) {
+    // El blobName puede venir en formato "tenant-id/path" o solo "path" si ya incluye tenantId
+    const blobNameStartsWithTenant = blobName.startsWith(tenantId) || blobName.startsWith(`${tenantId}/`) || blobName.includes(`/${tenantId}/`);
+    if (!blobNameStartsWithTenant && !blobName.includes(tenantId)) {
       return res.status(403).json({ error: 'No tienes permisos para eliminar este archivo' });
     }
 
