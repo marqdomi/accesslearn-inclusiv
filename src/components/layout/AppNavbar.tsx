@@ -187,17 +187,6 @@ export function AppNavbar({ userXP = 0 }: AppNavbarProps) {
 
           {/* Right: Desktop Actions - Simplified */}
           <div className="hidden md:flex items-center gap-3 flex-shrink-0">
-            <Button
-              variant="ghost"
-              size="icon"
-              className={`h-9 w-9 ${!canAccessSettings ? 'opacity-60' : ''}`}
-              onClick={handleSettingsAccess}
-              aria-disabled={!canAccessSettings}
-              aria-label="Configuración"
-            >
-              <Settings className="h-4 w-4" />
-            </Button>
-
             {user?.id && (
               <DropdownMenu open={notificationsOpen} onOpenChange={setNotificationsOpen}>
                 <DropdownMenuTrigger asChild>
