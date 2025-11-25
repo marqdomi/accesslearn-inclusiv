@@ -59,7 +59,7 @@ export function GroupSuggestions() {
 
       const employeeDataStr = JSON.stringify(employeeData, null, 2)
       
-      const isSpanish = t('app.title') === 'GameLearn' && t('nav.dashboard') === 'Panel Principal'
+      const isSpanish = t('app.title') === 'Kaido' && t('nav.dashboard') === 'Panel Principal'
       
       const promptText = isSpanish 
         ? `Eres un asistente de RRHH que ayuda a organizar empleados en grupos lógicos para una plataforma de aprendizaje corporativo.
