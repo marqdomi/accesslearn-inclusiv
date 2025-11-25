@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 import { useAuth } from '@/contexts/AuthContext'
 import { useTenant } from '@/contexts/TenantContext'
 import { ApiService } from '@/services/api.service'
+import { cn } from '@/lib/utils'
 import { ModuleNavigation } from '@/components/course/ModuleNavigation'
 import { LessonContent } from '@/components/course/LessonContent'
 import { CourseCompletionPage } from '@/components/course/CourseCompletionPage'
@@ -11,8 +12,15 @@ import { XPAnimation } from '@/components/gamification/XPAnimation'
 import { ConfettiEffect } from '@/components/gamification/ConfettiEffect'
 import { GameNotificationQueue, GameNotification } from '@/components/gamification/GameNotificationQueue'
 import { CourseMissionPanel } from '@/components/course/CourseMissionPanel'
+import { CourseHeatmapNavigator } from '@/components/course/CourseHeatmapNavigator'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, CheckCircle, ChevronLeft, ChevronRight, Trophy } from 'lucide-react'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
+import { ArrowLeft, CheckCircle, ChevronLeft, ChevronRight, Trophy, PanelRightClose, PanelLeftClose } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 interface Lesson {
@@ -64,6 +72,7 @@ export function CourseViewerPage() {
   const [courseCompleted, setCourseCompleted] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [gameNotifications, setGameNotifications] = useState<GameNotification[]>([])
+  const [navigatorMode, setNavigatorMode] = useState<'heatmap' | 'list'>('heatmap')
   
   // Gamification states
   const [showXPAnimation, setShowXPAnimation] = useState(false)
@@ -612,34 +621,18 @@ export function CourseViewerPage() {
   const totalLessons = course
     ? course.modules.reduce((acc, module) => acc + (module.lessons?.length || 0), 0)
     : 0
-  const progressPercentage = totalLessons > 0 ? (completedLessons.size / totalLessons) * 100 : 0
-
-  const getNextLessonInfo = () => {
-    if (!course || !currentModule) return null
-    const currentLessonIndex = currentModule.lessons.findIndex(l => l.id === currentLessonId)
-    if (currentLessonIndex >= 0 && currentLessonIndex < currentModule.lessons.length - 1) {
-      const lesson = currentModule.lessons[currentLessonIndex + 1]
-      return {
-        moduleTitle: currentModule.title,
-        lessonTitle: lesson.title,
-      }
-    }
-    const moduleIndex = course.modules.findIndex(m => m.id === currentModuleId)
-    if (moduleIndex >= 0 && moduleIndex < course.modules.length - 1) {
-      const nextModule = course.modules[moduleIndex + 1]
-      if (nextModule.lessons && nextModule.lessons.length > 0) {
-        return {
-          moduleTitle: nextModule.title,
-          lessonTitle: nextModule.lessons[0].title,
-        }
-      }
-    }
-    return null
-  }
-
-  const nextLessonInfo = getNextLessonInfo()
 
   // Show completion page if course is finished
+  const moduleNavigatorData = (course?.modules || []).map((module) => ({
+    ...module,
+    lessons: (module.lessons || []).map((lesson) => ({
+      ...lesson,
+      isCompleted: isLessonCompleted(lesson.id),
+      isCurrent: lesson.id === currentLessonId,
+    })),
+    isCompleted: (module.lessons || []).every((l) => isLessonCompleted(l.id)),
+  }))
+
   if (courseCompleted && course) {
     return (
       <CourseCompletionPage
@@ -719,33 +712,97 @@ export function CourseViewerPage() {
       <div className="container mx-auto px-4 py-6">
         <div className={`grid grid-cols-1 gap-6 ${sidebarCollapsed ? '' : 'lg:grid-cols-12'}`}>
           {!sidebarCollapsed && (
-            <aside className="lg:col-span-3">
-              <ModuleNavigation
-                modules={(course.modules || []).map(module => ({
-                  ...module,
-                  lessons: (module.lessons || []).map(lesson => ({
-                    ...lesson,
-                    isCompleted: isLessonCompleted(lesson.id),
-                  })),
-                  isCompleted: (module.lessons || []).every(l => isLessonCompleted(l.id)),
-                }))}
-                currentLessonId={currentLessonId}
-                onLessonSelect={handleLessonSelect}
-              />
+            <aside className="lg:col-span-3 space-y-4 max-w-[260px]">
+              <div className="flex items-center justify-between gap-2 mb-3">
+                <div className="flex items-center rounded-full border bg-muted/40 p-1 text-xs font-medium flex-1">
+                  <button
+                    className={cn(
+                      'flex-1 rounded-full px-3 py-1 transition',
+                      navigatorMode === 'heatmap'
+                        ? 'bg-background shadow-sm'
+                        : 'text-muted-foreground'
+                    )}
+                    onClick={() => setNavigatorMode('heatmap')}
+                  >
+                    Mapa
+                  </button>
+                  <button
+                    className={cn(
+                      'flex-1 rounded-full px-3 py-1 transition',
+                      navigatorMode === 'list'
+                        ? 'bg-background shadow-sm'
+                        : 'text-muted-foreground'
+                    )}
+                    onClick={() => setNavigatorMode('list')}
+                  >
+                    Lista
+                  </button>
+                </div>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={() => setSidebarCollapsed(true)}
+                        className="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 transition"
+                      >
+                        <PanelLeftClose className="h-4 w-4" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Ocultar navegación</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+
+              {navigatorMode === 'heatmap' ? (
+                <CourseHeatmapNavigator
+                  modules={moduleNavigatorData}
+                  currentLessonId={currentLessonId}
+                  onLessonSelect={handleLessonSelect}
+                />
+              ) : (
+                <div className="rounded-2xl border bg-card p-4 shadow-sm max-h-[65vh] overflow-y-auto">
+                  <ModuleNavigation
+                    modules={moduleNavigatorData}
+                    currentLessonId={currentLessonId}
+                    onLessonSelect={handleLessonSelect}
+                  />
+                </div>
+              )}
             </aside>
           )}
 
           {/* Main Content Area */}
           <main className={sidebarCollapsed ? 'lg:col-span-12' : 'lg:col-span-9'}>
-            <CourseMissionPanel
-              courseTitle={course.title}
-              currentModuleTitle={currentModule?.title}
-              currentLessonTitle={currentLesson?.title}
-              nextLessonTitle={nextLessonInfo?.lessonTitle}
-              progressPercentage={progressPercentage}
-              sidebarCollapsed={sidebarCollapsed}
-              onToggleSidebar={() => setSidebarCollapsed(prev => !prev)}
-            />
+            {sidebarCollapsed && (
+              <div className="mb-4">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setSidebarCollapsed(false)}
+                        className="p-2"
+                      >
+                        <PanelRightClose className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Mostrar navegación</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+            )}
+            <div className="mb-6">
+              <CourseMissionPanel
+                courseTitle={course.title}
+                currentModuleTitle={currentModule?.title}
+                currentLessonTitle={currentLesson?.title}
+              />
+            </div>
             <AnimatePresence mode="wait">
               <motion.div
                 key={currentLessonId}
@@ -775,12 +832,7 @@ export function CourseViewerPage() {
                 )}
 
                 {/* Navigation and Complete Button */}
-                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between border rounded-2xl p-4 shadow-sm bg-card">
-                  <div className="text-sm text-muted-foreground">
-                    {sidebarCollapsed
-                      ? 'El mapa está oculto. Puedes volver a mostrarlo desde la tarjeta superior.'
-                      : 'Usa el mapa lateral para saltar a cualquier módulo.'}
-                  </div>
+                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-end border rounded-2xl p-4 shadow-sm bg-card">
                   <div className="flex flex-wrap items-center justify-end gap-3">
                     <Button
                       variant="outline"

@@ -31,59 +31,62 @@ export function ModuleNavigation({
 }: ModuleNavigationProps) {
   const getLessonIcon = (type: Lesson['type'], isCompleted?: boolean) => {
     if (isCompleted) {
-      return <CheckCircle2 className="h-4 w-4 text-green-600" />
+      return <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
     }
 
     switch (type) {
       case 'video':
-        return <PlayCircle className="h-4 w-4 text-muted-foreground" />
+        return <PlayCircle className="h-3.5 w-3.5 text-muted-foreground" />
       case 'quiz':
-        return <HelpCircle className="h-4 w-4 text-muted-foreground" />
+        return <HelpCircle className="h-3.5 w-3.5 text-muted-foreground" />
       case 'markdown':
       default:
-        return <FileText className="h-4 w-4 text-muted-foreground" />
+        return <FileText className="h-3.5 w-3.5 text-muted-foreground" />
     }
   }
 
   return (
-    <Card className="p-4 sticky top-4">
-      <div className="space-y-6">
+    <Card className="p-3 sticky top-4">
+      <div className="space-y-4">
         <div>
-          <h2 className="text-lg font-semibold mb-1">Contenido del Curso</h2>
-          <p className="text-sm text-muted-foreground">
-            {modules.length} módulos
-          </p>
+          <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+            Contenido del curso
+          </h2>
+          <p className="text-[10px] text-muted-foreground mt-0.5">{modules.length} módulos</p>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-3">
           {modules.map((module, moduleIndex) => {
             const completedLessons = module.lessons.filter(l => l.isCompleted).length
             const totalLessons = module.lessons.length
             const progress = Math.round((completedLessons / totalLessons) * 100)
 
             return (
-              <div key={module.id} className="space-y-2">
+              <div key={module.id} className="space-y-1.5">
                 {/* Module Header */}
-                <div className="flex items-start gap-2">
-                  <div className="flex-shrink-0 mt-1">
+                <div className="flex items-start gap-1.5">
+                  <div className="flex-shrink-0 mt-0.5">
                     {module.isCompleted ? (
-                      <CheckCircle2 className="h-5 w-5 text-green-600" />
+                      <CheckCircle2 className="h-4 w-4 text-green-600" />
                     ) : (
-                      <Circle className="h-5 w-5 text-muted-foreground" />
+                      <Circle className="h-4 w-4 text-muted-foreground" />
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-medium text-sm leading-tight">
-                      Módulo {moduleIndex + 1}: {module.title}
+                    <h3 className="font-medium text-xs leading-tight">
+                      <span className="text-[10px] text-muted-foreground">
+                        M{moduleIndex + 1}
+                      </span>{' '}
+                      {module.title}
                     </h3>
-                    <div className="flex items-center gap-2 mt-1">
-                      <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <div className="flex-1 h-1 bg-muted rounded-full overflow-hidden">
                         <div
                           className="h-full bg-primary transition-all duration-300"
                           style={{ width: `${progress}%` }}
                         />
                       </div>
-                      <span className="text-xs text-muted-foreground">
+                      <span className="text-[10px] text-muted-foreground">
                         {completedLessons}/{totalLessons}
                       </span>
                     </div>
@@ -91,22 +94,22 @@ export function ModuleNavigation({
                 </div>
 
                 {/* Lessons List */}
-                <div className="ml-7 space-y-1">
+                <div className="ml-5 space-y-0.5">
                   {module.lessons.map((lesson, lessonIndex) => (
                     <button
                       key={lesson.id}
                       onClick={() => onLessonSelect(module.id, lesson.id)}
                       className={cn(
-                        'w-full text-left px-3 py-2 rounded-md transition-colors',
+                        'w-full text-left px-2 py-1.5 rounded-md transition-colors',
                         'hover:bg-muted/50 group',
                         currentLessonId === lesson.id && 'bg-primary/10 border-l-2 border-primary'
                       )}
                     >
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1.5">
                         {getLessonIcon(lesson.type, lesson.isCompleted)}
                         <span
                           className={cn(
-                            'text-sm flex-1',
+                            'text-xs flex-1 leading-tight',
                             currentLessonId === lesson.id && 'font-medium text-primary',
                             lesson.isCompleted && 'text-muted-foreground'
                           )}
@@ -114,7 +117,10 @@ export function ModuleNavigation({
                           {lessonIndex + 1}. {lesson.title}
                         </span>
                         {lesson.duration && (
-                          <Badge variant="secondary" className="text-xs">
+                          <Badge 
+                            variant="outline" 
+                            className="text-[10px] px-1.5 py-0 bg-muted/50 border-emerald-500 text-emerald-600"
+                          >
                             {lesson.duration}min
                           </Badge>
                         )}
