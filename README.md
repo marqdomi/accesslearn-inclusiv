@@ -384,7 +384,7 @@ El proyecto incluye scripts útiles para diagnóstico:
 
 ## 🗺️ Roadmap
 
-### Próximos Pasos (Q1 2025)
+### Próximos Pasos (Q1 2026)
 
 #### Prioridad Alta
 - [ ] Testing automatizado completo (Jest/Vitest + Playwright)
@@ -422,7 +422,7 @@ El proyecto incluye scripts útiles para diagnóstico:
 **Proyecto:** Kaido - Multi-Tenant Learning Platform  
 **Repositorio:** [github.com/marqdomi/accesslearn-inclusiv](https://github.com/marqdomi/accesslearn-inclusiv)  
 **Estado:** 🟢 **Producción Activa**  
-**Última Actualización:** 25 de Enero, 2025
+**Última Actualización:** 25 de Nov, 2025
 
 ---
 

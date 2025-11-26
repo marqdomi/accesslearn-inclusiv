@@ -16,6 +16,7 @@ export function useAutoSave<T>({
   enabled = true 
 }: UseAutoSaveOptions<T>) {
   const [lastSaved, setLastSaved] = useState<number | null>(null)
+  const [lastSavedBackend, setLastSavedBackend] = useState<number | null>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [isDirty, setIsDirty] = useState(false)
   const initialDataRef = useRef<string>(JSON.stringify(data))
@@ -29,7 +30,7 @@ export function useAutoSave<T>({
     }
   }, [data])
   
-  // Auto-save to localStorage
+  // Auto-save to localStorage only (does NOT mark as saved to backend)
   useEffect(() => {
     if (isDirty && enabled) {
       // Clear existing timer
@@ -41,6 +42,7 @@ export function useAutoSave<T>({
       timerRef.current = setTimeout(() => {
         try {
           localStorage.setItem(key, JSON.stringify(data))
+          // Only update lastSaved (local), NOT lastSavedBackend
           setLastSaved(Date.now())
           console.log('[AutoSave] Saved to localStorage at', new Date().toLocaleTimeString())
         } catch (error) {
@@ -66,7 +68,9 @@ export function useAutoSave<T>({
     setIsSaving(true)
     try {
       await onSave(data)
-      setLastSaved(Date.now())
+      const now = Date.now()
+      setLastSaved(now)
+      setLastSavedBackend(now) // Mark as saved to backend
       setIsDirty(false)
       initialDataRef.current = JSON.stringify(data)
       
@@ -123,7 +127,8 @@ export function useAutoSave<T>({
   }
   
   return {
-    lastSaved,
+    lastSaved, // Last time saved to localStorage
+    lastSavedBackend, // Last time saved to backend (null if never saved to backend)
     isSaving,
     isDirty,
     saveToBackend,

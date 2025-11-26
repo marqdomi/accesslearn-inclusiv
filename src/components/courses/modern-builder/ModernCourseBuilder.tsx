@@ -13,6 +13,8 @@ import { useAutoSave } from './hooks/useAutoSave'
 import { toast } from 'sonner'
 import { ApiService } from '@/services/api.service'
 import { adaptBackendCourseToFrontend, adaptFrontendCourseToBackend } from '@/lib/course-adapter'
+import { formatDistanceToNow } from 'date-fns'
+import { es } from 'date-fns/locale'
 
 // Import steps (we'll create these next)
 import { CourseDetailsStep } from './steps/CourseDetailsStep'
@@ -68,6 +70,8 @@ export function ModernCourseBuilder({ courseId, onBack }: ModernCourseBuilderPro
         const backendCourse = await ApiService.getCourseById(courseId)
         const frontendCourse = adaptBackendCourseToFrontend(backendCourse)
         setCourse(frontendCourse)
+        // Note: When a course is loaded from backend, it's considered synced
+        // The next save will update lastSavedBackend
       } catch (error) {
         console.error('Error loading course:', error)
         toast.error('Error al cargar el curso')
@@ -86,6 +90,7 @@ export function ModernCourseBuilder({ courseId, onBack }: ModernCourseBuilderPro
   const autoSaveKey = `course-draft-${course.id}`
   const {
     lastSaved,
+    lastSavedBackend,
     isSaving,
     isDirty,
     saveToBackend,
@@ -111,6 +116,9 @@ export function ModernCourseBuilder({ courseId, onBack }: ModernCourseBuilderPro
         // Convert to backend format
         const backendData = adaptFrontendCourseToBackend(courseToSave, currentTenant.id)
         
+        // Always set status to draft when saving via this hook (manual save)
+        backendData.status = 'draft'
+        
         if (courseId || course.id.startsWith('course-')) {
           // Update existing course
           await ApiService.updateCourse(course.id, backendData)
@@ -123,6 +131,7 @@ export function ModernCourseBuilder({ courseId, onBack }: ModernCourseBuilderPro
             estimatedTime: (courseToSave.estimatedHours || 0) * 60,
             modules: courseToSave.modules || [],
             coverImage: courseToSave.coverImage,
+            status: 'draft',
           })
           
           // Update course ID with the one from backend
@@ -226,8 +235,15 @@ export function ModernCourseBuilder({ courseId, onBack }: ModernCourseBuilderPro
       return
     }
     
+    if (!isDirty && lastSavedBackend) {
+      toast.info('No hay cambios nuevos para guardar', {
+        description: `El borrador ya está guardado en el servidor${lastSavedBackend ? ` (${formatDistanceToNow(lastSavedBackend, { addSuffix: true, locale: es })})` : ''}`
+      })
+      return
+    }
+    
     try {
-      // Ensure course has draft status and is not published
+      // Ensure course has draft status and is not published before saving
       const draftCourse = {
         ...course,
         status: 'draft' as const,
@@ -238,57 +254,47 @@ export function ModernCourseBuilder({ courseId, onBack }: ModernCourseBuilderPro
       // Update state first
       setCourse(draftCourse)
       
-      // Convert to backend format
-      const backendData = adaptFrontendCourseToBackend(draftCourse, currentTenant.id)
+      // Use the hook's saveToBackend method which handles:
+      // - Saving to Cosmos DB
+      // - Updating isDirty state
+      // - Updating lastSaved timestamp
+      // - Saving to localStorage as backup
+      await saveToBackend()
       
-      if (courseId || course.id.startsWith('course-')) {
-        // Update existing course in Cosmos DB
-        await ApiService.updateCourse(course.id, {
-          ...backendData,
-          status: 'draft',
-        })
-      } else {
-        // Create new course in Cosmos DB
-        const newCourse = await ApiService.createCourse({
-          title: draftCourse.title || 'Nuevo Curso',
-          description: draftCourse.description || '',
-          category: draftCourse.category || '',
-          estimatedTime: (draftCourse.estimatedHours || 0) * 60,
-          modules: draftCourse.modules || [],
-          coverImage: draftCourse.coverImage,
-        })
-        
-        // Update course ID with the one from backend
-        setCourse(prev => ({
-          ...prev,
-          id: newCourse.id,
-          createdAt: new Date(newCourse.createdAt).getTime(),
-        }))
-      }
-      
-      // Also save to localStorage as backup
-      forceSave()
+      // Show success notification
+      toast.success('Borrador guardado exitosamente', {
+        description: 'El curso se ha guardado en el servidor y está disponible desde cualquier dispositivo.',
+        duration: 3000,
+      })
     } catch (error: any) {
       console.error('[ModernCourseBuilder] Error saving draft:', error)
       
       // Provide more specific error messages
       let errorMessage = 'Error al guardar borrador'
+      let errorDescription = 'El borrador se ha guardado localmente como respaldo.'
       
       if (error.status === 401 || error.status === 403) {
-        errorMessage = 'No tienes permisos para guardar cursos. Por favor, inicia sesión nuevamente.'
+        errorMessage = 'No tienes permisos para guardar cursos'
+        errorDescription = 'Por favor, inicia sesión nuevamente o contacta al administrador.'
       } else if (error.status === 404) {
-        errorMessage = 'No se encontró el recurso. Por favor, recarga la página e intenta de nuevo.'
+        errorMessage = 'No se encontró el recurso'
+        errorDescription = 'Por favor, recarga la página e intenta de nuevo.'
       } else if (error.status === 400) {
-        errorMessage = error.message || 'Los datos del curso son inválidos. Por favor, revisa los campos requeridos.'
+        errorMessage = 'Error de validación'
+        errorDescription = error.message || 'Los datos del curso son inválidos. Por favor, revisa los campos requeridos.'
       } else if (error.status === 500 || error.status === 0) {
-        errorMessage = 'Error del servidor. El borrador se guardó localmente. Por favor, intenta de nuevo más tarde.'
-        // Save to localStorage even if backend fails
+        errorMessage = 'Error del servidor'
+        errorDescription = 'El borrador se guardó localmente. Por favor, intenta de nuevo más tarde.'
+        // Save to localStorage as backup
         forceSave()
       } else if (error.message) {
-        errorMessage = error.message
+        errorDescription = error.message
       }
       
-      toast.error(errorMessage)
+      toast.error(errorMessage, {
+        description: errorDescription,
+        duration: 5000,
+      })
       
       // Still save to localStorage as backup even if backend fails
       try {
@@ -370,6 +376,7 @@ export function ModernCourseBuilder({ courseId, onBack }: ModernCourseBuilderPro
             <div className="flex items-center gap-4">
               <AutoSaveIndicator 
                 lastSaved={lastSaved} 
+                lastSavedBackend={lastSavedBackend}
                 isSaving={isSaving} 
                 isDirty={isDirty} 
               />
@@ -377,10 +384,10 @@ export function ModernCourseBuilder({ courseId, onBack }: ModernCourseBuilderPro
               <Button 
                 variant="outline" 
                 onClick={handleSaveDraft}
-                disabled={isSaving || !isDirty}
+                disabled={isSaving}
               >
                 <FloppyDisk className="mr-2" size={18} />
-                Guardar Borrador
+                {isSaving ? 'Guardando...' : 'Guardar Borrador'}
               </Button>
             </div>
           </div>
