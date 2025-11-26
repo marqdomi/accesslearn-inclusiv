@@ -29,7 +29,7 @@ export function TeamReport() {
   }>>([])
   const [groups, setGroups] = useState<any[]>([])
 
-  const [selectedTeam, setSelectedTeam] = useState<string>('')
+  const [selectedTeam, setSelectedTeam] = useState<string>('__ALL__')
   const [viewMode, setViewMode] = useState<'visual' | 'table'>('visual')
 
   useEffect(() => {
@@ -43,7 +43,7 @@ export function TeamReport() {
 
     try {
       setLoading(true)
-      const reports = await ApiService.getTeamReport(selectedTeam || undefined)
+      const reports = await ApiService.getTeamReport(selectedTeam === '__ALL__' ? undefined : selectedTeam)
       setTeamReports(reports)
 
       const groupsData = await ApiService.getGroups(currentTenant.id)
@@ -58,7 +58,7 @@ export function TeamReport() {
   const teams = groups.map(g => ({ id: g.id, name: g.name }))
 
   const exportToCSV = () => {
-    const teamReport = teamReports.find(t => t.teamId === selectedTeam || (!selectedTeam && t.teamId))
+    const teamReport = teamReports.find(t => t.teamId === selectedTeam && selectedTeam !== '__ALL__')
     if (!teamReport) return
 
     const rows = [
@@ -88,7 +88,7 @@ export function TeamReport() {
     URL.revokeObjectURL(url)
   }
 
-  const currentTeamReport = teamReports.find(t => t.teamId === selectedTeam) || (teamReports.length > 0 ? teamReports[0] : null)
+  const currentTeamReport = teamReports.find(t => t.teamId === selectedTeam && selectedTeam !== '__ALL__') || (teamReports.length > 0 && selectedTeam !== '__ALL__' ? teamReports[0] : null)
 
   return (
     <Card className="p-6">
@@ -104,7 +104,7 @@ export function TeamReport() {
               <SelectValue placeholder={t('analytics.filters.selectTeam')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">{t('analytics.filters.allTeams')}</SelectItem>
+              <SelectItem value="__ALL__">{t('analytics.filters.allTeams')}</SelectItem>
               {teams.map(team => (
                 <SelectItem key={team.id} value={team.id}>
                   {team.name}
