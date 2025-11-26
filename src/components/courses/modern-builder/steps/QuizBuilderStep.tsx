@@ -276,7 +276,7 @@ export function QuizBuilderStep({ course, updateCourse }: QuizBuilderStepProps) 
       type: questionForm.type,
       question: questionText,
       options: ['multiple-choice', 'multiple-select', 'true-false', 'ordering'].includes(questionForm.type) 
-        ? questionForm.options.filter(o => o.trim()) 
+        ? (Array.isArray(questionForm.options) ? questionForm.options.filter(o => o?.trim()) : [])
         : [],
       correctAnswer,
       correctFeedback: questionForm.correctFeedback,
