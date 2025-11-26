@@ -872,16 +872,16 @@ export function QuizBuilderStep({ course, updateCourse }: QuizBuilderStepProps) 
                                         <div className="space-y-1">
                                           <Label className="text-xs">Siguiente</Label>
                                           <Select
-                                            value={option.nextScenarioId || ''}
+                                            value={option.nextScenarioId || '__NONE__'}
                                             onValueChange={(value) => 
-                                              handleUpdateOption(stepIndex, optionIndex, 'nextScenarioId', value || undefined)
+                                              handleUpdateOption(stepIndex, optionIndex, 'nextScenarioId', value === '__NONE__' ? undefined : value)
                                             }
                                           >
                                             <SelectTrigger className="h-7 text-xs">
                                               <SelectValue placeholder="Fin" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                              <SelectItem value="">Sin siguiente (Fin)</SelectItem>
+                                              <SelectItem value="__NONE__">Sin siguiente (Fin)</SelectItem>
                                               {scenarioForm.steps.map(s => (
                                                 <SelectItem key={s.id} value={s.id}>{s.id}</SelectItem>
                                               ))}
