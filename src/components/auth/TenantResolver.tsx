@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useTenant } from '@/contexts/TenantContext';
 import { ApiService } from '@/services/api.service';
 import { CircleNotch, Buildings, WarningCircle, SignOut } from '@phosphor-icons/react';
@@ -17,6 +18,11 @@ interface TenantResolverProps {
 }
 
 /**
+ * Rutas públicas que no requieren tenant para funcionar
+ */
+const PUBLIC_ROUTES = ['/accept-invitation', '/register', '/login'];
+
+/**
  * TenantResolver: Detecta y resuelve el tenant actual
  * 
  * Estrategia de resolución:
@@ -25,9 +31,10 @@ interface TenantResolverProps {
  * 3. localStorage: Última selección del usuario
  * 4. Selector manual: Usuario elige de lista
  * 
- * Solo renderiza children cuando el tenant está confirmado.
+ * Solo renderiza children cuando el tenant está confirmado O en rutas públicas.
  */
 export function TenantResolver({ children }: TenantResolverProps) {
+  const location = useLocation();
   const { currentTenant, setCurrentTenant, clearTenant, isLoading: tenantLoading } = useTenant();
   const [resolving, setResolving] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -39,9 +46,19 @@ export function TenantResolver({ children }: TenantResolverProps) {
   const [showSelector, setShowSelector] = useState(false);
   const [savedTenantId, setSavedTenantId] = useState<string | null>(null);
 
+  // Check if current route is public (doesn't require tenant)
+  const isPublicRoute = PUBLIC_ROUTES.some(route => location.pathname.startsWith(route));
+
   useEffect(() => {
+    // Si es una ruta pública, renderizar children sin resolver tenant
+    if (isPublicRoute) {
+      console.log('[TenantResolver] Ruta pública detectada:', location.pathname);
+      setResolving(false);
+      return;
+    }
+    
     resolveTenant();
-  }, []);
+  }, [location.pathname, isPublicRoute]);
 
   /**
    * Intenta resolver el tenant automáticamente
@@ -266,6 +283,11 @@ export function TenantResolver({ children }: TenantResolverProps) {
       }, 2000);
     }
   };
+
+  // Si es una ruta pública, renderizar children sin requerir tenant
+  if (isPublicRoute) {
+    return <>{children}</>;
+  }
 
   // Loading state
   if (resolving || tenantLoading) {

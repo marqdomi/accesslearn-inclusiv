@@ -6,8 +6,18 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { EnvelopeSimple, CheckCircle, WarningCircle, Eye, EyeSlash } from '@phosphor-icons/react'
+import { Badge } from '@/components/ui/badge'
+import { EnvelopeSimple, CheckCircle, WarningCircle, Eye, EyeSlash, User, Building } from '@phosphor-icons/react'
 import { toast } from 'sonner'
+
+const ROLE_LABELS: Record<string, string> = {
+  'student': 'Estudiante',
+  'instructor': 'Instructor',
+  'content-manager': 'Gestor de Contenido',
+  'tenant-admin': 'Administrador',
+  'super-admin': 'Super Administrador',
+  'mentor': 'Mentor',
+}
 
 export function AcceptInvitationPage() {
   const [searchParams] = useSearchParams()
@@ -18,6 +28,7 @@ export function AcceptInvitationPage() {
   const [validating, setValidating] = useState(true)
   const [isValid, setIsValid] = useState(false)
   const [userInfo, setUserInfo] = useState<any>(null)
+  const [tenantInfo, setTenantInfo] = useState<any>(null)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
@@ -60,6 +71,19 @@ export function AcceptInvitationPage() {
       const userData = await response.json()
       setUserInfo(userData)
       setIsValid(true)
+      
+      // Try to load tenant info from query param (if tenant slug is in URL)
+      // This is optional - the invitation works without it
+      const tenantSlug = searchParams.get('tenant')
+      if (tenantSlug) {
+        try {
+          const tenant = await ApiService.getTenantBySlug(tenantSlug)
+          setTenantInfo(tenant)
+        } catch (tenantError) {
+          console.warn('Could not load tenant info:', tenantError)
+          // Continue without tenant info - invitation is still valid
+        }
+      }
     } catch (error: any) {
       setIsValid(false)
       console.error('Error validating token:', error)
@@ -184,11 +208,31 @@ export function AcceptInvitationPage() {
             <EnvelopeSimple size={64} className="text-primary" />
           </div>
           <CardTitle>Activa tu Cuenta</CardTitle>
-          <CardDescription>
+          <CardDescription className="space-y-2">
             {userInfo ? (
               <>
-                Hola <strong>{userInfo.firstName} {userInfo.lastName}</strong>,<br />
-                has sido invitado a unirte a la plataforma. Configura tu contraseña para continuar.
+                <div>
+                  Hola <strong>{userInfo.firstName} {userInfo.lastName}</strong>,
+                </div>
+                <div>
+                  has sido invitado a unirte a la plataforma. Configura tu contraseña para continuar.
+                </div>
+                {(userInfo.role || tenantInfo) && (
+                  <div className="flex flex-wrap gap-2 mt-3 justify-center">
+                    {userInfo.role && (
+                      <Badge variant="secondary" className="gap-1">
+                        <User size={14} />
+                        {ROLE_LABELS[userInfo.role] || userInfo.role}
+                      </Badge>
+                    )}
+                    {tenantInfo && (
+                      <Badge variant="outline" className="gap-1">
+                        <Building size={14} />
+                        {tenantInfo.name}
+                      </Badge>
+                    )}
+                  </div>
+                )}
               </>
             ) : (
               'Has sido invitado a unirte a la plataforma. Configura tu contraseña para continuar.'

@@ -772,11 +772,13 @@ app.post('/api/users/invite', requireAuth, requirePermission('users:create'), as
       invitedBy
     });
 
-    const invitationUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/accept-invitation?token=${result.invitationToken}`;
+    // Get tenant to include slug in invitation URL
+    const tenant = await getTenantById(tenantId);
+    const tenantSlug = tenant?.slug || '';
+    const invitationUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/accept-invitation?token=${result.invitationToken}${tenantSlug ? `&tenant=${tenantSlug}` : ''}`;
 
     // Send invitation email
     try {
-      const tenant = await getTenantById(tenantId);
       const inviter = await getUserById(invitedBy, tenantId);
       
       await emailService.sendInvitationEmail({
