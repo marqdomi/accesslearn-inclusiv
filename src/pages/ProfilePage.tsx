@@ -29,7 +29,7 @@ import { motion } from 'framer-motion'
 
 export function ProfilePage() {
   const navigate = useNavigate()
-  const { profile, loading, updateProfile, changePassword, updateAvatar } = useProfile()
+  const { profile, loading, error, updateProfile, changePassword, updateAvatar } = useProfile()
   
   // Profile form state
   const [profileData, setProfileData] = useState({
