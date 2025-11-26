@@ -268,11 +268,35 @@ export function ModernCourseBuilder({ courseId, onBack }: ModernCourseBuilderPro
       
       // Also save to localStorage as backup
       forceSave()
+    } catch (error: any) {
+      console.error('[ModernCourseBuilder] Error saving draft:', error)
       
-      toast.success('Borrador guardado exitosamente en Cosmos DB')
-    } catch (error) {
-      toast.error('Error al guardar borrador')
-      console.error(error)
+      // Provide more specific error messages
+      let errorMessage = 'Error al guardar borrador'
+      
+      if (error.status === 401 || error.status === 403) {
+        errorMessage = 'No tienes permisos para guardar cursos. Por favor, inicia sesión nuevamente.'
+      } else if (error.status === 404) {
+        errorMessage = 'No se encontró el recurso. Por favor, recarga la página e intenta de nuevo.'
+      } else if (error.status === 400) {
+        errorMessage = error.message || 'Los datos del curso son inválidos. Por favor, revisa los campos requeridos.'
+      } else if (error.status === 500 || error.status === 0) {
+        errorMessage = 'Error del servidor. El borrador se guardó localmente. Por favor, intenta de nuevo más tarde.'
+        // Save to localStorage even if backend fails
+        forceSave()
+      } else if (error.message) {
+        errorMessage = error.message
+      }
+      
+      toast.error(errorMessage)
+      
+      // Still save to localStorage as backup even if backend fails
+      try {
+        forceSave()
+        console.log('[ModernCourseBuilder] Draft saved to localStorage as backup')
+      } catch (localStorageError) {
+        console.error('[ModernCourseBuilder] Error saving to localStorage:', localStorageError)
+      }
     }
   }
   

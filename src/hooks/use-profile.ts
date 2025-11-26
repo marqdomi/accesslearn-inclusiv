@@ -89,12 +89,22 @@ export function useProfile() {
       }
       
       setProfile(userData)
+      setError(null)
     } catch (err: any) {
       console.error('[useProfile] Error loading profile:', err)
-      const errorMessage = err.status === 404 
-        ? 'Usuario no encontrado. Por favor, contacta al administrador.'
-        : err.message || 'Error al cargar el perfil'
-      setError(errorMessage)
+      
+      // Si es un 404, significa que el usuario no existe en el backend para este tenant
+      // Esto puede pasar si el usuario fue creado en el frontend pero aún no se sincronizó con el backend
+      // No bloquear otras funcionalidades, solo mostrar el error en el componente de perfil
+      if (err.status === 404) {
+        const errorMessage = 'Usuario no encontrado en el sistema. Por favor, contacta al administrador o intenta recargar la página.'
+        setError(errorMessage)
+        // No establecer profile como null inmediatamente para permitir que el componente muestre un mensaje útil
+        // El componente de perfil puede manejar esto mostrando un formulario para crear el perfil
+      } else {
+        const errorMessage = err.message || 'Error al cargar el perfil'
+        setError(errorMessage)
+      }
     } finally {
       setLoading(false)
     }

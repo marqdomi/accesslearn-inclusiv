@@ -177,9 +177,10 @@ export function ProfilePage() {
     return `${first}${last}`.toUpperCase() || 'U'
   }
 
+  // Show loading state
   if (loading && !profile) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
           <p className="mt-4 text-muted-foreground">Cargando perfil...</p>
@@ -188,20 +189,52 @@ export function ProfilePage() {
     )
   }
 
-  if (!profile) {
+  // Show error state if profile failed to load (e.g., 404)
+  if (!loading && !profile && error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <Card className="max-w-md">
           <CardContent className="pt-6">
             <Alert variant="destructive">
               <WarningCircle className="h-4 w-4" />
               <AlertDescription>
-                No se pudo cargar el perfil. Por favor, intenta de nuevo.
+                {error || 'No se pudo cargar el perfil. Por favor, intenta de nuevo.'}
               </AlertDescription>
             </Alert>
-            <Button onClick={() => navigate('/dashboard')} className="mt-4 w-full">
-              Volver al Dashboard
-            </Button>
+            <div className="flex gap-2 mt-4">
+              <Button onClick={() => navigate('/dashboard')} variant="outline" className="flex-1">
+                Volver al Dashboard
+              </Button>
+              <Button onClick={() => window.location.reload()} className="flex-1">
+                Recargar Página
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  // Show empty state if no profile but no error (shouldn't normally happen)
+  if (!profile && !error && !loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <Card className="max-w-md">
+          <CardContent className="pt-6">
+            <Alert>
+              <WarningCircle className="h-4 w-4" />
+              <AlertDescription>
+                No hay información de perfil disponible. Por favor, intenta recargar la página.
+              </AlertDescription>
+            </Alert>
+            <div className="flex gap-2 mt-4">
+              <Button onClick={() => navigate('/dashboard')} variant="outline" className="flex-1">
+                Volver al Dashboard
+              </Button>
+              <Button onClick={() => window.location.reload()} className="flex-1">
+                Recargar Página
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
