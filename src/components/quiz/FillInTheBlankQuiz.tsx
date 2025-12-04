@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Check, X, GripVertical } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -28,11 +29,20 @@ export function FillInTheBlankQuiz({
   const [draggedOption, setDraggedOption] = useState<string | null>(null)
   const [selectedAnswers, setSelectedAnswers] = useState<string[]>(initialAnswers)
   const [usedOptions, setUsedOptions] = useState<Set<string>>(new Set(initialAnswers))
+  const [isReadyToConfirm, setIsReadyToConfirm] = useState(false)
 
   // Parsear el texto y encontrar los blanks
   const parts = question.text.split(/(\{blank\})/g)
   let blankIndex = 0
   const blanksCount = question.blanks.length
+
+  // Verificar si todas las respuestas están completadas al inicializar
+  useEffect(() => {
+    if (!isAnswered) {
+      const allFilled = selectedAnswers.filter(Boolean).length === blanksCount
+      setIsReadyToConfirm(allFilled)
+    }
+  }, [blanksCount, isAnswered])
 
   const handleDragStart = (option: string) => {
     if (isAnswered) return
@@ -64,11 +74,8 @@ export function FillInTheBlankQuiz({
     setDraggedOption(null)
 
     // Verificar si todas las respuestas están completadas
-    if (newAnswers.filter(Boolean).length === blanksCount) {
-      setTimeout(() => {
-        checkAnswers(newAnswers)
-      }, 300)
-    }
+    const allFilled = newAnswers.filter(Boolean).length === blanksCount
+    setIsReadyToConfirm(allFilled)
   }
 
   const handleRemoveAnswer = (index: number) => {
@@ -85,6 +92,19 @@ export function FillInTheBlankQuiz({
 
     setSelectedAnswers(newAnswers)
     setUsedOptions(newUsedOptions)
+    
+    // Verificar si todas las respuestas siguen completadas
+    const allFilled = newAnswers.filter(Boolean).length === blanksCount
+    setIsReadyToConfirm(allFilled)
+  }
+
+  const handleConfirm = () => {
+    if (isAnswered || !isReadyToConfirm) return
+    
+    // Verificar que todos los espacios estén llenos
+    if (selectedAnswers.filter(Boolean).length !== blanksCount) return
+    
+    checkAnswers(selectedAnswers)
   }
 
   const checkAnswers = (answers: string[]) => {
@@ -265,6 +285,24 @@ export function FillInTheBlankQuiz({
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Confirm Button */}
+      {!isAnswered && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+        >
+          <Button
+            onClick={handleConfirm}
+            disabled={!isReadyToConfirm}
+            size="lg"
+            className="w-full"
+          >
+            {isReadyToConfirm ? 'Confirmar Respuesta' : `Completa todos los espacios (${selectedAnswers.filter(Boolean).length}/${blanksCount})`}
+          </Button>
+        </motion.div>
+      )}
     </div>
   )
 }
