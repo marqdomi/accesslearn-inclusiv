@@ -15,6 +15,7 @@ import {
   Trash, 
   Clock,
   Check,
+  CheckCircle,
   FileText,
   Books,
   Lightning,
