@@ -14,14 +14,21 @@ export async function getAccessibilityProfiles(tenantId: string): Promise<Access
   const container = getContainer('accessibility-profiles')
   
   const query = {
-    query: 'SELECT * FROM c WHERE c.tenantId = @tenantId ORDER BY c.isDefault DESC, c.name',
+    query: 'SELECT * FROM c WHERE c.tenantId = @tenantId',
     parameters: [
       { name: '@tenantId', value: tenantId }
     ]
   }
   
   const { resources } = await container.items.query<AccessibilityProfile>(query).fetchAll()
-  return resources
+  
+  // Sort in memory: default profiles first, then alphabetically by name
+  return resources.sort((a, b) => {
+    if (a.isDefault !== b.isDefault) {
+      return a.isDefault ? -1 : 1
+    }
+    return a.name.localeCompare(b.name)
+  })
 }
 
 /**
@@ -31,14 +38,21 @@ export async function getEnabledAccessibilityProfiles(tenantId: string): Promise
   const container = getContainer('accessibility-profiles')
   
   const query = {
-    query: 'SELECT * FROM c WHERE c.tenantId = @tenantId AND c.enabled = true ORDER BY c.isDefault DESC, c.name',
+    query: 'SELECT * FROM c WHERE c.tenantId = @tenantId AND c.enabled = true',
     parameters: [
       { name: '@tenantId', value: tenantId }
     ]
   }
   
   const { resources } = await container.items.query<AccessibilityProfile>(query).fetchAll()
-  return resources
+  
+  // Sort in memory: default profiles first, then alphabetically by name
+  return resources.sort((a, b) => {
+    if (a.isDefault !== b.isDefault) {
+      return a.isDefault ? -1 : 1
+    }
+    return a.name.localeCompare(b.name)
+  })
 }
 
 /**
