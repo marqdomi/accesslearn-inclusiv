@@ -17,7 +17,7 @@ export function EngagementTrendChart({ data }: EngagementTrendChartProps) {
         <Card>
             <CardHeader>
                 <CardTitle className="text-lg font-semibold">
-                    {t('analytics.charts.engagementTrend') || 'Engagement Trend'}
+                    {t('analytics.charts.engagementTrend', 'Tendencia de Engagement')}
                 </CardTitle>
             </CardHeader>
             <CardContent>
@@ -51,7 +51,7 @@ export function EngagementTrendChart({ data }: EngagementTrendChartProps) {
                             dataKey="xpGained"
                             stroke="hsl(var(--primary))"
                             strokeWidth={2}
-                            name={t('analytics.metrics.xpGained') || 'XP Gained'}
+                            name={t('analytics.metrics.xpGained', 'XP Ganado')}
                             dot={{ fill: 'hsl(var(--primary))', r: 4 }}
                             activeDot={{ r: 6 }}
                         />
@@ -60,7 +60,7 @@ export function EngagementTrendChart({ data }: EngagementTrendChartProps) {
                             dataKey="activeUsers"
                             stroke="hsl(var(--secondary))"
                             strokeWidth={2}
-                            name={t('analytics.metrics.activeUsers') || 'Active Users'}
+                            name={t('analytics.metrics.activeUsers', 'Usuarios Activos')}
                             dot={{ fill: 'hsl(var(--secondary))', r: 4 }}
                             activeDot={{ r: 6 }}
                         />

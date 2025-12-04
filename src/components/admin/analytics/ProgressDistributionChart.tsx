@@ -24,7 +24,7 @@ export function ProgressDistributionChart({ data }: ProgressDistributionChartPro
         <Card>
             <CardHeader>
                 <CardTitle className="text-lg font-semibold">
-                    {t('analytics.charts.progressDistribution') || 'Progress Distribution'}
+                    {t('analytics.charts.progressDistribution', 'Distribución de Progreso')}
                 </CardTitle>
             </CardHeader>
             <CardContent>
@@ -40,7 +40,7 @@ export function ProgressDistributionChart({ data }: ProgressDistributionChartPro
                             className="text-xs"
                             tick={{ fill: 'hsl(var(--muted-foreground))' }}
                             label={{
-                                value: t('analytics.metrics.users') || 'Users',
+                                value: t('analytics.metrics.users', 'Usuarios'),
                                 angle: -90,
                                 position: 'insideLeft',
                                 style: { fill: 'hsl(var(--muted-foreground))' }
@@ -55,7 +55,7 @@ export function ProgressDistributionChart({ data }: ProgressDistributionChartPro
                             labelStyle={{ color: 'hsl(var(--foreground))' }}
                             formatter={(value: number, name: string, props: any) => [
                                 `${value} users (${props.payload.percentage}%)`,
-                                t('analytics.metrics.users') || 'Users'
+                                t('analytics.metrics.users', 'Usuarios')
                             ]}
                         />
                         <Bar

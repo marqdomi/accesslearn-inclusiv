@@ -1300,6 +1300,98 @@ class ApiServiceClass {
     }>>(`/analytics/mentorship`)
   }
 
+  async getHistoricalEngagementData(weeks: number = 8) {
+    return this.fetchWithAuth<Array<{
+      week: string
+      xpGained: number
+      activeUsers: number
+    }>>(`/analytics/engagement-history?weeks=${weeks}`)
+  }
+
+  async getRealProgressDistribution() {
+    return this.fetchWithAuth<Array<{
+      range: string
+      count: number
+      percentage: number
+    }>>(`/analytics/progress-distribution`)
+  }
+
+  async getROIMetrics() {
+    return this.fetchWithAuth<{
+      totalTrainingHours: number
+      averageTimePerCourse: number
+      totalCompletedCourses: number
+      averageCompletionTime: number
+    }>(`/analytics/roi`)
+  }
+
+  async getEngagementMetrics() {
+    return this.fetchWithAuth<{
+      currentMonthActiveUsers: number
+      previousMonthActiveUsers: number
+      retentionRate: number
+      averageActiveDaysPerUser: number
+      peakActivityDay?: string
+    }>(`/analytics/engagement`)
+  }
+
+  async getPerformanceMetrics() {
+    return this.fetchWithAuth<{
+      averageCourseScore: number
+      averageQuizPassRate: number
+      topPerformingCourses: Array<{
+        courseId: string
+        courseTitle: string
+        averageScore: number
+        completionRate: number
+      }>
+      underperformingCourses: Array<{
+        courseId: string
+        courseTitle: string
+        averageScore: number
+        completionRate: number
+      }>
+    }>(`/analytics/performance`)
+  }
+
+  async getTeamComparisons() {
+    return this.fetchWithAuth<Array<{
+      teamId: string
+      teamName: string
+      completionRate: number
+      totalXP: number
+      averageScore: number
+      memberCount: number
+    }>>(`/analytics/team-comparisons`)
+  }
+
+  async getCourseCompletionRates() {
+    return this.fetchWithAuth<Array<{
+      courseId: string
+      courseTitle: string
+      completionRate: number
+      enrollments: number
+      completions: number
+    }>>(`/analytics/course-completion-rates`)
+  }
+
+  async getMonthlyCompletionTrends(months: number = 6) {
+    return this.fetchWithAuth<Array<{
+      month: string
+      completions: number
+      enrollments: number
+      completionRate: number
+    }>>(`/analytics/monthly-completions?months=${months}`)
+  }
+
+  async getScoreDistribution() {
+    return this.fetchWithAuth<Array<{
+      range: string
+      count: number
+      percentage: number
+    }>>(`/analytics/score-distribution`)
+  }
+
   // ============================================
   // FORUM/Q&A APIs
   // ============================================

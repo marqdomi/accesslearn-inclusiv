@@ -238,13 +238,32 @@ export function useXP(userId?: string) {
     }
   }
 
+  const getRankName = (): string => {
+    const rankKey = getRankKey(currentLevel || 1)
+    const translated = t(rankKey)
+    // If translation returns the key itself (no translation found), use fallback
+    if (translated === rankKey || !translated) {
+      const fallbacks: Record<string, string> = {
+        'userTitle.novice': 'Novato',
+        'userTitle.apprentice': 'Aprendiz',
+        'userTitle.scholar': 'Erudito',
+        'userTitle.expert': 'Experto',
+        'userTitle.master': 'Maestro',
+        'userTitle.grandMaster': 'Gran Maestro',
+        'userTitle.legend': 'Leyenda'
+      }
+      return fallbacks[rankKey] || 'Novato'
+    }
+    return translated
+  }
+
   return {
     totalXP: totalXP || 0,
     currentLevel: currentLevel || 1,
     loading,
     awardXP,
     getProgressToNextLevel,
-    getRankName: () => t(getRankKey(currentLevel || 1)),
+    getRankName,
     refresh: loadStats,
   }
 }

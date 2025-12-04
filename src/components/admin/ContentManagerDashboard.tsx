@@ -200,84 +200,25 @@ export function ContentManagerDashboard({ onReviewCourse }: ContentManagerDashbo
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* Header */}
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold">Panel de Gestión de Contenido</h1>
-        <p className="text-muted-foreground">
+      <div className="space-y-1 md:space-y-2">
+        <h1 className="text-2xl md:text-3xl font-bold">Panel de Gestión de Contenido</h1>
+        <p className="text-sm md:text-base text-muted-foreground">
           Gestiona y revisa todos los cursos del sistema
         </p>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card className="bg-orange-50/50 dark:bg-orange-950/20 border-orange-100 dark:border-orange-900">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Pendientes de Revisión</p>
-                <p className="text-2xl font-bold mt-1">{stats.pending}</p>
-              </div>
-              <div className="h-12 w-12 rounded-lg bg-orange-100 dark:bg-orange-900/50 flex items-center justify-center">
-                <Clock className="h-6 w-6 text-orange-600 dark:text-orange-400" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-green-50/50 dark:bg-green-950/20 border-green-100 dark:border-green-900">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Publicados</p>
-                <p className="text-2xl font-bold mt-1">{stats.published}</p>
-              </div>
-              <div className="h-12 w-12 rounded-lg bg-green-100 dark:bg-green-900/50 flex items-center justify-center">
-                <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gray-50/50 dark:bg-gray-950/20 border-gray-100 dark:border-gray-900">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Archivados</p>
-                <p className="text-2xl font-bold mt-1">{stats.archived}</p>
-              </div>
-              <div className="h-12 w-12 rounded-lg bg-gray-100 dark:bg-gray-900/50 flex items-center justify-center">
-                <Archive className="h-6 w-6 text-gray-600 dark:text-gray-400" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-blue-50/50 dark:bg-blue-950/20 border-blue-100 dark:border-blue-900">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Borradores</p>
-                <p className="text-2xl font-bold mt-1">{stats.draft}</p>
-              </div>
-              <div className="h-12 w-12 rounded-lg bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center">
-                <FileText className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
       {/* Search */}
       <Card>
-        <CardContent className="pt-6">
+        <CardContent className="pt-4 md:pt-6">
           <div className="relative">
             <MagnifyingGlass className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={18} />
             <Input
-              placeholder="Buscar por título, instructor, categoría..."
+              placeholder="Buscar por título, instructor..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
+              className="pl-10 text-sm md:text-base"
             />
           </div>
         </CardContent>
@@ -285,28 +226,72 @@ export function ContentManagerDashboard({ onReviewCourse }: ContentManagerDashbo
 
       {/* Courses Tabs */}
       <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="pending" className="relative">
-            Pendientes de Revisión
-            {stats.pending > 0 && (
-              <Badge variant="destructive" className="ml-2 h-5 w-5 p-0 flex items-center justify-center">
+        <TabsList className="grid w-full grid-cols-4 h-auto">
+          <TabsTrigger 
+            value="pending" 
+            className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 px-2 py-2.5 sm:py-2 text-xs sm:text-sm relative"
+          >
+            <Clock size={16} className="sm:w-4 sm:h-4 flex-shrink-0" />
+            <span className="flex items-center gap-1.5">
+              <span className="hidden sm:inline">Pendientes</span>
+              <span className="sm:hidden">Pend.</span>
+              <Badge 
+                variant={stats.pending > 0 ? "destructive" : "secondary"} 
+                className="h-5 min-w-[20px] px-1.5 text-[10px] sm:text-xs font-semibold"
+              >
                 {stats.pending}
               </Badge>
-            )}
+            </span>
           </TabsTrigger>
-          <TabsTrigger value="published">Publicados ({stats.published})</TabsTrigger>
-          <TabsTrigger value="archived">Archivados ({stats.archived})</TabsTrigger>
-          <TabsTrigger value="draft">Borradores ({stats.draft})</TabsTrigger>
+          <TabsTrigger 
+            value="published"
+            className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 px-2 py-2.5 sm:py-2 text-xs sm:text-sm"
+          >
+            <CheckCircle size={16} className="sm:w-4 sm:h-4 flex-shrink-0" />
+            <span className="flex items-center gap-1.5">
+              <span className="hidden sm:inline">Publicados</span>
+              <span className="sm:hidden">Pub.</span>
+              <Badge variant="secondary" className="h-5 min-w-[20px] px-1.5 text-[10px] sm:text-xs font-semibold">
+                {stats.published}
+              </Badge>
+            </span>
+          </TabsTrigger>
+          <TabsTrigger 
+            value="archived"
+            className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 px-2 py-2.5 sm:py-2 text-xs sm:text-sm"
+          >
+            <Archive size={16} className="sm:w-4 sm:h-4 flex-shrink-0" />
+            <span className="flex items-center gap-1.5">
+              <span className="hidden sm:inline">Archivados</span>
+              <span className="sm:hidden">Arch.</span>
+              <Badge variant="secondary" className="h-5 min-w-[20px] px-1.5 text-[10px] sm:text-xs font-semibold">
+                {stats.archived}
+              </Badge>
+            </span>
+          </TabsTrigger>
+          <TabsTrigger 
+            value="draft"
+            className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 px-2 py-2.5 sm:py-2 text-xs sm:text-sm"
+          >
+            <FileText size={16} className="sm:w-4 sm:h-4 flex-shrink-0" />
+            <span className="flex items-center gap-1.5">
+              <span className="hidden sm:inline">Borradores</span>
+              <span className="sm:hidden">Borrad.</span>
+              <Badge variant="secondary" className="h-5 min-w-[20px] px-1.5 text-[10px] sm:text-xs font-semibold">
+                {stats.draft}
+              </Badge>
+            </span>
+          </TabsTrigger>
         </TabsList>
 
         {/* Courses List */}
-        <div className="mt-6 space-y-4">
+        <div className="mt-4 md:mt-6 space-y-3 md:space-y-4">
           {filteredCourses.length === 0 ? (
             <Card>
-              <CardContent className="py-12 text-center">
-                <FileText size={48} className="mx-auto text-muted-foreground mb-4" />
-                <p className="text-lg font-medium">No se encontraron cursos</p>
-                <p className="text-sm text-muted-foreground mt-1">
+              <CardContent className="py-8 md:py-12 text-center">
+                <FileText size={40} className="md:h-12 md:w-12 mx-auto text-muted-foreground mb-3 md:mb-4" />
+                <p className="text-base md:text-lg font-medium">No se encontraron cursos</p>
+                <p className="text-xs md:text-sm text-muted-foreground mt-1">
                   {searchQuery ? 'Intenta con otro término de búsqueda' : 'No hay cursos en esta categoría'}
                 </p>
               </CardContent>
@@ -314,14 +299,14 @@ export function ContentManagerDashboard({ onReviewCourse }: ContentManagerDashbo
           ) : (
             filteredCourses.map(course => (
               <Card key={course.id} className="hover:shadow-md transition-shadow">
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-1 flex-1">
-                      <div className="flex items-center gap-2">
-                        <CardTitle className="text-lg">{course.title}</CardTitle>
+                <CardHeader className="pb-3 md:pb-6">
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                    <div className="space-y-1 flex-1 min-w-0">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                        <CardTitle className="text-base md:text-lg line-clamp-2">{course.title}</CardTitle>
                         <StatusBadge status={course.status} />
                       </div>
-                      <CardDescription className="line-clamp-2">
+                      <CardDescription className="line-clamp-2 text-sm">
                         {course.description}
                       </CardDescription>
                     </div>
@@ -329,6 +314,7 @@ export function ContentManagerDashboard({ onReviewCourse }: ContentManagerDashbo
                       <Button 
                         onClick={() => onReviewCourse(course.id)}
                         size="sm"
+                        className="w-full sm:w-auto touch-target h-9"
                       >
                         <Eye className="mr-2" size={16} />
                         Revisar
@@ -336,18 +322,18 @@ export function ContentManagerDashboard({ onReviewCourse }: ContentManagerDashbo
                     )}
                   </div>
                 </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                <CardContent className="pt-0">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 text-xs md:text-sm">
                     <div>
-                      <p className="text-muted-foreground">Instructor</p>
-                      <p className="font-medium">{course.instructorName || 'No asignado'}</p>
+                      <p className="text-muted-foreground mb-1">Instructor</p>
+                      <p className="font-medium truncate">{course.instructorName || 'No asignado'}</p>
                     </div>
                     <div>
-                      <p className="text-muted-foreground">Categoría</p>
-                      <p className="font-medium">{course.category}</p>
+                      <p className="text-muted-foreground mb-1">Categoría</p>
+                      <p className="font-medium truncate">{course.category}</p>
                     </div>
                     <div>
-                      <p className="text-muted-foreground">Creado</p>
+                      <p className="text-muted-foreground mb-1">Creado</p>
                       <p className="font-medium">
                         {formatDistanceToNow(new Date(course.createdAt), { 
                           addSuffix: true, 
@@ -356,7 +342,7 @@ export function ContentManagerDashboard({ onReviewCourse }: ContentManagerDashbo
                       </p>
                     </div>
                     <div>
-                      <p className="text-muted-foreground">
+                      <p className="text-muted-foreground mb-1">
                         {course.status === 'pending-review' && 'Enviado a revisión'}
                         {course.status === 'published' && 'Publicado'}
                         {course.status === 'archived' && 'Archivado'}
@@ -387,9 +373,9 @@ export function ContentManagerDashboard({ onReviewCourse }: ContentManagerDashbo
 
                   {/* Requested Changes */}
                   {course.requestedChanges && (
-                    <Alert className="mt-4">
-                      <WarningCircle size={16} />
-                      <AlertDescription>
+                    <Alert className="mt-3 md:mt-4 text-xs md:text-sm">
+                      <WarningCircle size={14} className="md:h-4 md:w-4 flex-shrink-0" />
+                      <AlertDescription className="text-xs md:text-sm">
                         <strong>Cambios Solicitados:</strong>
                         <p className="mt-1">{course.requestedChanges}</p>
                       </AlertDescription>
@@ -398,9 +384,9 @@ export function ContentManagerDashboard({ onReviewCourse }: ContentManagerDashbo
 
                   {/* Review Comments */}
                   {course.reviewComments && (
-                    <div className="mt-4 p-3 bg-muted rounded-lg">
-                      <p className="text-sm font-medium">Comentarios de Revisión:</p>
-                      <p className="text-sm text-muted-foreground mt-1">{course.reviewComments}</p>
+                    <div className="mt-3 md:mt-4 p-2 md:p-3 bg-muted rounded-lg">
+                      <p className="text-xs md:text-sm font-medium">Comentarios de Revisión:</p>
+                      <p className="text-xs md:text-sm text-muted-foreground mt-1">{course.reviewComments}</p>
                     </div>
                   )}
                 </CardContent>

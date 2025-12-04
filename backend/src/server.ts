@@ -124,7 +124,16 @@ import {
   getCourseReport,
   getTeamReport,
   getAssessmentReport,
-  getMentorshipReport
+  getMentorshipReport,
+  getHistoricalEngagementData,
+  getRealProgressDistribution,
+  getROIMetrics,
+  getEngagementMetrics,
+  getPerformanceMetrics,
+  getTeamComparisons,
+  getCourseCompletionRates,
+  getMonthlyCompletionTrends,
+  getScoreDistribution
 } from './functions/AnalyticsFunctions';
 import {
   getCourseQuestions,
@@ -2619,6 +2628,116 @@ app.get('/api/analytics/mentorship', requireAuth, requirePermission('analytics:v
     res.json(report);
   } catch (error: any) {
     console.error('[API] Error getting mentorship report:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/analytics/engagement-history - Get historical engagement data
+app.get('/api/analytics/engagement-history', requireAuth, requirePermission('analytics:view-all'), async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const weeks = req.query.weeks ? parseInt(req.query.weeks as string) : 8;
+    const data = await getHistoricalEngagementData(user.tenantId, weeks);
+    res.json(data);
+  } catch (error: any) {
+    console.error('[API] Error getting engagement history:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/analytics/progress-distribution - Get real progress distribution
+app.get('/api/analytics/progress-distribution', requireAuth, requirePermission('analytics:view-all'), async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const data = await getRealProgressDistribution(user.tenantId);
+    res.json(data);
+  } catch (error: any) {
+    console.error('[API] Error getting progress distribution:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/analytics/roi - Get ROI metrics
+app.get('/api/analytics/roi', requireAuth, requirePermission('analytics:view-all'), async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const metrics = await getROIMetrics(user.tenantId);
+    res.json(metrics);
+  } catch (error: any) {
+    console.error('[API] Error getting ROI metrics:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/analytics/engagement - Get engagement metrics
+app.get('/api/analytics/engagement', requireAuth, requirePermission('analytics:view-all'), async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const metrics = await getEngagementMetrics(user.tenantId);
+    res.json(metrics);
+  } catch (error: any) {
+    console.error('[API] Error getting engagement metrics:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/analytics/performance - Get performance metrics
+app.get('/api/analytics/performance', requireAuth, requirePermission('analytics:view-all'), async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const metrics = await getPerformanceMetrics(user.tenantId);
+    res.json(metrics);
+  } catch (error: any) {
+    console.error('[API] Error getting performance metrics:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/analytics/team-comparisons - Get team comparison metrics
+app.get('/api/analytics/team-comparisons', requireAuth, requirePermission('analytics:view-all'), async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const comparisons = await getTeamComparisons(user.tenantId);
+    res.json(comparisons);
+  } catch (error: any) {
+    console.error('[API] Error getting team comparisons:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/analytics/course-completion-rates - Get course completion rates
+app.get('/api/analytics/course-completion-rates', requireAuth, requirePermission('analytics:view-all'), async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const rates = await getCourseCompletionRates(user.tenantId);
+    res.json(rates);
+  } catch (error: any) {
+    console.error('[API] Error getting course completion rates:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/analytics/monthly-completions - Get monthly completion trends
+app.get('/api/analytics/monthly-completions', requireAuth, requirePermission('analytics:view-all'), async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const months = req.query.months ? parseInt(req.query.months as string) : 6;
+    const trends = await getMonthlyCompletionTrends(user.tenantId, months);
+    res.json(trends);
+  } catch (error: any) {
+    console.error('[API] Error getting monthly completions:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/analytics/score-distribution - Get score distribution
+app.get('/api/analytics/score-distribution', requireAuth, requirePermission('analytics:view-all'), async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const distribution = await getScoreDistribution(user.tenantId);
+    res.json(distribution);
+  } catch (error: any) {
+    console.error('[API] Error getting score distribution:', error);
     res.status(500).json({ error: error.message });
   }
 });

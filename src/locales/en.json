@@ -1091,5 +1091,23 @@
   "courseAssignment.unknownCourse": "Unknown Course",
   "courseAssignment.unknownGroup": "Unknown Group",
   "courseAssignment.unknownUser": "Unknown User",
-  "courseAssignment.showingXofY": "Showing {showing} of {total} assignments"
+  "courseAssignment.showingXofY": "Showing {showing} of {total} assignments",
+  "analytics": {
+    "charts": {
+      "engagementTrend": "Engagement Trend",
+      "progressDistribution": "Progress Distribution",
+      "courseCompletionRate": "Course Completion Rate",
+      "monthlyCompletions": "Monthly Completion Trends",
+      "scoreDistribution": "Score Distribution"
+    },
+    "metrics": {
+      "xpGained": "XP Gained",
+      "activeUsers": "Active Users",
+      "users": "Users",
+      "completionRate": "Completion Rate",
+      "completions": "Completions",
+      "enrollments": "Enrollments",
+      "attempts": "Attempts"
+    }
+  }
 }

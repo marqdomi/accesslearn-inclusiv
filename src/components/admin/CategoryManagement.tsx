@@ -185,61 +185,59 @@ export function CategoryManagement() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-xl sm:text-2xl font-bold">Gestión de Categorías</h2>
-          <p className="text-sm sm:text-base text-muted-foreground mt-1">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 md:gap-4">
+        <div className="flex-1 min-w-0">
+          <h2 className="text-xl md:text-2xl font-bold">Gestión de Categorías</h2>
+          <p className="text-xs md:text-sm text-muted-foreground mt-1">
             Administra las categorías de cursos disponibles en tu organización
           </p>
         </div>
-        <Button onClick={() => setIsCreating(true)} className="gap-2 w-full sm:w-auto touch-target">
+        <Button 
+          onClick={() => setIsCreating(true)} 
+          className="gap-2 w-full sm:w-auto touch-target h-10 md:h-11"
+          size="sm"
+        >
           <Plus size={18} />
           Nueva Categoría
         </Button>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-3">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total de Categorías
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-2">
-              <Tag className="h-5 w-5 text-primary" />
-              <span className="text-2xl font-bold">{categories.length}</span>
+      <div className="grid gap-3 md:gap-4 grid-cols-3">
+        <Card className="bg-blue-50/50 dark:bg-blue-950/20 border-blue-100 dark:border-blue-900">
+          <CardContent className="pt-4 md:pt-6">
+            <div className="flex flex-col items-center text-center">
+              <Tag className="h-5 w-5 md:h-6 md:w-6 text-primary mb-2" />
+              <p className="text-xs md:text-sm font-medium text-muted-foreground mb-1">
+                Total
+              </p>
+              <span className="text-xl md:text-2xl font-bold">{categories.length}</span>
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Categorías en Uso
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-2">
-              <BarChart3 className="h-5 w-5 text-green-500" />
-              <span className="text-2xl font-bold">
+        <Card className="bg-green-50/50 dark:bg-green-950/20 border-green-100 dark:border-green-900">
+          <CardContent className="pt-4 md:pt-6">
+            <div className="flex flex-col items-center text-center">
+              <BarChart3 className="h-5 w-5 md:h-6 md:w-6 text-green-600 dark:text-green-400 mb-2" />
+              <p className="text-xs md:text-sm font-medium text-muted-foreground mb-1">
+                En Uso
+              </p>
+              <span className="text-xl md:text-2xl font-bold">
                 {categories.filter(c => c.courseCount > 0).length}
               </span>
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Categorías Disponibles
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-blue-500" />
-              <span className="text-2xl font-bold">
+        <Card className="bg-muted/50 border-border">
+          <CardContent className="pt-4 md:pt-6">
+            <div className="flex flex-col items-center text-center">
+              <CheckCircle className="h-5 w-5 md:h-6 md:w-6 text-blue-600 dark:text-blue-400 mb-2" />
+              <p className="text-xs md:text-sm font-medium text-muted-foreground mb-1">
+                Disponibles
+              </p>
+              <span className="text-xl md:text-2xl font-bold">
                 {categories.filter(c => c.courseCount === 0).length}
               </span>
             </div>
@@ -249,13 +247,13 @@ export function CategoryManagement() {
 
       {/* Categories Table */}
       <Card>
-        <CardHeader className="p-4 sm:p-6">
-          <CardTitle className="text-lg sm:text-xl">Categorías</CardTitle>
-          <CardDescription className="text-sm">
+        <CardHeader className="p-4 md:p-6">
+          <CardTitle className="text-base md:text-lg">Categorías</CardTitle>
+          <CardDescription className="text-xs md:text-sm mt-1">
             Lista de todas las categorías disponibles. Las categorías en uso no pueden eliminarse.
           </CardDescription>
         </CardHeader>
-        <CardContent className="p-4 sm:p-6">
+        <CardContent className="p-4 md:p-6 pt-0">
           {categories.length === 0 ? (
             <div className="text-center py-8">
               <Tag className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
@@ -331,47 +329,49 @@ export function CategoryManagement() {
               {/* Mobile: Cards */}
               <div className="md:hidden space-y-3">
                 {categories.map((category) => (
-                  <Card key={category.id} className="p-4">
+                  <Card key={category.id} className="p-4 hover:shadow-md transition-shadow">
                     <div className="flex items-start justify-between gap-3 mb-3">
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-base mb-2">{category.name}</h3>
+                        <h3 className="font-semibold text-sm md:text-base mb-2 truncate">{category.name}</h3>
                         <div className="flex items-center gap-2 flex-wrap">
-                          <Badge variant="secondary" className="text-xs">
-                            {category.courseCount} cursos
+                          <Badge variant="secondary" className="text-xs px-2 py-0.5">
+                            {category.courseCount} {category.courseCount === 1 ? 'curso' : 'cursos'}
                           </Badge>
                           {category.courseCount > 0 ? (
-                            <Badge variant="default" className="bg-green-100 text-green-800 text-xs">
-                              <CheckCircle className="h-3 w-3 mr-1" />
+                            <Badge variant="default" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100 text-xs px-2 py-0.5">
+                              <CheckCircle className="h-3 w-3 mr-1 inline" />
                               En uso
                             </Badge>
                           ) : (
-                            <Badge variant="outline" className="text-xs">Disponible</Badge>
+                            <Badge variant="outline" className="text-xs px-2 py-0.5">Disponible</Badge>
                           )}
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center justify-end gap-2 pt-3 border-t">
+                    <div className="flex items-center gap-2 pt-3 border-t">
                       <Button
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
                         onClick={() => {
                           setEditingCategory(category)
                           setEditCategoryName(category.name)
                         }}
                         disabled={category.courseCount > 0}
-                        className="touch-target flex-1"
+                        className="touch-target flex-1 h-9 text-xs"
+                        title={category.courseCount > 0 ? 'No se puede editar categorías en uso' : 'Editar categoría'}
                       >
-                        <Edit2 className="h-4 w-4 mr-2" />
+                        <Edit2 className="h-3.5 w-3.5 mr-1.5" />
                         Editar
                       </Button>
                       <Button
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
                         onClick={() => setDeletingCategory(category)}
                         disabled={category.courseCount > 0}
-                        className="touch-target flex-1 text-destructive"
+                        className="touch-target flex-1 h-9 text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
+                        title={category.courseCount > 0 ? 'No se puede eliminar categorías en uso' : 'Eliminar categoría'}
                       >
-                        <Trash2 className="h-4 w-4 mr-2" />
+                        <Trash2 className="h-3.5 w-3.5 mr-1.5" />
                         Eliminar
                       </Button>
                     </div>
@@ -385,16 +385,16 @@ export function CategoryManagement() {
 
       {/* Create Category Dialog */}
       <Dialog open={isCreating} onOpenChange={setIsCreating}>
-        <DialogContent className="max-w-[95vw] sm:max-w-md p-4 sm:p-6">
+        <DialogContent className="max-w-[95vw] sm:max-w-md p-4 md:p-6">
           <DialogHeader>
-            <DialogTitle className="text-lg sm:text-xl">Nueva Categoría</DialogTitle>
-            <DialogDescription className="text-sm">
+            <DialogTitle className="text-base md:text-lg">Nueva Categoría</DialogTitle>
+            <DialogDescription className="text-xs md:text-sm">
               Crea una nueva categoría para organizar tus cursos
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium mb-2 block">Nombre de la categoría</label>
+              <label className="text-xs md:text-sm font-medium mb-2 block">Nombre de la categoría</label>
               <Input
                 value={newCategoryName}
                 onChange={(e) => setNewCategoryName(e.target.value)}
@@ -405,15 +405,25 @@ export function CategoryManagement() {
                   }
                 }}
                 autoFocus
-                className="h-12 touch-target"
+                className="h-11 md:h-12 touch-target text-sm md:text-base"
               />
             </div>
           </div>
           <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
-            <Button variant="outline" onClick={() => setIsCreating(false)} className="w-full sm:w-auto touch-target">
+            <Button 
+              variant="outline" 
+              onClick={() => setIsCreating(false)} 
+              className="w-full sm:w-auto touch-target h-10 md:h-11"
+              size="sm"
+            >
               Cancelar
             </Button>
-            <Button onClick={handleCreateCategory} disabled={!newCategoryName.trim()} className="w-full sm:w-auto touch-target">
+            <Button 
+              onClick={handleCreateCategory} 
+              disabled={!newCategoryName.trim()} 
+              className="w-full sm:w-auto touch-target h-10 md:h-11"
+              size="sm"
+            >
               Crear
             </Button>
           </DialogFooter>
@@ -422,16 +432,16 @@ export function CategoryManagement() {
 
       {/* Edit Category Dialog */}
       <Dialog open={!!editingCategory} onOpenChange={(open) => !open && setEditingCategory(null)}>
-        <DialogContent className="max-w-[95vw] sm:max-w-md p-4 sm:p-6">
+        <DialogContent className="max-w-[95vw] sm:max-w-md p-4 md:p-6">
           <DialogHeader>
-            <DialogTitle className="text-lg sm:text-xl">Editar Categoría</DialogTitle>
-            <DialogDescription className="text-sm">
+            <DialogTitle className="text-base md:text-lg">Editar Categoría</DialogTitle>
+            <DialogDescription className="text-xs md:text-sm">
               Modifica el nombre de la categoría
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium mb-2 block">Nombre de la categoría</label>
+              <label className="text-xs md:text-sm font-medium mb-2 block">Nombre de la categoría</label>
               <Input
                 value={editCategoryName}
                 onChange={(e) => setEditCategoryName(e.target.value)}
@@ -442,21 +452,31 @@ export function CategoryManagement() {
                   }
                 }}
                 autoFocus
-                className="h-12 touch-target"
+                className="h-11 md:h-12 touch-target text-sm md:text-base"
               />
             </div>
-            <Alert>
-              <AlertTriangle className="h-4 w-4" />
-              <AlertDescription>
+            <Alert className="text-xs md:text-sm">
+              <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+              <AlertDescription className="text-xs md:text-sm">
                 Nota: La edición de categorías requiere actualización del backend. Esta funcionalidad estará disponible próximamente.
               </AlertDescription>
             </Alert>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditingCategory(null)}>
+          <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
+            <Button 
+              variant="outline" 
+              onClick={() => setEditingCategory(null)}
+              className="w-full sm:w-auto touch-target h-10 md:h-11"
+              size="sm"
+            >
               Cancelar
             </Button>
-            <Button onClick={handleEditCategory} disabled={!editCategoryName.trim()}>
+            <Button 
+              onClick={handleEditCategory} 
+              disabled={!editCategoryName.trim()}
+              className="w-full sm:w-auto touch-target h-10 md:h-11"
+              size="sm"
+            >
               Guardar
             </Button>
           </DialogFooter>
@@ -465,18 +485,18 @@ export function CategoryManagement() {
 
       {/* Delete Category Dialog */}
       <Dialog open={!!deletingCategory} onOpenChange={(open) => !open && setDeletingCategory(null)}>
-        <DialogContent>
+        <DialogContent className="max-w-[95vw] sm:max-w-md p-4 md:p-6">
           <DialogHeader>
-            <DialogTitle>Eliminar Categoría</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-base md:text-lg">Eliminar Categoría</DialogTitle>
+            <DialogDescription className="text-xs md:text-sm">
               ¿Estás seguro de que quieres eliminar esta categoría?
             </DialogDescription>
           </DialogHeader>
           {deletingCategory && (
             <div className="space-y-4">
-              <Alert variant="destructive">
-                <AlertTriangle className="h-4 w-4" />
-                <AlertDescription>
+              <Alert variant="destructive" className="text-xs md:text-sm">
+                <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+                <AlertDescription className="text-xs md:text-sm">
                   {coursesByCategory[deletingCategory.name] > 0 ? (
                     <>
                       No se puede eliminar esta categoría porque {coursesByCategory[deletingCategory.name]} curso(s) la están usando.
@@ -490,14 +510,20 @@ export function CategoryManagement() {
             </div>
           )}
           <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
-            <Button variant="outline" onClick={() => setDeletingCategory(null)} className="w-full sm:w-auto touch-target">
+            <Button 
+              variant="outline" 
+              onClick={() => setDeletingCategory(null)} 
+              className="w-full sm:w-auto touch-target h-10 md:h-11"
+              size="sm"
+            >
               Cancelar
             </Button>
             <Button
               variant="destructive"
               onClick={handleDeleteCategory}
               disabled={deletingCategory ? coursesByCategory[deletingCategory.name] > 0 : false}
-              className="w-full sm:w-auto touch-target"
+              className="w-full sm:w-auto touch-target h-10 md:h-11"
+              size="sm"
             >
               Eliminar
             </Button>

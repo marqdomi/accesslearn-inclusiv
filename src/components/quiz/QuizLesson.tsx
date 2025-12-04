@@ -64,6 +64,8 @@ export function QuizLesson({
   const progress = ((currentQuestionIndex + 1) / questions.length) * 100
   const isLastQuestion = currentQuestionIndex === questions.length - 1
   const isScenario = currentQuestion.type === 'scenario-solver'
+  // Verificar si TODAS las preguntas son scenarios (no solo la actual)
+  const allQuestionsAreScenarios = questions.every(q => q.type === 'scenario-solver')
 
   // Timer effect - NO iniciar para scenarios (sin presión de tiempo)
   useState(() => {
@@ -77,53 +79,69 @@ export function QuizLesson({
   })
 
   const handleAnswer = (isCorrect: boolean, answerOrScore: any, perfectScore?: number) => {
-    setIsAnswered(true)
-    setAnsweredQuestions(prev => new Set([...prev, currentQuestionIndex]))
-    
-    // Para scenario-solver, answerOrScore es el score total y perfectScore viene como 3er parámetro
-    // Para otros tipos, answerOrScore es la respuesta del usuario
-    
-    if (isScenario) {
-      // El scenario solver ya terminó, usar su score directamente
-      const scenarioScore = answerOrScore
-      setEarnedXP(scenarioScore)
-      setScenarioPerfectScore(perfectScore || 100)
+    try {
+      setIsAnswered(true)
+      setAnsweredQuestions(prev => new Set([...prev, currentQuestionIndex]))
       
-      // Considerar correcto si pasó el 70% del perfect score
-      if (isCorrect) {
-        setCorrectCount(1)
-      } else {
-        setIncorrectCount(1)
-      }
+      // Para scenario-solver, answerOrScore es el score total y perfectScore viene como 3er parámetro
+      // Para otros tipos, answerOrScore es la respuesta del usuario
       
-      // No descontar vidas en scenarios
-    } else {
-      // Lógica tradicional para otros tipos de quiz
-      setSelectedAnswer(answerOrScore)
-
-      if (isCorrect) {
-        setCorrectCount((prev) => prev + 1)
+      if (isScenario) {
+        // El scenario solver ya terminó, usar su score directamente
+        const scenarioScore = typeof answerOrScore === 'number' ? answerOrScore : 0
+        const safePerfectScore = typeof perfectScore === 'number' && perfectScore > 0 ? perfectScore : 100
         
-        // Update combo
-        const newCombo = combo + 1
-        setCombo(newCombo)
-        setMaxCombo(Math.max(maxCombo, newCombo))
-
-        // Calculate XP with combo multiplier
-        const comboMultiplier = 1 + (combo * 0.1)
-        const questionXP = Math.floor(currentQuestion.xpReward * comboMultiplier)
-        setEarnedXP((prev) => prev + questionXP)
-      } else {
-        setIncorrectCount((prev) => prev + 1)
-        setCombo(0)
-        setLives((prev) => Math.max(0, prev - 1))
-
-        // Check game over
-        if (lives === 1) {
-          setTimeout(() => {
-            finishQuiz()
-          }, 2000)
+        // Solo actualizar XP si el score es válido
+        if (scenarioScore >= 0) {
+          setEarnedXP(scenarioScore)
+          setScenarioPerfectScore(safePerfectScore)
         }
+        
+        // Considerar correcto si pasó el 70% del perfect score
+        // Nota: Para scenarios, solo contamos 1 pregunta por scenario completado
+        if (isCorrect) {
+          setCorrectCount((prev) => prev + 1)
+        } else {
+          setIncorrectCount((prev) => prev + 1)
+        }
+        
+        // No descontar vidas en scenarios
+      } else {
+        // Lógica tradicional para otros tipos de quiz
+        setSelectedAnswer(answerOrScore)
+
+        if (isCorrect) {
+          setCorrectCount((prev) => prev + 1)
+          
+          // Update combo
+          const newCombo = combo + 1
+          setCombo(newCombo)
+          setMaxCombo(Math.max(maxCombo, newCombo))
+
+          // Calculate XP with combo multiplier
+          const comboMultiplier = 1 + (combo * 0.1)
+          const questionXP = Math.floor((currentQuestion.xpReward || 0) * comboMultiplier)
+          setEarnedXP((prev) => prev + questionXP)
+        } else {
+          setIncorrectCount((prev) => prev + 1)
+          setCombo(0)
+          setLives((prev) => Math.max(0, prev - 1))
+
+          // Check game over
+          if (lives === 1) {
+            setTimeout(() => {
+              finishQuiz()
+            }, 2000)
+          }
+        }
+      }
+    } catch (error) {
+      console.error('[QuizLesson] Error handling answer:', error)
+      // En caso de error, al menos registrar que se respondió
+      setIsAnswered(true)
+      // Si hay un error, asumir incorrecto para no romper el flujo
+      if (!isScenario) {
+        setIncorrectCount((prev) => prev + 1)
       }
     }
   }
@@ -182,26 +200,40 @@ export function QuizLesson({
   }
 
   if (showResults) {
+    // Calcular accuracy correctamente: usar correctCount para quizzes normales
+    // Solo usar score para scenarios cuando TODAS las preguntas son scenarios
+    const calculatedAccuracy = allQuestionsAreScenarios && scenarioPerfectScore > 0
+      ? (earnedXP / scenarioPerfectScore) * 100
+      : (correctCount / questions.length) * 100
+    
+    // Asegurar que accuracy nunca sea NaN o Infinity
+    const safeAccuracy = isNaN(calculatedAccuracy) || !isFinite(calculatedAccuracy) 
+      ? (correctCount / questions.length) * 100 
+      : Math.max(0, Math.min(100, calculatedAccuracy))
+    
+    // Calcular XP: solo aplicar retry penalty si NO es un quiz completamente de scenarios
+    const calculatedXP = allQuestionsAreScenarios 
+      ? earnedXP 
+      : Math.floor(earnedXP * 0.8)
+    
     return (
       <QuizResultsPage
         results={{
           totalQuestions: questions.length,
           correctAnswers: correctCount,
           incorrectAnswers: incorrectCount,
-          totalXP: isScenario ? earnedXP : Math.floor(earnedXP * 0.8), // Scenarios no tienen retry penalty
-          accuracy: isScenario 
-            ? (earnedXP / scenarioPerfectScore) * 100 // Calcular accuracy basado en score
-            : (correctCount / questions.length) * 100,
-          timeTaken: isScenario ? 0 : timeElapsed, // No mostrar tiempo en scenarios
-          isPerfectScore: isScenario 
-            ? earnedXP === scenarioPerfectScore // Perfect solo si obtuvo el 100% del score
+          totalXP: calculatedXP,
+          accuracy: safeAccuracy,
+          timeTaken: allQuestionsAreScenarios ? 0 : timeElapsed,
+          isPerfectScore: allQuestionsAreScenarios
+            ? earnedXP === scenarioPerfectScore && scenarioPerfectScore > 0
             : correctCount === questions.length && lives === maxLives,
           usedHints: 0,
-          livesRemaining: isScenario ? maxLives : lives, // Scenarios no pierden vidas
-          combo: isScenario ? 0 : maxCombo, // Scenarios no tienen combo
+          livesRemaining: allQuestionsAreScenarios ? maxLives : lives,
+          combo: allQuestionsAreScenarios ? 0 : maxCombo,
         }}
         onRetry={handleRetry}
-        allowRetry={!isScenario} // No permitir retry en scenarios (ya tienen su propio review interno)
+        allowRetry={!allQuestionsAreScenarios}
       />
     )
   }
