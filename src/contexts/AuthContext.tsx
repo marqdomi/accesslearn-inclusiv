@@ -22,22 +22,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Cargar auth desde localStorage al iniciar
   useEffect(() => {
-    const storedToken = localStorage.getItem('auth-token')
-    const storedUser = localStorage.getItem('current-user')
+    const loadAuth = async () => {
+      const storedToken = localStorage.getItem('auth-token')
+      const storedUser = localStorage.getItem('current-user')
 
-    if (storedToken && storedUser) {
-      try {
-        const userData = JSON.parse(storedUser)
-        setToken(storedToken)
-        setUser(userData)
-      } catch (error) {
-        console.error('Error parsing stored user:', error)
-        localStorage.removeItem('auth-token')
-        localStorage.removeItem('current-user')
+      if (storedToken && storedUser) {
+        try {
+          const userData = JSON.parse(storedUser)
+          
+          // Try to validate token, but don't block if it fails (might be network issue)
+          // The API service will handle 401 errors on actual requests
+          try {
+            await ApiService.getCurrentUser()
+            // Token is valid, use stored user data
+            setToken(storedToken)
+            setUser(userData)
+          } catch (error: any) {
+            // Token might be expired, but don't clear yet - let actual API calls handle it
+            // This prevents clearing auth on network errors during initial load
+            console.warn('[AuthContext] Token validation failed during init, will validate on first API call')
+            // Still set user/token so UI can load, but first API call will trigger logout if invalid
+            setToken(storedToken)
+            setUser(userData)
+          }
+        } catch (error) {
+          console.error('Error parsing stored user:', error)
+          localStorage.removeItem('auth-token')
+          localStorage.removeItem('current-user')
+        }
       }
+
+      setIsLoading(false)
     }
 
-    setIsLoading(false)
+    loadAuth()
   }, [])
 
   const login = async (email: string, password: string, tenantId: string) => {

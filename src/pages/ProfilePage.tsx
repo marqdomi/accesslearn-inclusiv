@@ -23,13 +23,18 @@ import {
   X,
   Eye,
   EyeSlash,
+  Trophy,
 } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { motion } from 'framer-motion'
+import { AchievementsHall } from '@/components/profile/AchievementsHall'
+import { useAuth } from '@/contexts/AuthContext'
 
 export function ProfilePage() {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const { profile, loading, error, updateProfile, changePassword, updateAvatar } = useProfile()
+  const isStudent = user?.role === 'student'
   
   // Profile form state
   const [profileData, setProfileData] = useState({
@@ -333,6 +338,12 @@ export function ProfilePage() {
               <Lock className="h-4 w-4 mr-2" />
               Cambiar Contraseña
             </TabsTrigger>
+            {isStudent && (
+              <TabsTrigger value="achievements">
+                <Trophy className="h-4 w-4 mr-2" />
+                Logros
+              </TabsTrigger>
+            )}
           </TabsList>
 
           {/* Profile Tab */}
@@ -664,13 +675,20 @@ export function ProfilePage() {
                       </Button>
                     </div>
                   </form>
-                </CardContent>
-              </Card>
-            </motion.div>
-          </TabsContent>
-        </Tabs>
-      </div>
-    </div>
-  )
+            </CardContent>
+          </Card>
+        </motion.div>
+      </TabsContent>
+
+      {/* Achievements Tab - Only for students */}
+      {isStudent && (
+        <TabsContent value="achievements">
+          <AchievementsHall userId={user?.id} />
+        </TabsContent>
+      )}
+    </Tabs>
+  </div>
+</div>
+)
 }
 

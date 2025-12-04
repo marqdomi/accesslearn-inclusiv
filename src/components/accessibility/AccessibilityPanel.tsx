@@ -20,16 +20,18 @@ export function AccessibilityPanel() {
     highContrast: false,
     captionsEnabled: true,
     reduceMotion: false,
+    simplifiedMode: false,
   }
 
   useEffect(() => {
     const root = document.documentElement
     root.classList.toggle('high-contrast', preferences.highContrast)
     root.classList.toggle('reduce-motion', preferences.reduceMotion)
+    root.classList.toggle('simplified-mode', preferences.simplifiedMode ?? false)
     
     const fontSize = preferences.textSize === 'large' ? '110%' : preferences.textSize === 'x-large' ? '125%' : '100%'
     root.style.fontSize = fontSize
-  }, [preferences.highContrast, preferences.textSize, preferences.reduceMotion])
+  }, [preferences.highContrast, preferences.textSize, preferences.reduceMotion, preferences.simplifiedMode])
 
   return (
     <>
@@ -141,6 +143,18 @@ export function AccessibilityPanel() {
                   checked={preferences.reduceMotion}
                   onCheckedChange={(checked) => updatePreference('reduceMotion', checked)}
                   aria-label={t('accessibility.reduceMotion')}
+                />
+              </div>
+
+              <div className="flex items-center justify-between gap-4 min-h-[44px]">
+                <Label htmlFor="simplified-mode" className="text-base font-medium cursor-pointer">
+                  {t('accessibility.simplifiedMode', 'Modo Simplificado')}
+                </Label>
+                <Switch
+                  id="simplified-mode"
+                  checked={preferences.simplifiedMode ?? false}
+                  onCheckedChange={(checked) => updatePreference('simplifiedMode', checked)}
+                  aria-label={t('accessibility.simplifiedMode', 'Modo Simplificado')}
                 />
               </div>
             </div>

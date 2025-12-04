@@ -3,6 +3,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useTenant } from '@/contexts/TenantContext'
 import { ApiService } from '@/services/api.service'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card'
+import { GlassCard, GlassPanel } from '@/components/ui/glass-card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -18,6 +19,9 @@ import {
 } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { motion } from 'framer-motion'
+import { useAccessibilityPreferences } from '@/hooks/use-accessibility-preferences'
+import { cn } from '@/lib/utils'
+import { CourseCard } from './CourseCard'
 
 interface Course {
   id: string
@@ -43,6 +47,9 @@ interface CourseCatalogProps {
 export function CourseCatalog({ onCourseEnrolled }: CourseCatalogProps) {
   const { user, refreshUser } = useAuth()
   const { currentTenant } = useTenant()
+  const { preferences } = useAccessibilityPreferences()
+  const isStudent = user?.role === 'student'
+  const isSimplified = preferences.simplifiedMode
   const [courses, setCourses] = useState<Course[]>([])
   const [loading, setLoading] = useState(true)
   const [enrolling, setEnrolling] = useState<string | null>(null)
@@ -66,30 +73,54 @@ export function CourseCatalog({ onCourseEnrolled }: CourseCatalogProps) {
   }, [user?.enrolledCourses])
 
   const loadCourses = async () => {
-    if (!currentTenant) return
+    if (!currentTenant) {
+      console.warn('[CourseCatalog] No tenant available')
+      setLoading(false)
+      return
+    }
 
     try {
       setLoading(true)
+      console.log('[CourseCatalog] Loading courses for tenant:', currentTenant.id)
       
       // Refrescar usuario para obtener cursos inscritos actualizados
       if (user) {
         try {
           await refreshUser()
-        } catch (error) {
-          console.error('Error refreshing user:', error)
+        } catch (error: any) {
+          console.error('[CourseCatalog] Error refreshing user:', error)
+          if (error.status === 401) {
+            throw error // Re-throw 401 to trigger logout
+          }
           // Continuar aunque falle el refresh
         }
       }
       
       const data = await ApiService.getCourses(currentTenant.id)
+      console.log('[CourseCatalog] Courses received:', data?.length || 0, data)
+      
+      if (!data || !Array.isArray(data)) {
+        console.error('[CourseCatalog] Invalid courses data:', data)
+        setCourses([])
+        toast.error('Error: Formato de datos inválido')
+        return
+      }
+      
       // Filter only published/active courses
       const availableCourses = data.filter((c: Course) => 
         c.status === 'published' || c.status === 'active'
       )
+      console.log('[CourseCatalog] Available courses after filter:', availableCourses.length)
       setCourses(availableCourses)
     } catch (error: any) {
-      console.error('Error loading courses:', error)
-      toast.error('Error al cargar cursos')
+      console.error('[CourseCatalog] Error loading courses:', error)
+      if (error.status === 401) {
+        // Let ApiService handle 401 errors (logout)
+        toast.error('Sesión expirada. Por favor, inicia sesión nuevamente.')
+      } else {
+        toast.error(error.message || 'Error al cargar cursos')
+      }
+      setCourses([]) // Set empty array on error
     } finally {
       setLoading(false)
     }
@@ -175,82 +206,164 @@ export function CourseCatalog({ onCourseEnrolled }: CourseCatalogProps) {
     )
   }
 
+  const StatCard = (isStudent && !isSimplified) ? GlassCard : Card
+  const FilterCard = (isStudent && !isSimplified) ? GlassCard : Card
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold">Catálogo de Cursos</h1>
-        <p className="text-muted-foreground">
-          Explora y inscríbete en los cursos disponibles
+        <h1 className={cn(
+          "text-3xl font-bold",
+          isStudent && !isSimplified && "text-white"
+        )}>
+          {isStudent ? "Quest Board" : "Catálogo de Cursos"}
+        </h1>
+        <p className={cn(
+          isStudent && !isSimplified ? "text-gray-300" : "text-muted-foreground"
+        )}>
+          {isStudent 
+            ? "Explora misiones disponibles y comienza tu aventura de aprendizaje"
+            : "Explora y inscríbete en los cursos disponibles"
+          }
         </p>
       </div>
 
       {/* Stats */}
       <div className="grid gap-4 md:grid-cols-3">
-        <Card className="bg-blue-50/50 dark:bg-blue-950/20 border-blue-100 dark:border-blue-900">
-          <CardContent className="pt-6">
+        <StatCard className={cn(
+          isStudent && !isSimplified ? "" : "bg-blue-50/50 dark:bg-blue-950/20 border-blue-100 dark:border-blue-900"
+        )}>
+          <div className="pt-6 px-6 pb-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Total de Cursos</p>
-                <p className="text-2xl font-bold mt-1">{courses.length}</p>
+                <p className={cn(
+                  "text-sm font-medium",
+                  isStudent && !isSimplified ? "text-gray-300" : "text-muted-foreground"
+                )}>
+                  Total de Cursos
+                </p>
+                <p className={cn(
+                  "text-2xl font-bold mt-1",
+                  isStudent && !isSimplified ? "hud-counter text-white" : ""
+                )}>
+                  {courses.length}
+                </p>
               </div>
-              <div className="h-12 w-12 rounded-lg bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center">
-                <BookOpen className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+              <div className={cn(
+                "h-12 w-12 rounded-lg flex items-center justify-center",
+                isStudent && !isSimplified 
+                  ? "bg-tech-cyan/20" 
+                  : "bg-blue-100 dark:bg-blue-900/50"
+              )}>
+                <BookOpen className={cn(
+                  "h-6 w-6",
+                  isStudent && !isSimplified ? "text-tech-cyan" : "text-blue-600 dark:text-blue-400"
+                )} />
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </StatCard>
 
-        <Card className="bg-purple-50/50 dark:bg-purple-950/20 border-purple-100 dark:border-purple-900">
-          <CardContent className="pt-6">
+        <StatCard className={cn(
+          isStudent && !isSimplified ? "" : "bg-purple-50/50 dark:bg-purple-950/20 border-purple-100 dark:border-purple-900"
+        )}>
+          <div className="pt-6 px-6 pb-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Categorías</p>
-                <p className="text-2xl font-bold mt-1">{categories.length}</p>
+                <p className={cn(
+                  "text-sm font-medium",
+                  isStudent && !isSimplified ? "text-gray-300" : "text-muted-foreground"
+                )}>
+                  Categorías
+                </p>
+                <p className={cn(
+                  "text-2xl font-bold mt-1",
+                  isStudent && !isSimplified ? "hud-counter text-white" : ""
+                )}>
+                  {categories.length}
+                </p>
               </div>
-              <div className="h-12 w-12 rounded-lg bg-purple-100 dark:bg-purple-900/50 flex items-center justify-center">
-                <FunnelSimple className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+              <div className={cn(
+                "h-12 w-12 rounded-lg flex items-center justify-center",
+                isStudent && !isSimplified 
+                  ? "bg-tech-cyan/20" 
+                  : "bg-purple-100 dark:bg-purple-900/50"
+              )}>
+                <FunnelSimple className={cn(
+                  "h-6 w-6",
+                  isStudent && !isSimplified ? "text-tech-cyan" : "text-purple-600 dark:text-purple-400"
+                )} />
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </StatCard>
 
-        <Card className="bg-green-50/50 dark:bg-green-950/20 border-green-100 dark:border-green-900">
-          <CardContent className="pt-6">
+        <StatCard className={cn(
+          isStudent && !isSimplified ? "" : "bg-green-50/50 dark:bg-green-950/20 border-green-100 dark:border-green-900"
+        )}>
+          <div className="pt-6 px-6 pb-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Resultados</p>
-                <p className="text-2xl font-bold mt-1">{filteredCourses.length}</p>
+                <p className={cn(
+                  "text-sm font-medium",
+                  isStudent && !isSimplified ? "text-gray-300" : "text-muted-foreground"
+                )}>
+                  Resultados
+                </p>
+                <p className={cn(
+                  "text-2xl font-bold mt-1",
+                  isStudent && !isSimplified ? "hud-counter text-white" : ""
+                )}>
+                  {filteredCourses.length}
+                </p>
               </div>
-              <div className="h-12 w-12 rounded-lg bg-green-100 dark:bg-green-900/50 flex items-center justify-center">
-                <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400" />
+              <div className={cn(
+                "h-12 w-12 rounded-lg flex items-center justify-center",
+                isStudent && !isSimplified 
+                  ? "bg-tech-cyan/20" 
+                  : "bg-green-100 dark:bg-green-900/50"
+              )}>
+                <CheckCircle className={cn(
+                  "h-6 w-6",
+                  isStudent && !isSimplified ? "text-tech-cyan" : "text-green-600 dark:text-green-400"
+                )} />
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </StatCard>
       </div>
 
       {/* Search and Filters */}
-      <Card>
-        <CardContent className="pt-6 space-y-4">
+      <FilterCard className={isStudent && !isSimplified ? "" : ""}>
+        <div className="pt-6 px-6 pb-6 space-y-4">
           {/* Search */}
           <div className="relative">
             <MagnifyingGlass 
-              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" 
+              className={cn(
+                "absolute left-3 top-1/2 transform -translate-y-1/2",
+                isStudent && !isSimplified ? "text-gray-400" : "text-muted-foreground"
+              )} 
               size={18} 
             />
             <Input
               placeholder="Buscar por título, descripción, instructor..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
+              className={cn(
+                "pl-10",
+                isStudent && !isSimplified && "bg-white/10 border-tech-cyan/30 text-white placeholder:text-gray-400 focus:border-tech-cyan"
+              )}
             />
           </div>
 
           {/* Filters */}
           <div className="flex gap-4">
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="w-[200px]">
+              <SelectTrigger className={cn(
+                "w-[200px]",
+                isStudent && !isSimplified && "bg-white/10 border-tech-cyan/30 text-white"
+              )}>
                 <SelectValue placeholder="Todas las categorías" />
               </SelectTrigger>
               <SelectContent>
@@ -262,7 +375,10 @@ export function CourseCatalog({ onCourseEnrolled }: CourseCatalogProps) {
             </Select>
 
             <Select value={levelFilter} onValueChange={setLevelFilter}>
-              <SelectTrigger className="w-[200px]">
+              <SelectTrigger className={cn(
+                "w-[200px]",
+                isStudent && !isSimplified && "bg-white/10 border-tech-cyan/30 text-white"
+              )}>
                 <SelectValue placeholder="Todos los niveles" />
               </SelectTrigger>
               <SelectContent>
@@ -273,118 +389,68 @@ export function CourseCatalog({ onCourseEnrolled }: CourseCatalogProps) {
               </SelectContent>
             </Select>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </FilterCard>
 
       {/* Courses Grid */}
       {filteredCourses.length === 0 ? (
-        <Card>
-          <CardContent className="py-16 text-center">
-            <BookOpen size={64} className="mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-xl font-semibold mb-2">
+        (isStudent && !isSimplified) ? (
+          <GlassCard className="py-16 text-center">
+            <BookOpen size={64} className="mx-auto text-tech-cyan mb-4" />
+            <h3 className={cn(
+              "text-xl font-semibold mb-2",
+              isStudent && !isSimplified && "text-white"
+            )}>
               {courses.length === 0 ? 'No hay cursos disponibles' : 'No se encontraron cursos'}
             </h3>
-            <p className="text-muted-foreground">
+            <p className={cn(
+              isStudent && !isSimplified ? "text-gray-300" : "text-muted-foreground"
+            )}>
               {searchQuery || categoryFilter !== 'all' || levelFilter !== 'all'
                 ? 'Intenta ajustar los filtros de búsqueda'
                 : 'Pronto habrá nuevos cursos disponibles'}
             </p>
-          </CardContent>
-        </Card>
+          </GlassCard>
+        ) : (
+          <Card>
+            <CardContent className="py-16 text-center">
+              <BookOpen size={64} className="mx-auto text-muted-foreground mb-4" />
+              <h3 className="text-xl font-semibold mb-2">
+                {courses.length === 0 ? 'No hay cursos disponibles' : 'No se encontraron cursos'}
+              </h3>
+              <p className="text-muted-foreground">
+                {searchQuery || categoryFilter !== 'all' || levelFilter !== 'all'
+                  ? 'Intenta ajustar los filtros de búsqueda'
+                  : 'Pronto habrá nuevos cursos disponibles'}
+              </p>
+            </CardContent>
+          </Card>
+        )
       ) : (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className={cn(
+          "grid gap-6",
+          isStudent && !isSimplified ? "md:grid-cols-2 lg:grid-cols-3" : "md:grid-cols-2 lg:grid-cols-3"
+        )}>
           {filteredCourses.map((course) => {
             const isEnrolled = enrolledCourseIds.has(course.id)
-            const isEnrolling = enrolling === course.id
-
+            // Get progress if enrolled
+            const progress = isEnrolled ? { status: 'in-progress' as const, completedModules: [] } : undefined
+            
             return (
-              <Card key={course.id} className="h-full flex flex-col hover:shadow-lg transition-shadow relative">
-                {course.coverImage && (
-                  <div className="h-48 overflow-hidden rounded-t-lg">
-                    <img 
-                      src={course.coverImage} 
-                      alt={course.title}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                )}
-                
-                {isEnrolled && (
-                  <Badge 
-                    className="absolute top-4 right-4 bg-emerald-100 text-emerald-700 border-emerald-200"
-                    variant="outline"
-                  >
-                    Inscrito
-                  </Badge>
-                )}
-                
-                <CardHeader>
-                  <CardTitle className="text-xl line-clamp-2">
-                    {course.title}
-                  </CardTitle>
-                  <CardDescription className="line-clamp-3">
-                    {course.description}
-                  </CardDescription>
-                </CardHeader>
-
-                <CardContent className="flex-1 space-y-3">
-                  <div className="flex flex-wrap gap-2">
-                    {course.category && (
-                      <Badge variant="outline">{course.category}</Badge>
-                    )}
-                    {course.level && (
-                      <Badge variant="secondary">{course.level}</Badge>
-                    )}
-                  </div>
-
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                    {course.duration && (
-                      <div className="flex items-center gap-1">
-                        <Clock size={16} />
-                        <span>{course.duration}h</span>
-                      </div>
-                    )}
-                    {course.totalXP && (
-                      <div className="flex items-center gap-1">
-                        <Star size={16} weight="fill" className="text-yellow-500" />
-                        <span>{course.totalXP} XP</span>
-                      </div>
-                    )}
-                  </div>
-
-                  {course.instructorName && (
-                    <p className="text-sm text-muted-foreground">
-                      Instructor: {course.instructorName}
-                    </p>
-                  )}
-                </CardContent>
-
-                <CardFooter>
-                  <Button 
-                    onClick={() => handleEnroll(course)} 
-                    className="w-full gap-2"
-                    disabled={isEnrolling || isEnrolled}
-                    variant={isEnrolled ? 'outline' : 'default'}
-                  >
-                    {isEnrolled ? (
-                      <>
-                        <CheckCircle size={18} weight="fill" />
-                        Inscrito
-                      </>
-                    ) : isEnrolling ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        Inscribiendo...
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircle size={18} weight="fill" />
-                        Inscribirse
-                      </>
-                    )}
-                  </Button>
-                </CardFooter>
-              </Card>
+              <CourseCard
+                key={course.id}
+                course={course}
+                progress={progress}
+                onSelect={() => {
+                  if (isEnrolled) {
+                    // Navigate to course
+                    window.location.href = `/courses/${course.id}`
+                  } else {
+                    // Enroll first
+                    handleEnroll(course)
+                  }
+                }}
+              />
             )
           })}
         </div>

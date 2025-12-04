@@ -29,30 +29,57 @@ export function LibraryPage() {
   }, [user, currentTenant])
 
   const loadLibrary = async () => {
-    if (!user || !currentTenant) return
+    if (!user || !currentTenant) {
+      console.warn('[LibraryPage] Missing user or tenant:', { user: !!user, tenant: !!currentTenant })
+      setLoading(false)
+      return
+    }
 
     try {
       setLoading(true)
       setError(null)
+      console.log('[LibraryPage] Loading library for user:', user.id, 'tenant:', currentTenant.id)
+      
       const progressRecords = await ApiService.getUserLibrary(user.id, currentTenant.id)
+      console.log('[LibraryPage] Progress records received:', progressRecords?.length || 0, progressRecords)
+      
+      if (!progressRecords || progressRecords.length === 0) {
+        console.log('[LibraryPage] No progress records found - user may not be enrolled in any courses')
+        setLibrary([])
+        setLoading(false)
+        return
+      }
       
       // Load course details for each progress record
       const libraryItems = await Promise.all(
         progressRecords.map(async (progress) => {
           try {
+            console.log('[LibraryPage] Loading course:', progress.courseId)
             const course = await ApiService.getCourseById(progress.courseId)
+            console.log('[LibraryPage] Course loaded:', course?.title)
             return { progress, course }
-          } catch (err) {
-            console.error(`Failed to load course ${progress.courseId}:`, err)
+          } catch (err: any) {
+            console.error(`[LibraryPage] Failed to load course ${progress.courseId}:`, err)
+            // Don't fail silently - log the error
+            if (err.status === 401) {
+              throw err // Re-throw 401 to trigger logout
+            }
             return null
           }
         })
       )
 
-      setLibrary(libraryItems.filter((item): item is LibraryItem => item !== null))
-    } catch (err) {
-      console.error('Failed to load library:', err)
-      setError('No se pudo cargar tu biblioteca. Por favor, intenta de nuevo.')
+      const validItems = libraryItems.filter((item): item is LibraryItem => item !== null)
+      console.log('[LibraryPage] Valid library items:', validItems.length)
+      setLibrary(validItems)
+    } catch (err: any) {
+      console.error('[LibraryPage] Failed to load library:', err)
+      if (err.status === 401) {
+        // Let ApiService handle 401 errors (logout)
+        setError('Sesión expirada. Por favor, inicia sesión nuevamente.')
+      } else {
+        setError(err.message || 'No se pudo cargar tu biblioteca. Por favor, intenta de nuevo.')
+      }
     } finally {
       setLoading(false)
     }
@@ -110,11 +137,26 @@ export function LibraryPage() {
   if (error) {
     return (
       <div className="container mx-auto p-6">
+        <div className="mb-8">
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={() => navigate('/dashboard')}
+            className="mb-4"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Volver al Dashboard
+          </Button>
+          <h1 className="text-3xl font-bold mb-2">Mi Biblioteca</h1>
+        </div>
         <Card className="border-destructive">
           <CardContent className="pt-6">
-            <p className="text-destructive text-center">{error}</p>
-            <div className="flex justify-center mt-4">
+            <p className="text-destructive text-center mb-4">{error}</p>
+            <div className="flex justify-center gap-4">
               <Button onClick={loadLibrary}>Reintentar</Button>
+              <Button variant="outline" onClick={() => navigate('/catalog')}>
+                Explorar Catálogo
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -266,9 +308,14 @@ export function LibraryPage() {
             <Card>
               <CardContent className="pt-6 text-center">
                 <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground">
-                  Tu biblioteca está vacía. Inscríbete en cursos para comenzar.
+                <h3 className="text-lg font-semibold mb-2">Tu biblioteca está vacía</h3>
+                <p className="text-muted-foreground mb-4">
+                  Inscríbete en cursos del catálogo para comenzar tu aprendizaje.
                 </p>
+                <Button onClick={() => navigate('/catalog')} className="gap-2">
+                  <BookOpen className="h-4 w-4" />
+                  Explorar Catálogo
+                </Button>
               </CardContent>
             </Card>
           ) : (

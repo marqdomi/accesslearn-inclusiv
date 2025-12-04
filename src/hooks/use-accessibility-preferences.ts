@@ -8,6 +8,7 @@ const defaultPreferences: UserPreferences = {
   highContrast: false,
   captionsEnabled: true,
   reduceMotion: false,
+  simplifiedMode: false,
 }
 
 export interface AccessibilityProfile {
@@ -89,6 +90,12 @@ function applyAccessibilityPreferences(
     root.classList.add('reduce-motion')
   } else {
     root.classList.remove('reduce-motion')
+  }
+
+  if (preferences.simplifiedMode) {
+    root.classList.add('simplified-mode')
+  } else {
+    root.classList.remove('simplified-mode')
   }
 
   switch (preferences.textSize) {

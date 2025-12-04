@@ -14,6 +14,7 @@ import { GameNotificationQueue, GameNotification } from '@/components/gamificati
 import { CourseMissionPanel } from '@/components/course/CourseMissionPanel'
 import { CourseHeatmapNavigator } from '@/components/course/CourseHeatmapNavigator'
 import { Button } from '@/components/ui/button'
+import { useAccessibilityPreferences } from '@/hooks/use-accessibility-preferences'
 import {
   Tooltip,
   TooltipContent,
@@ -62,6 +63,10 @@ export function CourseViewerPage() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const { currentTenant } = useTenant()
+  const { preferences } = useAccessibilityPreferences()
+  const isStudent = user?.role === 'student'
+  const isSimplified = preferences.simplifiedMode
+  const useGlassmorphism = isStudent && !isSimplified
 
   const [course, setCourse] = useState<Course | null>(null)
   const [currentModuleId, setCurrentModuleId] = useState<string>('')
@@ -668,41 +673,82 @@ export function CourseViewerPage() {
     )
   }
 
+  const progressPercent = totalLessons > 0 ? Math.round((completedLessons.size / totalLessons) * 100) : 0
+
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b bg-background sticky top-0 z-10 shadow-sm">
+    <div className={cn(
+      "min-h-screen",
+      useGlassmorphism ? "tech-bg" : "bg-background"
+    )}>
+      {/* Header - Glassmorphism for students */}
+      <header className={cn(
+        "border-b sticky top-0 z-10 shadow-sm",
+        useGlassmorphism ? "glass-navbar border-tech-cyan/30" : "bg-background"
+      )}>
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Button
                 variant="ghost"
                 onClick={() => navigate('/library')}
-                className="gap-2"
+                className={cn(
+                  "gap-2",
+                  useGlassmorphism && "text-white hover:bg-white/10"
+                )}
               >
                 <ArrowLeft size={18} />
                 Mi Biblioteca
               </Button>
-              <div className="border-l pl-4">
-                <h1 className="text-lg font-bold">{course.title}</h1>
-                <p className="text-sm text-muted-foreground">
+              <div className={cn(
+                "border-l pl-4",
+                useGlassmorphism ? "border-tech-cyan/30" : ""
+              )}>
+                <h1 className={cn(
+                  "text-lg font-bold",
+                  useGlassmorphism ? "text-white" : ""
+                )}>
+                  {course.title}
+                </h1>
+                <p className={cn(
+                  "text-sm",
+                  useGlassmorphism ? "text-gray-300" : "text-muted-foreground"
+                )}>
                   {completedLessons.size} de {totalLessons || 0} lecciones completadas
                 </p>
               </div>
             </div>
             
-            {/* Progress indicator */}
+            {/* Progress indicator - HUD style for students */}
             <div className="hidden md:flex items-center gap-3">
               <div className="text-right">
-                <p className="text-sm font-medium">{totalLessons > 0 ? Math.round((completedLessons.size / totalLessons) * 100) : 0}%</p>
-                <p className="text-xs text-muted-foreground">Progreso</p>
+                <p className={cn(
+                  "text-sm font-medium",
+                  useGlassmorphism ? "hud-counter text-white" : ""
+                )}>
+                  {progressPercent}%
+                </p>
+                <p className={cn(
+                  "text-xs",
+                  useGlassmorphism ? "text-gray-300" : "text-muted-foreground"
+                )}>
+                  Progreso
+                </p>
               </div>
-              <div className="w-32 h-2 bg-muted rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-primary transition-all duration-300"
-                  style={{ width: `${totalLessons > 0 ? (completedLessons.size / totalLessons) * 100 : 0}%` }}
-                />
-              </div>
+              {useGlassmorphism ? (
+                <div className="w-32 hud-progress-bar">
+                  <div 
+                    className="hud-progress-bar-fill"
+                    style={{ width: `${progressPercent}%` }}
+                  />
+                </div>
+              ) : (
+                <div className="w-32 h-2 bg-muted rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-primary transition-all duration-300"
+                    style={{ width: `${progressPercent}%` }}
+                  />
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -712,7 +758,10 @@ export function CourseViewerPage() {
       <div className="container mx-auto px-4 py-6">
         <div className={`grid grid-cols-1 gap-6 ${sidebarCollapsed ? '' : 'lg:grid-cols-12'}`}>
           {!sidebarCollapsed && (
-            <aside className="lg:col-span-3 space-y-4 max-w-[260px]">
+            <aside className={cn(
+              "lg:col-span-3 space-y-4 max-w-[260px]",
+              useGlassmorphism && "glass-panel p-4 rounded-lg"
+            )}>
               <div className="flex items-center justify-between gap-2 mb-3">
                 <div className="flex items-center rounded-full border bg-muted/40 p-1 text-xs font-medium flex-1">
                   <button
@@ -773,8 +822,11 @@ export function CourseViewerPage() {
             </aside>
           )}
 
-          {/* Main Content Area */}
-          <main className={sidebarCollapsed ? 'lg:col-span-12' : 'lg:col-span-9'}>
+          {/* Main Content Area - Solid background for readability */}
+          <main className={cn(
+            sidebarCollapsed ? 'lg:col-span-12' : 'lg:col-span-9',
+            useGlassmorphism && "bg-background rounded-lg p-6 shadow-lg"
+          )}>
             {sidebarCollapsed && (
               <div className="mb-4">
                 <TooltipProvider>
@@ -784,7 +836,10 @@ export function CourseViewerPage() {
                         variant="outline"
                         size="sm"
                         onClick={() => setSidebarCollapsed(false)}
-                        className="p-2"
+                        className={cn(
+                          "p-2",
+                          useGlassmorphism && "border-tech-cyan/30 text-white hover:bg-white/10"
+                        )}
                       >
                         <PanelRightClose className="h-4 w-4" />
                       </Button>

@@ -46,6 +46,24 @@
   /* Rounded, friendly corners */
   --learner-radius: 0.75rem;
   --learner-radius-lg: 1rem;
+  
+  /* Glassmorphism tokens for High-End Tech Interface */
+  --tech-cyan: #00d9ff;
+  --tech-cyan-dark: #0066ff;
+  --tech-cyan-glow: rgba(0, 217, 255, 0.3);
+  --tech-cyan-glow-strong: rgba(0, 217, 255, 0.5);
+  
+  /* Tech background colors */
+  --tech-bg-dark: oklch(0.15 0.02 240); /* Dark slate */
+  --tech-bg-darker: oklch(0.12 0.02 240);
+  --tech-bg-gradient-start: oklch(0.15 0.02 240);
+  --tech-bg-gradient-mid: oklch(0.18 0.02 240);
+  --tech-bg-gradient-end: oklch(0.20 0.02 240);
+  
+  /* HUD element colors */
+  --hud-primary: var(--tech-cyan);
+  --hud-secondary: var(--tech-cyan-dark);
+  --hud-glow: var(--tech-cyan-glow);
 }
 
 /* High contrast mode for learner persona */

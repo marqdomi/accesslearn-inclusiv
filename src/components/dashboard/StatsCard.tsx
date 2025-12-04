@@ -1,7 +1,9 @@
 import { Card, CardContent } from '@/components/ui/card'
+import { GlassCard } from '@/components/ui/glass-card'
 import { TrendingUp, TrendingDown, Minus, type LucideIcon } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
+import { useAccessibilityPreferences } from '@/hooks/use-accessibility-preferences'
 
 interface StatsCardProps {
   title: string
@@ -57,17 +59,20 @@ export function StatsCard({
   loading = false 
 }: StatsCardProps) {
   const colors = colorClasses[color]
+  const { preferences } = useAccessibilityPreferences()
+  const isSimplified = preferences.simplifiedMode
 
   if (loading) {
+    const LoadingCard = isSimplified ? Card : GlassCard
     return (
-      <Card className={cn("border", colors.border)}>
-        <CardContent className="p-4">
+      <LoadingCard className={cn("border", colors.border)}>
+        <div className="p-4">
           <div className="animate-pulse space-y-3">
             <div className="h-4 bg-muted rounded w-2/3"></div>
             <div className="h-8 bg-muted rounded w-1/2"></div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </LoadingCard>
     )
   }
 
@@ -75,8 +80,10 @@ export function StatsCard({
     ? (trend.value > 0 ? TrendingUp : trend.value < 0 ? TrendingDown : Minus)
     : null
   const trendColor = trend
-    ? (trend.value > 0 ? 'text-green-600' : trend.value < 0 ? 'text-red-600' : 'text-muted-foreground')
+    ? (trend.value > 0 ? 'text-green-400' : trend.value < 0 ? 'text-red-400' : 'text-gray-400')
     : ''
+
+  const StatCard = isSimplified ? Card : GlassCard
 
   return (
     <motion.div
@@ -85,19 +92,27 @@ export function StatsCard({
       whileHover={{ y: -2 }}
       transition={{ duration: 0.2 }}
     >
-      <Card className={cn(
-        "border transition-all hover:shadow-md",
-        colors.border,
-        `bg-gradient-to-br ${colors.bg}`
+      <StatCard className={cn(
+        "transition-all hover:shadow-md",
+        isSimplified ? `border bg-gradient-to-br ${colors.bg}` : "",
+        colors.border
       )}>
-        <CardContent className="p-4">
+        <div className="p-4">
           <div className="flex items-start justify-between">
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-muted-foreground mb-1.5 truncate">
+              <p className={cn(
+                "text-xs font-medium mb-1.5 truncate",
+                isSimplified ? "text-muted-foreground" : "text-gray-300"
+              )}>
                 {title}
               </p>
               <div className="flex items-baseline gap-2">
-                <p className="text-2xl font-bold">{value}</p>
+                <p className={cn(
+                  "text-2xl font-bold",
+                  isSimplified ? "" : "hud-counter text-white"
+                )}>
+                  {value}
+                </p>
                 {trend && TrendIcon && (
                   <div className={cn("flex items-center gap-1 text-xs", trendColor)}>
                     <TrendIcon className="h-3 w-3" />
@@ -106,15 +121,26 @@ export function StatsCard({
                 )}
               </div>
               {trend?.label && (
-                <p className="text-xs text-muted-foreground mt-1">{trend.label}</p>
+                <p className={cn(
+                  "text-xs mt-1",
+                  isSimplified ? "text-muted-foreground" : "text-gray-400"
+                )}>
+                  {trend.label}
+                </p>
               )}
             </div>
-            <div className={cn("p-2 rounded-lg flex-shrink-0", colors.iconBg)}>
-              <Icon className={cn("h-5 w-5", colors.icon)} />
+            <div className={cn(
+              "p-2 rounded-lg flex-shrink-0",
+              isSimplified ? colors.iconBg : "bg-tech-cyan/20"
+            )}>
+              <Icon className={cn(
+                "h-5 w-5",
+                isSimplified ? colors.icon : "text-tech-cyan"
+              )} />
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </StatCard>
     </motion.div>
   )
 }

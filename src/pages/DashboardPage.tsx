@@ -24,6 +24,7 @@ import { RequireRole } from '@/components/auth/RequireRole'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { AppNavbar } from '@/components/layout/AppNavbar'
 import { ContinueLearningCard } from '@/components/dashboard/ContinueLearningCard'
+import { CommandCenter } from '@/components/dashboard/CommandCenter'
 import { StatsCard } from '@/components/dashboard/StatsCard'
 import { QuickActions } from '@/components/dashboard/QuickActions'
 import { RecommendedCourses } from '@/components/dashboard/RecommendedCourses'
@@ -230,6 +231,9 @@ export function DashboardPage() {
     )
   }
 
+  // Check if user is a student (show gaming UI)
+  const isStudent = user?.role === 'student'
+
   // Get greeting based on time of day
   const getGreeting = () => {
     const hour = new Date().getHours()
@@ -238,6 +242,22 @@ export function DashboardPage() {
     return 'Buenas noches'
   }
 
+  // Show Command Center (Gaming UI) for students
+  if (isStudent) {
+    return (
+      <>
+        <AppNavbar userXP={stats.totalXP} />
+        <CommandCenter 
+          course={currentCourse}
+          progress={currentProgress}
+          stats={stats}
+          loading={loading}
+        />
+      </>
+    )
+  }
+
+  // Show Professional Dashboard for admins/managers
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background">
       <AppNavbar userXP={stats.totalXP} />

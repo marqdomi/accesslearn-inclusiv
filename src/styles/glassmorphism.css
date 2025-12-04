@@ -1,0 +1,336 @@
+/**
+ * Glassmorphism Design System
+ * 
+ * High-End Tech Interface styling with glassmorphism effects
+ * Style: Stark Industries / Iron Man aesthetic
+ * 
+ * Features:
+ * - Backdrop blur effects
+ * - Glass panel backgrounds
+ * - Border glow effects
+ * - Shadow layers for depth
+ * - Text overlay gradients for contrast
+ * - Accessibility fallbacks
+ */
+
+/* ========================================
+   GLASSMORPHISM CSS VARIABLES
+   ======================================== */
+
+:root {
+  /* Backdrop blur levels */
+  --glass-blur-sm: blur(8px);
+  --glass-blur-md: blur(16px);
+  --glass-blur-lg: blur(24px);
+  --glass-blur-xl: blur(32px);
+  
+  /* Glass panel backgrounds - Dark theme (default for gaming) */
+  --glass-bg-dark: rgba(15, 23, 42, 0.7); /* slate-900 with opacity */
+  --glass-bg-dark-hover: rgba(15, 23, 42, 0.85);
+  --glass-bg-dark-light: rgba(30, 41, 59, 0.6); /* slate-800 */
+  
+  /* Glass panel backgrounds - Light theme (fallback) */
+  --glass-bg-light: rgba(255, 255, 255, 0.7);
+  --glass-bg-light-hover: rgba(255, 255, 255, 0.85);
+  
+  /* Border glow effects - Tech cyan/blue */
+  --glass-border-glow: rgba(0, 217, 255, 0.3); /* Cyan glow */
+  --glass-border-glow-strong: rgba(0, 217, 255, 0.5);
+  --glass-border-glow-hover: rgba(0, 217, 255, 0.6);
+  
+  /* Border colors */
+  --glass-border: rgba(148, 163, 184, 0.2); /* slate-400 with opacity */
+  --glass-border-strong: rgba(148, 163, 184, 0.4);
+  
+  /* Shadow layers for depth */
+  --glass-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
+  --glass-shadow-md: 0 4px 16px rgba(0, 0, 0, 0.15), 0 2px 6px rgba(0, 0, 0, 0.1);
+  --glass-shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.2), 0 4px 12px rgba(0, 0, 0, 0.15);
+  --glass-shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.25), 0 8px 16px rgba(0, 0, 0, 0.2);
+  
+  /* Glow shadows for tech elements */
+  --glass-glow-cyan: 0 0 20px rgba(0, 217, 255, 0.3), 0 0 40px rgba(0, 217, 255, 0.1);
+  --glass-glow-cyan-strong: 0 0 30px rgba(0, 217, 255, 0.5), 0 0 60px rgba(0, 217, 255, 0.2);
+  
+  /* Text overlay gradients for contrast */
+  --glass-text-overlay-dark: linear-gradient(180deg, rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0.8) 100%);
+  --glass-text-overlay-light: linear-gradient(180deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.95) 100%);
+  
+  /* Border radius */
+  --glass-radius-sm: 0.5rem;
+  --glass-radius-md: 0.75rem;
+  --glass-radius-lg: 1rem;
+  --glass-radius-xl: 1.5rem;
+  
+  /* Tech background gradients */
+  --tech-bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+  --tech-bg-gradient-subtle: radial-gradient(ellipse at top, rgba(0, 217, 255, 0.1) 0%, transparent 50%);
+}
+
+/* ========================================
+   GLASS PANEL BASE CLASSES
+   ======================================== */
+
+.glass-panel {
+  background: var(--glass-bg-dark);
+  backdrop-filter: var(--glass-blur-md);
+  -webkit-backdrop-filter: var(--glass-blur-md);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--glass-radius-md);
+  box-shadow: var(--glass-shadow-md);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-panel:hover {
+  background: var(--glass-bg-dark-hover);
+  border-color: var(--glass-border-glow);
+  box-shadow: var(--glass-shadow-lg), var(--glass-glow-cyan);
+}
+
+/* Glass panel variants */
+.glass-panel-sm {
+  backdrop-filter: var(--glass-blur-sm);
+  -webkit-backdrop-filter: var(--glass-blur-sm);
+  box-shadow: var(--glass-shadow-sm);
+}
+
+.glass-panel-lg {
+  backdrop-filter: var(--glass-blur-lg);
+  -webkit-backdrop-filter: var(--glass-blur-lg);
+  box-shadow: var(--glass-shadow-lg);
+}
+
+.glass-panel-xl {
+  backdrop-filter: var(--glass-blur-xl);
+  -webkit-backdrop-filter: var(--glass-blur-xl);
+  box-shadow: var(--glass-shadow-xl);
+}
+
+/* Glass panel with glow */
+.glass-panel-glow {
+  border-color: var(--glass-border-glow);
+  box-shadow: var(--glass-shadow-md), var(--glass-glow-cyan);
+}
+
+.glass-panel-glow:hover {
+  border-color: var(--glass-border-glow-hover);
+  box-shadow: var(--glass-shadow-lg), var(--glass-glow-cyan-strong);
+}
+
+/* ========================================
+   GLASS CARD CLASSES
+   ======================================== */
+
+.glass-card {
+  background: var(--glass-bg-dark);
+  backdrop-filter: var(--glass-blur-md);
+  -webkit-backdrop-filter: var(--glass-blur-md);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--glass-radius-lg);
+  box-shadow: var(--glass-shadow-md);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.glass-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--glass-border-glow), transparent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.glass-card:hover {
+  background: var(--glass-bg-dark-hover);
+  border-color: var(--glass-border-glow);
+  box-shadow: var(--glass-shadow-lg), var(--glass-glow-cyan);
+  transform: translateY(-4px);
+}
+
+.glass-card:hover::before {
+  opacity: 1;
+}
+
+/* Glass card with text overlay */
+.glass-card-text-overlay {
+  position: relative;
+}
+
+.glass-card-text-overlay::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 40%;
+  background: var(--glass-text-overlay-dark);
+  pointer-events: none;
+  border-radius: 0 0 var(--glass-radius-lg) var(--glass-radius-lg);
+}
+
+/* ========================================
+   GLASS NAVBAR CLASSES
+   ======================================== */
+
+.glass-navbar {
+  background: var(--glass-bg-dark);
+  backdrop-filter: var(--glass-blur-lg);
+  -webkit-backdrop-filter: var(--glass-blur-lg);
+  border-bottom: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow-sm);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+/* ========================================
+   GLASS OVERLAY FOR TEXT CONTRAST
+   ======================================== */
+
+.glass-overlay {
+  position: relative;
+}
+
+.glass-overlay::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--glass-text-overlay-dark);
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.glass-overlay > * {
+  position: relative;
+  z-index: 2;
+}
+
+/* ========================================
+   TECH BACKGROUND CLASSES
+   ======================================== */
+
+.tech-bg {
+  background: var(--tech-bg-gradient);
+  position: relative;
+}
+
+.tech-bg::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--tech-bg-gradient-subtle);
+  pointer-events: none;
+}
+
+.tech-bg-pattern {
+  background-image: 
+    radial-gradient(circle at 20% 50%, rgba(0, 217, 255, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(0, 102, 255, 0.1) 0%, transparent 50%),
+    var(--tech-bg-gradient);
+}
+
+/* ========================================
+   FALLBACKS FOR BROWSERS WITHOUT BACKDROP-FILTER
+   ======================================== */
+
+@supports not (backdrop-filter: blur(1px)) {
+  .glass-panel,
+  .glass-card,
+  .glass-navbar {
+    background: rgba(15, 23, 42, 0.95); /* Solid dark background */
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+  
+  .glass-panel-sm,
+  .glass-panel-lg,
+  .glass-panel-xl {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+/* ========================================
+   ACCESSIBILITY MODE - SIMPLIFIED
+   ======================================== */
+
+.simplified-mode .glass-panel,
+.simplified-mode .glass-card,
+.simplified-mode .glass-navbar {
+  background: rgba(15, 23, 42, 0.98); /* Near-solid background */
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  box-shadow: var(--glass-shadow-md);
+}
+
+.simplified-mode .glass-panel:hover,
+.simplified-mode .glass-card:hover {
+  transform: none;
+  box-shadow: var(--glass-shadow-md);
+}
+
+.simplified-mode .glass-panel-glow,
+.simplified-mode .glass-card:hover {
+  border-color: rgba(148, 163, 184, 0.3);
+  box-shadow: var(--glass-shadow-md);
+}
+
+/* ========================================
+   REDUCE MOTION SUPPORT
+   ======================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .glass-panel,
+  .glass-card {
+    transition: none;
+  }
+  
+  .glass-card:hover {
+    transform: none;
+  }
+  
+  .glass-card::before {
+    transition: none;
+  }
+}
+
+.reduce-motion .glass-panel,
+.reduce-motion .glass-card {
+  transition: none;
+}
+
+.reduce-motion .glass-card:hover {
+  transform: none;
+}
+
+/* ========================================
+   HIGH CONTRAST MODE
+   ======================================== */
+
+@media (prefers-contrast: more) {
+  .glass-panel,
+  .glass-card,
+  .glass-navbar {
+    background: rgba(15, 23, 42, 0.98);
+    border: 2px solid rgba(148, 163, 184, 0.6);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+.high-contrast .glass-panel,
+.high-contrast .glass-card,
+.high-contrast .glass-navbar {
+  background: rgba(15, 23, 42, 0.98);
+  border: 2px solid rgba(148, 163, 184, 0.6);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
