@@ -56,10 +56,20 @@ export function useCustomCategories() {
   }, [currentTenant?.id])
 
   const addCategory = async (category: string) => {
-    if (!currentTenant) return false
+    if (!currentTenant) {
+      toast.error('No se puede agregar categoría: falta información del tenant')
+      return false
+    }
 
     const trimmed = category.trim()
-    if (!trimmed || categories.includes(trimmed)) {
+    if (!trimmed) {
+      toast.error('El nombre de la categoría no puede estar vacío')
+      return false
+    }
+    
+    // Check if category already exists (case-insensitive)
+    const normalizedTrimmed = trimmed.toLowerCase()
+    if (categories.some(c => c.toLowerCase() === normalizedTrimmed)) {
       toast.error('La categoría ya existe')
       return false
     }
@@ -75,11 +85,34 @@ export function useCustomCategories() {
       toast.success('Categoría agregada exitosamente')
       return true
     } catch (error: any) {
-      console.error('Error saving category to Cosmos DB:', error)
-      if (error.message?.includes('already exists') || error.status === 409) {
+      console.error('[useCustomCategories] Error saving category to Cosmos DB:', error)
+      
+      // Handle specific error cases
+      if (error.status === 409 || error.message?.includes('already exists') || error.message?.includes('Category already exists')) {
         toast.error('La categoría ya existe')
+        // Refresh categories to get latest list
+        try {
+          const backendCategories = await ApiService.getCategories()
+          const customCategoryNames = backendCategories.map(c => c.name)
+          const merged = [...new Set([...DEFAULT_CATEGORIES, ...customCategoryNames])]
+          setCategories(merged.sort())
+        } catch (refreshError) {
+          console.error('[useCustomCategories] Error refreshing categories:', refreshError)
+        }
+      } else if (error.status === 403) {
+        toast.error('No tienes permisos para crear categorías. Contacta al administrador.')
+      } else if (error.status === 401) {
+        toast.error('Sesión expirada. Por favor, inicia sesión nuevamente.')
+      } else if (error.status === 400) {
+        toast.error(error.message || 'El nombre de la categoría es inválido')
       } else {
-        toast.error('Error al guardar la categoría')
+        // Generic error - show more details in console
+        console.error('[useCustomCategories] Full error details:', {
+          status: error.status,
+          message: error.message,
+          error
+        })
+        toast.error(`Error al guardar la categoría: ${error.message || 'Error desconocido'}`)
       }
       return false
     }

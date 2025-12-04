@@ -40,28 +40,57 @@ export async function createCategory(
   name: string,
   userId: string
 ): Promise<Category> {
-  const container = getContainer('categories')
-  
-  // Check if category already exists
-  const existing = await getCategories(tenantId)
-  const normalizedName = name.trim()
-  
-  if (existing.some(c => c.name.toLowerCase() === normalizedName.toLowerCase())) {
-    throw new Error('Category already exists')
+  try {
+    const container = getContainer('categories')
+    
+    // Validate input
+    const normalizedName = name.trim()
+    if (!normalizedName) {
+      throw new Error('Category name cannot be empty')
+    }
+    
+    // Check if category already exists
+    const existing = await getCategories(tenantId)
+    
+    if (existing.some(c => c.name.toLowerCase() === normalizedName.toLowerCase())) {
+      throw new Error('Category already exists')
+    }
+    
+    const now = new Date().toISOString()
+    const category: Category = {
+      id: `category-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      tenantId,
+      name: normalizedName,
+      createdBy: userId,
+      createdAt: now,
+      updatedAt: now
+    }
+    
+    const { resource } = await container.items.create<Category>(category)
+    
+    if (!resource) {
+      throw new Error('Failed to create category in database')
+    }
+    
+    return resource
+  } catch (error: any) {
+    // Re-throw known errors
+    if (error.message === 'Category already exists' || error.message === 'Category name cannot be empty') {
+      throw error
+    }
+    
+    // Log unexpected errors for debugging
+    console.error('[CategoryFunctions] Error creating category:', {
+      tenantId,
+      name,
+      userId,
+      error: error.message,
+      stack: error.stack
+    })
+    
+    // Wrap unknown errors
+    throw new Error(`Failed to create category: ${error.message || 'Unknown error'}`)
   }
-  
-  const now = new Date().toISOString()
-  const category: Category = {
-    id: `category-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-    tenantId,
-    name: normalizedName,
-    createdBy: userId,
-    createdAt: now,
-    updatedAt: now
-  }
-  
-  const { resource } = await container.items.create<Category>(category)
-  return resource!
 }
 
 /**

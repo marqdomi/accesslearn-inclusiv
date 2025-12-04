@@ -445,9 +445,13 @@ class ApiServiceClass {
   }
 
   async createCategory(name: string) {
+    if (!name || !name.trim()) {
+      throw { status: 400, message: 'Category name is required' } as ApiError
+    }
+    
     return this.fetchWithAuth<{ id: string; name: string; tenantId: string }>(`/categories`, {
       method: 'POST',
-      body: JSON.stringify({ name }),
+      body: JSON.stringify({ name: name.trim() }),
     })
   }
 
