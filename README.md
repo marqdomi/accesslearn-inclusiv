@@ -5,7 +5,7 @@
 ![Status](https://img.shields.io/badge/status-Producción%20Activa-success)
 ![Status](https://img.shields.io/badge/production-100%25%20Deployed-green)
 ![Version](https://img.shields.io/badge/version-1.0.0-blue)
-![Last Updated](https://img.shields.io/badge/updated-25%20Enero%202025-blue)
+![Last Updated](https://img.shields.io/badge/updated-4%20Diciembre%202025-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
 **Plataforma SaaS multi-tenant de aprendizaje corporativo gamificado, accesible y lista para producción en Azure**
@@ -63,14 +63,18 @@
 - **Documentación:** 120+ archivos MD en `/docs`
 - **Commits (Últimos 30 días):** 30+ commits
 
-### 🆕 Cambios Recientes (Enero 2025)
+### 🆕 Cambios Recientes (Diciembre 2025)
 
+- ✅ **Perfiles de Accesibilidad**: Sistema completo de perfiles predefinidos (Discalexia, Baja Visión, Daltonismo, Auditiva, Motora, Cognitiva)
+- ✅ **Gestión de Perfiles**: Panel administrativo para crear, editar y gestionar perfiles de accesibilidad personalizados
+- ✅ **Selector de Perfiles**: Componente para que usuarios seleccionen y apliquen perfiles de accesibilidad
+- ✅ **Migración Automática**: Scripts para crear perfiles por defecto en todos los tenants existentes
+- ✅ **Scripts de Utilidad**: Herramienta para obtener credenciales de Azure Cosmos DB automáticamente
+- ✅ **Optimización de Queries**: Corrección de consultas Cosmos DB para evitar errores de índices compuestos
 - ✅ **Dashboard Mejorado**: Nuevos componentes `ContinueLearningCard`, `StatsCard`, `QuickActions`, `RecommendedCourses`
 - ✅ **Navbar Refactorizado**: Simplificación UI/UX, notificaciones, breadcrumbs
 - ✅ **Course Viewer Mejorado**: Navegación tipo heatmap, cola de notificaciones gamificadas
 - ✅ **Azure Blob Storage**: Integración completa para logos, avatares y media de cursos
-- ✅ **Fix Crítico**: Endpoint `/api/media/upload` desplegado y funcional
-- ✅ **Mejoras UI/UX**: Microinteracciones, skeleton loading, estados vacíos mejorados
 
 ---
 
@@ -111,7 +115,8 @@ Azure Cosmos DB
 ├── Container: categories (partición por tenantId)
 ├── Container: notifications (partición por tenantId)
 ├── Container: audit-logs (partición por tenantId)
-└── Container: certificates (partición por tenantId)
+├── Container: certificates (partición por tenantId)
+└── Container: accessibility-profiles (partición por tenantId)
 ```
 
 **Estrategia de Aislamiento:**
@@ -217,6 +222,15 @@ Ver [CREDENCIALES_TEST_USUARIOS.md](./docs/CREDENCIALES_TEST_USUARIOS.md) para m
 ### ♿ Accesibilidad
 
 - **WCAG 2.1 Level AA**: Cumplimiento completo
+- **Perfiles de Accesibilidad**: 6 perfiles predefinidos para necesidades específicas
+  - **Discalexia**: Fuente especializada, espaciado mejorado, texto grande
+  - **Baja Visión**: Alto contraste, texto aumentado, zoom al 150%
+  - **Daltonismo**: Filtros de color, indicadores visuales adicionales
+  - **Auditiva**: Subtítulos grandes, notificaciones visuales, transcripciones
+  - **Motora**: Navegación simplificada, áreas de toque grandes, sin límites de tiempo
+  - **Cognitiva**: Lectura simplificada, ayudas contextuales, pausas automáticas
+- **Gestión de Perfiles**: Administradores pueden crear y personalizar perfiles
+- **Selector de Perfiles**: Interfaz intuitiva para seleccionar y aplicar perfiles
 - **Navegación por Teclado**: 100% accesible sin mouse
 - **Lectores de Pantalla**: Optimizado para NVDA, JAWS, VoiceOver
 - **Alto Contraste**: Modo de visibilidad mejorada
@@ -367,9 +381,12 @@ Este proyecto está licenciado bajo la Licencia MIT. Ver [LICENSE](./LICENSE) pa
 - **Error 404 en upload de archivos**: Verifica que `AZURE_STORAGE_CONNECTION_STRING` esté configurada
 - **Container crasheando**: Revisa los logs con `az containerapp logs show`
 
-### Scripts de Diagnóstico
+### Scripts de Diagnóstico y Utilidad
 
-El proyecto incluye scripts útiles para diagnóstico:
+El proyecto incluye scripts útiles para diagnóstico y gestión:
+- `scripts/get-cosmos-credentials.sh` - Obtiene credenciales de Azure Cosmos DB automáticamente
+- `backend/src/scripts/seed-all-tenants-profiles.ts` - Crea perfiles de accesibilidad para todos los tenants
+- `backend/src/scripts/seed-accessibility-profiles.ts` - Crea perfiles de accesibilidad para un tenant específico
 - `quick-test-upload.sh` - Test rápido del endpoint de upload
 - `test-upload-endpoint.sh` - Diagnóstico completo de endpoints
 - `redeploy-backend.sh` - Script para redesplegar el backend
@@ -401,6 +418,10 @@ El proyecto incluye scripts útiles para diagnóstico:
 
 ### Completado Recientemente ✅
 
+- ✅ Sistema completo de Perfiles de Accesibilidad (6 perfiles predefinidos)
+- ✅ Gestión administrativa de perfiles personalizados
+- ✅ Scripts de migración para tenants existentes
+- ✅ Herramientas de utilidad para gestión de Azure Cosmos DB
 - ✅ Azure Blob Storage para media (logos, avatares, course covers)
 - ✅ Mejoras UI/UX completas (Dashboard, Navbar, Course Viewer)
 - ✅ Integración completa con Azure Container Apps
@@ -422,7 +443,7 @@ El proyecto incluye scripts útiles para diagnóstico:
 **Proyecto:** Kaido - Multi-Tenant Learning Platform  
 **Repositorio:** [github.com/marqdomi/accesslearn-inclusiv](https://github.com/marqdomi/accesslearn-inclusiv)  
 **Estado:** 🟢 **Producción Activa**  
-**Última Actualización:** 25 de Nov, 2025
+**Última Actualización:** 4 de Diciembre, 2025
 
 ---
 
