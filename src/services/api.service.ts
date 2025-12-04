@@ -40,6 +40,8 @@ interface ApiError {
 }
 
 class ApiServiceClass {
+  private isHandling401 = false
+
   private async fetch<T>(
     endpoint: string,
     options: RequestInit = {},
@@ -70,8 +72,33 @@ class ApiServiceClass {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
+        
+        // Handle 401 Unauthorized - Token expired or invalid
+        if (response.status === 401 && includeAuth) {
+          // Only handle 401 once to avoid infinite loops
+          if (!this.isHandling401) {
+            this.isHandling401 = true
+            console.warn('[ApiService] 401 Unauthorized - Token expired or invalid. Logging out...')
+            
+            // Clear auth data
+            localStorage.removeItem('auth-token')
+            localStorage.removeItem('current-user')
+            localStorage.removeItem('current-tenant-id')
+            
+            // Redirect to login after a short delay to allow error to propagate
+            setTimeout(() => {
+              // Only redirect if we're not already on login page
+              if (!window.location.pathname.includes('/login')) {
+                window.location.href = '/login?expired=true'
+              }
+            }, 100)
+            
+            this.isHandling401 = false
+          }
+        }
+        
         throw {
-          message: errorData.message || `HTTP ${response.status}: ${response.statusText}`,
+          message: errorData.message || errorData.error || `HTTP ${response.status}: ${response.statusText}`,
           status: response.status,
           code: errorData.code,
         } as ApiError
@@ -509,7 +536,33 @@ class ApiServiceClass {
   }
 
   async getCurrentUser() {
-    return this.fetchWithAuth<any>(`/auth/me`)
+    // Use validate endpoint to check if token is still valid
+    const token = localStorage.getItem('auth-token')
+    if (!token) {
+      throw { status: 401, message: 'No token found' } as ApiError
+    }
+    
+    const response = await fetch(`${API_BASE_URL}/auth/validate`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    })
+    
+    if (!response.ok) {
+      throw {
+        status: response.status,
+        message: 'Token validation failed',
+      } as ApiError
+    }
+    
+    const result = await response.json()
+    if (result.success && result.user) {
+      return result.user
+    }
+    
+    throw { status: 401, message: 'Token invalid' } as ApiError
   }
 
   // ========================================

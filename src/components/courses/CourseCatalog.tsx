@@ -66,30 +66,54 @@ export function CourseCatalog({ onCourseEnrolled }: CourseCatalogProps) {
   }, [user?.enrolledCourses])
 
   const loadCourses = async () => {
-    if (!currentTenant) return
+    if (!currentTenant) {
+      console.warn('[CourseCatalog] No tenant available')
+      setLoading(false)
+      return
+    }
 
     try {
       setLoading(true)
+      console.log('[CourseCatalog] Loading courses for tenant:', currentTenant.id)
       
       // Refrescar usuario para obtener cursos inscritos actualizados
       if (user) {
         try {
           await refreshUser()
-        } catch (error) {
-          console.error('Error refreshing user:', error)
+        } catch (error: any) {
+          console.error('[CourseCatalog] Error refreshing user:', error)
+          if (error.status === 401) {
+            throw error // Re-throw 401 to trigger logout
+          }
           // Continuar aunque falle el refresh
         }
       }
       
       const data = await ApiService.getCourses(currentTenant.id)
+      console.log('[CourseCatalog] Courses received:', data?.length || 0)
+      
+      if (!data || !Array.isArray(data)) {
+        console.error('[CourseCatalog] Invalid courses data:', data)
+        setCourses([])
+        toast.error('Error: Formato de datos inválido')
+        return
+      }
+      
       // Filter only published/active courses
       const availableCourses = data.filter((c: Course) => 
         c.status === 'published' || c.status === 'active'
       )
+      console.log('[CourseCatalog] Available courses after filter:', availableCourses.length)
       setCourses(availableCourses)
     } catch (error: any) {
-      console.error('Error loading courses:', error)
-      toast.error('Error al cargar cursos')
+      console.error('[CourseCatalog] Error loading courses:', error)
+      if (error.status === 401) {
+        // Let ApiService handle 401 errors (logout)
+        toast.error('Sesión expirada. Por favor, inicia sesión nuevamente.')
+      } else {
+        toast.error(error.message || 'Error al cargar cursos')
+      }
+      setCourses([]) // Set empty array on error
     } finally {
       setLoading(false)
     }

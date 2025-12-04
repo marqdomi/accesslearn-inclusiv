@@ -29,30 +29,56 @@ export function LibraryPage() {
   }, [user, currentTenant])
 
   const loadLibrary = async () => {
-    if (!user || !currentTenant) return
+    if (!user || !currentTenant) {
+      console.warn('[LibraryPage] Missing user or tenant:', { user: !!user, tenant: !!currentTenant })
+      setLoading(false)
+      return
+    }
 
     try {
       setLoading(true)
       setError(null)
+      console.log('[LibraryPage] Loading library for user:', user.id, 'tenant:', currentTenant.id)
+      
       const progressRecords = await ApiService.getUserLibrary(user.id, currentTenant.id)
+      console.log('[LibraryPage] Progress records received:', progressRecords?.length || 0)
+      
+      if (!progressRecords || progressRecords.length === 0) {
+        console.log('[LibraryPage] No progress records found - user may not be enrolled in any courses')
+        setLibrary([])
+        setLoading(false)
+        return
+      }
       
       // Load course details for each progress record
       const libraryItems = await Promise.all(
         progressRecords.map(async (progress) => {
           try {
+            console.log('[LibraryPage] Loading course:', progress.courseId)
             const course = await ApiService.getCourseById(progress.courseId)
             return { progress, course }
-          } catch (err) {
-            console.error(`Failed to load course ${progress.courseId}:`, err)
+          } catch (err: any) {
+            console.error(`[LibraryPage] Failed to load course ${progress.courseId}:`, err)
+            // Don't fail silently - log the error
+            if (err.status === 401) {
+              throw err // Re-throw 401 to trigger logout
+            }
             return null
           }
         })
       )
 
-      setLibrary(libraryItems.filter((item): item is LibraryItem => item !== null))
-    } catch (err) {
-      console.error('Failed to load library:', err)
-      setError('No se pudo cargar tu biblioteca. Por favor, intenta de nuevo.')
+      const validItems = libraryItems.filter((item): item is LibraryItem => item !== null)
+      console.log('[LibraryPage] Valid library items:', validItems.length)
+      setLibrary(validItems)
+    } catch (err: any) {
+      console.error('[LibraryPage] Failed to load library:', err)
+      if (err.status === 401) {
+        // Let ApiService handle 401 errors (logout)
+        setError('Sesión expirada. Por favor, inicia sesión nuevamente.')
+      } else {
+        setError(err.message || 'No se pudo cargar tu biblioteca. Por favor, intenta de nuevo.')
+      }
     } finally {
       setLoading(false)
     }
