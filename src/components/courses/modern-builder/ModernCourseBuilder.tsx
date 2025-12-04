@@ -74,8 +74,9 @@ export function ModernCourseBuilder({ courseId, onBack }: ModernCourseBuilderPro
         if (isMounted) {
           const frontendCourse = adaptBackendCourseToFrontend(backendCourse)
           setCourse(frontendCourse)
-          // Note: When a course is loaded from backend, it's considered synced
-          // The next save will update lastSavedBackend
+          // Mark as saved to backend since we loaded it from backend
+          setHasBeenSavedToBackend(true)
+          console.log('[ModernCourseBuilder] Loaded course from backend:', courseId)
         }
       } catch (error) {
         console.error('Error loading course:', error)
@@ -98,6 +99,9 @@ export function ModernCourseBuilder({ courseId, onBack }: ModernCourseBuilderPro
   
   const [currentStep, setCurrentStep] = useState(1)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
+  
+  // Track if course has been saved to backend at least once
+  const [hasBeenSavedToBackend, setHasBeenSavedToBackend] = useState(false)
   
   // Auto-save hook - saves to Cosmos DB via API
   const autoSaveKey = `course-draft-${course.id}`
@@ -132,15 +136,32 @@ export function ModernCourseBuilder({ courseId, onBack }: ModernCourseBuilderPro
         // Always set status to draft when saving via this hook (manual save)
         backendData.status = 'draft'
         
-        if (courseId || course.id.startsWith('course-')) {
+        // Determine if course exists in backend:
+        // 1. If courseId prop exists, it's an existing course
+        // 2. If hasBeenSavedToBackend is true, it's been saved before
+        // 3. If course.id doesn't start with 'course-', it's a backend ID
+        const courseExistsInBackend = courseId || hasBeenSavedToBackend || !course.id.startsWith('course-')
+        
+        if (courseExistsInBackend) {
           // Update existing course
+          console.log('[ModernCourseBuilder] Updating existing course:', course.id)
           await ApiService.updateCourse(course.id, backendData)
         } else {
           // Create new course
+          console.log('[ModernCourseBuilder] Creating new course')
+          
+          // Validate required fields before creating
+          if (!courseToSave.title || !courseToSave.title.trim()) {
+            throw new Error('El título del curso es requerido para crear el curso')
+          }
+          if (!courseToSave.category || !courseToSave.category.trim()) {
+            throw new Error('La categoría del curso es requerida para crear el curso')
+          }
+          
           const newCourse = await ApiService.createCourse({
-            title: courseToSave.title || 'Nuevo Curso',
+            title: courseToSave.title.trim(),
             description: courseToSave.description || '',
-            category: courseToSave.category || '',
+            category: courseToSave.category.trim(),
             estimatedTime: (courseToSave.estimatedHours || 0) * 60,
             modules: courseToSave.modules || [],
             coverImage: courseToSave.coverImage,
@@ -153,15 +174,27 @@ export function ModernCourseBuilder({ courseId, onBack }: ModernCourseBuilderPro
             id: newCourse.id,
             createdAt: new Date(newCourse.createdAt).getTime(),
           }))
+          
+          // Mark as saved to backend
+          setHasBeenSavedToBackend(true)
+          
+          console.log('[ModernCourseBuilder] Course created with ID:', newCourse.id)
         }
       } catch (error) {
-        console.error('Error saving course to backend:', error)
+        console.error('[ModernCourseBuilder] Error saving course to backend:', error)
         throw error
       }
     },
     interval: 30000, // 30 seconds
     enabled: true,
   })
+  
+  // Update hasBeenSavedToBackend when courseId prop changes (course loaded from backend)
+  useEffect(() => {
+    if (courseId) {
+      setHasBeenSavedToBackend(true)
+    }
+  }, [courseId])
   
   // Restore draft from localStorage only if no courseId (new course)
   // For existing courses, we load from backend
@@ -345,7 +378,16 @@ export function ModernCourseBuilder({ courseId, onBack }: ModernCourseBuilderPro
   // Submit for review (for instructors)
   const handleSubmitForReview = async () => {
     try {
-      await saveToBackend() // Save first
+      // Ensure course is saved to backend first
+      if (!hasBeenSavedToBackend && !courseId) {
+        await saveToBackend()
+      }
+      
+      // Verify course exists in backend before submitting
+      if (!course.id || (course.id.startsWith('course-') && !hasBeenSavedToBackend)) {
+        throw new Error('El curso debe guardarse primero antes de enviarlo para revisión')
+      }
+      
       await ApiService.submitCourseForReview(course.id)
       clearLocalStorage()
       // Navigate immediately to prevent state updates after unmount
@@ -354,16 +396,25 @@ export function ModernCourseBuilder({ courseId, onBack }: ModernCourseBuilderPro
       setTimeout(() => {
         toast.success('Curso enviado para revisión')
       }, 100)
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error submitting course:', error)
-      toast.error('Error al enviar el curso para revisión')
+      toast.error(error.message || 'Error al enviar el curso para revisión')
     }
   }
 
   // Publish directly (for content managers/admins)
   const handlePublishCourse = async () => {
     try {
-      await saveToBackend() // Save first
+      // Ensure course is saved to backend first
+      if (!hasBeenSavedToBackend && !courseId) {
+        await saveToBackend()
+      }
+      
+      // Verify course exists in backend before publishing
+      if (!course.id || (course.id.startsWith('course-') && !hasBeenSavedToBackend)) {
+        throw new Error('El curso debe guardarse primero antes de publicarlo')
+      }
+      
       await ApiService.publishCourse(course.id)
       clearLocalStorage()
       // Navigate immediately to prevent state updates after unmount
