@@ -102,10 +102,6 @@ export function QuizLesson({
   const timeRemaining = timeLimit > 0 ? Math.max(0, timeLimit - timeElapsed) : null
   const isTimeRunningOut = timeRemaining !== null && timeRemaining <= 60 && timeRemaining > 0 // Último minuto
 
-  // Calcular tiempo restante si hay límite
-  const timeRemaining = timeLimit > 0 ? Math.max(0, timeLimit - timeElapsed) : null
-  const isTimeRunningOut = timeRemaining !== null && timeRemaining <= 60 && timeRemaining > 0 // Último minuto
-
   const handleAnswer = (isCorrect: boolean, answerOrScore: any, perfectScore?: number) => {
     try {
       setIsAnswered(true)
