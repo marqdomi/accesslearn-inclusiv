@@ -6,7 +6,7 @@
 ![Status](https://img.shields.io/badge/production-100%25%20Deployed-green)
 ![Version](https://img.shields.io/badge/version-1.0.0-blue)
 ![Last Updated](https://img.shields.io/badge/updated-4%20Diciembre%202025-blue)
-![License](https://img.shields.io/badge/license-MIT-green)
+![License](https://img.shields.io/badge/license-Proprietary-red)
 
 **Plataforma SaaS multi-tenant de aprendizaje corporativo gamificado, accesible y lista para producción en Azure**
 
@@ -366,9 +366,20 @@ El proyecto incluye guías completas de testing manual:
 
 ---
 
-## 📄 Licencia
+## 📄 Licencia y Propiedad Intelectual
 
-Este proyecto está licenciado bajo la Licencia MIT. Ver [LICENSE](./LICENSE) para más detalles.
+**⚠️ PROPIETARIO Y CONFIDENCIAL**
+
+Este proyecto es **PROPIETARIO** y contiene información **CONFIDENCIAL**. 
+
+- **Copyright (c) 2025 Marco Domínguez. All Rights Reserved.**
+- Todo el código, documentación y características son propiedad exclusiva de Marco Domínguez
+- **NO está permitido** copiar, modificar, distribuir o usar este software sin autorización escrita
+- El acceso a este repositorio es solo para colaboradores autorizados
+- Ver [LICENSE](./LICENSE) y [NOTICE](./NOTICE) para términos completos
+- Ver [CONTRIBUTING.md](./CONTRIBUTING.md) para guía de colaboración
+
+**Para consultas de licencia o uso:** Contacta directamente a Marco Domínguez
 
 ---
 

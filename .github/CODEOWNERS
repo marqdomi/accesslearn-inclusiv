@@ -1,0 +1,11 @@
+# Code Owners - Todos los archivos requieren aprobación del propietario
+* @marqdomi
+
+# Archivos críticos requieren aprobación explícita
+/backend/src/functions/ @marqdomi
+/backend/src/server.ts @marqdomi
+/src/services/api.service.ts @marqdomi
+/.github/workflows/ @marqdomi
+/LICENSE @marqdomi
+/NOTICE @marqdomi
+
