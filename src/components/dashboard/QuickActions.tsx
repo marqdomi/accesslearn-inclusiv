@@ -11,6 +11,7 @@ import {
   Calendar,
   ClipboardList,
   BarChart3,
+  Settings,
 } from 'lucide-react'
 import { RequireRole } from '@/components/auth/RequireRole'
 import { RequirePermission } from '@/components/auth/RequirePermission'
@@ -83,6 +84,13 @@ export function QuickActions({ notificationCounts = {} }: QuickActionsProps) {
       onClick: () => navigate('/admin/analytics'),
       permission: 'analytics:view-all',
     },
+    {
+      id: 'settings',
+      label: 'Configuración',
+      icon: Settings,
+      onClick: () => navigate('/admin/settings'),
+      role: ['super-admin', 'tenant-admin'],
+    },
   ]
 
   const mentorActions: QuickAction[] = [
@@ -105,11 +113,27 @@ export function QuickActions({ notificationCounts = {} }: QuickActionsProps) {
     },
   ]
 
-  // Filter actions based on user role
+  // Filter and organize actions based on user role
+  // Group: Student actions first, then instructor, then admin, then mentor/mentee
   const allActions: QuickAction[] = [
+    // Student actions (always visible)
     ...studentActions,
+    // Instructor actions (if user has instructor role)
     ...instructorActions.filter(a => !a.role || a.role.includes(user?.role || '')),
-    ...adminActions.filter(a => !a.role || a.role.includes(user?.role || '')),
+    // Admin actions (if user has admin role) - Settings should be prominent
+    ...adminActions
+      .filter(a => {
+        if (a.role && !a.role.includes(user?.role || '')) return false
+        if (a.permission) return true // Will be handled by RequirePermission
+        return true
+      })
+      .sort((a, b) => {
+        // Put Settings first in admin actions
+        if (a.id === 'settings') return -1
+        if (b.id === 'settings') return 1
+        return 0
+      }),
+    // Mentor/Mentee actions
     ...(user?.role === 'mentor' ? mentorActions : menteeActions),
   ]
 
@@ -141,8 +165,8 @@ export function QuickActions({ notificationCounts = {} }: QuickActionsProps) {
 
   return (
     <div className="space-y-2">
-      {/* Desktop: Grid */}
-      <div className="hidden md:grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+      {/* Desktop: Grid - Improved layout with better spacing */}
+      <div className="hidden md:grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-3">
         {allActions.map((action) => {
           // Handle role-based rendering
           if (action.role && !action.role.includes(user?.role || '')) {

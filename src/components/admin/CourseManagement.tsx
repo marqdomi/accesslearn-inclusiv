@@ -204,15 +204,15 @@ export function CourseManagement({ onBack }: CourseManagementProps) {
           </CardContent>
         </Card>
 
-        <Card className="bg-gray-50/50 dark:bg-gray-950/20 border-gray-100 dark:border-gray-900">
+        <Card className="bg-muted/50 border-border">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Borradores</p>
                 <p className="text-2xl font-bold mt-1">{draftCount}</p>
               </div>
-              <div className="h-12 w-12 rounded-lg bg-gray-100 dark:bg-gray-900/50 flex items-center justify-center">
-                <FileText className="h-6 w-6 text-gray-600 dark:text-gray-400" />
+              <div className="h-12 w-12 rounded-lg bg-muted flex items-center justify-center">
+                <FileText className="h-6 w-6 text-muted-foreground" />
               </div>
             </div>
           </CardContent>

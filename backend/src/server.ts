@@ -2163,6 +2163,72 @@ app.delete('/api/gamification/badges/:userId/:badgeId', requireAuth, requirePerm
 });
 
 // ============================================
+// ACHIEVEMENTS ENDPOINTS
+// ============================================
+
+// GET /api/achievements/user/:userId/stats - Get user achievement stats
+app.get('/api/achievements/user/:userId/stats', requireAuth, requireOwnershipOrAdmin('userId'), async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const { userId } = req.params;
+    const stats = await getUserStats(user.tenantId, userId);
+    res.json(stats);
+  } catch (error: any) {
+    console.error('[API] Error getting user stats:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/achievements/user/:userId - Get user achievements
+app.get('/api/achievements/user/:userId', requireAuth, requireOwnershipOrAdmin('userId'), async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const { userId } = req.params;
+    const achievements = await getUserAchievements(user.tenantId, userId);
+    res.json(achievements);
+  } catch (error: any) {
+    console.error('[API] Error getting user achievements:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/achievements/unlock - Unlock achievement
+app.post('/api/achievements/unlock', requireAuth, async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const { achievementId } = req.body;
+    
+    if (!achievementId) {
+      return res.status(400).json({ error: 'achievementId is required' });
+    }
+    
+    const achievement = await unlockAchievement(user.tenantId, user.id, achievementId);
+    res.json(achievement);
+  } catch (error: any) {
+    console.error('[API] Error unlocking achievement:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/achievements/check - Check and unlock achievements based on stats
+app.post('/api/achievements/check', requireAuth, async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const { stats } = req.body;
+    
+    if (!stats) {
+      return res.status(400).json({ error: 'stats is required' });
+    }
+    
+    const unlocked = await checkAndUnlockAchievements(user.tenantId, user.id, stats);
+    res.json(unlocked);
+  } catch (error: any) {
+    console.error('[API] Error checking achievements:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ============================================
 // CERTIFICATES ENDPOINTS
 // ============================================
 

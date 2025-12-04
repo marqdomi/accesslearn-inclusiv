@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'sonner'
+import { ThemeProvider } from '@/contexts/ThemeContext'
 import { TenantProvider } from '@/contexts/TenantContext'
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import { TenantResolver } from '@/components/auth/TenantResolver'
@@ -228,15 +229,17 @@ function AppRoutes() {
 function App() {
   return (
     <BrowserRouter>
-      <TenantProvider>
-        <TenantResolver>
-          <AuthProvider>
-            <AppRoutes />
-            <AdvancedAccessibilityPanel />
-            <Toaster position="top-right" richColors />
-          </AuthProvider>
-        </TenantResolver>
-      </TenantProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <TenantProvider>
+            <TenantResolver>
+              <AppRoutes />
+              <AdvancedAccessibilityPanel />
+              <Toaster position="top-right" richColors />
+            </TenantResolver>
+          </TenantProvider>
+        </AuthProvider>
+      </ThemeProvider>
     </BrowserRouter>
   )
 }

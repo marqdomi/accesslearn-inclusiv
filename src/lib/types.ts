@@ -83,6 +83,7 @@ export interface UserPreferences {
   highContrast: boolean
   captionsEnabled: boolean
   reduceMotion: boolean
+  themePreference?: 'light' | 'dark' | 'system'
 }
 
 /**

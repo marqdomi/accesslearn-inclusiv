@@ -17,32 +17,32 @@ interface StatsCardProps {
 
 const colorClasses = {
   blue: {
-    bg: 'from-blue-50 to-blue-100 dark:from-blue-950/50 dark:to-blue-900/50',
-    iconBg: 'bg-blue-500/10',
+    bg: 'bg-blue-50/80 dark:bg-blue-950/30 border-blue-200/60 dark:border-blue-800',
+    iconBg: 'bg-blue-100 dark:bg-blue-900/50',
     icon: 'text-blue-600 dark:text-blue-400',
     border: 'border-blue-200 dark:border-blue-800',
   },
   purple: {
-    bg: 'from-purple-50 to-purple-100 dark:from-purple-950/50 dark:to-purple-900/50',
-    iconBg: 'bg-purple-500/10',
+    bg: 'bg-purple-50/80 dark:bg-purple-950/30 border-purple-200/60 dark:border-purple-800',
+    iconBg: 'bg-purple-100 dark:bg-purple-900/50',
     icon: 'text-purple-600 dark:text-purple-400',
     border: 'border-purple-200 dark:border-purple-800',
   },
   green: {
-    bg: 'from-green-50 to-green-100 dark:from-green-950/50 dark:to-green-900/50',
-    iconBg: 'bg-green-500/10',
+    bg: 'bg-green-50/80 dark:bg-green-950/30 border-green-200/60 dark:border-green-800',
+    iconBg: 'bg-green-100 dark:bg-green-900/50',
     icon: 'text-green-600 dark:text-green-400',
     border: 'border-green-200 dark:border-green-800',
   },
   yellow: {
-    bg: 'from-yellow-50 to-yellow-100 dark:from-yellow-950/50 dark:to-yellow-900/50',
-    iconBg: 'bg-yellow-500/10',
+    bg: 'bg-yellow-50/80 dark:bg-yellow-950/30 border-yellow-200/60 dark:border-yellow-800',
+    iconBg: 'bg-yellow-100 dark:bg-yellow-900/50',
     icon: 'text-yellow-600 dark:text-yellow-400',
     border: 'border-yellow-200 dark:border-yellow-800',
   },
   orange: {
-    bg: 'from-orange-50 to-orange-100 dark:from-orange-950/50 dark:to-orange-900/50',
-    iconBg: 'bg-orange-500/10',
+    bg: 'bg-orange-50/80 dark:bg-orange-950/30 border-orange-200/60 dark:border-orange-800',
+    iconBg: 'bg-orange-100 dark:bg-orange-900/50',
     icon: 'text-orange-600 dark:text-orange-400',
     border: 'border-orange-200 dark:border-orange-800',
   },
@@ -88,7 +88,7 @@ export function StatsCard({
       <Card className={cn(
         "border transition-all hover:shadow-md",
         colors.border,
-        `bg-gradient-to-br ${colors.bg}`
+        colors.bg
       )}>
         <CardContent className="p-4">
           <div className="flex items-start justify-between">

@@ -117,7 +117,7 @@ export function CompanySettings({ onBack }: CompanySettingsProps) {
                   <img
                     src={logoPreview}
                     alt="Company logo preview"
-                    className="h-24 w-24 object-contain bg-white rounded border"
+                    className="h-24 w-24 object-contain bg-background rounded border"
                   />
                   <div className="flex-1">
                     <p className="text-sm font-medium">Logo Preview</p>

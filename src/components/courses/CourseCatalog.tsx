@@ -211,7 +211,7 @@ export function CourseCatalog({ onCourseEnrolled }: CourseCatalogProps) {
 
       {/* Stats */}
       <div className="grid gap-4 md:grid-cols-3">
-        <Card className="bg-blue-50/50 dark:bg-blue-950/20 border-blue-100 dark:border-blue-900">
+        <Card className="bg-blue-50/80 dark:bg-blue-950/30 border-blue-200/60 dark:border-blue-800">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
@@ -225,7 +225,7 @@ export function CourseCatalog({ onCourseEnrolled }: CourseCatalogProps) {
           </CardContent>
         </Card>
 
-        <Card className="bg-purple-50/50 dark:bg-purple-950/20 border-purple-100 dark:border-purple-900">
+        <Card className="bg-purple-50/80 dark:bg-purple-950/30 border-purple-200/60 dark:border-purple-800">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
@@ -239,7 +239,7 @@ export function CourseCatalog({ onCourseEnrolled }: CourseCatalogProps) {
           </CardContent>
         </Card>
 
-        <Card className="bg-green-50/50 dark:bg-green-950/20 border-green-100 dark:border-green-900">
+        <Card className="bg-green-50/80 dark:bg-green-950/30 border-green-200/60 dark:border-green-800">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>

@@ -78,6 +78,48 @@
   --ring: oklch(0.55 0.20 290);
   
   --radius: 0.75rem;
+  
+  /* Force light color scheme when light mode is explicitly selected */
+  color-scheme: light;
+}
+
+/* Dark mode variables */
+.dark {
+  /* Force dark color scheme when dark mode is explicitly selected */
+  color-scheme: dark;
+  --background: oklch(0.15 0 0);
+  --foreground: oklch(0.95 0 0);
+  
+  --card: oklch(0.20 0 0);
+  --card-foreground: oklch(0.95 0 0);
+  
+  --popover: oklch(0.20 0 0);
+  --popover-foreground: oklch(0.95 0 0);
+  
+  --primary: oklch(0.70 0.20 290);
+  --primary-foreground: oklch(0.15 0 0);
+  
+  --secondary: oklch(0.55 0.15 195);
+  --secondary-foreground: oklch(0.95 0 0);
+  
+  --muted: oklch(0.25 0 0);
+  --muted-foreground: oklch(0.70 0 0);
+  
+  --accent: oklch(0.65 0.18 30);
+  --accent-foreground: oklch(0.15 0 0);
+  
+  --destructive: oklch(0.65 0.22 25);
+  --destructive-foreground: oklch(0.95 0 0);
+  
+  --success: oklch(0.70 0.20 130);
+  --success-foreground: oklch(0.15 0 0);
+  
+  --xp: oklch(0.70 0.20 130);
+  --xp-foreground: oklch(0.15 0 0);
+  
+  --border: oklch(1 0 0 / 0.1);
+  --input: oklch(1 0 0 / 0.15);
+  --ring: oklch(0.70 0.20 290);
 }
 
 .high-contrast {

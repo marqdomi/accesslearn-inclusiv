@@ -223,9 +223,9 @@ export function TenantLoginPage() {
       </div>
 
       {/* Panel derecho - Login Form */}
-      <div className="flex-1 flex items-center justify-center p-8 bg-gray-50">
+      <div className="flex-1 flex items-center justify-center p-8 bg-muted/30">
         <div className="w-full max-w-md">
-          <div className="bg-white rounded-2xl shadow-xl p-8 space-y-6">
+          <div className="bg-card rounded-2xl shadow-xl p-8 space-y-6 border border-border">
             {/* Header */}
             <div className="text-center space-y-2">
               <div className="flex justify-center mb-4">
@@ -242,28 +242,28 @@ export function TenantLoginPage() {
                   }
                 />
               </div>
-              <h2 className="text-2xl font-bold text-gray-900">
+              <h2 className="text-2xl font-bold text-foreground">
                 Bienvenido a {currentTenant?.name}
               </h2>
-              <p className="text-gray-600">
+              <p className="text-muted-foreground">
                 Ingresa tus credenciales para continuar
               </p>
             </div>
 
             {/* Tenant Info Badge */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-center">
-              <p className="text-sm text-blue-800">
+            <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-3 text-center">
+              <p className="text-sm text-blue-800 dark:text-blue-200">
                 🏢 Accediendo a: <strong>{currentTenant?.name}</strong>
               </p>
-              <p className="text-xs text-blue-600 mt-1">
+              <p className="text-xs text-blue-600 dark:text-blue-300 mt-1">
                 Plan: {currentTenant?.plan || 'Básico'}
               </p>
             </div>
 
             {/* Error Message */}
             {error && activeTab === 'login' && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-center">
-                <p className="text-sm text-red-800">{error}</p>
+              <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg p-3 text-center">
+                <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
               </div>
             )}
 
@@ -301,7 +301,7 @@ export function TenantLoginPage() {
                       <Label htmlFor="password">Contraseña</Label>
                       <button
                         type="button"
-                        className="text-sm text-blue-600 hover:text-blue-700"
+                        className="text-sm text-primary hover:text-primary/80"
                         onClick={() => alert('🚧 Recuperación de contraseña en desarrollo')}
                       >
                         ¿Olvidaste tu contraseña?
@@ -320,7 +320,7 @@ export function TenantLoginPage() {
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                       >
                         {showPassword ? (
                           <EyeSlash className="w-5 h-5" />
@@ -410,7 +410,7 @@ export function TenantLoginPage() {
                       <button
                         type="button"
                         onClick={() => setShowRegisterPassword(!showRegisterPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                         disabled={isRegistering}
                       >
                         {showRegisterPassword ? (
@@ -440,7 +440,7 @@ export function TenantLoginPage() {
                       <button
                         type="button"
                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                         disabled={isRegistering}
                       >
                         {showConfirmPassword ? (
@@ -479,7 +479,7 @@ export function TenantLoginPage() {
           </div>
 
           {/* Mobile branding */}
-          <div className="lg:hidden mt-6 text-center text-sm text-gray-600">
+          <div className="lg:hidden mt-6 text-center text-sm text-muted-foreground">
             © {new Date().getFullYear()} {currentTenant?.name || 'Kaido'}
           </div>
         </div>

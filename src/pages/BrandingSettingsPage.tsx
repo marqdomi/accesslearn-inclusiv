@@ -404,7 +404,7 @@ export function BrandingSettingsPage() {
                     <img
                       src={logoPreview}
                       alt="Logo preview"
-                      className="h-24 w-24 object-contain bg-white rounded border"
+                      className="h-24 w-24 object-contain bg-background rounded border"
                     />
                     <div className="flex-1">
                       <p className="text-sm font-medium">Vista Previa del Logo</p>

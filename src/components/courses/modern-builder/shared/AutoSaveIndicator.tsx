@@ -23,7 +23,7 @@ export function AutoSaveIndicator({ lastSaved, lastSavedBackend, isSaving, isDir
     // Show different message based on whether there's a backend save
     if (lastSavedBackend) {
       return (
-        <div className="flex items-center gap-2 text-sm text-amber-600">
+        <div className="flex items-center gap-2 text-sm text-amber-600 dark:text-amber-500">
           <Warning size={16} />
           <span>
             Cambios sin guardar en el servidor
@@ -37,7 +37,7 @@ export function AutoSaveIndicator({ lastSaved, lastSavedBackend, isSaving, isDir
       )
     } else {
       return (
-        <div className="flex items-center gap-2 text-sm text-amber-600">
+        <div className="flex items-center gap-2 text-sm text-amber-600 dark:text-amber-500">
           <Warning size={16} />
           <span>
             Cambios sin guardar
@@ -56,7 +56,7 @@ export function AutoSaveIndicator({ lastSaved, lastSavedBackend, isSaving, isDir
   if (lastSavedBackend) {
     // Saved to backend - best status
     return (
-      <div className="flex items-center gap-2 text-sm text-green-600">
+      <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
         <CloudArrowUp size={16} weight="fill" />
         <span>
           Guardado en el servidor {formatDistanceToNow(lastSavedBackend, { addSuffix: true, locale: es })}

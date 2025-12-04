@@ -180,7 +180,7 @@ export function ProfilePage() {
   // Show loading state
   if (loading && !profile) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+      <div className="min-h-screen flex items-center justify-center bg-muted/30">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
           <p className="mt-4 text-muted-foreground">Cargando perfil...</p>
@@ -192,7 +192,7 @@ export function ProfilePage() {
   // Show error state if profile failed to load (e.g., 404)
   if (!loading && !profile && error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+      <div className="min-h-screen flex items-center justify-center bg-muted/30">
         <Card className="max-w-md">
           <CardContent className="pt-6">
             <Alert variant="destructive">
@@ -218,7 +218,7 @@ export function ProfilePage() {
   // Show empty state if no profile but no error (shouldn't normally happen)
   if (!profile && !error && !loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+      <div className="min-h-screen flex items-center justify-center bg-muted/30">
         <Card className="max-w-md">
           <CardContent className="pt-6">
             <Alert>
@@ -242,7 +242,7 @@ export function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-muted/30">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         {/* Header */}
         <div className="mb-6">
@@ -254,8 +254,8 @@ export function ProfilePage() {
             <ArrowLeft className="h-4 w-4 mr-2" />
             Volver al Dashboard
           </Button>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Mi Perfil</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-2">
+          <h1 className="text-3xl font-bold text-foreground">Mi Perfil</h1>
+          <p className="text-muted-foreground mt-2">
             Administra tu información personal y configuración de cuenta
           </p>
         </div>
@@ -295,14 +295,14 @@ export function ProfilePage() {
 
                 {/* User Info */}
                 <div className="flex-1">
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  <h2 className="text-2xl font-bold text-foreground">
                     {profile.firstName} {profile.lastName}
                   </h2>
-                  <p className="text-gray-600 dark:text-gray-400 mt-1">
+                  <p className="text-muted-foreground mt-1">
                     {profile.email}
                   </p>
                   <div className="flex items-center gap-4 mt-2">
-                    <span className="text-sm text-gray-500 dark:text-gray-400">
+                    <span className="text-sm text-muted-foreground">
                       {profile.role === 'super-admin' && 'Super Administrador'}
                       {profile.role === 'tenant-admin' && 'Administrador'}
                       {profile.role === 'instructor' && 'Instructor'}
@@ -311,7 +311,7 @@ export function ProfilePage() {
                       {profile.role === 'student' && 'Estudiante'}
                     </span>
                     {profile.totalXP !== undefined && (
-                      <span className="text-sm text-gray-500 dark:text-gray-400">
+                      <span className="text-sm text-muted-foreground">
                         • XP: {profile.totalXP} • Nivel {profile.level || 1}
                       </span>
                     )}
@@ -385,9 +385,9 @@ export function ProfilePage() {
                         type="email"
                         value={profile.email}
                         disabled
-                        className="bg-gray-100 dark:bg-gray-800"
+                        className="bg-muted"
                       />
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                      <p className="text-xs text-muted-foreground">
                         El correo electrónico no se puede cambiar
                       </p>
                     </div>
@@ -424,7 +424,7 @@ export function ProfilePage() {
                             ...profileData, 
                             gender: e.target.value as any 
                           })}
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-800"
+                          className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground"
                         >
                           <option value="prefer-not-to-say">Prefiero no decir</option>
                           <option value="male">Masculino</option>
@@ -640,7 +640,7 @@ export function ProfilePage() {
                       </div>
                       {passwordData.newPassword && passwordData.confirmPassword && 
                        passwordData.newPassword !== passwordData.confirmPassword && (
-                        <p className="text-xs text-red-500">
+                        <p className="text-xs text-destructive">
                           Las contraseñas no coinciden
                         </p>
                       )}

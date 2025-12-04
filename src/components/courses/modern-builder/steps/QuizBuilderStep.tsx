@@ -549,7 +549,7 @@ export function QuizBuilderStep({ course, updateCourse }: QuizBuilderStepProps) 
                                       {option}
                                       {(question.correctAnswer === i || 
                                         (Array.isArray(question.correctAnswer) && question.correctAnswer.includes(i))) && (
-                                        <CheckCircle size={14} className="text-green-600" weight="fill" />
+                                        <CheckCircle size={14} className="text-green-600 dark:text-green-400" weight="fill" />
                                       )}
                                     </li>
                                   ))}

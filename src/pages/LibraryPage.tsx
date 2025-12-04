@@ -109,7 +109,8 @@ export function LibraryPage() {
     return progress >= 100
   })
 
-  const totalXP = library.reduce((sum, item) => sum + (item.progress.totalXpEarned || 0), 0)
+  // Get total XP from gamification stats (consistent with dashboard)
+  const [totalXP, setTotalXP] = useState(0)
   const totalAttempts = library.reduce((sum, item) => sum + (item.progress.attempts?.length || 0), 0)
   const averageScore = library.length > 0
     ? library.reduce((sum, item) => {
@@ -119,6 +120,22 @@ export function LibraryPage() {
         return sum + progress
       }, 0) / library.length
     : 0
+
+  // Load total XP from gamification stats
+  useEffect(() => {
+    if (user && !loading) {
+      ApiService.getGamificationStats(user.id)
+        .then(stats => {
+          setTotalXP(stats.totalXP || 0)
+        })
+        .catch(error => {
+          // Fallback to library sum if gamification stats fail
+          console.warn('Failed to load gamification stats, using library XP sum:', error)
+          const libraryXP = library.reduce((sum, item) => sum + (item.progress.totalXpEarned || 0), 0)
+          setTotalXP(libraryXP)
+        })
+    }
+  }, [user, library, loading])
 
   if (loading) {
     return (
@@ -204,7 +221,7 @@ export function LibraryPage() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-green-500" />
+              <TrendingUp className="h-5 w-5 text-green-500 dark:text-green-400" />
               <span className="text-2xl font-bold">{averageScore.toFixed(0)}%</span>
             </div>
           </CardContent>
@@ -218,7 +235,7 @@ export function LibraryPage() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
-              <History className="h-5 w-5 text-blue-500" />
+              <History className="h-5 w-5 text-blue-500 dark:text-blue-400" />
               <span className="text-2xl font-bold">{totalAttempts}</span>
             </div>
           </CardContent>

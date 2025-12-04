@@ -19,6 +19,8 @@ import {
   ZoomIn
 } from 'lucide-react'
 import { useAccessibilityPreferences } from '@/hooks/use-accessibility-preferences'
+import { useTheme } from '@/hooks/use-theme'
+import { ThemeToggle } from '@/components/ui/theme-toggle'
 
 interface AdvancedPreferences {
   // Visual
@@ -149,6 +151,7 @@ const accessibilityProfiles = {
 
 export function AdvancedAccessibilityPanel() {
   const { preferences: basePreferences, updatePreference, updateProfile } = useAccessibilityPreferences()
+  const { theme, setTheme } = useTheme()
   const [isOpen, setIsOpen] = useState(false)
   const [preferences, setPreferences] = useState<AdvancedPreferences>(() => {
     const stored = localStorage.getItem('advanced-accessibility-preferences')
@@ -472,6 +475,35 @@ export function AdvancedAccessibilityPanel() {
                       checked={preferences.invertColors}
                       onCheckedChange={(checked) => updateAdvancedPreference('invertColors', checked)}
                     />
+                  </div>
+                </div>
+
+                <div className="space-y-4 pt-4 border-t">
+                  <div className="flex items-center gap-2">
+                    <Palette size={20} />
+                    <Label className="text-lg font-semibold">Tema</Label>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Modo de Apariencia</Label>
+                    <div className="flex items-center justify-between p-3 border rounded-lg">
+                      <div className="flex flex-col gap-1">
+                        <span className="text-sm font-medium">
+                          {theme === 'light' ? 'Claro' : theme === 'dark' ? 'Oscuro' : 'Sistema'}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {theme === 'system' 
+                            ? 'Sigue la preferencia del sistema operativo'
+                            : theme === 'light'
+                            ? 'Tema claro activado'
+                            : 'Tema oscuro activado'}
+                        </span>
+                      </div>
+                      <ThemeToggle />
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      El tema se aplica a toda la aplicación y se guarda automáticamente.
+                    </p>
                   </div>
                 </div>
 

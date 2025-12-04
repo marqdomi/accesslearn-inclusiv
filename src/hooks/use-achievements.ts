@@ -34,8 +34,16 @@ export function useAchievements(userId?: string) {
       setLoading(true)
       const stats = await ApiService.getUserStats(userId)
       setUserStats(stats)
-    } catch (error) {
-      console.error('Error loading user stats:', error)
+    } catch (error: any) {
+      // Handle 404 gracefully - endpoint might not exist yet, use default stats
+      if (error?.status === 404) {
+        console.warn('Achievements endpoint not available, using default stats')
+        setUserStats(DEFAULT_USER_STATS)
+      } else {
+        console.error('Error loading user stats:', error)
+        // Use default stats on error to prevent UI breakage
+        setUserStats(DEFAULT_USER_STATS)
+      }
     } finally {
       setLoading(false)
     }

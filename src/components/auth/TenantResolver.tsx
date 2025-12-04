@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useTenant } from '@/contexts/TenantContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { ApiService } from '@/services/api.service';
 import { CircleNotch, Buildings, WarningCircle, SignOut } from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
@@ -36,6 +37,7 @@ const PUBLIC_ROUTES = ['/accept-invitation', '/register', '/login'];
 export function TenantResolver({ children }: TenantResolverProps) {
   const location = useLocation();
   const { currentTenant, setCurrentTenant, clearTenant, isLoading: tenantLoading } = useTenant();
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const [resolving, setResolving] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [availableTenants, setAvailableTenants] = useState<Array<{
@@ -57,8 +59,13 @@ export function TenantResolver({ children }: TenantResolverProps) {
       return;
     }
     
+    // Esperar a que auth termine de cargar antes de resolver tenant
+    if (authLoading) {
+      return;
+    }
+    
     resolveTenant();
-  }, [location.pathname, isPublicRoute]);
+  }, [location.pathname, isPublicRoute, authLoading, isAuthenticated, user]);
 
   /**
    * Intenta resolver el tenant automáticamente
@@ -68,7 +75,31 @@ export function TenantResolver({ children }: TenantResolverProps) {
       setResolving(true);
       setError(null);
 
-      // 1. Intentar desde query param PRIMERO (tiene prioridad sobre subdomain)
+      // PRIORIDAD 1: Si el usuario está autenticado, usar su tenantId
+      if (isAuthenticated && user?.tenantId) {
+        console.log('[TenantResolver] Usuario autenticado detectado, usando tenantId del usuario:', user.tenantId);
+        
+        // Si el tenant actual ya es el del usuario, no hacer nada
+        if (currentTenant?.id === user.tenantId) {
+          console.log('[TenantResolver] Tenant del usuario ya está cargado');
+          setResolving(false);
+          return;
+        }
+        
+        // Cargar tenant del usuario
+        const slug = user.tenantId.replace('tenant-', '');
+        const loaded = await loadTenantBySlug(slug);
+        if (loaded) {
+          // Guardar en localStorage para persistencia
+          localStorage.setItem('current-tenant-id', user.tenantId);
+          console.log('[TenantResolver] Tenant del usuario cargado y guardado en localStorage');
+          return;
+        }
+        // Si falla, continuar con otros métodos
+        console.warn('[TenantResolver] No se pudo cargar tenant del usuario, continuando...');
+      }
+
+      // PRIORIDAD 2: Intentar desde query param (tiene prioridad sobre subdomain)
       // Esto permite usar ?tenant=xxx incluso en app.kainet.mx
       const queryTenant = getQueryParam('tenant');
       if (queryTenant) {
@@ -81,7 +112,7 @@ export function TenantResolver({ children }: TenantResolverProps) {
         console.warn('[TenantResolver] No se pudo cargar tenant del query param, continuando...');
       }
 
-      // 2. Intentar desde subdomain (producción)
+      // PRIORIDAD 3: Intentar desde subdomain (producción)
       // IMPORTANTE: getSubdomain() ya filtra subdomains de infraestructura (app, api, etc.)
       const subdomain = getSubdomain();
       if (subdomain) {
@@ -97,7 +128,7 @@ export function TenantResolver({ children }: TenantResolverProps) {
         console.log('[TenantResolver] Subdomain ignorado (infraestructura) o no detectado');
       }
 
-      // 3. Intentar desde localStorage
+      // PRIORIDAD 4: Intentar desde localStorage
       const savedTenantId = localStorage.getItem('current-tenant-id');
       if (savedTenantId && currentTenant?.id === savedTenantId) {
         console.log('[TenantResolver] Usando tenant de localStorage:', savedTenantId);
@@ -105,22 +136,32 @@ export function TenantResolver({ children }: TenantResolverProps) {
         return;
       }
 
-      // 4. Si hay tenant guardado pero no está cargado, guardarlo para mostrar opción
+      // PRIORIDAD 5: Si hay tenant guardado pero no está cargado, guardarlo para mostrar opción
       if (savedTenantId) {
         console.log('[TenantResolver] Tenant guardado encontrado:', savedTenantId);
         setSavedTenantId(savedTenantId);
       }
 
-      // 5. No se pudo resolver automáticamente → mostrar selector
-      console.log('[TenantResolver] No se detectó tenant, mostrando selector...');
-      await loadAvailableTenants();
-      setShowSelector(true);
-      setResolving(false);
+      // PRIORIDAD 6: No se pudo resolver automáticamente → mostrar selector
+      // Solo mostrar selector si el usuario NO está autenticado
+      if (!isAuthenticated) {
+        console.log('[TenantResolver] Usuario no autenticado y no se detectó tenant, mostrando selector...');
+        await loadAvailableTenants();
+        setShowSelector(true);
+        setResolving(false);
+      } else {
+        // Si está autenticado pero no se pudo cargar el tenant, hay un error
+        console.error('[TenantResolver] Usuario autenticado pero no se pudo cargar tenant');
+        setError('No se pudo cargar la organización. Por favor, intenta de nuevo.');
+        setResolving(false);
+      }
     } catch (err) {
       console.error('[TenantResolver] Error:', err);
       setError('Error al cargar la configuración. Por favor, intenta de nuevo.');
-      await loadAvailableTenants();
-      setShowSelector(true);
+      if (!isAuthenticated) {
+        await loadAvailableTenants();
+        setShowSelector(true);
+      }
       setResolving(false);
     }
   };
@@ -290,12 +331,12 @@ export function TenantResolver({ children }: TenantResolverProps) {
   }
 
   // Loading state
-  if (resolving || tenantLoading) {
+  if (resolving || tenantLoading || authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-950/50 dark:to-indigo-950/50">
         <div className="text-center space-y-4">
-          <CircleNotch className="w-12 h-12 animate-spin mx-auto text-blue-600" />
-          <p className="text-lg text-gray-700">Cargando configuración...</p>
+          <CircleNotch className="w-12 h-12 animate-spin mx-auto text-blue-600 dark:text-blue-400" />
+          <p className="text-lg text-foreground">Cargando configuración...</p>
         </div>
       </div>
     );
@@ -304,11 +345,11 @@ export function TenantResolver({ children }: TenantResolverProps) {
   // Error state
   if (error && !showSelector) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 to-orange-100">
-        <div className="bg-white rounded-xl shadow-xl p-8 max-w-md text-center space-y-4">
-          <WarningCircle className="w-16 h-16 text-red-600 mx-auto" weight="fill" />
-          <h2 className="text-2xl font-bold text-gray-900">Error de Configuración</h2>
-          <p className="text-gray-600">{error}</p>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 to-orange-100 dark:from-red-950/50 dark:to-orange-950/50">
+        <div className="bg-card rounded-xl shadow-xl p-8 max-w-md text-center space-y-4 border border-border">
+          <WarningCircle className="w-16 h-16 text-red-600 dark:text-red-400 mx-auto" weight="fill" />
+          <h2 className="text-2xl font-bold text-foreground">Error de Configuración</h2>
+          <p className="text-muted-foreground">{error}</p>
           <Button onClick={resolveTenant} className="w-full">
             Reintentar
           </Button>
@@ -324,7 +365,7 @@ export function TenantResolver({ children }: TenantResolverProps) {
         {/* Background pattern */}
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMzLjMxNCAwIDYgMi42ODYgNiA2cy0yLjY4NiA2LTYgNi02LTIuNjg2LTYtNiAyLjY4Ni02IDYtNnptMCA0YzEuMTA1IDAgMiAuODk1IDIgMnMtLjg5NSAyLTIgMi0yLS44OTUtMi0yIC44OTUtMiAyLTJ6IiBmaWxsPSIjZmZmIiBmaWxsLW9wYWNpdHk9Ii4wNSIvPjwvZz48L3N2Zz4=')] opacity-20"></div>
 
-        <div className="relative bg-white rounded-2xl shadow-2xl p-10 max-w-lg w-full mx-4 space-y-8">
+        <div className="relative bg-card rounded-2xl shadow-2xl p-10 max-w-lg w-full mx-4 space-y-8 border border-border">
           {/* Logout button in top-right */}
           <div className="absolute top-4 right-4">
             <Button
@@ -335,7 +376,7 @@ export function TenantResolver({ children }: TenantResolverProps) {
               }}
               variant="ghost"
               size="sm"
-              className="gap-2 text-gray-600 hover:text-gray-900"
+              className="gap-2 text-muted-foreground hover:text-foreground"
             >
               <SignOut size={18} />
               <span className="hidden sm:inline">Cerrar Sesión</span>
@@ -359,7 +400,7 @@ export function TenantResolver({ children }: TenantResolverProps) {
               </div>
             </div>
             <div className="space-y-2">
-              <p className="text-sm text-gray-600 font-medium tracking-wide">
+              <p className="text-sm text-muted-foreground font-medium tracking-wide">
                 Plataforma de Capacitación y Desarrollo
               </p>
             </div>
@@ -368,17 +409,17 @@ export function TenantResolver({ children }: TenantResolverProps) {
           {/* Divider moderno */}
           <div className="relative py-2">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-200"></div>
+              <div className="w-full border-t border-border"></div>
             </div>
             <div className="relative flex justify-center">
-              <span className="px-4 bg-white/95 text-sm font-medium text-gray-500 tracking-wide">Selecciona tu organización</span>
+              <span className="px-4 bg-card/95 text-sm font-medium text-muted-foreground tracking-wide">Selecciona tu organización</span>
             </div>
           </div>
 
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start space-x-3">
-              <WarningCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" weight="fill" />
-              <p className="text-sm text-red-800">{error}</p>
+            <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl p-4 flex items-start space-x-3">
+              <WarningCircle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" weight="fill" />
+              <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
             </div>
           )}
 
@@ -386,33 +427,33 @@ export function TenantResolver({ children }: TenantResolverProps) {
             {/* Continue with saved tenant option - diseño moderno */}
             {savedTenantId && availableTenants.find(t => t.id === savedTenantId) && (
               <div className="space-y-4">
-                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/50 rounded-xl p-4 shadow-sm">
-                  <p className="text-sm text-blue-900">
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border border-blue-200/50 dark:border-blue-800/50 rounded-xl p-4 shadow-sm">
+                  <p className="text-sm text-blue-900 dark:text-blue-100">
                     <strong className="font-semibold">Última organización utilizada:</strong>
                     <br />
-                    <span className="text-blue-700 font-medium">{availableTenants.find(t => t.id === savedTenantId)?.name}</span>
+                    <span className="text-blue-700 dark:text-blue-300 font-medium">{availableTenants.find(t => t.id === savedTenantId)?.name}</span>
                   </p>
                 </div>
                 <Button
                   onClick={() => handleTenantSelect(savedTenantId)}
-                  className="w-full h-14 text-base font-semibold rounded-xl shadow-md hover:shadow-lg transition-all duration-200 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                  className="w-full h-14 text-base font-semibold rounded-xl shadow-md hover:shadow-lg transition-all duration-200 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 dark:from-blue-500 dark:to-indigo-500 dark:hover:from-blue-600 dark:hover:to-indigo-600"
                   variant="default"
                 >
                   Continuar con {availableTenants.find(t => t.id === savedTenantId)?.name}
                 </Button>
                 <div className="relative py-2">
                   <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-gray-200"></div>
+                    <div className="w-full border-t border-border"></div>
                   </div>
                   <div className="relative flex justify-center">
-                    <span className="px-3 bg-white/95 text-xs font-medium text-gray-500">o selecciona otra organización</span>
+                    <span className="px-4 bg-card/95 text-xs font-medium text-muted-foreground">o selecciona otra organización</span>
                   </div>
                 </div>
               </div>
             )}
 
             <div className="space-y-3">
-              <label className="text-sm font-medium text-gray-700">
+              <label className="text-sm font-medium text-foreground">
                 Organización
               </label>
               <Select
@@ -422,7 +463,7 @@ export function TenantResolver({ children }: TenantResolverProps) {
                   handleTenantSelect(value);
                 }}
               >
-                <SelectTrigger className="w-full h-12 border-gray-300 focus:ring-2 focus:ring-blue-500">
+                <SelectTrigger className="w-full h-12 border-border focus:ring-2 focus:ring-primary">
                   <SelectValue placeholder="Selecciona tu organización..." />
                 </SelectTrigger>
                 <SelectContent>
@@ -430,7 +471,7 @@ export function TenantResolver({ children }: TenantResolverProps) {
                     availableTenants.map((tenant) => (
                       <SelectItem key={tenant.id} value={tenant.id} className="py-3">
                         <div className="flex items-center space-x-3">
-                          <Buildings className="w-5 h-5 text-gray-400" />
+                          <Buildings className="w-5 h-5 text-muted-foreground" />
                           <span className="font-medium">{tenant.name}</span>
                         </div>
                       </SelectItem>
@@ -438,7 +479,7 @@ export function TenantResolver({ children }: TenantResolverProps) {
                   ) : (
                     <SelectItem value="loading" disabled>
                       <div className="flex items-center space-x-3">
-                        <CircleNotch className="w-5 h-5 text-gray-400 animate-spin" />
+                        <CircleNotch className="w-5 h-5 text-muted-foreground animate-spin" />
                         <span className="font-medium">Cargando organizaciones...</span>
                       </div>
                     </SelectItem>
@@ -448,8 +489,8 @@ export function TenantResolver({ children }: TenantResolverProps) {
             </div>
 
             {/* Help text */}
-            <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
-              <p className="text-sm text-blue-900">
+            <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-800/50 rounded-xl p-4">
+              <p className="text-sm text-blue-900 dark:text-blue-100">
                 <strong className="font-semibold">¿No encuentras tu organización?</strong>
                 <br />
                 Contacta a tu administrador para obtener acceso.
@@ -458,8 +499,8 @@ export function TenantResolver({ children }: TenantResolverProps) {
           </div>
 
           {/* Footer - Kainet branding */}
-          <div className="pt-6 border-t border-gray-100">
-            <div className="flex items-center justify-center space-x-2 text-gray-500">
+          <div className="pt-6 border-t border-border">
+            <div className="flex items-center justify-center space-x-2 text-muted-foreground">
               <span className="text-sm">Desarrollado por</span>
               <img 
                 src="/logos/kainet-logo.png" 
@@ -472,9 +513,9 @@ export function TenantResolver({ children }: TenantResolverProps) {
                   if (fallback) fallback.style.display = 'inline';
                 }}
               />
-              <span className="text-sm font-semibold text-blue-600 hidden">Kainet</span>
+              <span className="text-sm font-semibold text-primary hidden">Kainet</span>
             </div>
-            <p className="text-xs text-center text-gray-400 mt-2">
+            <p className="text-xs text-center text-muted-foreground mt-2">
               © {new Date().getFullYear()} Kainet. Todos los derechos reservados.
             </p>
           </div>

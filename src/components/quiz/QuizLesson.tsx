@@ -258,7 +258,7 @@ export function QuizLesson({
                           'h-6 w-6',
                           idx < lives
                             ? 'fill-red-500 text-red-500'
-                            : 'fill-gray-300 text-gray-300'
+                            : 'fill-muted-foreground/50 text-muted-foreground/50'
                         )}
                       />
                     </motion.div>

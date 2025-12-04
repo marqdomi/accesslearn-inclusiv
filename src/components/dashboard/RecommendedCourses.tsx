@@ -25,6 +25,7 @@ interface Course {
   coverImage?: string
   enrollments?: number
   rating?: number
+  category?: string
 }
 
 interface RecommendedCoursesProps {
@@ -40,10 +41,43 @@ export function RecommendedCourses({
 }: RecommendedCoursesProps) {
   const navigate = useNavigate()
 
-  // Filter out already enrolled courses and get top 3-4 recommendations
-  const recommended = courses
-    .filter((course) => !currentEnrolledCourseIds.includes(course.id))
+  // Smart recommendation algorithm
+  // Priority: 1) Same category as enrolled courses, 2) New courses, 3) High XP courses, 4) Shorter courses
+  const availableCourses = courses.filter((course) => !currentEnrolledCourseIds.includes(course.id))
+  
+  // Get categories of enrolled courses
+  const enrolledCategories = courses
+    .filter((c) => currentEnrolledCourseIds.includes(c.id))
+    .map((c) => c.category)
+    .filter(Boolean)
+  
+  const recommended = availableCourses
+    .map((course) => {
+      let score = 0
+      
+      // Boost: Same category as enrolled courses (+10 points)
+      if (course.category && enrolledCategories.includes(course.category)) {
+        score += 10
+      }
+      
+      // Boost: High XP courses (+5 points per 100 XP)
+      if (course.totalXP) {
+        score += Math.floor(course.totalXP / 100) * 5
+      }
+      
+      // Boost: Shorter courses (more accessible) (+3 points per hour under 5h)
+      if (course.estimatedHours && course.estimatedHours < 5) {
+        score += (5 - course.estimatedHours) * 3
+      }
+      
+      // Boost: New courses (created in last 30 days) (+5 points)
+      // Note: This would require createdAt field in Course interface
+      
+      return { course, score }
+    })
+    .sort((a, b) => b.score - a.score)
     .slice(0, 4)
+    .map((item) => item.course)
 
   if (loading) {
     return (

@@ -11,7 +11,8 @@ import {
   Database,
   Tag,
   ChevronRight,
-  Info
+  Info,
+  Users
 } from 'lucide-react'
 
 interface SettingSection {
@@ -70,6 +71,15 @@ export function AdminSettingsPage() {
       icon: Tag,
       onClick: () => {
         navigate('/admin/settings/categories')
+      }
+    },
+    {
+      id: 'users',
+      title: 'Usuarios',
+      description: 'Administra usuarios, roles, permisos e invitaciones de tu organización',
+      icon: Users,
+      onClick: () => {
+        navigate('/admin/users')
       }
     }
   ]

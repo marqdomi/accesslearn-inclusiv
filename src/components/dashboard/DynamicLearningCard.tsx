@@ -1,0 +1,341 @@
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { Card, CardContent } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Progress } from '@/components/ui/progress'
+import { Badge } from '@/components/ui/badge'
+import { 
+  PlayCircle, 
+  Clock, 
+  BookOpen, 
+  ArrowRight,
+  Zap,
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+} from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { cn } from '@/lib/utils'
+
+interface Course {
+  id: string
+  title: string
+  description: string
+  modules: any[]
+  totalXP?: number
+  estimatedHours?: number
+  difficulty?: string
+  coverImage?: string
+}
+
+interface CourseProgress {
+  courseId: string
+  status: string
+  completedLessons?: string[]
+  lastAccessedAt?: string
+  progress?: number
+}
+
+interface CourseWithProgress {
+  course: Course
+  progress: CourseProgress
+  progressPercent: number
+  lastAccessed: number
+}
+
+interface DynamicLearningCardProps {
+  coursesInProgress: CourseWithProgress[]
+  enrolledCourses: CourseWithProgress[]
+  loading?: boolean
+}
+
+export function DynamicLearningCard({ 
+  coursesInProgress, 
+  enrolledCourses,
+  loading = false 
+}: DynamicLearningCardProps) {
+  const navigate = useNavigate()
+  const [currentIndex, setCurrentIndex] = useState(0)
+
+  if (loading) {
+    return (
+      <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 via-primary/10 to-primary/5">
+        <CardContent className="p-6">
+          <div className="animate-pulse space-y-4">
+            <div className="h-4 bg-muted rounded w-1/3"></div>
+            <div className="h-8 bg-muted rounded w-2/3"></div>
+            <div className="h-2 bg-muted rounded"></div>
+            <div className="h-10 bg-muted rounded w-1/2"></div>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  // Priority 1: Show courses in progress
+  const coursesToShow = coursesInProgress.length > 0 ? coursesInProgress : enrolledCourses
+  const isInProgress = coursesInProgress.length > 0
+  const hasMultiple = coursesToShow.length > 1
+
+  // Empty state - no courses at all
+  if (coursesToShow.length === 0) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+      >
+        <Card className="border-2 border-dashed border-muted hover:border-primary/50 transition-colors">
+          <CardContent className="p-8 md:p-12">
+            <div className="text-center space-y-6">
+              <motion.div
+                initial={{ scale: 0.8 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
+                className="mx-auto w-20 h-20 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center"
+              >
+                <BookOpen className="h-10 w-10 text-primary" />
+              </motion.div>
+              <div className="space-y-3">
+                <h3 className="text-xl font-bold">¡Comienza tu aprendizaje!</h3>
+                <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                  Explora el catálogo de cursos y encuentra el perfecto para ti. 
+                  Cada curso te acerca más a tus objetivos profesionales.
+                </p>
+                <Button 
+                  onClick={() => navigate('/catalog')} 
+                  className="gap-2 mt-4"
+                  size="lg"
+                >
+                  <BookOpen className="h-4 w-4" />
+                  Explorar Catálogo
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+    )
+  }
+
+  const currentCourseData = coursesToShow[currentIndex]
+  const { course, progress, progressPercent } = currentCourseData
+
+  // Calculate progress details
+  const totalLessons = course.modules?.reduce((sum: number, m: any) =>
+    sum + (m.lessons?.length || 0), 0) || 0
+  const completedLessons = progress?.completedLessons?.length || 0
+  const remainingLessons = totalLessons - completedLessons
+  const estimatedMinutes = remainingLessons * 15 // ~15 min per lesson
+
+  const handleContinue = () => {
+    navigate(`/courses/${course.id}`)
+  }
+
+  const handlePrevious = () => {
+    setCurrentIndex((prev) => (prev === 0 ? coursesToShow.length - 1 : prev - 1))
+  }
+
+  const handleNext = () => {
+    setCurrentIndex((prev) => (prev === coursesToShow.length - 1 ? 0 : prev + 1))
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+    >
+      <Card className="border-2 border-primary/30 bg-gradient-to-br from-primary/5 via-primary/10 to-primary/5 hover:border-primary/50 transition-all shadow-lg relative overflow-hidden">
+        {/* Carousel Navigation */}
+        {hasMultiple && (
+          <>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute left-2 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full bg-background/80 backdrop-blur-sm hover:bg-background shadow-md"
+              onClick={handlePrevious}
+              aria-label="Curso anterior"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute right-2 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full bg-background/80 backdrop-blur-sm hover:bg-background shadow-md"
+              onClick={handleNext}
+              aria-label="Siguiente curso"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+            
+            {/* Carousel Indicators */}
+            <div className="absolute top-4 right-4 z-10">
+              <div className="flex items-center gap-1 bg-background/80 backdrop-blur-sm px-2 py-1 rounded-full shadow-sm">
+                {coursesToShow.map((_, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setCurrentIndex(idx)}
+                    className={cn(
+                      "h-1.5 rounded-full transition-all",
+                      idx === currentIndex 
+                        ? "w-6 bg-primary" 
+                        : "w-1.5 bg-muted-foreground/30 hover:bg-muted-foreground/50"
+                    )}
+                    aria-label={`Ir al curso ${idx + 1}`}
+                  />
+                ))}
+              </div>
+            </div>
+          </>
+        )}
+
+        <CardContent className="p-6">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentIndex}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3 }}
+              className="flex flex-col md:flex-row gap-6"
+            >
+              {/* Left: Course Info */}
+              <div className="flex-1 space-y-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-2">
+                      {isInProgress ? (
+                        <>
+                          <PlayCircle className="h-5 w-5 text-primary flex-shrink-0" />
+                          <Badge variant="outline" className="text-xs">
+                            En Progreso
+                          </Badge>
+                          {hasMultiple && (
+                            <span className="text-xs text-muted-foreground">
+                              {currentIndex + 1} de {coursesToShow.length}
+                            </span>
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          <BookOpen className="h-5 w-5 text-primary flex-shrink-0" />
+                          <Badge variant="outline" className="text-xs">
+                            Inscrito
+                          </Badge>
+                          {hasMultiple && (
+                            <span className="text-xs text-muted-foreground">
+                              {currentIndex + 1} de {coursesToShow.length}
+                            </span>
+                          )}
+                        </>
+                      )}
+                    </div>
+                    <h3 className="text-xl font-bold mb-2 line-clamp-2">
+                      {isInProgress ? 'Continúa donde te quedaste' : 'Tus cursos inscritos'}
+                    </h3>
+                    <h4 className="text-lg font-semibold mb-2 line-clamp-1">
+                      {course.title}
+                    </h4>
+                    <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
+                      {course.description}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Progress Bar - Only show if in progress */}
+                {isInProgress && progressPercent > 0 && (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="font-medium">Progreso del Curso</span>
+                      <span className="text-muted-foreground">{progressPercent}%</span>
+                    </div>
+                    <Progress value={progressPercent} className="h-2" />
+                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                      <div className="flex items-center gap-1">
+                        <CheckCircle2 className="h-3 w-3 text-green-600 dark:text-green-400" />
+                        <span>{completedLessons} completadas</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <BookOpen className="h-3 w-3" />
+                        <span>{remainingLessons} restantes</span>
+                      </div>
+                      {estimatedMinutes > 0 && (
+                        <div className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          <span>~{Math.round(estimatedMinutes / 60)}h restantes</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Actions */}
+                <div className="flex items-center gap-3 pt-2">
+                  <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                    <Button 
+                      onClick={handleContinue}
+                      size="lg"
+                      className="gap-2 flex-1 md:flex-initial shadow-md hover:shadow-lg transition-shadow"
+                    >
+                      {isInProgress ? (
+                        <>
+                          <PlayCircle className="h-4 w-4" />
+                          Continuar Curso
+                        </>
+                      ) : (
+                        <>
+                          <BookOpen className="h-4 w-4" />
+                          Comenzar Curso
+                        </>
+                      )}
+                      <ArrowRight className="h-4 w-4" />
+                    </Button>
+                  </motion.div>
+                  <Button
+                    variant="outline"
+                    onClick={() => navigate(`/courses/${course.id}`)}
+                    className="hidden md:flex gap-2 hover:bg-primary/5 transition-colors"
+                  >
+                    Ver Detalles
+                  </Button>
+                </div>
+              </div>
+
+              {/* Right: Stats */}
+              <div className="md:w-48 space-y-3 flex-shrink-0">
+                {course.totalXP && (
+                  <div className="p-3 rounded-lg bg-primary/10 border border-primary/20">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Zap className="h-4 w-4 text-primary" />
+                      <span className="text-xs text-muted-foreground">XP Disponible</span>
+                    </div>
+                    <p className="text-2xl font-bold text-primary">{course.totalXP}</p>
+                  </div>
+                )}
+                
+                {course.estimatedHours && (
+                  <div className="p-3 rounded-lg bg-muted/50">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Clock className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground">Duración</span>
+                    </div>
+                    <p className="text-lg font-semibold">{course.estimatedHours}h</p>
+                  </div>
+                )}
+
+                {course.difficulty && (
+                  <Badge variant="outline" className="w-full justify-center py-2">
+                    {course.difficulty}
+                  </Badge>
+                )}
+              </div>
+            </motion.div>
+          </AnimatePresence>
+        </CardContent>
+      </Card>
+    </motion.div>
+  )
+}
+

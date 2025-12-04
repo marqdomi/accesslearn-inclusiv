@@ -33,6 +33,7 @@ import {
   ChevronRight,
 } from 'lucide-react'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
+import { ThemeToggle } from '@/components/ui/theme-toggle'
 import { useTranslation } from 'react-i18next'
 import type { UserNotification } from '@/lib/types'
 import { toast } from 'sonner'
@@ -283,6 +284,9 @@ export function AppNavbar({ userXP = 0 }: AppNavbarProps) {
               </DropdownMenu>
             )}
 
+            {/* Theme Toggle */}
+            <ThemeToggle />
+
             {/* User Menu - Only Avatar */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -338,6 +342,12 @@ export function AppNavbar({ userXP = 0 }: AppNavbarProps) {
                     </Badge>
                   )}
                 </DropdownMenuItem>
+                <div className="px-2 py-1">
+                  <div className="flex items-center justify-between px-2 py-1.5">
+                    <span className="text-sm text-muted-foreground">Tema</span>
+                    <ThemeToggle className="h-8 w-8" />
+                  </div>
+                </div>
                 <DropdownMenuSeparator />
 
                 {/* Level/XP Section */}

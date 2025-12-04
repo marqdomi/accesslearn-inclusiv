@@ -30,6 +30,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const userData = JSON.parse(storedUser)
         setToken(storedToken)
         setUser(userData)
+        // Asegurar que el tenantId del usuario esté guardado en localStorage
+        if (userData.tenantId) {
+          const currentTenantId = localStorage.getItem('current-tenant-id')
+          // Solo actualizar si no hay tenant guardado o si es diferente
+          if (!currentTenantId || currentTenantId !== userData.tenantId) {
+            localStorage.setItem('current-tenant-id', userData.tenantId)
+          }
+        }
       } catch (error) {
         console.error('Error parsing stored user:', error)
         localStorage.removeItem('auth-token')
@@ -73,6 +81,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         localStorage.setItem('auth-token', response.token)
         localStorage.setItem('current-user', JSON.stringify(userData))
+        // Guardar tenantId del usuario para persistencia automática
+        if (userData.tenantId) {
+          localStorage.setItem('current-tenant-id', userData.tenantId)
+        }
       } else {
         throw new Error(response.error || 'Login failed')
       }
