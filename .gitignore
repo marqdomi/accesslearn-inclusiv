@@ -32,7 +32,53 @@ playwright-report/
 *.sln
 *.sw?
 
+# Environment variables and secrets
 .env
+.env.local
+.env.*.local
+.env.production
+.env.development
+**/.env
+**/.env.local
+**/.env.*.local
+
+# Secrets and credentials
+*.pem
+*.key
+*.cert
+*.p12
+*.pfx
+secrets/
+credentials/
+*.secret
+*.token
+
+# Azure and cloud credentials
+azure-credentials.json
+azure-secrets.json
+*.azure.json
+
+# API keys and tokens
+*api-key*
+*api_key*
+*apikey*
+*secret*
+*token*
+*password*
+*credential*
+
+# Backup files
+*.backup
+*.bak
+*.tmp
+*.temp
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
 **/agent-eval-report*
 packages
 pids
@@ -40,3 +86,19 @@ pids
 .devcontainer/
 
 .spark-workbench-id
+
+# Build artifacts
+build/
+dist/
+out/
+.next/
+
+# Coverage reports
+coverage/
+*.lcov
+.nyc_output/
+
+# Lock files (opcional, descomenta si quieres ignorarlos)
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml

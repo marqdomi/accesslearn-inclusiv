@@ -1,4 +1,11 @@
 /**
+ * Copyright (c) 2025 Marco Domínguez. All Rights Reserved.
+ * 
+ * PROPRIETARY AND CONFIDENTIAL
+ * This file contains proprietary and confidential information of Marco Domínguez.
+ * Unauthorized copying, modification, distribution, or use of this file,
+ * via any medium, is strictly prohibited without prior written permission.
+ * 
  * Analytics Functions
  * 
  * Provides analytics and reporting data from Cosmos DB
