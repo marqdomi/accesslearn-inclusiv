@@ -17,6 +17,7 @@ interface LessonContentProps {
         questions: any[]
         maxLives?: number
         showTimer?: boolean
+        timeLimit?: number
         passingScore?: number
       }
     }
@@ -55,6 +56,7 @@ export function LessonContent({ lesson, onQuizComplete }: LessonContentProps) {
           questions={lesson.content.quiz.questions}
           maxLives={lesson.content.quiz.maxLives}
           showTimer={lesson.content.quiz.showTimer}
+          timeLimit={lesson.content.quiz.timeLimit}
           passingScore={lesson.content.quiz.passingScore}
           onComplete={onQuizComplete}
         />

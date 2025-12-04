@@ -39,9 +39,11 @@ import {
   FlowArrow,
   GitBranch,
   Target,
+  X,
 } from '@phosphor-icons/react'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Checkbox } from '@/components/ui/checkbox'
+import { Switch } from '@/components/ui/switch'
 
 interface QuizBuilderStepProps {
   course: CourseStructure
@@ -52,7 +54,7 @@ const QUESTION_TYPES = [
   { value: 'multiple-choice', label: 'Opción Múltiple', icon: Question, description: 'Una respuesta correcta' },
   { value: 'multiple-select', label: 'Selección Múltiple', icon: ListChecks, description: 'Varias respuestas correctas' },
   { value: 'true-false', label: 'Verdadero/Falso', icon: CheckCircle, description: 'Pregunta binaria' },
-  { value: 'short-answer', label: 'Respuesta Corta', icon: TextT, description: 'Respuesta de texto' },
+  { value: 'fill-blank', label: 'Completar Espacios', icon: TextT, description: 'Arrastra palabras para completar' },
   { value: 'ordering', label: 'Ordenamiento', icon: SortAscending, description: 'Ordenar elementos' },
   { value: 'scenario-solver', label: 'Árbol de Decisiones', icon: GitBranch, description: 'Escenario interactivo ramificado' },
 ] as const
@@ -69,6 +71,9 @@ export function QuizBuilderStep({ course, updateCourse }: QuizBuilderStepProps) 
     description: '',
     passingScore: 70,
     maxAttempts: 3,
+    showTimer: false, // Mostrar timer visualmente
+    timeLimit: 0, // Límite de tiempo en minutos (0 = sin límite)
+    examMode: false, // Modo examen de certificación
   })
 
   // Question form
@@ -79,7 +84,9 @@ export function QuizBuilderStep({ course, updateCourse }: QuizBuilderStepProps) 
     correctAnswer: 0,
     correctAnswers: [] as number[],
     correctOrder: [] as number[], // Para preguntas de ordenamiento: [0, 1, 2, 3...]
-    shortAnswer: '',
+    fillBlankText: '', // Texto con {blank} para completar espacios
+    fillBlankAnswers: [] as string[], // Respuestas correctas para cada blank
+    fillBlankOptions: [] as string[], // Opciones disponibles (correctas + distractores)
     correctFeedback: '¡Correcto! Excelente trabajo.',
     incorrectFeedback: 'Incorrecto. Inténtalo de nuevo.',
     xpValue: 10,
@@ -116,6 +123,9 @@ export function QuizBuilderStep({ course, updateCourse }: QuizBuilderStepProps) 
         description: currentQuiz.description,
         passingScore: currentQuiz.passingScore,
         maxAttempts: currentQuiz.maxAttempts,
+        showTimer: currentQuiz.showTimer ?? false,
+        timeLimit: currentQuiz.timeLimit ? Math.floor(currentQuiz.timeLimit / 60) : 0, // Convertir segundos a minutos
+        examMode: currentQuiz.examMode ?? false,
       })
     } else {
       setQuizForm({
@@ -123,6 +133,9 @@ export function QuizBuilderStep({ course, updateCourse }: QuizBuilderStepProps) 
         description: 'Evaluación de la lección',
         passingScore: 70,
         maxAttempts: 3,
+        showTimer: false,
+        timeLimit: 0,
+        examMode: false,
       })
     }
     setIsQuizMetadataOpen(true)
@@ -145,6 +158,9 @@ export function QuizBuilderStep({ course, updateCourse }: QuizBuilderStepProps) 
         passingScore: quizForm.passingScore,
         maxAttempts: quizForm.maxAttempts,
         totalXP: 0,
+        showTimer: quizForm.showTimer || quizForm.examMode,
+        timeLimit: quizForm.timeLimit > 0 ? quizForm.timeLimit * 60 : undefined, // Convertir minutos a segundos
+        examMode: quizForm.examMode,
       }
     } else {
       // Update existing quiz
@@ -152,6 +168,9 @@ export function QuizBuilderStep({ course, updateCourse }: QuizBuilderStepProps) 
       lesson.quiz.description = quizForm.description
       lesson.quiz.passingScore = quizForm.passingScore
       lesson.quiz.maxAttempts = quizForm.maxAttempts
+      lesson.quiz.showTimer = quizForm.showTimer || quizForm.examMode
+      lesson.quiz.timeLimit = quizForm.timeLimit > 0 ? quizForm.timeLimit * 60 : undefined
+      lesson.quiz.examMode = quizForm.examMode
     }
 
     updateCourse({ modules: updatedModules })
@@ -177,7 +196,9 @@ export function QuizBuilderStep({ course, updateCourse }: QuizBuilderStepProps) 
       correctAnswer: 0,
       correctAnswers: [],
       correctOrder: [], // Inicializar correctOrder para evitar undefined
-      shortAnswer: '',
+      fillBlankText: '',
+      fillBlankAnswers: [],
+      fillBlankOptions: [],
       correctFeedback: '¡Correcto! Excelente trabajo.',
       incorrectFeedback: 'Incorrecto. Inténtalo de nuevo.',
       xpValue: 10,
@@ -209,9 +230,15 @@ export function QuizBuilderStep({ course, updateCourse }: QuizBuilderStepProps) 
       })
     }
     
+    // Para fill-blank, el question.question es un objeto con text, blanks, options
+    const isFillBlank = question.type === 'fill-blank'
+    const fillBlankData = isFillBlank && typeof question.question === 'object' 
+      ? question.question as any 
+      : null
+    
     setQuestionForm({
       type: question.type,
-      question: typeof question.question === 'string' ? question.question : '',
+      question: typeof question.question === 'string' ? question.question : (fillBlankData?.text || ''),
       options: Array.isArray(question.options) ? question.options : ['', '', '', ''],
       correctAnswer: typeof question.correctAnswer === 'number' ? question.correctAnswer : 0,
       correctAnswers: Array.isArray(question.correctAnswer) ? question.correctAnswer : [],
@@ -220,7 +247,9 @@ export function QuizBuilderStep({ course, updateCourse }: QuizBuilderStepProps) 
         : Array.isArray(question.options) 
           ? question.options.map((_, i) => i) 
           : [],
-      shortAnswer: typeof question.correctAnswer === 'string' ? question.correctAnswer : '',
+      fillBlankText: fillBlankData?.text || '',
+      fillBlankAnswers: fillBlankData?.blanks || [],
+      fillBlankOptions: fillBlankData?.options || [],
       correctFeedback: question.correctFeedback,
       incorrectFeedback: question.incorrectFeedback,
       xpValue: question.xpValue,
@@ -266,16 +295,25 @@ export function QuizBuilderStep({ course, updateCourse }: QuizBuilderStepProps) 
     } else if (questionForm.type === 'true-false') {
       questionText = questionForm.question
       correctAnswer = questionForm.correctAnswer
+    } else if (questionForm.type === 'fill-blank') {
+      // Para fill-blank, question es un objeto con text, blanks, options
+      questionText = {
+        text: questionForm.fillBlankText,
+        blanks: questionForm.fillBlankAnswers.filter(b => b.trim()),
+        options: questionForm.fillBlankOptions.filter(o => o.trim()),
+        explanation: questionForm.correctFeedback || undefined
+      }
+      correctAnswer = questionForm.fillBlankAnswers // No se usa directamente, está en questionText.blanks
     } else {
       questionText = questionForm.question
-      correctAnswer = questionForm.shortAnswer
+      correctAnswer = 0
     }
 
     const newQuestion: QuizQuestion = {
       id: editingQuestion ? editingQuestion.data.id : `question-${Date.now()}`,
       type: questionForm.type,
       question: questionText,
-      options: ['multiple-choice', 'multiple-select', 'true-false', 'ordering'].includes(questionForm.type) 
+      options: ['multiple-choice', 'multiple-select', 'true-false', 'ordering', 'fill-blank'].includes(questionForm.type) 
         ? (Array.isArray(questionForm.options) ? questionForm.options.filter(o => o?.trim()) : [])
         : [],
       correctAnswer,
@@ -641,6 +679,71 @@ export function QuizBuilderStep({ course, updateCourse }: QuizBuilderStepProps) 
                 value={quizForm.maxAttempts}
                 onChange={(e) => setQuizForm({ ...quizForm, maxAttempts: parseInt(e.target.value) || 3 })}
               />
+            </div>
+
+            <Separator />
+
+            {/* Modo Examen de Certificación */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="exam-mode">Modo Examen de Certificación</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Activa el timer visible y límite de tiempo para simular exámenes reales
+                  </p>
+                </div>
+                <Switch
+                  id="exam-mode"
+                  checked={quizForm.examMode}
+                  onCheckedChange={(checked) => {
+                    setQuizForm({ 
+                      ...quizForm, 
+                      examMode: checked,
+                      showTimer: checked || quizForm.showTimer // Si activa examMode, también activa showTimer
+                    })
+                  }}
+                />
+              </div>
+
+              {/* Mostrar Timer */}
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="show-timer">Mostrar Timer Visualmente</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Muestra el contador de tiempo durante el quiz (útil para práctica de exámenes)
+                  </p>
+                </div>
+                <Switch
+                  id="show-timer"
+                  checked={quizForm.showTimer || quizForm.examMode}
+                  onCheckedChange={(checked) => setQuizForm({ ...quizForm, showTimer: checked })}
+                  disabled={quizForm.examMode} // Si examMode está activo, showTimer también lo está
+                />
+              </div>
+
+              {/* Límite de Tiempo */}
+              {(quizForm.showTimer || quizForm.examMode) && (
+                <div className="space-y-2">
+                  <Label htmlFor="time-limit">
+                    Límite de Tiempo (minutos)
+                    {quizForm.examMode && <span className="text-xs text-muted-foreground ml-2">Recomendado para exámenes</span>}
+                  </Label>
+                  <Input
+                    id="time-limit"
+                    type="number"
+                    min={0}
+                    max={300}
+                    value={quizForm.timeLimit}
+                    onChange={(e) => setQuizForm({ ...quizForm, timeLimit: parseInt(e.target.value) || 0 })}
+                    placeholder="0 = Sin límite"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {quizForm.timeLimit > 0 
+                      ? `El quiz se terminará automáticamente después de ${quizForm.timeLimit} minutos`
+                      : 'Sin límite de tiempo (el timer seguirá contando para analytics)'}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 
@@ -1060,16 +1163,121 @@ export function QuizBuilderStep({ course, updateCourse }: QuizBuilderStepProps) 
               </div>
             )}
 
-                {/* Short Answer */}
-                {questionForm.type === 'short-answer' && (
-                  <div className="space-y-2">
-                    <Label htmlFor="short-answer">Respuesta Correcta *</Label>
-                    <Input
-                      id="short-answer"
-                      placeholder="Escribe la respuesta correcta..."
-                      value={questionForm.shortAnswer}
-                      onChange={(e) => setQuestionForm({ ...questionForm, shortAnswer: e.target.value })}
-                    />
+                {/* Fill Blank - Completar Espacios */}
+                {questionForm.type === 'fill-blank' && (
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="fill-blank-text">
+                        Enunciado con Espacios en Blanco *
+                        <span className="text-xs text-muted-foreground ml-2">
+                          Usa <code className="px-1 py-0.5 bg-muted rounded text-xs">{'{blank}'}</code> para marcar cada espacio
+                        </span>
+                      </Label>
+                      <Textarea
+                        id="fill-blank-text"
+                        placeholder='Ejemplo: "La capital de {blank} es {blank}."'
+                        value={questionForm.fillBlankText}
+                        onChange={(e) => {
+                          const text = e.target.value
+                          const blankCount = (text.match(/\{blank\}/g) || []).length
+                          setQuestionForm({ 
+                            ...questionForm, 
+                            fillBlankText: text,
+                            // Ajustar arrays si cambia el número de blanks
+                            fillBlankAnswers: Array(blankCount).fill('').map((_, i) => 
+                              questionForm.fillBlankAnswers[i] || ''
+                            ).slice(0, blankCount)
+                          })
+                        }}
+                        rows={4}
+                        className="font-mono text-sm"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        {questionForm.fillBlankText.match(/\{blank\}/g)?.length || 0} espacio(s) en blanco detectado(s)
+                      </p>
+                    </div>
+
+                    {/* Respuestas Correctas */}
+                    {(questionForm.fillBlankText.match(/\{blank\}/g) || []).length > 0 && (
+                      <div className="space-y-2">
+                        <Label>Respuestas Correctas (en orden) *</Label>
+                        <div className="space-y-2">
+                          {(questionForm.fillBlankText.match(/\{blank\}/g) || []).map((_, index) => (
+                            <div key={index} className="flex items-center gap-2">
+                              <Badge variant="outline" className="w-8 h-8 flex items-center justify-center">
+                                {index + 1}
+                              </Badge>
+                              <Input
+                                placeholder={`Respuesta para espacio ${index + 1}`}
+                                value={questionForm.fillBlankAnswers[index] || ''}
+                                onChange={(e) => {
+                                  const newAnswers = [...questionForm.fillBlankAnswers]
+                                  newAnswers[index] = e.target.value
+                                  setQuestionForm({ ...questionForm, fillBlankAnswers: newAnswers })
+                                }}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Opciones Disponibles (correctas + distractores) */}
+                    <div className="space-y-2">
+                      <Label>
+                        Palabras Disponibles *
+                        <span className="text-xs text-muted-foreground ml-2">
+                          Incluye las respuestas correctas y palabras adicionales (distractores)
+                        </span>
+                      </Label>
+                      <div className="space-y-2">
+                        {questionForm.fillBlankOptions.map((option, index) => (
+                          <div key={index} className="flex items-center gap-2">
+                            <Badge 
+                              variant={questionForm.fillBlankAnswers.includes(option) ? "default" : "secondary"}
+                              className="w-6 h-6 flex items-center justify-center p-0"
+                            >
+                              {questionForm.fillBlankAnswers.includes(option) ? '✓' : index + 1}
+                            </Badge>
+                            <Input
+                              placeholder={`Palabra ${index + 1}`}
+                              value={option}
+                              onChange={(e) => {
+                                const newOptions = [...questionForm.fillBlankOptions]
+                                newOptions[index] = e.target.value
+                                setQuestionForm({ ...questionForm, fillBlankOptions: newOptions })
+                              }}
+                            />
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => {
+                                const newOptions = questionForm.fillBlankOptions.filter((_, i) => i !== index)
+                                setQuestionForm({ ...questionForm, fillBlankOptions: newOptions })
+                              }}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ))}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setQuestionForm({ 
+                              ...questionForm, 
+                              fillBlankOptions: [...questionForm.fillBlankOptions, ''] 
+                            })
+                          }}
+                        >
+                          <Plus className="mr-1" size={12} />
+                          Agregar Palabra
+                        </Button>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Las palabras marcadas con ✓ son las respuestas correctas. Agrega palabras adicionales como distractores.
+                      </p>
+                    </div>
                   </div>
                 )}
 
@@ -1121,7 +1329,11 @@ export function QuizBuilderStep({ course, updateCourse }: QuizBuilderStepProps) 
               disabled={
                 questionForm.type === 'scenario-solver' 
                   ? !scenarioForm.title.trim() || scenarioForm.steps.length === 0
-                  : !questionForm.question.trim()
+                  : questionForm.type === 'fill-blank'
+                    ? !questionForm.fillBlankText.trim() || 
+                      questionForm.fillBlankAnswers.some(a => !a.trim()) ||
+                      questionForm.fillBlankOptions.length < questionForm.fillBlankAnswers.length
+                    : !questionForm.question.trim()
               }
             >
               {editingQuestion ? 'Actualizar' : 'Crear'} Pregunta

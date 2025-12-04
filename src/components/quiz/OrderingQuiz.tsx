@@ -27,7 +27,10 @@ export function OrderingQuiz({
 }: OrderingQuizProps) {
   // Estado para el orden actual del usuario (índices de las opciones)
   const [userOrder, setUserOrder] = useState<number[]>([])
+  const [confirmedOrder, setConfirmedOrder] = useState<number[] | null>(null) // Orden confirmado por el usuario
   const [shuffledOptions, setShuffledOptions] = useState<{ index: number; text: string }[]>([])
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
 
   // Inicializar: mezclar opciones y crear orden inicial
   useEffect(() => {
@@ -51,24 +54,91 @@ export function OrderingQuiz({
   useEffect(() => {
     if (selectedAnswer && selectedAnswer.length > 0 && userOrder.length === 0) {
       setUserOrder(selectedAnswer)
+      setConfirmedOrder(selectedAnswer)
     }
   }, [selectedAnswer])
 
+  // Verificar si hay cambios sin confirmar
+  const hasUnconfirmedChanges = confirmedOrder === null || 
+    JSON.stringify(userOrder) !== JSON.stringify(confirmedOrder)
+
+  // Drag and Drop handlers
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    if (isAnswered) return
+    setDraggedIndex(index)
+    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('text/html', index.toString())
+    // Hacer el elemento semi-transparente mientras se arrastra
+    if (e.currentTarget instanceof HTMLElement) {
+      e.currentTarget.style.opacity = '0.5'
+    }
+  }
+
+  const handleDragEnd = (e: React.DragEvent) => {
+    if (e.currentTarget instanceof HTMLElement) {
+      e.currentTarget.style.opacity = '1'
+    }
+    setDraggedIndex(null)
+    setDragOverIndex(null)
+  }
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+    if (draggedIndex !== null && draggedIndex !== index) {
+      setDragOverIndex(index)
+    }
+  }
+
+  const handleDragLeave = () => {
+    setDragOverIndex(null)
+  }
+
+  const handleDrop = (e: React.DragEvent, dropIndex: number) => {
+    e.preventDefault()
+    if (isAnswered || draggedIndex === null) return
+
+    const newOrder = [...userOrder]
+    
+    // Encontrar las posiciones actuales en userOrder
+    const draggedPosition = userOrder.indexOf(draggedIndex)
+    const dropPosition = userOrder.indexOf(dropIndex)
+
+    if (draggedPosition === -1 || dropPosition === -1 || draggedPosition === dropPosition) {
+      setDraggedIndex(null)
+      setDragOverIndex(null)
+      return
+    }
+
+    // Mover el elemento arrastrado a la nueva posición
+    const [removed] = newOrder.splice(draggedPosition, 1)
+    newOrder.splice(dropPosition, 0, removed)
+
+    setUserOrder(newOrder)
+    setDraggedIndex(null)
+    setDragOverIndex(null)
+  }
+
+  // Botones de flecha (método alternativo)
   const moveItem = (fromIndex: number, direction: 'up' | 'down') => {
     if (isAnswered) return
 
     const newOrder = [...userOrder]
+    const draggedPosition = fromIndex
     const targetIndex = direction === 'up' ? fromIndex - 1 : fromIndex + 1
 
     if (targetIndex < 0 || targetIndex >= newOrder.length) return
 
     // Intercambiar posiciones
-    ;[newOrder[fromIndex], newOrder[targetIndex]] = [newOrder[targetIndex], newOrder[fromIndex]]
+    ;[newOrder[draggedPosition], newOrder[targetIndex]] = [newOrder[targetIndex], newOrder[draggedPosition]]
     setUserOrder(newOrder)
   }
 
-  const handleSubmit = () => {
+  const handleConfirm = () => {
     if (isAnswered) return
+
+    // Confirmar el orden actual
+    setConfirmedOrder([...userOrder])
 
     // Convertir el orden del usuario (índices en shuffledOptions) al orden original
     // userOrder contiene los índices de shuffledOptions
@@ -81,9 +151,11 @@ export function OrderingQuiz({
     onAnswer(isCorrect, originalIndices)
   }
 
-  const isCorrect = () => {
-    if (!isAnswered || !selectedAnswer) return false
-    return JSON.stringify(selectedAnswer) === JSON.stringify(question.correctAnswer)
+  // Función para verificar si el orden confirmado es correcto
+  const getIsCorrect = () => {
+    if (!isAnswered || !confirmedOrder) return false
+    const originalIndices = confirmedOrder.map((shuffledIndex) => shuffledOptions[shuffledIndex].index)
+    return JSON.stringify(originalIndices) === JSON.stringify(question.correctAnswer)
   }
 
   return (
@@ -94,29 +166,55 @@ export function OrderingQuiz({
           {question.question}
         </h3>
         <p className="text-sm text-muted-foreground mt-2">
-          Ordena los elementos arrastrándolos o usando las flechas para colocarlos en el orden correcto.
+          Arrastra los elementos para ordenarlos correctamente. También puedes usar las flechas para moverlos. 
+          Cuando estés seguro de tu orden, haz clic en "Confirmar Orden".
         </p>
       </Card>
 
       {/* Ordering Interface */}
       <div className="space-y-3">
-        {shuffledOptions.map((option, displayIndex) => {
-          const position = userOrder.indexOf(displayIndex) + 1
-          const isCorrectPosition = isAnswered && selectedAnswer
-            ? selectedAnswer[position - 1] === question.correctAnswer[position - 1]
-            : null
+        {userOrder.map((shuffledIndex, position) => {
+          const option = shuffledOptions[shuffledIndex]
+          if (!option) return null
+
+          const isDragging = draggedIndex === shuffledIndex
+          const isDragOver = dragOverIndex === shuffledIndex
+          // Solo mostrar feedback si está confirmado y ya respondido
+          // Comparar el índice original de la opción en esta posición con el correcto
+          let isCorrectPosition: boolean | null = null
+          if (isAnswered && confirmedOrder) {
+            const originalIndexAtPosition = shuffledOptions[confirmedOrder[position]]?.index
+            const correctOriginalIndex = question.correctAnswer[position]
+            isCorrectPosition = originalIndexAtPosition === correctOriginalIndex
+          }
 
           return (
             <motion.div
-              key={displayIndex}
+              key={`order-${position}-${shuffledIndex}`}
               initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: displayIndex * 0.1 }}
+              animate={{ 
+                opacity: isDragging ? 0.5 : 1, 
+                y: 0,
+                scale: isDragOver ? 1.02 : 1
+              }}
+              transition={{ delay: position * 0.05 }}
+              draggable={!isAnswered}
+              onDragStart={(e) => handleDragStart(e as any, shuffledIndex)}
+              onDragEnd={handleDragEnd}
+              onDragOver={(e) => handleDragOver(e as any, shuffledIndex)}
+              onDragLeave={handleDragLeave}
+              onDrop={(e) => handleDrop(e as any, shuffledIndex)}
+              className={cn(
+                'cursor-move select-none',
+                isAnswered && 'cursor-not-allowed'
+              )}
             >
               <Card
                 className={cn(
-                  'p-4 border-2 transition-all',
-                  !isAnswered && 'hover:shadow-md cursor-move',
+                  'p-4 border-2 transition-all duration-200',
+                  !isAnswered && 'hover:shadow-lg hover:border-primary/50',
+                  isDragging && 'opacity-50 scale-95',
+                  isDragOver && 'border-primary bg-primary/10 scale-105',
                   isAnswered && isCorrectPosition === true && 'border-green-500 bg-green-50 dark:bg-green-950',
                   isAnswered && isCorrectPosition === false && 'border-red-500 bg-red-50 dark:bg-red-950',
                   isAnswered && isCorrectPosition === null && 'opacity-50'
@@ -133,12 +231,14 @@ export function OrderingQuiz({
                       isAnswered && isCorrectPosition === null && 'bg-muted text-muted-foreground'
                     )}
                   >
-                    {position}
+                    {position + 1}
                   </div>
 
-                  {/* Grip Icon */}
+                  {/* Grip Icon - Visual indicator for drag */}
                   {!isAnswered && (
-                    <GripVertical className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                    <div className="flex-shrink-0">
+                      <GripVertical className="h-6 w-6 text-muted-foreground" />
+                    </div>
                   )}
 
                   {/* Option Text */}
@@ -146,24 +246,26 @@ export function OrderingQuiz({
                     {option.text}
                   </span>
 
-                  {/* Move Controls */}
+                  {/* Move Controls (Alternative method) */}
                   {!isAnswered && (
                     <div className="flex flex-col gap-1">
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-6 w-6 p-0"
-                        onClick={() => moveItem(position - 1, 'up')}
-                        disabled={position === 1}
+                        className="h-7 w-7 p-0"
+                        onClick={() => moveItem(position, 'up')}
+                        disabled={position === 0}
+                        onMouseDown={(e) => e.stopPropagation()}
                       >
                         <ArrowUp className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-6 w-6 p-0"
-                        onClick={() => moveItem(position - 1, 'down')}
-                        disabled={position === shuffledOptions.length}
+                        className="h-7 w-7 p-0"
+                        onClick={() => moveItem(position, 'down')}
+                        disabled={position === userOrder.length - 1}
+                        onMouseDown={(e) => e.stopPropagation()}
                       >
                         <ArrowDown className="h-4 w-4" />
                       </Button>
@@ -178,6 +280,7 @@ export function OrderingQuiz({
                         animate={{ scale: 1, rotate: 0 }}
                         exit={{ scale: 0 }}
                         transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+                        className="flex-shrink-0"
                       >
                         {isCorrectPosition ? (
                           <Check className="h-6 w-6 text-green-600" />
@@ -194,13 +297,35 @@ export function OrderingQuiz({
         })}
       </div>
 
-      {/* Submit Button */}
+      {/* Confirm Button */}
       {!isAnswered && (
-        <div className="flex justify-end">
-          <Button size="lg" onClick={handleSubmit}>
-            Verificar Orden
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex justify-end"
+        >
+          <Button 
+            size="lg" 
+            onClick={handleConfirm}
+            disabled={userOrder.length === 0}
+            className={cn(
+              hasUnconfirmedChanges && 'animate-pulse'
+            )}
+          >
+            {hasUnconfirmedChanges ? 'Confirmar Orden' : 'Verificar Respuesta'}
           </Button>
-        </div>
+        </motion.div>
+      )}
+
+      {/* Hint: Show that changes are pending */}
+      {!isAnswered && hasUnconfirmedChanges && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="text-sm text-muted-foreground text-center"
+        >
+          <p>Has realizado cambios. Confirma tu orden antes de continuar.</p>
+        </motion.div>
       )}
 
       {/* Explanation */}
@@ -231,4 +356,3 @@ export function OrderingQuiz({
     </div>
   )
 }
-

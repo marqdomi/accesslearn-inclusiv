@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { MultipleChoiceQuiz } from './MultipleChoiceQuiz'
+import { MultipleSelectQuiz } from './MultipleSelectQuiz'
 import { TrueFalseQuiz } from './TrueFalseQuiz'
 import { FillInTheBlankQuiz } from './FillInTheBlankQuiz'
 import { OrderingQuiz } from './OrderingQuiz'
@@ -22,7 +23,7 @@ import { cn } from '@/lib/utils'
 
 interface QuizQuestion {
   id: string
-  type: 'multiple-choice' | 'true-false' | 'fill-blank' | 'ordering' | 'scenario-solver'
+  type: 'multiple-choice' | 'multiple-select' | 'true-false' | 'fill-blank' | 'ordering' | 'scenario-solver'
   question: any
   xpReward: number
 }
@@ -32,7 +33,8 @@ interface QuizLessonProps {
   description?: string
   questions: QuizQuestion[]
   maxLives?: number
-  showTimer?: boolean
+  showTimer?: boolean // Mostrar timer visualmente
+  timeLimit?: number // Límite de tiempo en segundos (0 = sin límite)
   passingScore?: number
   onComplete?: (results: QuizResults) => void
 }
@@ -43,6 +45,7 @@ export function QuizLesson({
   questions,
   maxLives = 3,
   showTimer = false,
+  timeLimit = 0,
   passingScore = 70,
   onComplete,
 }: QuizLessonProps) {
@@ -67,16 +70,41 @@ export function QuizLesson({
   // Verificar si TODAS las preguntas son scenarios (no solo la actual)
   const allQuestionsAreScenarios = questions.every(q => q.type === 'scenario-solver')
 
-  // Timer effect - NO iniciar para scenarios (sin presión de tiempo)
-  useState(() => {
-    if (!showTimer || isScenario) return
+  // Timer effect - Siempre contar tiempo (aunque no se muestre visualmente)
+  // Esto es útil para analytics, incluso si no queremos mostrar presión de tiempo al usuario
+  useEffect(() => {
+    // NO iniciar timer para scenarios (son sin tiempo)
+    if (allQuestionsAreScenarios) return
 
+    // Iniciar timer cuando comienza el quiz
     const interval = setInterval(() => {
-      setTimeElapsed((prev) => prev + 1)
+      setTimeElapsed((prev) => {
+        const newTime = prev + 1
+        
+        // Si hay límite de tiempo y se alcanzó, terminar el quiz automáticamente
+        if (timeLimit > 0 && newTime >= timeLimit) {
+          // Pequeño delay para asegurar que el estado se actualice
+          setTimeout(() => {
+            if (!showResults) {
+              finishQuiz()
+            }
+          }, 100)
+        }
+        
+        return newTime
+      })
     }, 1000)
 
     return () => clearInterval(interval)
-  })
+  }, [allQuestionsAreScenarios, timeLimit, isAnswered, showResults])
+
+  // Calcular tiempo restante si hay límite
+  const timeRemaining = timeLimit > 0 ? Math.max(0, timeLimit - timeElapsed) : null
+  const isTimeRunningOut = timeRemaining !== null && timeRemaining <= 60 && timeRemaining > 0 // Último minuto
+
+  // Calcular tiempo restante si hay límite
+  const timeRemaining = timeLimit > 0 ? Math.max(0, timeLimit - timeElapsed) : null
+  const isTimeRunningOut = timeRemaining !== null && timeRemaining <= 60 && timeRemaining > 0 // Último minuto
 
   const handleAnswer = (isCorrect: boolean, answerOrScore: any, perfectScore?: number) => {
     try {
@@ -314,9 +342,25 @@ export function QuizLesson({
 
               {/* Timer */}
               {showTimer && (
-                <div className="flex items-center gap-2 text-muted-foreground">
+                <div className={cn(
+                  "flex items-center gap-2 font-mono",
+                  timeRemaining !== null && isTimeRunningOut && "text-red-500 animate-pulse",
+                  timeRemaining !== null && timeRemaining === 0 && "text-red-600",
+                  timeRemaining === null && "text-muted-foreground"
+                )}>
                   <Timer className="h-4 w-4" />
-                  <span className="text-sm font-mono">{formatTime(timeElapsed)}</span>
+                  {timeRemaining !== null ? (
+                    <div className="flex flex-col">
+                      <span className="text-sm font-bold">
+                        {formatTime(timeRemaining)}
+                      </span>
+                      {timeRemaining <= 60 && (
+                        <span className="text-[10px] text-red-500">¡Tiempo limitado!</span>
+                      )}
+                    </div>
+                  ) : (
+                    <span className="text-sm">{formatTime(timeElapsed)}</span>
+                  )}
                 </div>
               )}
 
@@ -345,6 +389,17 @@ export function QuizLesson({
               onAnswer={handleAnswer}
               isAnswered={isAnswered}
               selectedAnswer={selectedAnswer}
+            />
+          )}
+
+          {currentQuestion.type === 'multiple-select' && (
+            <MultipleSelectQuiz
+              question={currentQuestion.question as any}
+              onAnswer={(isCorrect, selectedIndices) => {
+                handleAnswer(isCorrect, selectedIndices)
+              }}
+              isAnswered={isAnswered}
+              selectedAnswers={Array.isArray(selectedAnswer) ? selectedAnswer : null}
             />
           )}
 

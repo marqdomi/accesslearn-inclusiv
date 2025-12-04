@@ -228,7 +228,7 @@ export interface ScenarioQuestion {
 
 export interface QuizQuestion {
   id: string
-  type: 'multiple-choice' | 'multiple-select' | 'true-false' | 'short-answer' | 'ordering' | 'scenario-solver'
+  type: 'multiple-choice' | 'multiple-select' | 'true-false' | 'fill-blank' | 'ordering' | 'scenario-solver'
   question: string | ScenarioQuestion
   options: string[]
   correctAnswer: number | number[] | string
@@ -245,6 +245,9 @@ export interface Quiz {
   passingScore: number
   maxAttempts: number
   totalXP: number
+  showTimer?: boolean // Mostrar timer visualmente durante el quiz (modo examen)
+  timeLimit?: number // Límite de tiempo en segundos (opcional, para exámenes de certificación)
+  examMode?: boolean // Modo examen de certificación (muestra timer y aplica límite de tiempo)
 }
 
 export interface LessonBlock {

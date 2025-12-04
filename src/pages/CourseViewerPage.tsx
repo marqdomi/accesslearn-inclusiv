@@ -137,31 +137,59 @@ export function CourseViewerPage() {
           }
         } else {
           questionObj = {
-          question: q.question || q.text || '',
-          explanation: q.explanation || ''
-        }
-        
-        if (questionType === 'multiple-choice') {
-          questionObj.options = Array.isArray(q.options) ? q.options : (q.choices || [])
-          questionObj.correctAnswer = q.correctAnswer !== undefined 
-            ? q.correctAnswer 
-            : (q.correctAnswerIndex !== undefined 
-              ? q.correctAnswerIndex 
-              : 0)
-        } else if (questionType === 'true-false') {
-          questionObj.correctAnswer = q.correctAnswer !== undefined 
-            ? Boolean(q.correctAnswer)
-            : (q.correctAnswerIndex !== undefined 
-              ? Boolean(q.correctAnswerIndex)
-              : true)
-        } else if (questionType === 'ordering') {
-          questionObj.options = Array.isArray(q.options) ? q.options : []
-          questionObj.correctAnswer = Array.isArray(q.correctAnswer) 
-            ? q.correctAnswer 
-            : (q.options ? q.options.map((_: any, i: number) => i) : [])
-        } else if (questionType === 'fill-blank') {
-          questionObj.blanks = q.blanks || []
-          questionObj.correctAnswers = q.correctAnswers || []
+            question: q.question || q.text || '',
+            explanation: q.explanation || ''
+          }
+          
+          if (questionType === 'multiple-choice') {
+            questionObj.options = Array.isArray(q.options) ? q.options : (q.choices || [])
+            questionObj.correctAnswer = q.correctAnswer !== undefined 
+              ? q.correctAnswer 
+              : (q.correctAnswerIndex !== undefined 
+                ? q.correctAnswerIndex 
+                : 0)
+          } else if (questionType === 'multiple-select') {
+            questionObj.options = Array.isArray(q.options) ? q.options : (q.choices || [])
+            questionObj.correctAnswer = Array.isArray(q.correctAnswer) 
+              ? q.correctAnswer 
+              : (Array.isArray(q.correctAnswers) 
+                ? q.correctAnswers 
+                : (q.correctAnswer !== undefined 
+                  ? [q.correctAnswer] 
+                  : []))
+          } else if (questionType === 'true-false') {
+            // En el constructor: 0 = Verdadero (true), 1 = Falso (false)
+            // Necesitamos convertir el número a boolean correctamente
+            if (q.correctAnswer !== undefined) {
+              // Si es 0, significa Verdadero (true), si es 1, significa Falso (false)
+              questionObj.correctAnswer = q.correctAnswer === 0
+            } else if (q.correctAnswerIndex !== undefined) {
+              questionObj.correctAnswer = q.correctAnswerIndex === 0
+            } else if (typeof q.correctAnswer === 'boolean') {
+              // Si ya es boolean, usarlo directamente
+              questionObj.correctAnswer = q.correctAnswer
+            } else {
+              // Default: Verdadero (true)
+              questionObj.correctAnswer = true
+            }
+          } else if (questionType === 'fill-blank') {
+            // Para fill-blank, question puede ser un objeto con text, blanks, options
+            // o puede estar en question.question como objeto
+            if (q.question && typeof q.question === 'object') {
+              questionObj = q.question
+            } else {
+              // Construir desde las propiedades del quiz
+              questionObj = {
+                text: q.text || (typeof q.question === 'string' ? q.question : ''),
+                blanks: Array.isArray(q.blanks) ? q.blanks : (q.correctAnswer ? [q.correctAnswer] : []),
+                options: Array.isArray(q.options) ? q.options : []
+              }
+            }
+          } else if (questionType === 'ordering') {
+            questionObj.options = Array.isArray(q.options) ? q.options : []
+            questionObj.correctAnswer = Array.isArray(q.correctAnswer) 
+              ? q.correctAnswer 
+              : (q.options ? q.options.map((_: any, i: number) => i) : [])
           }
         }
         
@@ -186,7 +214,8 @@ export function CourseViewerPage() {
             description: lesson.description || lesson.quiz.description || '',
             questions: transformedQuestions,
             maxLives: lesson.quiz.maxAttempts || lesson.quiz.maxLives || 3,
-            showTimer: lesson.quiz.showTimer || false,
+            showTimer: lesson.quiz.showTimer || lesson.quiz.examMode || false,
+            timeLimit: lesson.quiz.timeLimit || 0,
             passingScore: lesson.quiz.passingScore || 70
           }
         }
