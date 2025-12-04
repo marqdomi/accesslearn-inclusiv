@@ -184,6 +184,7 @@ Ver [CREDENCIALES_TEST_USUARIOS.md](./docs/CREDENCIALES_TEST_USUARIOS.md) para m
 
 | Documento | Descripción | Audiencia |
 |-----------|-------------|-----------|
+| **[CHANGELOG.md](./CHANGELOG.md)** ⭐ | Registro de cambios y nuevas funcionalidades | Todos |
 | **[AUDITORIA_COMPLETA_2025-01-24.md](./docs/AUDITORIA_COMPLETA_2025-01-24.md)** ⭐ | Auditoría completa actualizada (Enero 2025) | Todos |
 | **[ONBOARDING_DEVELOPER.md](./docs/ONBOARDING_DEVELOPER.md)** ⭐ | Guía para nuevos desarrolladores | Desarrolladores |
 | **[DEMO_READINESS_CHECKLIST.md](./docs/DEMO_READINESS_CHECKLIST.md)** ⭐ | Checklist para demo con cliente | PM/Stakeholders |
