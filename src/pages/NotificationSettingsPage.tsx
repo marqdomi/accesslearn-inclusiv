@@ -132,46 +132,47 @@ export function NotificationSettingsPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8 max-w-6xl">
+      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 max-w-6xl">
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-4 sm:mb-8">
           <Button
             variant="ghost"
             onClick={() => navigate('/admin/settings')}
-            className="mb-4 gap-2"
+            className="mb-3 sm:mb-4 gap-2 touch-target"
           >
-            <ArrowLeft size={20} />
-            Volver a Configuración
+            <ArrowLeft size={18} className="sm:w-5 sm:h-5" />
+            <span className="hidden sm:inline">Volver a Configuración</span>
+            <span className="sm:hidden">Volver</span>
           </Button>
 
           <div>
-            <h1 className="text-4xl font-bold mb-2">Configuración de Notificaciones</h1>
-            <p className="text-lg text-muted-foreground">
+            <h1 className="text-2xl sm:text-4xl font-bold mb-1 sm:mb-2">Configuración de Notificaciones</h1>
+            <p className="text-sm sm:text-lg text-muted-foreground">
               Configura las notificaciones por email y push para tu organización
             </p>
           </div>
         </div>
 
         {/* Notification Preferences */}
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {/* In-App Notifications */}
           <Card>
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <Bell className="h-6 w-6 text-yellow-600" />
-                <div>
-                  <CardTitle>Notificaciones en la Aplicación</CardTitle>
-                  <CardDescription>
+            <CardHeader className="p-4 sm:p-6 pb-3 sm:pb-4">
+              <div className="flex items-start sm:items-center gap-2 sm:gap-3">
+                <Bell className="h-5 w-5 sm:h-6 sm:w-6 text-yellow-600 flex-shrink-0 mt-0.5 sm:mt-0" />
+                <div className="min-w-0 flex-1">
+                  <CardTitle className="text-base sm:text-xl">Notificaciones en la Aplicación</CardTitle>
+                  <CardDescription className="text-xs sm:text-sm mt-1">
                     Controla qué notificaciones recibes dentro de la plataforma
                   </CardDescription>
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label htmlFor="activityFeed">Feed de Actividad</Label>
-                  <p className="text-sm text-muted-foreground">
+            <CardContent className="p-4 sm:p-6 pt-0 space-y-4 sm:space-y-6">
+              <div className="flex items-center justify-between gap-3">
+                <div className="space-y-0.5 flex-1 min-w-0">
+                  <Label htmlFor="activityFeed" className="text-xs sm:text-sm">Feed de Actividad</Label>
+                  <p className="text-[10px] sm:text-sm text-muted-foreground">
                     Recibe notificaciones sobre actividades en tu feed
                   </p>
                 </div>
@@ -182,13 +183,14 @@ export function NotificationSettingsPage() {
                     setPreferences({ ...preferences, activityFeed: checked })
                   }
                   disabled={saving}
+                  className="flex-shrink-0 touch-target"
                 />
               </div>
 
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label htmlFor="forumReplies">Respuestas en Foros</Label>
-                  <p className="text-sm text-muted-foreground">
+              <div className="flex items-center justify-between gap-3">
+                <div className="space-y-0.5 flex-1 min-w-0">
+                  <Label htmlFor="forumReplies" className="text-xs sm:text-sm">Respuestas en Foros</Label>
+                  <p className="text-[10px] sm:text-sm text-muted-foreground">
                     Notificaciones cuando alguien responde en los foros
                   </p>
                 </div>
@@ -199,13 +201,14 @@ export function NotificationSettingsPage() {
                     setPreferences({ ...preferences, forumReplies: checked })
                   }
                   disabled={saving}
+                  className="flex-shrink-0 touch-target"
                 />
               </div>
 
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label htmlFor="achievements">Logros y Reconocimientos</Label>
-                  <p className="text-sm text-muted-foreground">
+              <div className="flex items-center justify-between gap-3">
+                <div className="space-y-0.5 flex-1 min-w-0">
+                  <Label htmlFor="achievements" className="text-xs sm:text-sm">Logros y Reconocimientos</Label>
+                  <p className="text-[10px] sm:text-sm text-muted-foreground">
                     Notificaciones cuando obtienes logros o badges
                   </p>
                 </div>
@@ -216,13 +219,14 @@ export function NotificationSettingsPage() {
                     setPreferences({ ...preferences, achievements: checked })
                   }
                   disabled={saving}
+                  className="flex-shrink-0 touch-target"
                 />
               </div>
 
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label htmlFor="teamChallenges">Desafíos de Equipo</Label>
-                  <p className="text-sm text-muted-foreground">
+              <div className="flex items-center justify-between gap-3">
+                <div className="space-y-0.5 flex-1 min-w-0">
+                  <Label htmlFor="teamChallenges" className="text-xs sm:text-sm">Desafíos de Equipo</Label>
+                  <p className="text-[10px] sm:text-sm text-muted-foreground">
                     Notificaciones sobre desafíos y competencias de equipo
                   </p>
                 </div>
@@ -233,13 +237,14 @@ export function NotificationSettingsPage() {
                     setPreferences({ ...preferences, teamChallenges: checked })
                   }
                   disabled={saving}
+                  className="flex-shrink-0 touch-target"
                 />
               </div>
 
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label htmlFor="courseReminders">Recordatorios de Cursos</Label>
-                  <p className="text-sm text-muted-foreground">
+              <div className="flex items-center justify-between gap-3">
+                <div className="space-y-0.5 flex-1 min-w-0">
+                  <Label htmlFor="courseReminders" className="text-xs sm:text-sm">Recordatorios de Cursos</Label>
+                  <p className="text-[10px] sm:text-sm text-muted-foreground">
                     Notificaciones sobre cursos pendientes y recordatorios
                   </p>
                 </div>
@@ -250,13 +255,14 @@ export function NotificationSettingsPage() {
                     setPreferences({ ...preferences, courseReminders: checked })
                   }
                   disabled={saving}
+                  className="flex-shrink-0 touch-target"
                 />
               </div>
 
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label htmlFor="inAppBadges">Badges en la App</Label>
-                  <p className="text-sm text-muted-foreground">
+              <div className="flex items-center justify-between gap-3">
+                <div className="space-y-0.5 flex-1 min-w-0">
+                  <Label htmlFor="inAppBadges" className="text-xs sm:text-sm">Badges en la App</Label>
+                  <p className="text-[10px] sm:text-sm text-muted-foreground">
                     Muestra badges y notificaciones visuales en la aplicación
                   </p>
                 </div>
@@ -267,6 +273,7 @@ export function NotificationSettingsPage() {
                     setPreferences({ ...preferences, inAppBadges: checked })
                   }
                   disabled={saving}
+                  className="flex-shrink-0 touch-target"
                 />
               </div>
             </CardContent>
@@ -274,20 +281,20 @@ export function NotificationSettingsPage() {
 
           {/* Email Notifications */}
           <Card>
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <Mail className="h-6 w-6 text-blue-600" />
-                <div>
-                  <CardTitle>Notificaciones por Email</CardTitle>
-                  <CardDescription>
+            <CardHeader className="p-4 sm:p-6 pb-3 sm:pb-4">
+              <div className="flex items-start sm:items-center gap-2 sm:gap-3">
+                <Mail className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 flex-shrink-0 mt-0.5 sm:mt-0" />
+                <div className="min-w-0 flex-1">
+                  <CardTitle className="text-base sm:text-xl">Notificaciones por Email</CardTitle>
+                  <CardDescription className="text-xs sm:text-sm mt-1">
                     Configura la frecuencia de los resúmenes por email
                   </CardDescription>
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="emailSummary">Resumen de Email</Label>
+            <CardContent className="p-4 sm:p-6 pt-0 space-y-3 sm:space-y-4">
+              <div className="space-y-1.5 sm:space-y-2">
+                <Label htmlFor="emailSummary" className="text-xs sm:text-sm">Resumen de Email</Label>
                 <Select
                   value={preferences.emailSummary}
                   onValueChange={(value: 'never' | 'daily' | 'weekly') =>
@@ -295,7 +302,7 @@ export function NotificationSettingsPage() {
                   }
                   disabled={saving}
                 >
-                  <SelectTrigger id="emailSummary">
+                  <SelectTrigger id="emailSummary" className="h-11 sm:h-12 text-sm sm:text-base touch-target">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -304,7 +311,7 @@ export function NotificationSettingsPage() {
                     <SelectItem value="weekly">Semanal</SelectItem>
                   </SelectContent>
                 </Select>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-[10px] sm:text-sm text-muted-foreground">
                   Recibe un resumen de todas tus notificaciones por email
                 </p>
               </div>
@@ -313,22 +320,22 @@ export function NotificationSettingsPage() {
 
           {/* Sound & Effects */}
           <Card>
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <Volume2 className="h-6 w-6 text-purple-600" />
-                <div>
-                  <CardTitle>Efectos de Sonido</CardTitle>
-                  <CardDescription>
+            <CardHeader className="p-4 sm:p-6 pb-3 sm:pb-4">
+              <div className="flex items-start sm:items-center gap-2 sm:gap-3">
+                <Volume2 className="h-5 w-5 sm:h-6 sm:w-6 text-purple-600 flex-shrink-0 mt-0.5 sm:mt-0" />
+                <div className="min-w-0 flex-1">
+                  <CardTitle className="text-base sm:text-xl">Efectos de Sonido</CardTitle>
+                  <CardDescription className="text-xs sm:text-sm mt-1">
                     Controla los efectos de sonido y audio en la aplicación
                   </CardDescription>
                 </div>
               </div>
             </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label htmlFor="soundEffects">Efectos de Sonido</Label>
-                  <p className="text-sm text-muted-foreground">
+            <CardContent className="p-4 sm:p-6 pt-0">
+              <div className="flex items-center justify-between gap-3">
+                <div className="space-y-0.5 flex-1 min-w-0">
+                  <Label htmlFor="soundEffects" className="text-xs sm:text-sm">Efectos de Sonido</Label>
+                  <p className="text-[10px] sm:text-sm text-muted-foreground">
                     Reproduce sonidos cuando recibes notificaciones
                   </p>
                 </div>
@@ -339,31 +346,35 @@ export function NotificationSettingsPage() {
                     setPreferences({ ...preferences, soundEffects: checked })
                   }
                   disabled={saving}
+                  className="flex-shrink-0 touch-target"
                 />
               </div>
             </CardContent>
           </Card>
 
           {/* Actions */}
-          <div className="flex items-center justify-between pt-4">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4 pt-3 sm:pt-4">
             <Button
               variant="outline"
               onClick={handleReset}
               disabled={saving}
+              className="w-full sm:w-auto touch-target text-xs sm:text-sm"
             >
               Restablecer Valores por Defecto
             </Button>
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
               <Button
                 variant="ghost"
                 onClick={() => navigate('/admin/settings')}
                 disabled={saving}
+                className="w-full sm:w-auto touch-target text-xs sm:text-sm"
               >
                 Cancelar
               </Button>
               <Button
                 onClick={handleSave}
                 disabled={saving}
+                className="w-full sm:w-auto touch-target text-xs sm:text-sm"
               >
                 {saving ? 'Guardando...' : 'Guardar Configuración'}
               </Button>

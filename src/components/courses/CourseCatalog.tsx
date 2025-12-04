@@ -50,6 +50,7 @@ export function CourseCatalog({ onCourseEnrolled }: CourseCatalogProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [categoryFilter, setCategoryFilter] = useState<string>('all')
   const [levelFilter, setLevelFilter] = useState<string>('all')
+  const [coverImageUrls, setCoverImageUrls] = useState<Record<string, string>>({})
 
   useEffect(() => {
     if (currentTenant) {
@@ -105,6 +106,30 @@ export function CourseCatalog({ onCourseEnrolled }: CourseCatalogProps) {
       )
       console.log('[CourseCatalog] Available courses after filter:', availableCourses.length)
       setCourses(availableCourses)
+      
+      // Load cover image URLs for courses that have coverImage stored as blobName
+      const imageUrlPromises = availableCourses
+        .filter(c => c.coverImage && !c.coverImage.startsWith('http') && !c.coverImage.startsWith('data:') && c.coverImage.includes('/'))
+        .map(async (c) => {
+          try {
+            const [containerName, ...blobNameParts] = c.coverImage!.split('/')
+            const blobName = blobNameParts.join('/')
+            const { url } = await ApiService.getMediaUrl(containerName, blobName)
+            return { courseId: c.id, url }
+          } catch (error) {
+            console.error(`[CourseCatalog] Error loading cover image for course ${c.id}:`, error)
+            return null
+          }
+        })
+      
+      const imageResults = await Promise.all(imageUrlPromises)
+      const urlMap: Record<string, string> = {}
+      imageResults.forEach(result => {
+        if (result) {
+          urlMap[result.courseId] = result.url
+        }
+      })
+      setCoverImageUrls(urlMap)
     } catch (error: any) {
       console.error('[CourseCatalog] Error loading courses:', error)
       if (error.status === 401) {
@@ -362,9 +387,18 @@ export function CourseCatalog({ onCourseEnrolled }: CourseCatalogProps) {
                 {course.coverImage && (
                   <div className="h-40 sm:h-48 overflow-hidden rounded-t-lg">
                     <img 
-                      src={course.coverImage} 
+                      src={
+                        course.coverImage.startsWith('http') || course.coverImage.startsWith('data:')
+                          ? course.coverImage
+                          : coverImageUrls[course.id] || course.coverImage
+                      }
                       alt={course.title}
                       className="w-full h-full object-cover"
+                      onError={(e) => {
+                        console.error(`[CourseCatalog] Error loading image for course ${course.id}:`, course.coverImage)
+                        // Hide image on error
+                        e.currentTarget.style.display = 'none'
+                      }}
                     />
                   </div>
                 )}

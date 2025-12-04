@@ -30,6 +30,7 @@ import { motion } from 'framer-motion'
 export function ProfilePage() {
   const navigate = useNavigate()
   const { profile, loading, error, updateProfile, changePassword, updateAvatar } = useProfile()
+  const [activeTab, setActiveTab] = useState('profile')
   
   // Profile form state
   const [profileData, setProfileData] = useState({
@@ -269,18 +270,18 @@ export function ProfilePage() {
         >
           <Card className="mb-4 sm:mb-6">
             <CardContent className="pt-4 sm:pt-6 p-4 sm:p-6">
-              <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6">
+              <div className="flex flex-col sm:flex-row items-center sm:items-start gap-3 sm:gap-6">
                 {/* Avatar */}
                 <div className="relative flex-shrink-0">
-                  <Avatar className="h-20 w-20 sm:h-24 sm:w-24">
+                  <Avatar className="h-16 w-16 sm:h-24 sm:w-24">
                     <AvatarImage src={avatarPreview || undefined} alt={profile.firstName} />
-                    <AvatarFallback className="text-xl sm:text-2xl">
+                    <AvatarFallback className="text-lg sm:text-2xl">
                       {getInitials()}
                     </AvatarFallback>
                   </Avatar>
                   <label
                     htmlFor="avatar-upload"
-                    className="absolute bottom-0 right-0 bg-primary text-primary-foreground rounded-full p-1.5 sm:p-2 cursor-pointer hover:bg-primary/90 transition-colors touch-target"
+                    className="absolute bottom-0 right-0 bg-primary text-primary-foreground rounded-full p-1.5 sm:p-2 cursor-pointer hover:bg-primary/90 transition-colors touch-target shadow-md"
                   >
                     <Camera className="h-3 w-3 sm:h-4 sm:w-4" />
                     <input
@@ -296,14 +297,14 @@ export function ProfilePage() {
 
                 {/* User Info */}
                 <div className="flex-1 text-center sm:text-left min-w-0">
-                  <h2 className="text-xl sm:text-2xl font-bold text-foreground">
+                  <h2 className="text-lg sm:text-2xl font-bold text-foreground">
                     {profile.firstName} {profile.lastName}
                   </h2>
-                  <p className="text-sm sm:text-base text-muted-foreground mt-1 break-words">
+                  <p className="text-xs sm:text-base text-muted-foreground mt-1 break-words">
                     {profile.email}
                   </p>
-                  <div className="flex flex-col sm:flex-row items-center sm:items-center gap-2 sm:gap-4 mt-2">
-                    <span className="text-xs sm:text-sm text-muted-foreground">
+                  <div className="flex flex-col sm:flex-row items-center sm:items-center gap-1.5 sm:gap-4 mt-2">
+                    <span className="text-[10px] sm:text-sm text-muted-foreground">
                       {profile.role === 'super-admin' && 'Super Administrador'}
                       {profile.role === 'tenant-admin' && 'Administrador'}
                       {profile.role === 'instructor' && 'Instructor'}
@@ -312,7 +313,7 @@ export function ProfilePage() {
                       {profile.role === 'student' && 'Estudiante'}
                     </span>
                     {profile.totalXP !== undefined && (
-                      <span className="text-xs sm:text-sm text-muted-foreground">
+                      <span className="text-[10px] sm:text-sm text-muted-foreground">
                         • XP: {profile.totalXP} • Nivel {profile.level || 1}
                       </span>
                     )}
@@ -324,15 +325,35 @@ export function ProfilePage() {
         </motion.div>
 
         {/* Tabs */}
-        <Tabs defaultValue="profile" className="space-y-4 sm:space-y-6">
-          <TabsList className="w-full grid grid-cols-2 h-auto">
-            <TabsTrigger value="profile" className="text-xs sm:text-sm py-2 sm:py-3 px-2 sm:px-4 touch-target">
-              <User className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+        <Tabs 
+          value={activeTab}
+          onValueChange={(value) => {
+            // Mantener la posición del scroll al cambiar de tab
+            const scrollPosition = window.scrollY || document.documentElement.scrollTop
+            setActiveTab(value)
+            requestAnimationFrame(() => {
+              window.scrollTo({
+                top: scrollPosition,
+                behavior: 'instant'
+              })
+            })
+          }}
+          className="space-y-4 sm:space-y-6"
+        >
+          <TabsList className="w-full grid grid-cols-2 h-auto bg-muted/30 p-1.5 rounded-xl border-0 shadow-sm">
+            <TabsTrigger 
+              value="profile" 
+              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md rounded-lg py-2.5 px-3 sm:px-4 text-xs sm:text-sm font-semibold transition-all duration-200 hover:bg-muted/50 data-[state=inactive]:text-muted-foreground touch-target"
+            >
+              <User className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2 flex-shrink-0" />
               <span className="hidden sm:inline">Información Personal</span>
               <span className="sm:hidden">Perfil</span>
             </TabsTrigger>
-            <TabsTrigger value="password" className="text-xs sm:text-sm py-2 sm:py-3 px-2 sm:px-4 touch-target">
-              <Lock className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+            <TabsTrigger 
+              value="password" 
+              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md rounded-lg py-2.5 px-3 sm:px-4 text-xs sm:text-sm font-semibold transition-all duration-200 hover:bg-muted/50 data-[state=inactive]:text-muted-foreground touch-target"
+            >
+              <Lock className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2 flex-shrink-0" />
               <span className="hidden sm:inline">Cambiar Contraseña</span>
               <span className="sm:hidden">Contraseña</span>
             </TabsTrigger>
@@ -346,18 +367,18 @@ export function ProfilePage() {
               transition={{ duration: 0.3 }}
             >
               <Card>
-                <CardHeader className="p-4 sm:p-6">
-                  <CardTitle className="text-lg sm:text-xl">Información Personal</CardTitle>
-                  <CardDescription className="text-sm">
+                <CardHeader className="p-4 sm:p-6 pb-3 sm:pb-4">
+                  <CardTitle className="text-base sm:text-xl">Información Personal</CardTitle>
+                  <CardDescription className="text-xs sm:text-sm mt-1">
                     Actualiza tu información personal y datos de contacto
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="p-4 sm:p-6">
-                  <form onSubmit={handleUpdateProfile} className="space-y-4 sm:space-y-6">
+                <CardContent className="p-4 sm:p-6 pt-0">
+                  <form onSubmit={handleUpdateProfile} className="space-y-3 sm:space-y-6">
                     {/* Name Fields */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="firstName" required className="text-sm">
+                      <div className="space-y-1.5 sm:space-y-2">
+                        <Label htmlFor="firstName" required className="text-xs sm:text-sm">
                           Nombre
                         </Label>
                         <Input
@@ -365,11 +386,11 @@ export function ProfilePage() {
                           value={profileData.firstName}
                           onChange={(e) => setProfileData({ ...profileData, firstName: e.target.value })}
                           required
-                          className="h-12 touch-target"
+                          className="h-11 sm:h-12 text-sm sm:text-base touch-target"
                         />
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="lastName" required className="text-sm">
+                      <div className="space-y-1.5 sm:space-y-2">
+                        <Label htmlFor="lastName" required className="text-xs sm:text-sm">
                           Apellido
                         </Label>
                         <Input
@@ -377,53 +398,53 @@ export function ProfilePage() {
                           value={profileData.lastName}
                           onChange={(e) => setProfileData({ ...profileData, lastName: e.target.value })}
                           required
-                          className="h-12 touch-target"
+                          className="h-11 sm:h-12 text-sm sm:text-base touch-target"
                         />
                       </div>
                     </div>
 
                     {/* Email (read-only) */}
-                    <div className="space-y-2">
-                      <Label htmlFor="email" className="text-sm">Correo Electrónico</Label>
+                    <div className="space-y-1.5 sm:space-y-2">
+                      <Label htmlFor="email" className="text-xs sm:text-sm">Correo Electrónico</Label>
                       <Input
                         id="email"
                         type="email"
                         value={profile.email}
                         disabled
-                        className="bg-muted h-12 touch-target"
+                        className="bg-muted h-11 sm:h-12 text-sm sm:text-base touch-target"
                       />
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-[10px] sm:text-xs text-muted-foreground">
                         El correo electrónico no se puede cambiar
                       </p>
                     </div>
 
                     {/* Phone */}
-                    <div className="space-y-2">
-                      <Label htmlFor="phone" className="text-sm">Teléfono</Label>
+                    <div className="space-y-1.5 sm:space-y-2">
+                      <Label htmlFor="phone" className="text-xs sm:text-sm">Teléfono</Label>
                       <Input
                         id="phone"
                         type="tel"
                         value={profileData.phone}
                         onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
                         placeholder="+52 55 1234 5678"
-                        className="h-12 touch-target"
+                        className="h-11 sm:h-12 text-sm sm:text-base touch-target"
                       />
                     </div>
 
                     {/* Date of Birth and Gender */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="dateOfBirth" className="text-sm">Fecha de Nacimiento</Label>
+                      <div className="space-y-1.5 sm:space-y-2">
+                        <Label htmlFor="dateOfBirth" className="text-xs sm:text-sm">Fecha de Nacimiento</Label>
                         <Input
                           id="dateOfBirth"
                           type="date"
                           value={profileData.dateOfBirth}
                           onChange={(e) => setProfileData({ ...profileData, dateOfBirth: e.target.value })}
-                          className="h-12 touch-target"
+                          className="h-11 sm:h-12 text-sm sm:text-base touch-target"
                         />
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="gender" className="text-sm">Género</Label>
+                      <div className="space-y-1.5 sm:space-y-2">
+                        <Label htmlFor="gender" className="text-xs sm:text-sm">Género</Label>
                         <select
                           id="gender"
                           value={profileData.gender}
@@ -431,7 +452,7 @@ export function ProfilePage() {
                             ...profileData, 
                             gender: e.target.value as any 
                           })}
-                          className="w-full px-3 py-3 h-12 border border-border rounded-md bg-background text-foreground touch-target"
+                          className="w-full px-3 py-2.5 sm:py-3 h-11 sm:h-12 border border-border rounded-md bg-background text-sm sm:text-base text-foreground touch-target"
                         >
                           <option value="prefer-not-to-say">Prefiero no decir</option>
                           <option value="male">Masculino</option>
@@ -442,10 +463,10 @@ export function ProfilePage() {
                     </div>
 
                     {/* Address */}
-                    <div className="space-y-3 sm:space-y-4 border-t pt-4">
-                      <h3 className="text-base sm:text-lg font-semibold">Dirección (Opcional)</h3>
-                      <div className="space-y-2">
-                        <Label htmlFor="street" className="text-sm">Calle</Label>
+                    <div className="space-y-3 sm:space-y-4 border-t pt-3 sm:pt-4">
+                      <h3 className="text-sm sm:text-lg font-semibold">Dirección (Opcional)</h3>
+                      <div className="space-y-1.5 sm:space-y-2">
+                        <Label htmlFor="street" className="text-xs sm:text-sm">Calle</Label>
                         <Input
                           id="street"
                           value={profileData.address.street}
@@ -454,12 +475,12 @@ export function ProfilePage() {
                             address: { ...profileData.address, street: e.target.value }
                           })}
                           placeholder="Calle y número"
-                          className="h-12 touch-target"
+                          className="h-11 sm:h-12 text-sm sm:text-base touch-target"
                         />
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="city">Ciudad</Label>
+                        <div className="space-y-1.5 sm:space-y-2">
+                          <Label htmlFor="city" className="text-xs sm:text-sm">Ciudad</Label>
                           <Input
                             id="city"
                             value={profileData.address.city}
@@ -468,10 +489,11 @@ export function ProfilePage() {
                               address: { ...profileData.address, city: e.target.value }
                             })}
                             placeholder="Ciudad"
+                            className="h-11 sm:h-12 text-sm sm:text-base touch-target"
                           />
                         </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="state">Estado</Label>
+                        <div className="space-y-1.5 sm:space-y-2">
+                          <Label htmlFor="state" className="text-xs sm:text-sm">Estado</Label>
                           <Input
                             id="state"
                             value={profileData.address.state}
@@ -480,10 +502,11 @@ export function ProfilePage() {
                               address: { ...profileData.address, state: e.target.value }
                             })}
                             placeholder="Estado"
+                            className="h-11 sm:h-12 text-sm sm:text-base touch-target"
                           />
                         </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="zipCode">Código Postal</Label>
+                        <div className="space-y-1.5 sm:space-y-2">
+                          <Label htmlFor="zipCode" className="text-xs sm:text-sm">Código Postal</Label>
                           <Input
                             id="zipCode"
                             value={profileData.address.zipCode}
@@ -492,11 +515,12 @@ export function ProfilePage() {
                               address: { ...profileData.address, zipCode: e.target.value }
                             })}
                             placeholder="CP"
+                            className="h-11 sm:h-12 text-sm sm:text-base touch-target"
                           />
                         </div>
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="country">País</Label>
+                      <div className="space-y-1.5 sm:space-y-2">
+                        <Label htmlFor="country" className="text-xs sm:text-sm">País</Label>
                         <Input
                           id="country"
                           value={profileData.address.country}
@@ -505,20 +529,22 @@ export function ProfilePage() {
                             address: { ...profileData.address, country: e.target.value }
                           })}
                           placeholder="País"
+                          className="h-11 sm:h-12 text-sm sm:text-base touch-target"
                         />
                       </div>
                     </div>
 
                     {/* Submit Button */}
-                    <div className="flex justify-end gap-4 pt-4 border-t">
+                    <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-4 pt-3 sm:pt-4 border-t">
                       <Button
                         type="button"
                         variant="outline"
                         onClick={() => navigate('/dashboard')}
+                        className="w-full sm:w-auto touch-target"
                       >
                         Cancelar
                       </Button>
-                      <Button type="submit" disabled={loading}>
+                      <Button type="submit" disabled={loading} className="w-full sm:w-auto touch-target">
                         {loading ? 'Guardando...' : 'Guardar Cambios'}
                       </Button>
                     </div>
@@ -536,17 +562,17 @@ export function ProfilePage() {
               transition={{ duration: 0.3 }}
             >
               <Card>
-                <CardHeader className="p-4 sm:p-6">
-                  <CardTitle className="text-lg sm:text-xl">Cambiar Contraseña</CardTitle>
-                  <CardDescription className="text-sm">
+                <CardHeader className="p-4 sm:p-6 pb-3 sm:pb-4">
+                  <CardTitle className="text-base sm:text-xl">Cambiar Contraseña</CardTitle>
+                  <CardDescription className="text-xs sm:text-sm mt-1">
                     Actualiza tu contraseña para mantener tu cuenta segura
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="p-4 sm:p-6">
-                  <form onSubmit={handleChangePassword} className="space-y-4 sm:space-y-6">
+                <CardContent className="p-4 sm:p-6 pt-0">
+                  <form onSubmit={handleChangePassword} className="space-y-3 sm:space-y-6">
                     {/* Current Password */}
-                    <div className="space-y-2">
-                      <Label htmlFor="currentPassword" required className="text-sm">
+                    <div className="space-y-1.5 sm:space-y-2">
+                      <Label htmlFor="currentPassword" required className="text-xs sm:text-sm">
                         Contraseña Actual
                       </Label>
                       <div className="relative">
@@ -559,7 +585,7 @@ export function ProfilePage() {
                             currentPassword: e.target.value
                           })}
                           required
-                          className="pr-10 h-12 touch-target"
+                          className="pr-10 h-11 sm:h-12 text-sm sm:text-base touch-target"
                         />
                         <Button
                           type="button"
@@ -578,8 +604,8 @@ export function ProfilePage() {
                     </div>
 
                     {/* New Password */}
-                    <div className="space-y-2">
-                      <Label htmlFor="newPassword" required className="text-sm">
+                    <div className="space-y-1.5 sm:space-y-2">
+                      <Label htmlFor="newPassword" required className="text-xs sm:text-sm">
                         Nueva Contraseña
                       </Label>
                       <div className="relative">
@@ -593,7 +619,7 @@ export function ProfilePage() {
                           })}
                           required
                           minLength={8}
-                          className="pr-10 h-12 touch-target"
+                          className="pr-10 h-11 sm:h-12 text-sm sm:text-base touch-target"
                         />
                         <Button
                           type="button"
@@ -609,14 +635,14 @@ export function ProfilePage() {
                           )}
                         </Button>
                       </div>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-[10px] sm:text-xs text-muted-foreground">
                         La contraseña debe tener al menos 8 caracteres
                       </p>
                     </div>
 
                     {/* Confirm Password */}
-                    <div className="space-y-2">
-                      <Label htmlFor="confirmPassword" required className="text-sm">
+                    <div className="space-y-1.5 sm:space-y-2">
+                      <Label htmlFor="confirmPassword" required className="text-xs sm:text-sm">
                         Confirmar Nueva Contraseña
                       </Label>
                       <div className="relative">
@@ -630,7 +656,7 @@ export function ProfilePage() {
                           })}
                           required
                           minLength={8}
-                          className="pr-10 h-12 touch-target"
+                          className="pr-10 h-11 sm:h-12 text-sm sm:text-base touch-target"
                         />
                         <Button
                           type="button"
@@ -648,7 +674,7 @@ export function ProfilePage() {
                       </div>
                       {passwordData.newPassword && passwordData.confirmPassword && 
                        passwordData.newPassword !== passwordData.confirmPassword && (
-                        <p className="text-xs text-destructive">
+                        <p className="text-[10px] sm:text-xs text-destructive">
                           Las contraseñas no coinciden
                         </p>
                       )}

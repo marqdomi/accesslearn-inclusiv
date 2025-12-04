@@ -95,37 +95,38 @@ export function SecuritySettingsPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8 max-w-6xl">
+      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 max-w-6xl">
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-4 sm:mb-8">
           <Button
             variant="ghost"
             onClick={() => navigate('/admin/settings')}
-            className="mb-4 gap-2"
+            className="mb-3 sm:mb-4 gap-2 touch-target"
           >
-            <ArrowLeft size={20} />
-            Volver a Configuración
+            <ArrowLeft size={18} className="sm:w-5 sm:h-5" />
+            <span className="hidden sm:inline">Volver a Configuración</span>
+            <span className="sm:hidden">Volver</span>
           </Button>
 
           <div>
-            <h1 className="text-3xl font-bold tracking-tight mb-2">Configuración de Seguridad</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight mb-1 sm:mb-2">Configuración de Seguridad</h1>
+            <p className="text-sm sm:text-base text-muted-foreground">
               Administra permisos, roles y políticas de seguridad
             </p>
           </div>
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {/* Security Overview */}
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-3 md:gap-4 grid-cols-1 md:grid-cols-3">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total de Usuarios</CardTitle>
-                <Users className="h-5 w-5 text-primary" aria-hidden="true" />
+                <CardTitle className="text-xs md:text-sm font-medium">Total de Usuarios</CardTitle>
+                <Users className="h-4 w-4 md:h-5 md:w-5 text-primary flex-shrink-0" aria-hidden="true" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{users.length}</div>
-                <p className="text-xs text-muted-foreground mt-1">
+                <div className="text-xl md:text-2xl font-bold">{users.length}</div>
+                <p className="text-[10px] md:text-xs text-muted-foreground mt-1">
                   Usuarios activos en {currentTenant?.name}
                 </p>
               </CardContent>
@@ -133,14 +134,14 @@ export function SecuritySettingsPage() {
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Roles Activos</CardTitle>
-                <Shield className="h-5 w-5 text-secondary" aria-hidden="true" />
+                <CardTitle className="text-xs md:text-sm font-medium">Roles Activos</CardTitle>
+                <Shield className="h-4 w-4 md:h-5 md:w-5 text-secondary flex-shrink-0" aria-hidden="true" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
+                <div className="text-xl md:text-2xl font-bold">
                   {Object.keys(roleCounts).length}
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-[10px] md:text-xs text-muted-foreground mt-1">
                   Diferentes roles asignados
                 </p>
               </CardContent>
@@ -148,14 +149,14 @@ export function SecuritySettingsPage() {
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Administradores</CardTitle>
-                <Lock className="h-5 w-5 text-success" aria-hidden="true" />
+                <CardTitle className="text-xs md:text-sm font-medium">Administradores</CardTitle>
+                <Lock className="h-4 w-4 md:h-5 md:w-5 text-success flex-shrink-0" aria-hidden="true" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
+                <div className="text-xl md:text-2xl font-bold">
                   {(roleCounts['tenant-admin'] || 0) + (roleCounts['super-admin'] || 0)}
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-[10px] md:text-xs text-muted-foreground mt-1">
                   Usuarios con permisos de administración
                 </p>
               </CardContent>
@@ -164,39 +165,39 @@ export function SecuritySettingsPage() {
 
           {/* Roles & Permissions */}
           <Card>
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-muted">
-                  <Shield className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
+            <CardHeader className="p-4 sm:p-6 pb-3 sm:pb-4">
+              <div className="flex items-start sm:items-center gap-2 sm:gap-3">
+                <div className="p-1.5 sm:p-2 rounded-lg bg-muted flex-shrink-0">
+                  <Shield className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" aria-hidden="true" />
                 </div>
-                <div>
-                  <CardTitle className="text-xl">Roles y Permisos</CardTitle>
-                  <CardDescription>
+                <div className="min-w-0 flex-1">
+                  <CardTitle className="text-base sm:text-xl">Roles y Permisos</CardTitle>
+                  <CardDescription className="text-xs sm:text-sm mt-1">
                     Información sobre los roles disponibles y sus permisos
                   </CardDescription>
                 </div>
               </div>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
+            <CardContent className="p-4 sm:p-6 pt-0">
+              <div className="space-y-3 sm:space-y-4">
                 {Object.entries(ROLE_DESCRIPTIONS).map(([role, description]) => (
                   <div
                     key={role}
-                    className="p-4 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
+                    className="p-3 sm:p-4 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer touch-target"
                     onClick={() => setSelectedRole(selectedRole === role ? null : role)}
                   >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h3 className="font-semibold capitalize">{role.replace('-', ' ')}</h3>
-                          <Badge variant="secondary" className="text-xs">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-1">
+                          <h3 className="text-xs sm:text-sm font-semibold capitalize">{role.replace('-', ' ')}</h3>
+                          <Badge variant="secondary" className="text-[10px] sm:text-xs">
                             {roleCounts[role] || 0} usuarios
                           </Badge>
                         </div>
-                        <p className="text-sm text-muted-foreground">{description}</p>
+                        <p className="text-[10px] sm:text-sm text-muted-foreground">{description}</p>
                       </div>
-                      <Button variant="ghost" size="sm">
-                        <Eye size={16} />
+                      <Button variant="ghost" size="sm" className="flex-shrink-0 touch-target">
+                        <Eye size={14} className="sm:w-4 sm:h-4" />
                       </Button>
                     </div>
                   </div>
@@ -207,54 +208,54 @@ export function SecuritySettingsPage() {
 
           {/* Security Policies */}
           <Card>
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-muted">
-                  <Lock className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
+            <CardHeader className="p-4 sm:p-6 pb-3 sm:pb-4">
+              <div className="flex items-start sm:items-center gap-2 sm:gap-3">
+                <div className="p-1.5 sm:p-2 rounded-lg bg-muted flex-shrink-0">
+                  <Lock className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" aria-hidden="true" />
                 </div>
-                <div>
-                  <CardTitle className="text-xl">Políticas de Seguridad</CardTitle>
-                  <CardDescription>
+                <div className="min-w-0 flex-1">
+                  <CardTitle className="text-base sm:text-xl">Políticas de Seguridad</CardTitle>
+                  <CardDescription className="text-xs sm:text-sm mt-1">
                     Configuración de seguridad para tu organización
                   </CardDescription>
                 </div>
               </div>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="p-4 border rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-semibold mb-1">Autenticación de Dos Factores (2FA)</h3>
-                      <p className="text-sm text-muted-foreground">
+            <CardContent className="p-4 sm:p-6 pt-0">
+              <div className="space-y-3 sm:space-y-4">
+                <div className="p-3 sm:p-4 border rounded-lg">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-xs sm:text-sm font-semibold mb-1">Autenticación de Dos Factores (2FA)</h3>
+                      <p className="text-[10px] sm:text-sm text-muted-foreground">
                         Requiere autenticación de dos factores para usuarios administrativos
                       </p>
                     </div>
-                    <Badge variant="outline">Próximamente</Badge>
+                    <Badge variant="outline" className="text-[10px] sm:text-xs flex-shrink-0">Próximamente</Badge>
                   </div>
                 </div>
 
-                <div className="p-4 border rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-semibold mb-1">Política de Contraseñas</h3>
-                      <p className="text-sm text-muted-foreground">
+                <div className="p-3 sm:p-4 border rounded-lg">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-xs sm:text-sm font-semibold mb-1">Política de Contraseñas</h3>
+                      <p className="text-[10px] sm:text-sm text-muted-foreground">
                         Configura requisitos mínimos para contraseñas
                       </p>
                     </div>
-                    <Badge variant="outline">Próximamente</Badge>
+                    <Badge variant="outline" className="text-[10px] sm:text-xs flex-shrink-0">Próximamente</Badge>
                   </div>
                 </div>
 
-                <div className="p-4 border rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-semibold mb-1">Sesiones y Timeouts</h3>
-                      <p className="text-sm text-muted-foreground">
+                <div className="p-3 sm:p-4 border rounded-lg">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-xs sm:text-sm font-semibold mb-1">Sesiones y Timeouts</h3>
+                      <p className="text-[10px] sm:text-sm text-muted-foreground">
                         Configura el tiempo de expiración de sesiones
                       </p>
                     </div>
-                    <Badge variant="outline">Próximamente</Badge>
+                    <Badge variant="outline" className="text-[10px] sm:text-xs flex-shrink-0">Próximamente</Badge>
                   </div>
                 </div>
               </div>
@@ -262,12 +263,14 @@ export function SecuritySettingsPage() {
           </Card>
 
           {/* Actions */}
-          <div className="flex justify-end pt-4">
+          <div className="flex justify-end pt-3 sm:pt-4">
             <Button
               variant="ghost"
               onClick={() => navigate('/admin/settings')}
+              className="touch-target text-xs sm:text-sm"
             >
-              Volver a Configuración
+              <span className="hidden sm:inline">Volver a Configuración</span>
+              <span className="sm:hidden">Volver</span>
             </Button>
           </div>
         </div>

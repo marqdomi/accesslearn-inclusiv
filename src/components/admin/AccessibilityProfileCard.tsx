@@ -110,59 +110,59 @@ export function AccessibilityProfileCard({
           profile.enabled && 'border-primary/50 bg-primary/5'
         )}
       >
-        <CardHeader className="pb-3">
-          <div className="flex items-start justify-between">
-            <div className="flex items-start gap-3 flex-1 min-w-0">
+        <CardHeader className="pb-2 sm:pb-3 p-4 sm:p-6">
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex items-start gap-2 sm:gap-3 flex-1 min-w-0">
               {profile.icon ? (
-                <div className="p-2 rounded-lg bg-primary/10 flex-shrink-0">
-                  <Settings className="h-5 w-5 text-primary" />
+                <div className="p-1.5 sm:p-2 rounded-lg bg-primary/10 flex-shrink-0">
+                  <Settings className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                 </div>
               ) : (
-                <div className="p-2 rounded-lg bg-muted flex-shrink-0">
-                  <Settings className="h-5 w-5 text-muted-foreground" />
+                <div className="p-1.5 sm:p-2 rounded-lg bg-muted flex-shrink-0">
+                  <Settings className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
                 </div>
               )}
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <CardTitle className="text-lg truncate">{profile.name}</CardTitle>
+                <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-1">
+                  <CardTitle className="text-sm sm:text-lg truncate">{profile.name}</CardTitle>
                   {profile.isDefault && (
-                    <Badge variant="secondary" className="text-xs">
+                    <Badge variant="secondary" className="text-[10px] sm:text-xs">
                       Sistema
                     </Badge>
                   )}
                   {profile.enabled && (
-                    <Badge variant="default" className="text-xs bg-green-500">
-                      <CheckCircle2 className="h-3 w-3 mr-1" />
+                    <Badge variant="default" className="text-[10px] sm:text-xs bg-green-500">
+                      <CheckCircle2 className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-0.5 sm:mr-1" />
                       Activo
                     </Badge>
                   )}
                 </div>
-                <CardDescription className="text-sm line-clamp-2">
+                <CardDescription className="text-xs sm:text-sm line-clamp-2">
                   {profile.description}
                 </CardDescription>
               </div>
             </div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
-                  <MoreVertical className="h-4 w-4" />
+                <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-8 sm:w-8 flex-shrink-0 touch-target">
+                  <MoreVertical className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={onEdit}>
-                  <Edit2 className="h-4 w-4 mr-2" />
+                <DropdownMenuItem onClick={onEdit} className="text-xs sm:text-sm">
+                  <Edit2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-2" />
                   Editar
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleDuplicate} disabled={isDuplicating}>
-                  <Copy className="h-4 w-4 mr-2" />
+                <DropdownMenuItem onClick={handleDuplicate} disabled={isDuplicating} className="text-xs sm:text-sm">
+                  <Copy className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-2" />
                   Duplicar
                 </DropdownMenuItem>
                 {!profile.isDefault && (
                   <DropdownMenuItem
                     onClick={() => setShowDeleteDialog(true)}
-                    className="text-destructive"
+                    className="text-destructive text-xs sm:text-sm"
                   >
-                    <Trash2 className="h-4 w-4 mr-2" />
+                    <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-2" />
                     Eliminar
                   </DropdownMenuItem>
                 )}
@@ -170,19 +170,19 @@ export function AccessibilityProfileCard({
             </DropdownMenu>
           </div>
         </CardHeader>
-        <CardContent className="pt-0">
-          <div className="space-y-3">
+        <CardContent className="pt-0 p-4 sm:p-6">
+          <div className="space-y-2 sm:space-y-3">
             {/* Metadata Preview */}
-            <div className="space-y-1">
-              <p className="text-xs font-medium text-muted-foreground">Audiencia:</p>
-              <p className="text-sm">{profile.metadata.targetAudience}</p>
+            <div className="space-y-0.5 sm:space-y-1">
+              <p className="text-[10px] sm:text-xs font-medium text-muted-foreground">Audiencia:</p>
+              <p className="text-xs sm:text-sm">{profile.metadata.targetAudience}</p>
             </div>
 
             {/* Benefits Preview */}
             {profile.metadata.benefits.length > 0 && (
-              <div className="space-y-1">
-                <p className="text-xs font-medium text-muted-foreground">Beneficios:</p>
-                <ul className="text-xs text-muted-foreground space-y-0.5">
+              <div className="space-y-0.5 sm:space-y-1">
+                <p className="text-[10px] sm:text-xs font-medium text-muted-foreground">Beneficios:</p>
+                <ul className="text-[10px] sm:text-xs text-muted-foreground space-y-0.5">
                   {profile.metadata.benefits.slice(0, 2).map((benefit, idx) => (
                     <li key={idx} className="flex items-start gap-1">
                       <span>•</span>
@@ -190,7 +190,7 @@ export function AccessibilityProfileCard({
                     </li>
                   ))}
                   {profile.metadata.benefits.length > 2 && (
-                    <li className="text-xs text-muted-foreground/70">
+                    <li className="text-[10px] sm:text-xs text-muted-foreground/70">
                       +{profile.metadata.benefits.length - 2} más
                     </li>
                   )}
@@ -199,14 +199,14 @@ export function AccessibilityProfileCard({
             )}
 
             {/* Toggle Switch */}
-            <div className="flex items-center justify-between pt-2 border-t">
-              <div className="flex items-center gap-2">
+            <div className="flex items-center justify-between gap-2 pt-2 border-t">
+              <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
                 {profile.enabled ? (
-                  <Eye className="h-4 w-4 text-green-500" />
+                  <Eye className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-green-500 flex-shrink-0" />
                 ) : (
-                  <EyeOff className="h-4 w-4 text-muted-foreground" />
+                  <EyeOff className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" />
                 )}
-                <span className="text-sm font-medium">
+                <span className="text-xs sm:text-sm font-medium truncate">
                   {profile.enabled ? 'Visible para usuarios' : 'Oculto para usuarios'}
                 </span>
               </div>
@@ -214,6 +214,7 @@ export function AccessibilityProfileCard({
                 checked={profile.enabled}
                 onCheckedChange={handleToggle}
                 disabled={isToggling}
+                className="flex-shrink-0 touch-target"
               />
             </div>
           </div>

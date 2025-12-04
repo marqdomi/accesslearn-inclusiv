@@ -58,6 +58,7 @@ export function DashboardPage() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const { currentTenant } = useTenant()
+  const [activeTab, setActiveTab] = useState('overview')
   const { t } = useTranslation('dashboard')
   const [courses, setCourses] = useState<Course[]>([])
   const [loading, setLoading] = useState(true)
@@ -390,12 +391,36 @@ export function DashboardPage() {
         </div>
 
         {/* Main Content Tabs */}
-        <Tabs defaultValue="overview" className="mb-8">
-          <TabsList className="grid w-full grid-cols-2 max-w-md mb-6">
-            <TabsTrigger value="overview" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+        <Tabs 
+          value={activeTab}
+          onValueChange={(value) => {
+            // Guardar posición del scroll antes de cambiar
+            const scrollPosition = window.scrollY || document.documentElement.scrollTop
+            
+            // Cambiar el tab
+            setActiveTab(value)
+            
+            // Restaurar posición del scroll después del render
+            requestAnimationFrame(() => {
+              window.scrollTo({
+                top: scrollPosition,
+                behavior: 'instant'
+              })
+            })
+          }}
+          className="mb-8"
+        >
+          <TabsList className="grid w-full grid-cols-2 max-w-md mb-6 h-auto bg-muted/30 p-1.5 rounded-xl border-0 shadow-sm">
+            <TabsTrigger 
+              value="overview" 
+              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md rounded-lg py-2.5 px-4 text-sm font-semibold transition-all duration-200 hover:bg-muted/50 data-[state=inactive]:text-muted-foreground"
+            >
               Inicio
             </TabsTrigger>
-            <TabsTrigger value="progress" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <TabsTrigger 
+              value="progress" 
+              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md rounded-lg py-2.5 px-4 text-sm font-semibold transition-all duration-200 hover:bg-muted/50 data-[state=inactive]:text-muted-foreground"
+            >
               Progreso de Nivel
             </TabsTrigger>
           </TabsList>

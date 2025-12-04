@@ -250,75 +250,76 @@ export function UserManagement({ onBack }: UserManagementProps) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 px-3 sm:px-0">
       {/* Header */}
-      <div className="mb-6">
-        <Button variant="ghost" onClick={onBack || (() => navigate('/dashboard'))} className="gap-2 mb-4">
-          <ArrowLeft size={18} />
-          Volver al Dashboard
+      <div className="mb-4 sm:mb-6">
+        <Button variant="ghost" onClick={onBack || (() => navigate('/dashboard'))} className="gap-2 mb-3 sm:mb-4 touch-target">
+          <ArrowLeft size={16} className="sm:w-[18px] sm:h-[18px]" />
+          <span className="hidden sm:inline">Volver al Dashboard</span>
+          <span className="sm:hidden">Volver</span>
         </Button>
       </div>
 
-      <div className="space-y-2 mb-6">
-        <h2 className="text-3xl font-bold">Gestión de Usuarios</h2>
-        <p className="text-muted-foreground">
+      <div className="space-y-1 sm:space-y-2 mb-4 sm:mb-6">
+        <h2 className="text-2xl sm:text-3xl font-bold">Gestión de Usuarios</h2>
+        <p className="text-xs sm:text-base text-muted-foreground">
           {stats.total} usuarios · {stats.active} activos · {stats.pending} pendientes
         </p>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-3 sm:gap-4 grid-cols-2 md:grid-cols-4">
         <Card className="bg-blue-50/50 dark:bg-blue-950/20 border-blue-100 dark:border-blue-900">
-          <CardContent className="pt-6">
+          <CardContent className="pt-4 sm:pt-6 p-4 sm:p-6">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Total</p>
-                <p className="text-2xl font-bold mt-1">{stats.total}</p>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs sm:text-sm font-medium text-muted-foreground">Total</p>
+                <p className="text-xl sm:text-2xl font-bold mt-1">{stats.total}</p>
               </div>
-              <div className="h-12 w-12 rounded-lg bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center">
-                <UsersIcon className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+              <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-lg bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center flex-shrink-0">
+                <UsersIcon className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 dark:text-blue-400" />
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card className="bg-green-50/50 dark:bg-green-950/20 border-green-100 dark:border-green-900">
-          <CardContent className="pt-6">
+          <CardContent className="pt-4 sm:pt-6 p-4 sm:p-6">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Estudiantes</p>
-                <p className="text-2xl font-bold mt-1">{stats.students}</p>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs sm:text-sm font-medium text-muted-foreground">Estudiantes</p>
+                <p className="text-xl sm:text-2xl font-bold mt-1">{stats.students}</p>
               </div>
-              <div className="h-12 w-12 rounded-lg bg-green-100 dark:bg-green-900/50 flex items-center justify-center">
-                <UsersIcon className="h-6 w-6 text-green-600 dark:text-green-400" />
+              <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-lg bg-green-100 dark:bg-green-900/50 flex items-center justify-center flex-shrink-0">
+                <UsersIcon className="h-5 w-5 sm:h-6 sm:w-6 text-green-600 dark:text-green-400" />
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card className="bg-purple-50/50 dark:bg-purple-950/20 border-purple-100 dark:border-purple-900">
-          <CardContent className="pt-6">
+          <CardContent className="pt-4 sm:pt-6 p-4 sm:p-6">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Instructores</p>
-                <p className="text-2xl font-bold mt-1">{stats.instructors}</p>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs sm:text-sm font-medium text-muted-foreground">Instructores</p>
+                <p className="text-xl sm:text-2xl font-bold mt-1">{stats.instructors}</p>
               </div>
-              <div className="h-12 w-12 rounded-lg bg-purple-100 dark:bg-purple-900/50 flex items-center justify-center">
-                <UserPlus className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+              <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-lg bg-purple-100 dark:bg-purple-900/50 flex items-center justify-center flex-shrink-0">
+                <UserPlus className="h-5 w-5 sm:h-6 sm:w-6 text-purple-600 dark:text-purple-400" />
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card className="bg-orange-50/50 dark:bg-orange-950/20 border-orange-100 dark:border-orange-900">
-          <CardContent className="pt-6">
+          <CardContent className="pt-4 sm:pt-6 p-4 sm:p-6">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Admins</p>
-                <p className="text-2xl font-bold mt-1">{stats.admins}</p>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs sm:text-sm font-medium text-muted-foreground">Admins</p>
+                <p className="text-xl sm:text-2xl font-bold mt-1">{stats.admins}</p>
               </div>
-              <div className="h-12 w-12 rounded-lg bg-orange-100 dark:bg-orange-900/50 flex items-center justify-center">
-                <UsersIcon className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+              <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-lg bg-orange-100 dark:bg-orange-900/50 flex items-center justify-center flex-shrink-0">
+                <UsersIcon className="h-5 w-5 sm:h-6 sm:w-6 text-orange-600 dark:text-orange-400" />
               </div>
             </div>
           </CardContent>
@@ -327,33 +328,36 @@ export function UserManagement({ onBack }: UserManagementProps) {
 
       {/* Actions and Filters */}
       <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>Lista de Usuarios</CardTitle>
-              <CardDescription>Gestiona usuarios, invita nuevos miembros y actualiza permisos</CardDescription>
+        <CardHeader className="p-4 sm:p-6 pb-3 sm:pb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+            <div className="min-w-0 flex-1">
+              <CardTitle className="text-base sm:text-xl">Lista de Usuarios</CardTitle>
+              <CardDescription className="text-xs sm:text-sm mt-1">
+                Gestiona usuarios, invita nuevos miembros y actualiza permisos
+              </CardDescription>
             </div>
-            <Button onClick={() => setIsInviteModalOpen(true)}>
-              <UserPlus className="mr-2" size={18} />
-              Invitar Usuario
+            <Button onClick={() => setIsInviteModalOpen(true)} className="w-full sm:w-auto touch-target text-xs sm:text-sm">
+              <UserPlus className="mr-1.5 sm:mr-2" size={16} className="sm:w-[18px] sm:h-[18px]" />
+              <span className="hidden sm:inline">Invitar Usuario</span>
+              <span className="sm:hidden">Invitar</span>
             </Button>
           </div>
 
           {/* Search and Filters */}
-          <div className="flex gap-4 mt-4">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 mt-3 sm:mt-4">
             <div className="flex-1 relative">
-              <MagnifyingGlass className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={16} />
+              <MagnifyingGlass className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={14} className="sm:w-4 sm:h-4" />
               <Input
                 placeholder="Buscar por nombre o email..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
+                className="pl-9 sm:pl-10 h-11 sm:h-12 text-sm sm:text-base touch-target"
               />
             </div>
 
             <Select value={roleFilter} onValueChange={setRoleFilter}>
-              <SelectTrigger className="w-[180px]">
-                <FunnelSimple className="mr-2" size={16} />
+              <SelectTrigger className="w-full sm:w-[180px] h-11 sm:h-12 text-sm sm:text-base touch-target">
+                <FunnelSimple className="mr-2" size={14} className="sm:w-4 sm:h-4" />
                 <SelectValue placeholder="Rol" />
               </SelectTrigger>
               <SelectContent>
@@ -367,7 +371,7 @@ export function UserManagement({ onBack }: UserManagementProps) {
             </Select>
 
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-full sm:w-[180px] h-11 sm:h-12 text-sm sm:text-base touch-target">
                 <SelectValue placeholder="Estado" />
               </SelectTrigger>
               <SelectContent>
@@ -380,43 +384,45 @@ export function UserManagement({ onBack }: UserManagementProps) {
           </div>
         </CardHeader>
 
-        <CardContent>
+        <CardContent className="p-4 sm:p-6 pt-0">
           {filteredUsers.length === 0 ? (
-            <div className="text-center py-12">
-              <UsersIcon size={48} className="mx-auto text-muted-foreground mb-4" />
-              <p className="text-muted-foreground mb-4">
+            <div className="text-center py-8 sm:py-12">
+              <UsersIcon size={36} className="sm:w-12 sm:h-12 mx-auto text-muted-foreground mb-3 sm:mb-4" />
+              <p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4">
                 {users.length === 0 ? 'No hay usuarios aún' : 'No se encontraron usuarios'}
               </p>
               {users.length === 0 && (
-                <Button onClick={() => setIsInviteModalOpen(true)}>
-                  <UserPlus className="mr-2" size={18} />
+                <Button onClick={() => setIsInviteModalOpen(true)} className="touch-target text-xs sm:text-sm">
+                  <UserPlus className="mr-1.5 sm:mr-2" size={16} className="sm:w-[18px] sm:h-[18px]" />
                   Invitar Primer Usuario
                 </Button>
               )}
             </div>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-2 sm:space-y-3">
               {filteredUsers.map((user) => (
                 <div
                   key={user.id}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 p-3 sm:p-4 border rounded-lg hover:bg-muted/50 transition-colors"
                 >
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-1">
-                      <h4 className="font-semibold">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-1">
+                      <h4 className="text-sm sm:text-base font-semibold truncate">
                         {user.firstName || ''} {user.lastName || ''}
                       </h4>
-                      <Badge className={getRoleBadgeColor(user.role)}>
+                      <Badge className={`${getRoleBadgeColor(user.role)} text-[10px] sm:text-xs`}>
                         {getRoleLabel(user.role)}
                       </Badge>
-                      {getStatusBadge(user.status || 'inactive')}
+                      <div className="text-[10px] sm:text-xs">
+                        {getStatusBadge(user.status || 'inactive')}
+                      </div>
                     </div>
-                    <p className="text-sm text-muted-foreground">{user.email}</p>
-                    <div className="flex items-center gap-4 text-xs text-muted-foreground mt-2">
+                    <p className="text-xs sm:text-sm text-muted-foreground truncate">{user.email}</p>
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-[10px] sm:text-xs text-muted-foreground mt-1.5 sm:mt-2">
                       <span>XP: {user.totalXP || 0}</span>
                       <span>Nivel: {user.level || 1}</span>
                       {user.lastLoginAt && (
-                        <span>Último acceso: {new Date(user.lastLoginAt).toLocaleDateString()}</span>
+                        <span className="truncate">Último acceso: {new Date(user.lastLoginAt).toLocaleDateString()}</span>
                       )}
                       {user.status === 'pending' && (
                         <span className="text-yellow-600">⏳ Invitación pendiente</span>
@@ -424,21 +430,23 @@ export function UserManagement({ onBack }: UserManagementProps) {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-shrink-0">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => openEditModal(user)}
+                      className="touch-target"
                     >
-                      <Pencil size={16} />
+                      <Pencil size={14} className="sm:w-4 sm:h-4" />
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handleDeleteUser(user)}
                       disabled={user.id === currentUser?.id}
+                      className="touch-target"
                     >
-                      <Trash size={16} />
+                      <Trash size={14} className="sm:w-4 sm:h-4" />
                     </Button>
                   </div>
                 </div>
@@ -450,55 +458,58 @@ export function UserManagement({ onBack }: UserManagementProps) {
 
       {/* Invite User Modal */}
       <Dialog open={isInviteModalOpen} onOpenChange={setIsInviteModalOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Invitar Nuevo Usuario</DialogTitle>
-            <DialogDescription>
+        <DialogContent className="max-w-[95vw] sm:max-w-md">
+          <DialogHeader className="p-4 sm:p-6 pb-3 sm:pb-4">
+            <DialogTitle className="text-base sm:text-lg">Invitar Nuevo Usuario</DialogTitle>
+            <DialogDescription className="text-xs sm:text-sm">
               El usuario recibirá un email con un enlace para activar su cuenta
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 py-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="firstName">Nombre *</Label>
+          <div className="space-y-3 sm:space-y-4 py-2 sm:py-4 px-4 sm:px-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+              <div className="space-y-1.5 sm:space-y-2">
+                <Label htmlFor="firstName" className="text-xs sm:text-sm">Nombre *</Label>
                 <Input
                   id="firstName"
                   placeholder="Juan"
                   value={inviteForm.firstName}
                   onChange={(e) => setInviteForm({ ...inviteForm, firstName: e.target.value })}
+                  className="h-11 sm:h-12 text-sm sm:text-base touch-target"
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="lastName">Apellido *</Label>
+              <div className="space-y-1.5 sm:space-y-2">
+                <Label htmlFor="lastName" className="text-xs sm:text-sm">Apellido *</Label>
                 <Input
                   id="lastName"
                   placeholder="Pérez"
                   value={inviteForm.lastName}
                   onChange={(e) => setInviteForm({ ...inviteForm, lastName: e.target.value })}
+                  className="h-11 sm:h-12 text-sm sm:text-base touch-target"
                 />
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="email">Email *</Label>
+            <div className="space-y-1.5 sm:space-y-2">
+              <Label htmlFor="email" className="text-xs sm:text-sm">Email *</Label>
               <Input
                 id="email"
                 type="email"
                 placeholder="juan.perez@example.com"
                 value={inviteForm.email}
                 onChange={(e) => setInviteForm({ ...inviteForm, email: e.target.value })}
+                className="h-11 sm:h-12 text-sm sm:text-base touch-target"
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="role">Rol</Label>
+            <div className="space-y-1.5 sm:space-y-2">
+              <Label htmlFor="role" className="text-xs sm:text-sm">Rol</Label>
               <Select
                 value={inviteForm.role}
                 onValueChange={(value) => setInviteForm({ ...inviteForm, role: value })}
               >
-                <SelectTrigger id="role">
+                <SelectTrigger id="role" className="h-11 sm:h-12 text-sm sm:text-base touch-target">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -512,12 +523,12 @@ export function UserManagement({ onBack }: UserManagementProps) {
             </div>
           </div>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsInviteModalOpen(false)}>
+          <DialogFooter className="p-4 sm:p-6 pt-0 flex-col sm:flex-row gap-2 sm:gap-4">
+            <Button variant="outline" onClick={() => setIsInviteModalOpen(false)} className="w-full sm:w-auto touch-target text-xs sm:text-sm">
               Cancelar
             </Button>
-            <Button onClick={handleInviteUser}>
-              <EnvelopeSimple className="mr-2" size={16} />
+            <Button onClick={handleInviteUser} className="w-full sm:w-auto touch-target text-xs sm:text-sm">
+              <EnvelopeSimple className="mr-1.5 sm:mr-2" size={14} className="sm:w-4 sm:h-4" />
               Enviar Invitación
             </Button>
           </DialogFooter>
@@ -526,42 +537,44 @@ export function UserManagement({ onBack }: UserManagementProps) {
 
       {/* Edit User Modal */}
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Editar Usuario</DialogTitle>
-            <DialogDescription>
+        <DialogContent className="max-w-[95vw] sm:max-w-md">
+          <DialogHeader className="p-4 sm:p-6 pb-3 sm:pb-4">
+            <DialogTitle className="text-base sm:text-lg">Editar Usuario</DialogTitle>
+            <DialogDescription className="text-xs sm:text-sm">
               Actualizar información y permisos del usuario
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 py-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="editFirstName">Nombre</Label>
+          <div className="space-y-3 sm:space-y-4 py-2 sm:py-4 px-4 sm:px-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+              <div className="space-y-1.5 sm:space-y-2">
+                <Label htmlFor="editFirstName" className="text-xs sm:text-sm">Nombre</Label>
                 <Input
                   id="editFirstName"
                   value={editForm.firstName}
                   onChange={(e) => setEditForm({ ...editForm, firstName: e.target.value })}
+                  className="h-11 sm:h-12 text-sm sm:text-base touch-target"
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="editLastName">Apellido</Label>
+              <div className="space-y-1.5 sm:space-y-2">
+                <Label htmlFor="editLastName" className="text-xs sm:text-sm">Apellido</Label>
                 <Input
                   id="editLastName"
                   value={editForm.lastName}
                   onChange={(e) => setEditForm({ ...editForm, lastName: e.target.value })}
+                  className="h-11 sm:h-12 text-sm sm:text-base touch-target"
                 />
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="editRole">Rol</Label>
+            <div className="space-y-1.5 sm:space-y-2">
+              <Label htmlFor="editRole" className="text-xs sm:text-sm">Rol</Label>
               <Select
                 value={editForm.role}
                 onValueChange={(value) => setEditForm({ ...editForm, role: value })}
               >
-                <SelectTrigger id="editRole">
+                <SelectTrigger id="editRole" className="h-11 sm:h-12 text-sm sm:text-base touch-target">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -574,13 +587,13 @@ export function UserManagement({ onBack }: UserManagementProps) {
               </Select>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="editStatus">Estado</Label>
+            <div className="space-y-1.5 sm:space-y-2">
+              <Label htmlFor="editStatus" className="text-xs sm:text-sm">Estado</Label>
               <Select
                 value={editForm.status}
                 onValueChange={(value) => setEditForm({ ...editForm, status: value as 'active' | 'inactive' })}
               >
-                <SelectTrigger id="editStatus">
+                <SelectTrigger id="editStatus" className="h-11 sm:h-12 text-sm sm:text-base touch-target">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -591,11 +604,11 @@ export function UserManagement({ onBack }: UserManagementProps) {
             </div>
           </div>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>
+          <DialogFooter className="p-4 sm:p-6 pt-0 flex-col sm:flex-row gap-2 sm:gap-4">
+            <Button variant="outline" onClick={() => setIsEditModalOpen(false)} className="w-full sm:w-auto touch-target text-xs sm:text-sm">
               Cancelar
             </Button>
-            <Button onClick={handleUpdateUser}>
+            <Button onClick={handleUpdateUser} className="w-full sm:w-auto touch-target text-xs sm:text-sm">
               Guardar Cambios
             </Button>
           </DialogFooter>

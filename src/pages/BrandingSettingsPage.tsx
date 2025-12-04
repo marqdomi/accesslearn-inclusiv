@@ -345,45 +345,47 @@ export function BrandingSettingsPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8 max-w-6xl">
+      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 max-w-6xl">
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-4 sm:mb-8">
           <Button
             variant="ghost"
             onClick={() => navigate('/admin/settings')}
-            className="mb-4 gap-2"
+            className="mb-3 sm:mb-4 gap-2 touch-target"
           >
-            <ArrowLeft size={20} />
-            Volver a Configuración
+            <ArrowLeft size={18} className="sm:w-5 sm:h-5" />
+            <span className="hidden sm:inline">Volver a Configuración</span>
+            <span className="sm:hidden">Volver</span>
           </Button>
 
           <div>
-            <h1 className="text-4xl font-bold mb-2">Marca y Apariencia</h1>
-            <p className="text-lg text-muted-foreground">
+            <h1 className="text-2xl sm:text-4xl font-bold mb-1 sm:mb-2">Marca y Apariencia</h1>
+            <p className="text-sm sm:text-lg text-muted-foreground">
               Personaliza los colores, logo y nombre de tu organización
             </p>
           </div>
         </div>
 
         {/* Branding Form */}
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {/* Company Name */}
           <Card>
-            <CardHeader>
-              <CardTitle>Nombre de la Empresa</CardTitle>
-              <CardDescription>
+            <CardHeader className="p-4 sm:p-6 pb-3 sm:pb-4">
+              <CardTitle className="text-base sm:text-xl">Nombre de la Empresa</CardTitle>
+              <CardDescription className="text-xs sm:text-sm mt-1">
                 Este nombre se mostrará en toda la plataforma
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <Label htmlFor="companyName">Nombre *</Label>
+            <CardContent className="p-4 sm:p-6 pt-0">
+              <div className="space-y-1.5 sm:space-y-2">
+                <Label htmlFor="companyName" className="text-xs sm:text-sm">Nombre *</Label>
                 <Input
                   id="companyName"
                   value={companyName}
                   onChange={(e) => setCompanyName(e.target.value)}
                   placeholder="Ingresa el nombre de tu empresa"
                   disabled={saving}
+                  className="h-11 sm:h-12 text-sm sm:text-base touch-target"
                 />
               </div>
             </CardContent>
@@ -391,35 +393,36 @@ export function BrandingSettingsPage() {
 
           {/* Logo */}
           <Card>
-            <CardHeader>
-              <CardTitle>Logo de la Empresa</CardTitle>
-              <CardDescription>
+            <CardHeader className="p-4 sm:p-6 pb-3 sm:pb-4">
+              <CardTitle className="text-base sm:text-xl">Logo de la Empresa</CardTitle>
+              <CardDescription className="text-xs sm:text-sm mt-1">
                 Sube un archivo PNG o SVG. Este logo aparecerá en el encabezado y la página de inicio de sesión.
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
+            <CardContent className="p-4 sm:p-6 pt-0">
+              <div className="space-y-3 sm:space-y-4">
                 {logoPreview ? (
-                  <div className="flex items-center gap-4 p-4 border rounded-lg bg-muted/20">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 p-3 sm:p-4 border rounded-lg bg-muted/20">
                     <img
                       src={logoPreview}
                       alt="Logo preview"
-                      className="h-24 w-24 object-contain bg-background rounded border"
+                      className="h-16 w-16 sm:h-24 sm:w-24 object-contain bg-background rounded border flex-shrink-0"
                     />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">Vista Previa del Logo</p>
-                      <p className="text-xs text-muted-foreground">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs sm:text-sm font-medium">Vista Previa del Logo</p>
+                      <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">
                         Este logo aparecerá en toda la plataforma
                       </p>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 w-full sm:w-auto">
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => fileInputRef.current?.click()}
                         disabled={saving}
+                        className="flex-1 sm:flex-initial touch-target text-xs sm:text-sm"
                       >
-                        <Upload size={16} className="mr-2" />
+                        <Upload size={14} className="sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
                         Reemplazar
                       </Button>
                       <Button
@@ -427,23 +430,24 @@ export function BrandingSettingsPage() {
                         size="sm"
                         onClick={handleRemoveLogo}
                         disabled={saving}
+                        className="flex-1 sm:flex-initial touch-target text-xs sm:text-sm"
                       >
-                        <X size={16} className="mr-2" />
+                        <X size={14} className="sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
                         Eliminar
                       </Button>
                     </div>
                   </div>
                 ) : (
-                  <div className="border-2 border-dashed rounded-lg p-8 text-center">
-                    <div className="flex flex-col items-center gap-4">
-                      <div className="rounded-full bg-muted p-4">
-                        <Upload size={32} className="text-muted-foreground" />
+                  <div className="border-2 border-dashed rounded-lg p-4 sm:p-8 text-center">
+                    <div className="flex flex-col items-center gap-3 sm:gap-4">
+                      <div className="rounded-full bg-muted p-3 sm:p-4">
+                        <Upload size={24} className="sm:w-8 sm:h-8 text-muted-foreground" />
                       </div>
                       <div>
-                        <p className="text-sm font-medium mb-1">
+                        <p className="text-xs sm:text-sm font-medium mb-1">
                           Haz clic para subir un logo
                         </p>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-[10px] sm:text-xs text-muted-foreground">
                           PNG o SVG, máximo 2MB
                         </p>
                       </div>
@@ -451,8 +455,9 @@ export function BrandingSettingsPage() {
                         variant="outline"
                         onClick={() => fileInputRef.current?.click()}
                         disabled={saving}
+                        className="touch-target text-xs sm:text-sm"
                       >
-                        <Upload size={16} className="mr-2" />
+                        <Upload size={14} className="sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
                         Seleccionar Archivo
                       </Button>
                     </div>
@@ -472,103 +477,103 @@ export function BrandingSettingsPage() {
 
           {/* Colors */}
           <Card>
-            <CardHeader>
-              <CardTitle>Colores de la Marca</CardTitle>
-              <CardDescription>
+            <CardHeader className="p-4 sm:p-6 pb-3 sm:pb-4">
+              <CardTitle className="text-base sm:text-xl">Colores de la Marca</CardTitle>
+              <CardDescription className="text-xs sm:text-sm mt-1">
                 Personaliza los colores principales de tu organización
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="p-4 sm:p-6 pt-0 space-y-4 sm:space-y-6">
               {/* Primary Color */}
-              <div className="space-y-2">
-                <Label htmlFor="primaryColor">Color Primario</Label>
-                <p className="text-sm text-muted-foreground">
+              <div className="space-y-1.5 sm:space-y-2">
+                <Label htmlFor="primaryColor" className="text-xs sm:text-sm">Color Primario</Label>
+                <p className="text-[10px] sm:text-sm text-muted-foreground">
                   Este color se usará para botones, enlaces y elementos interactivos
                 </p>
-                <div className="flex gap-4 items-center">
-                  <div className="flex-1">
+                <div className="flex gap-2 sm:gap-4 items-center">
+                  <div className="flex-1 min-w-0">
                     <Input
                       id="primaryColor"
                       type="text"
                       value={primaryColor}
                       onChange={(e) => setPrimaryColor(e.target.value)}
                       placeholder="#4F46E5"
-                      className="font-mono"
+                      className="font-mono text-xs sm:text-base h-10 sm:h-12 touch-target"
                       maxLength={7}
                       disabled={saving}
                     />
                   </div>
-                  <div className="relative">
+                  <div className="relative flex-shrink-0">
                     <Input
                       type="color"
                       value={primaryColor}
                       onChange={(e) => setPrimaryColor(e.target.value)}
-                      className="h-10 w-20 cursor-pointer p-1"
+                      className="h-10 w-14 sm:w-20 cursor-pointer p-1 touch-target"
                       disabled={saving}
                     />
                   </div>
                   <div
-                    className="h-10 w-20 rounded border"
+                    className="h-10 w-14 sm:w-20 rounded border flex-shrink-0"
                     style={{ backgroundColor: primaryColor }}
                   />
                 </div>
               </div>
 
               {/* Secondary Color */}
-              <div className="space-y-2">
-                <Label htmlFor="secondaryColor">Color Secundario</Label>
-                <p className="text-sm text-muted-foreground">
+              <div className="space-y-1.5 sm:space-y-2">
+                <Label htmlFor="secondaryColor" className="text-xs sm:text-sm">Color Secundario</Label>
+                <p className="text-[10px] sm:text-sm text-muted-foreground">
                   Color complementario para acentos y elementos secundarios
                 </p>
-                <div className="flex gap-4 items-center">
-                  <div className="flex-1">
+                <div className="flex gap-2 sm:gap-4 items-center">
+                  <div className="flex-1 min-w-0">
                     <Input
                       id="secondaryColor"
                       type="text"
                       value={secondaryColor}
                       onChange={(e) => setSecondaryColor(e.target.value)}
                       placeholder="#10B981"
-                      className="font-mono"
+                      className="font-mono text-xs sm:text-base h-10 sm:h-12 touch-target"
                       maxLength={7}
                       disabled={saving}
                     />
                   </div>
-                  <div className="relative">
+                  <div className="relative flex-shrink-0">
                     <Input
                       type="color"
                       value={secondaryColor}
                       onChange={(e) => setSecondaryColor(e.target.value)}
-                      className="h-10 w-20 cursor-pointer p-1"
+                      className="h-10 w-14 sm:w-20 cursor-pointer p-1 touch-target"
                       disabled={saving}
                     />
                   </div>
                   <div
-                    className="h-10 w-20 rounded border"
+                    className="h-10 w-14 sm:w-20 rounded border flex-shrink-0"
                     style={{ backgroundColor: secondaryColor }}
                   />
                 </div>
               </div>
 
               {/* Color Preview */}
-              <div className="border-t pt-6">
-                <Label className="mb-4 block">Vista Previa</Label>
-                <div className="space-y-3">
+              <div className="border-t pt-4 sm:pt-6">
+                <Label className="mb-3 sm:mb-4 block text-xs sm:text-sm">Vista Previa</Label>
+                <div className="space-y-2 sm:space-y-3">
                   <Button
                     style={{ backgroundColor: primaryColor }}
-                    className="w-full"
+                    className="w-full text-xs sm:text-sm touch-target"
                     disabled
                   >
                     Botón Primario
                   </Button>
                   <div className="flex gap-2">
                     <div
-                      className="flex-1 h-12 rounded border flex items-center justify-center text-sm"
+                      className="flex-1 h-10 sm:h-12 rounded border flex items-center justify-center text-[10px] sm:text-sm"
                       style={{ backgroundColor: primaryColor, color: 'white' }}
                     >
                       Elemento Primario
                     </div>
                     <div
-                      className="flex-1 h-12 rounded border flex items-center justify-center text-sm"
+                      className="flex-1 h-10 sm:h-12 rounded border flex items-center justify-center text-[10px] sm:text-sm"
                       style={{ backgroundColor: secondaryColor, color: 'white' }}
                     >
                       Elemento Secundario
@@ -580,25 +585,28 @@ export function BrandingSettingsPage() {
           </Card>
 
           {/* Actions */}
-          <div className="flex items-center justify-between pt-4">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4 pt-3 sm:pt-4">
             <Button
               variant="outline"
               onClick={handleReset}
               disabled={saving}
+              className="w-full sm:w-auto touch-target text-xs sm:text-sm"
             >
               Restablecer Valores por Defecto
             </Button>
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
               <Button
                 variant="ghost"
                 onClick={() => navigate('/admin/settings')}
                 disabled={saving}
+                className="w-full sm:w-auto touch-target text-xs sm:text-sm"
               >
                 Cancelar
               </Button>
               <Button
                 onClick={handleSave}
                 disabled={saving || !companyName.trim()}
+                className="w-full sm:w-auto touch-target text-xs sm:text-sm"
               >
                 {saving ? 'Guardando...' : 'Guardar Configuración'}
               </Button>
