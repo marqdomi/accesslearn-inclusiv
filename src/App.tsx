@@ -22,6 +22,7 @@ import { BrandingSettingsPage } from '@/pages/BrandingSettingsPage'
 import { NotificationSettingsPage } from '@/pages/NotificationSettingsPage'
 import { SecuritySettingsPage } from '@/pages/SecuritySettingsPage'
 import { DataSettingsPage } from '@/pages/DataSettingsPage'
+import { CategoryManagementPage } from '@/pages/CategoryManagementPage'
 import { AdvancedAccessibilityPanel } from '@/components/accessibility/AdvancedAccessibilityPanel'
 import { AdminAnalyticsPage } from '@/pages/AdminAnalyticsPage'
 import { ProfilePage } from '@/pages/ProfilePage'
@@ -199,6 +200,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <DataSettingsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/settings/categories"
+        element={
+          <ProtectedRoute>
+            <CategoryManagementPage />
           </ProtectedRoute>
         }
       />

@@ -9,6 +9,7 @@ import {
   Bell,
   Shield,
   Database,
+  Tag,
   ChevronRight,
   Info
 } from 'lucide-react'
@@ -60,6 +61,15 @@ export function AdminSettingsPage() {
       icon: Database,
       onClick: () => {
         navigate('/admin/settings/data')
+      }
+    },
+    {
+      id: 'categories',
+      title: 'Categorías',
+      description: 'Gestiona las categorías de cursos disponibles en tu organización',
+      icon: Tag,
+      onClick: () => {
+        navigate('/admin/settings/categories')
       }
     }
   ]

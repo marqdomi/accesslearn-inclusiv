@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { CourseStructure } from '@/lib/types'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -13,13 +14,14 @@ import {
   PencilSimple, 
   Trash, 
   Clock,
-  CheckCircle,
+  Check,
   FileText,
   Books,
   Lightning,
   CalendarBlank,
   User,
   Warning,
+  Tag,
 } from '@phosphor-icons/react'
 import { ModernCourseBuilder } from '../courses/modern-builder'
 import { ApiService } from '@/services/api.service'
@@ -33,6 +35,7 @@ interface CourseManagementProps {
 }
 
 export function CourseManagement({ onBack }: CourseManagementProps) {
+  const navigate = useNavigate()
   const { user } = useAuth()
   const [courses, setCourses] = useState<CourseStructure[]>([])
   const [loading, setLoading] = useState(true)
@@ -168,10 +171,20 @@ export function CourseManagement({ onBack }: CourseManagementProps) {
             {(courses || []).length} {(courses || []).length === 1 ? 'curso' : 'cursos'} totales
           </p>
         </div>
-        <Button onClick={() => setIsCreating(true)}>
-          <Plus className="mr-2" size={20} />
-          Crear Nuevo Curso
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            onClick={() => navigate('/admin/settings/categories')}
+            className="gap-2"
+          >
+            <Tag size={18} />
+            Gestionar Categorías
+          </Button>
+          <Button onClick={() => setIsCreating(true)}>
+            <Plus className="mr-2" size={20} />
+            Crear Nuevo Curso
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}
