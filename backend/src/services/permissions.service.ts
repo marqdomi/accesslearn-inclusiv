@@ -83,6 +83,8 @@ export type Permission =
   | 'mentorship:rate-sessions'
   
   // Settings & Configuration
+  | 'settings:read'
+  | 'settings:write'
   | 'settings:branding'
   | 'settings:notifications'
   | 'settings:integrations'
@@ -152,6 +154,8 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'gamification:manage-leaderboards',
     'mentorship:configure',
     'mentorship:view-all-sessions',
+    'settings:read',
+    'settings:write',
     'settings:branding',
     'settings:notifications',
     'settings:integrations',
@@ -210,6 +214,8 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'gamification:manage-leaderboards',
     'mentorship:configure',
     'mentorship:view-all-sessions',
+    'settings:read',
+    'settings:write',
     'settings:branding',
     'settings:notifications',
     'settings:languages',
