@@ -62,25 +62,38 @@ export function ModernCourseBuilder({ courseId, onBack }: ModernCourseBuilderPro
   
   // Load existing course if editing
   useEffect(() => {
+    let isMounted = true
+    
     const loadCourse = async () => {
       if (!courseId || !currentTenant) return
       
       try {
-        setLoading(true)
+        if (isMounted) setLoading(true)
         const backendCourse = await ApiService.getCourseById(courseId)
-        const frontendCourse = adaptBackendCourseToFrontend(backendCourse)
-        setCourse(frontendCourse)
-        // Note: When a course is loaded from backend, it's considered synced
-        // The next save will update lastSavedBackend
+        
+        if (isMounted) {
+          const frontendCourse = adaptBackendCourseToFrontend(backendCourse)
+          setCourse(frontendCourse)
+          // Note: When a course is loaded from backend, it's considered synced
+          // The next save will update lastSavedBackend
+        }
       } catch (error) {
         console.error('Error loading course:', error)
-        toast.error('Error al cargar el curso')
+        if (isMounted) {
+          toast.error('Error al cargar el curso')
+        }
       } finally {
-        setLoading(false)
+        if (isMounted) {
+          setLoading(false)
+        }
       }
     }
     
     loadCourse()
+    
+    return () => {
+      isMounted = false
+    }
   }, [courseId, currentTenant])
   
   const [currentStep, setCurrentStep] = useState(1)
@@ -153,17 +166,23 @@ export function ModernCourseBuilder({ courseId, onBack }: ModernCourseBuilderPro
   // Restore draft from localStorage only if no courseId (new course)
   // For existing courses, we load from backend
   useEffect(() => {
+    let isMounted = true
+    
     if (!courseId && !loading) {
       const draft = restoreFromLocalStorage()
       if (draft && draft.title) {
         const shouldRestore = window.confirm(
           '¿Deseas recuperar el borrador guardado localmente?'
         )
-        if (shouldRestore) {
+        if (shouldRestore && isMounted) {
           setCourse(draft)
           toast.info('Borrador restaurado')
         }
       }
+    }
+    
+    return () => {
+      isMounted = false
     }
   }, [courseId, loading])
   
@@ -329,8 +348,12 @@ export function ModernCourseBuilder({ courseId, onBack }: ModernCourseBuilderPro
       await saveToBackend() // Save first
       await ApiService.submitCourseForReview(course.id)
       clearLocalStorage()
-      toast.success('Curso enviado para revisión')
+      // Navigate immediately to prevent state updates after unmount
       navigate('/my-courses')
+      // Show toast after navigation to avoid DOM manipulation issues
+      setTimeout(() => {
+        toast.success('Curso enviado para revisión')
+      }, 100)
     } catch (error) {
       console.error('Error submitting course:', error)
       toast.error('Error al enviar el curso para revisión')
@@ -343,8 +366,12 @@ export function ModernCourseBuilder({ courseId, onBack }: ModernCourseBuilderPro
       await saveToBackend() // Save first
       await ApiService.publishCourse(course.id)
       clearLocalStorage()
-      toast.success('Curso publicado exitosamente')
+      // Navigate immediately to prevent state updates after unmount
       navigate('/my-courses')
+      // Show toast after navigation to avoid DOM manipulation issues
+      setTimeout(() => {
+        toast.success('Curso publicado exitosamente')
+      }, 100)
     } catch (error: any) {
       console.error('Error publishing course:', error)
       toast.error(error.message || 'Error al publicar el curso')
