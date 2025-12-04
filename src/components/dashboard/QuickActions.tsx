@@ -144,8 +144,8 @@ export function QuickActions({ notificationCounts = {} }: QuickActionsProps) {
       <Button
         variant="outline"
         className={cn(
-          "h-auto py-4 px-4 flex flex-col items-center gap-2 relative min-w-[120px]",
-          "hover:bg-primary/5 hover:border-primary/50 transition-all"
+          "h-auto py-4 sm:py-4 px-3 sm:px-4 flex flex-col items-center gap-2 relative min-w-[100px] sm:min-w-[120px]",
+          "hover:bg-primary/5 hover:border-primary/50 transition-all touch-target"
         )}
         onClick={action.onClick}
       >

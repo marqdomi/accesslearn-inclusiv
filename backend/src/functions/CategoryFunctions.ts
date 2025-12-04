@@ -41,32 +41,32 @@ export async function createCategory(
   userId: string
 ): Promise<Category> {
   try {
-    const container = getContainer('categories')
+  const container = getContainer('categories')
     
     // Validate input
     const normalizedName = name.trim()
     if (!normalizedName) {
       throw new Error('Category name cannot be empty')
     }
-    
-    // Check if category already exists
-    const existing = await getCategories(tenantId)
-    
-    if (existing.some(c => c.name.toLowerCase() === normalizedName.toLowerCase())) {
-      throw new Error('Category already exists')
-    }
-    
-    const now = new Date().toISOString()
-    const category: Category = {
-      id: `category-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      tenantId,
-      name: normalizedName,
-      createdBy: userId,
-      createdAt: now,
-      updatedAt: now
-    }
-    
-    const { resource } = await container.items.create<Category>(category)
+  
+  // Check if category already exists
+  const existing = await getCategories(tenantId)
+  
+  if (existing.some(c => c.name.toLowerCase() === normalizedName.toLowerCase())) {
+    throw new Error('Category already exists')
+  }
+  
+  const now = new Date().toISOString()
+  const category: Category = {
+    id: `category-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    tenantId,
+    name: normalizedName,
+    createdBy: userId,
+    createdAt: now,
+    updatedAt: now
+  }
+  
+  const { resource } = await container.items.create<Category>(category)
     
     if (!resource) {
       throw new Error('Failed to create category in database')

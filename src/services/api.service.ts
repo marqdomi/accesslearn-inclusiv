@@ -461,6 +461,230 @@ class ApiServiceClass {
     })
   }
 
+  // ============================================
+  // Accessibility Profiles API
+  // ============================================
+
+  /**
+   * Get all accessibility profiles for the tenant (admin only)
+   */
+  async getAccessibilityProfiles() {
+    return this.fetchWithAuth<Array<{
+      id: string
+      tenantId: string
+      name: string
+      description: string
+      icon?: string
+      enabled: boolean
+      isDefault: boolean
+      settings: any
+      metadata: {
+        useCase: string
+        objective: string
+        benefits: string[]
+        recommendedSettings?: string
+        targetAudience: string
+      }
+      createdBy?: string
+      createdAt: string
+      updatedAt: string
+    }>>(`/accessibility-profiles`)
+  }
+
+  /**
+   * Get only enabled accessibility profiles (for end users)
+   */
+  async getEnabledAccessibilityProfiles() {
+    return this.fetchWithAuth<Array<{
+      id: string
+      tenantId: string
+      name: string
+      description: string
+      icon?: string
+      enabled: boolean
+      isDefault: boolean
+      settings: any
+      metadata: {
+        useCase: string
+        objective: string
+        benefits: string[]
+        recommendedSettings?: string
+        targetAudience: string
+      }
+      createdBy?: string
+      createdAt: string
+      updatedAt: string
+    }>>(`/accessibility-profiles/enabled`)
+  }
+
+  /**
+   * Get a specific accessibility profile
+   */
+  async getAccessibilityProfile(profileId: string) {
+    return this.fetchWithAuth<{
+      id: string
+      tenantId: string
+      name: string
+      description: string
+      icon?: string
+      enabled: boolean
+      isDefault: boolean
+      settings: any
+      metadata: {
+        useCase: string
+        objective: string
+        benefits: string[]
+        recommendedSettings?: string
+        targetAudience: string
+      }
+      createdBy?: string
+      createdAt: string
+      updatedAt: string
+    }>(`/accessibility-profiles/${profileId}`)
+  }
+
+  /**
+   * Create a new accessibility profile
+   */
+  async createAccessibilityProfile(profile: {
+    name: string
+    description: string
+    icon?: string
+    enabled: boolean
+    settings: any
+    metadata: {
+      useCase: string
+      objective: string
+      benefits: string[]
+      recommendedSettings?: string
+      targetAudience: string
+    }
+  }) {
+    if (!profile.name || !profile.name.trim()) {
+      throw { status: 400, message: 'Profile name is required' } as ApiError
+    }
+    
+    if (!profile.description || !profile.description.trim()) {
+      throw { status: 400, message: 'Profile description is required' } as ApiError
+    }
+
+    return this.fetchWithAuth<{
+      id: string
+      tenantId: string
+      name: string
+      description: string
+      icon?: string
+      enabled: boolean
+      isDefault: boolean
+      settings: any
+      metadata: any
+      createdBy?: string
+      createdAt: string
+      updatedAt: string
+    }>(`/accessibility-profiles`, {
+      method: 'POST',
+      body: JSON.stringify(profile),
+    })
+  }
+
+  /**
+   * Update an accessibility profile
+   */
+  async updateAccessibilityProfile(
+    profileId: string,
+    updates: Partial<{
+      name: string
+      description: string
+      icon?: string
+      enabled: boolean
+      settings: any
+      metadata: {
+        useCase: string
+        objective: string
+        benefits: string[]
+        recommendedSettings?: string
+        targetAudience: string
+      }
+    }>
+  ) {
+    return this.fetchWithAuth<{
+      id: string
+      tenantId: string
+      name: string
+      description: string
+      icon?: string
+      enabled: boolean
+      isDefault: boolean
+      settings: any
+      metadata: any
+      createdBy?: string
+      createdAt: string
+      updatedAt: string
+    }>(`/accessibility-profiles/${profileId}`, {
+      method: 'PUT',
+      body: JSON.stringify(updates),
+    })
+  }
+
+  /**
+   * Delete an accessibility profile
+   */
+  async deleteAccessibilityProfile(profileId: string) {
+    return this.fetchWithAuth<void>(`/accessibility-profiles/${profileId}`, {
+      method: 'DELETE',
+    })
+  }
+
+  /**
+   * Toggle accessibility profile enabled status
+   */
+  async toggleAccessibilityProfile(profileId: string, enabled: boolean) {
+    return this.fetchWithAuth<{
+      id: string
+      tenantId: string
+      name: string
+      description: string
+      icon?: string
+      enabled: boolean
+      isDefault: boolean
+      settings: any
+      metadata: any
+      createdBy?: string
+      createdAt: string
+      updatedAt: string
+    }>(`/accessibility-profiles/${profileId}/toggle`, {
+      method: 'PATCH',
+      body: JSON.stringify({ enabled }),
+    })
+  }
+
+  /**
+   * Duplicate an accessibility profile
+   */
+  async duplicateAccessibilityProfile(profileId: string, newName: string) {
+    if (!newName || !newName.trim()) {
+      throw { status: 400, message: 'newName is required' } as ApiError
+    }
+
+    return this.fetchWithAuth<{
+      id: string
+      tenantId: string
+      name: string
+      description: string
+      icon?: string
+      enabled: boolean
+      isDefault: boolean
+      settings: any
+      metadata: any
+      createdBy?: string
+      createdAt: string
+      updatedAt: string
+    }>(`/accessibility-profiles/${profileId}/duplicate`, {
+      method: 'POST',
+      body: JSON.stringify({ newName: newName.trim() }),
+    })
+  }
+
   async submitCourseForReview(courseId: string) {
     return this.fetchWithAuth<any>(`/courses/${courseId}/submit-review`, {
       method: 'POST',

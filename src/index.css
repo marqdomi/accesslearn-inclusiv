@@ -14,30 +14,37 @@
     word-spacing: var(--word-spacing, normal);
   }
   
+  /* Apply CSS variables to body when set */
+  body[style*="font-family"] {
+    font-family: inherit;
+  }
+  
   p + p {
     margin-top: 1.5em;
   }
   
   h1, h2, h3, h4, h5, h6 {
     font-weight: 600;
+    line-height: var(--line-height, inherit);
+    letter-spacing: var(--letter-spacing, inherit);
   }
   
   h1 {
     font-size: 36px;
-    line-height: 1.2;
-    letter-spacing: -0.01em;
+    line-height: var(--line-height, 1.2);
+    letter-spacing: var(--letter-spacing, -0.01em);
     font-weight: 700;
   }
   
   h2 {
     font-size: 28px;
-    line-height: 1.3;
+    line-height: var(--line-height, 1.3);
     font-weight: 600;
   }
   
   h3 {
     font-size: 22px;
-    line-height: 1.4;
+    line-height: var(--line-height, 1.4);
     font-weight: 500;
   }
 }
@@ -281,6 +288,280 @@ select:focus-visible {
   --card: oklch(0.05 0 0);
   --card-foreground: oklch(0.85 0.15 90);
   --primary: oklch(0.85 0.15 90);
+  --border: oklch(0.85 0.15 90);
+  --input: oklch(0.85 0.15 90);
+  --muted: oklch(0.10 0 0);
+  --muted-foreground: oklch(0.80 0.15 90);
+}
+
+/* ============================================
+   LOW VISION ACCESSIBILITY PROFILE
+   ============================================ */
+
+/* Apply when low vision profile is active */
+.low-vision-profile,
+[data-low-vision="true"] {
+  /* Enhanced contrast - yellow on black scheme */
+  --background: oklch(0 0 0) !important; /* Pure black */
+  --foreground: oklch(0.90 0.18 90) !important; /* Bright yellow */
+  --card: oklch(0.05 0 0) !important; /* Very dark gray */
+  --card-foreground: oklch(0.90 0.18 90) !important; /* Bright yellow */
+  --primary: oklch(0.90 0.18 90) !important; /* Bright yellow */
+  --primary-foreground: oklch(0 0 0) !important; /* Black */
+  --secondary: oklch(0.85 0.15 195) !important; /* Bright cyan */
+  --secondary-foreground: oklch(0 0 0) !important; /* Black */
+  --accent: oklch(0.90 0.18 30) !important; /* Bright orange */
+  --accent-foreground: oklch(0 0 0) !important; /* Black */
+  --destructive: oklch(0.70 0.25 25) !important; /* Bright red */
+  --destructive-foreground: oklch(0 0 0) !important; /* Black */
+  --success: oklch(0.80 0.20 130) !important; /* Bright green */
+  --success-foreground: oklch(0 0 0) !important; /* Black */
+  --border: oklch(0.90 0.18 90) !important; /* Bright yellow */
+  --input: oklch(0.90 0.18 90) !important; /* Bright yellow */
+  --ring: oklch(0.90 0.18 90) !important; /* Bright yellow */
+  --muted: oklch(0.10 0 0) !important; /* Dark gray */
+  --muted-foreground: oklch(0.80 0.15 90) !important; /* Yellow-gray */
+  
+  /* Larger text size - 150% */
+  font-size: 1.5em !important;
+  
+  /* Enhanced line height for readability */
+  line-height: 1.8 !important;
+  
+  /* Better letter spacing */
+  letter-spacing: 0.02em !important;
+  
+  /* Strong borders for better visibility */
+  * {
+    border-color: oklch(0.90 0.18 90) !important;
+  }
+  
+  /* Headings with enhanced visibility */
+  h1, h2, h3, h4, h5, h6 {
+    color: oklch(0.95 0.20 90) !important; /* Very bright yellow */
+    font-weight: 700 !important;
+    text-shadow: 0 0 2px oklch(0.95 0.20 90) !important;
+    line-height: 1.6 !important;
+  }
+  
+  h1 {
+    font-size: 2.5em !important;
+    border-bottom: 3px solid oklch(0.90 0.18 90) !important;
+    padding-bottom: 0.5em !important;
+  }
+  
+  h2 {
+    font-size: 2em !important;
+    border-bottom: 2px solid oklch(0.90 0.18 90) !important;
+    padding-bottom: 0.4em !important;
+  }
+  
+  h3 {
+    font-size: 1.75em !important;
+  }
+  
+  /* Paragraphs with better spacing */
+  p {
+    margin-bottom: 1.5em !important;
+    line-height: 1.8 !important;
+    color: oklch(0.90 0.18 90) !important;
+  }
+  
+  /* Links with strong underline */
+  a {
+    color: oklch(0.95 0.20 90) !important;
+    text-decoration: underline !important;
+    text-decoration-thickness: 3px !important;
+    text-underline-offset: 0.3em !important;
+    font-weight: 600 !important;
+  }
+  
+  a:hover, a:focus {
+    background-color: oklch(0.90 0.18 90) !important;
+    color: oklch(0 0 0) !important;
+    outline: 3px solid oklch(0.95 0.20 90) !important;
+    outline-offset: 2px !important;
+  }
+  
+  /* Buttons with strong borders and larger size */
+  button {
+    border-width: 3px !important;
+    border-color: oklch(0.90 0.18 90) !important;
+    font-size: 1.2em !important;
+    padding: 0.875em 1.75em !important;
+    font-weight: 600 !important;
+    min-height: 56px !important; /* Larger touch target */
+    box-shadow: 0 0 8px oklch(0.90 0.18 90 / 0.5) !important;
+  }
+  
+  button:focus-visible {
+    outline: 4px solid oklch(0.95 0.20 90) !important;
+    outline-offset: 3px !important;
+    box-shadow: 0 0 12px oklch(0.95 0.20 90) !important;
+  }
+  
+  /* Inputs with strong borders */
+  input, textarea, select {
+    border-width: 3px !important;
+    border-color: oklch(0.90 0.18 90) !important;
+    background-color: oklch(0.05 0 0) !important;
+    color: oklch(0.90 0.18 90) !important;
+    font-size: 1.2em !important;
+    padding: 0.875em !important;
+    min-height: 56px !important;
+  }
+  
+  input:focus, textarea:focus, select:focus {
+    outline: 4px solid oklch(0.95 0.20 90) !important;
+    outline-offset: 2px !important;
+    box-shadow: 0 0 12px oklch(0.95 0.20 90 / 0.5) !important;
+  }
+  
+  /* Cards with strong borders */
+  .card, [class*="Card"] {
+    border-width: 3px !important;
+    border-color: oklch(0.90 0.18 90) !important;
+    background-color: oklch(0.05 0 0) !important;
+    box-shadow: 0 0 12px oklch(0.90 0.18 90 / 0.3) !important;
+    padding: 1.5em !important;
+  }
+  
+  /* Badges with strong borders */
+  [class*="Badge"], [class*="badge"] {
+    border-width: 2px !important;
+    border-color: oklch(0.90 0.18 90) !important;
+    font-weight: 600 !important;
+    font-size: 1.1em !important;
+    padding: 0.5em 1em !important;
+  }
+  
+  /* Tables with strong borders */
+  table {
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+    border: 3px solid oklch(0.90 0.18 90) !important;
+  }
+  
+  th, td {
+    border: 2px solid oklch(0.90 0.18 90) !important;
+    padding: 1em !important;
+    font-size: 1.1em !important;
+  }
+  
+  th {
+    background-color: oklch(0.10 0 0) !important;
+    color: oklch(0.95 0.20 90) !important;
+    font-weight: 700 !important;
+  }
+  
+  /* Lists with better visibility */
+  ul, ol {
+    margin-left: 2em !important;
+    margin-bottom: 1.5em !important;
+  }
+  
+  li {
+    margin-bottom: 0.75em !important;
+    line-height: 1.8 !important;
+    color: oklch(0.90 0.18 90) !important;
+  }
+  
+  li::marker {
+    color: oklch(0.95 0.20 90) !important;
+    font-weight: 700 !important;
+  }
+  
+  /* Code blocks with strong borders */
+  code, pre {
+    border: 2px solid oklch(0.90 0.18 90) !important;
+    background-color: oklch(0.05 0 0) !important;
+    color: oklch(0.90 0.18 90) !important;
+    padding: 1em !important;
+    font-size: 1.1em !important;
+  }
+  
+  /* Blockquotes with strong borders */
+  blockquote {
+    border-left: 5px solid oklch(0.90 0.18 90) !important;
+    padding-left: 1.5em !important;
+    margin: 1.5em 0 !important;
+    background-color: oklch(0.05 0 0) !important;
+    padding: 1em 1.5em !important;
+  }
+  
+  /* Progress bars with strong visibility */
+  [class*="Progress"], [role="progressbar"] {
+    border: 2px solid oklch(0.90 0.18 90) !important;
+    background-color: oklch(0.10 0 0) !important;
+    height: 24px !important;
+  }
+  
+  /* Icons with better visibility */
+  svg, [class*="Icon"] {
+    filter: drop-shadow(0 0 2px oklch(0.90 0.18 90)) !important;
+  }
+  
+  /* Focus indicators - very visible */
+  *:focus-visible {
+    outline: 4px solid oklch(0.95 0.20 90) !important;
+    outline-offset: 3px !important;
+    box-shadow: 0 0 12px oklch(0.95 0.20 90) !important;
+  }
+  
+  /* Scrollbars visible */
+  ::-webkit-scrollbar {
+    width: 16px !important;
+    height: 16px !important;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: oklch(0.05 0 0) !important;
+    border: 2px solid oklch(0.90 0.18 90) !important;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: oklch(0.90 0.18 90) !important;
+    border: 2px solid oklch(0 0 0) !important;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background: oklch(0.95 0.20 90) !important;
+  }
+  
+  /* Images with borders for better visibility */
+  img {
+    border: 2px solid oklch(0.90 0.18 90) !important;
+    box-shadow: 0 0 8px oklch(0.90 0.18 90 / 0.5) !important;
+  }
+  
+  /* Videos with borders */
+  video, iframe {
+    border: 3px solid oklch(0.90 0.18 90) !important;
+    box-shadow: 0 0 12px oklch(0.90 0.18 90 / 0.5) !important;
+  }
+  
+  /* Modals and dialogs with strong borders */
+  [role="dialog"], [class*="Dialog"], [class*="Modal"] {
+    border: 4px solid oklch(0.90 0.18 90) !important;
+    box-shadow: 0 0 20px oklch(0.90 0.18 90 / 0.6) !important;
+    background-color: oklch(0 0 0) !important;
+  }
+  
+  /* Tooltips with strong visibility */
+  [role="tooltip"], [class*="Tooltip"] {
+    background-color: oklch(0.90 0.18 90) !important;
+    color: oklch(0 0 0) !important;
+    border: 2px solid oklch(0 0 0) !important;
+    font-size: 1.1em !important;
+    font-weight: 600 !important;
+    padding: 0.75em 1em !important;
+  }
+}
+
+/* Ensure body inherits low vision styles when active */
+body.low-vision-profile {
+  background-color: oklch(0 0 0) !important;
+  color: oklch(0.90 0.18 90) !important;
 }
 
 /* Color Blindness Filters */
@@ -294,6 +575,559 @@ select:focus-visible {
 
 .colorblind-tritanopia {
   filter: url('#tritanopia-filter');
+}
+
+/* ============================================
+   COLOR BLINDNESS ACCESSIBILITY PROFILE
+   ============================================ */
+
+/* Apply when color blindness profile is active */
+.colorblind-profile,
+[data-colorblind="true"] {
+  /* Enhanced contrast for better visibility */
+  --background: oklch(0.98 0 0) !important; /* Light background */
+  --foreground: oklch(0.15 0 0) !important; /* Dark text */
+  --card: oklch(1 0 0) !important; /* White cards */
+  --card-foreground: oklch(0.15 0 0) !important; /* Dark text */
+  --border: oklch(0.70 0 0) !important; /* Medium gray borders */
+  
+  /* Ensure all states have visual indicators beyond color */
+  
+  /* Success state - Green with checkmark pattern */
+  --success: oklch(0.60 0.20 130) !important; /* Green */
+  --success-foreground: oklch(1 0 0) !important; /* White */
+  
+  /* Error/Destructive state - Red with X pattern */
+  --destructive: oklch(0.50 0.25 25) !important; /* Red */
+  --destructive-foreground: oklch(1 0 0) !important; /* White */
+  
+  /* Warning state - Orange/Yellow with exclamation pattern */
+  --warning: oklch(0.75 0.20 60) !important; /* Orange */
+  --warning-foreground: oklch(0.15 0 0) !important; /* Dark text */
+  
+  /* Info state - Blue with info icon pattern */
+  --info: oklch(0.60 0.20 240) !important; /* Blue */
+  --info-foreground: oklch(1 0 0) !important; /* White */
+  
+  /* Primary - Use distinct color that works with filters */
+  --primary: oklch(0.50 0.20 280) !important; /* Purple */
+  --primary-foreground: oklch(1 0 0) !important; /* White */
+  
+  /* Secondary - Use distinct color */
+  --secondary: oklch(0.60 0.15 195) !important; /* Cyan */
+  --secondary-foreground: oklch(0.15 0 0) !important; /* Dark text */
+  
+  /* Strong borders for all interactive elements */
+  * {
+    border-color: oklch(0.70 0 0) !important;
+  }
+  
+  /* Success indicators - always show icon/text */
+  [class*="success"], [class*="Success"], 
+  .bg-success, .text-success,
+  [data-state="success"] {
+    position: relative !important;
+    border-left: 4px solid oklch(0.60 0.20 130) !important;
+  }
+  
+  [class*="success"]::before,
+  [class*="Success"]::before,
+  [data-state="success"]::before {
+    content: "✓ " !important;
+    font-weight: 700 !important;
+    margin-right: 0.5em !important;
+  }
+  
+  /* Error indicators - always show icon/text */
+  [class*="error"], [class*="Error"], [class*="destructive"], [class*="Destructive"],
+  .bg-destructive, .text-destructive,
+  [data-state="error"], [data-state="destructive"] {
+    position: relative !important;
+    border-left: 4px solid oklch(0.50 0.25 25) !important;
+  }
+  
+  [class*="error"]::before,
+  [class*="Error"]::before,
+  [class*="destructive"]::before,
+  [class*="Destructive"]::before,
+  [data-state="error"]::before,
+  [data-state="destructive"]::before {
+    content: "✗ " !important;
+    font-weight: 700 !important;
+    margin-right: 0.5em !important;
+  }
+  
+  /* Warning indicators - always show icon/text */
+  [class*="warning"], [class*="Warning"],
+  .bg-warning, .text-warning,
+  [data-state="warning"] {
+    position: relative !important;
+    border-left: 4px solid oklch(0.75 0.20 60) !important;
+  }
+  
+  [class*="warning"]::before,
+  [class*="Warning"]::before,
+  [data-state="warning"]::before {
+    content: "⚠ " !important;
+    font-weight: 700 !important;
+    margin-right: 0.5em !important;
+  }
+  
+  /* Info indicators - always show icon/text */
+  [class*="info"], [class*="Info"],
+  .bg-info, .text-info,
+  [data-state="info"] {
+    position: relative !important;
+    border-left: 4px solid oklch(0.60 0.20 240) !important;
+  }
+  
+  [class*="info"]::before,
+  [class*="Info"]::before,
+  [data-state="info"]::before {
+    content: "ℹ " !important;
+    font-weight: 700 !important;
+    margin-right: 0.5em !important;
+  }
+  
+  /* Buttons with patterns/text labels */
+  button[class*="success"], button[class*="Success"],
+  button.bg-success {
+    border: 2px solid oklch(0.60 0.20 130) !important;
+    position: relative !important;
+  }
+  
+  button[class*="destructive"], button[class*="Destructive"],
+  button.bg-destructive {
+    border: 2px solid oklch(0.50 0.25 25) !important;
+    position: relative !important;
+  }
+  
+  button[class*="warning"], button[class*="Warning"],
+  button.bg-warning {
+    border: 2px solid oklch(0.75 0.20 60) !important;
+    position: relative !important;
+  }
+  
+  /* Badges with patterns */
+  [class*="Badge"][class*="success"],
+  [class*="badge"][class*="success"] {
+    border: 2px solid oklch(0.60 0.20 130) !important;
+    background-image: repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 4px,
+      oklch(0.60 0.20 130 / 0.1) 4px,
+      oklch(0.60 0.20 130 / 0.1) 8px
+    ) !important;
+  }
+  
+  [class*="Badge"][class*="destructive"],
+  [class*="badge"][class*="destructive"] {
+    border: 2px solid oklch(0.50 0.25 25) !important;
+    background-image: repeating-linear-gradient(
+      135deg,
+      transparent,
+      transparent 4px,
+      oklch(0.50 0.25 25 / 0.1) 4px,
+      oklch(0.50 0.25 25 / 0.1) 8px
+    ) !important;
+  }
+  
+  [class*="Badge"][class*="warning"],
+  [class*="badge"][class*="warning"] {
+    border: 2px solid oklch(0.75 0.20 60) !important;
+    background-image: repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 4px,
+      oklch(0.75 0.20 60 / 0.1) 4px,
+      oklch(0.75 0.20 60 / 0.1) 8px
+    ) !important;
+  }
+  
+  /* Progress bars with patterns */
+  [class*="Progress"][value] {
+    background-image: repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 8px,
+      rgba(0, 0, 0, 0.05) 8px,
+      rgba(0, 0, 0, 0.05) 16px
+    ) !important;
+    border: 2px solid oklch(0.70 0 0) !important;
+  }
+  
+  /* Links with underlines always visible */
+  a {
+    text-decoration: underline !important;
+    text-decoration-thickness: 2px !important;
+    text-underline-offset: 0.2em !important;
+  }
+  
+  /* Form validation with icons */
+  input:invalid, textarea:invalid, select:invalid {
+    border-left: 4px solid oklch(0.50 0.25 25) !important;
+    position: relative !important;
+  }
+  
+  input:valid, textarea:valid, select:valid {
+    border-left: 4px solid oklch(0.60 0.20 130) !important;
+  }
+  
+  /* Charts and graphs - ensure patterns/text labels */
+  [class*="Chart"], [class*="chart"],
+  svg[class*="chart"], canvas[class*="chart"] {
+    /* Add pattern overlays if needed */
+  }
+  
+  /* Status indicators in tables */
+  td[data-status="active"],
+  td[data-status="success"] {
+    border-left: 4px solid oklch(0.60 0.20 130) !important;
+  }
+  
+  td[data-status="inactive"],
+  td[data-status="error"] {
+    border-left: 4px solid oklch(0.50 0.25 25) !important;
+  }
+  
+  td[data-status="pending"],
+  td[data-status="warning"] {
+    border-left: 4px solid oklch(0.75 0.20 60) !important;
+  }
+  
+  /* Ensure all text is readable */
+  * {
+    color: oklch(0.15 0 0) !important;
+  }
+  
+  /* Maintain contrast for backgrounds */
+  [class*="bg-"] {
+    border: 1px solid oklch(0.70 0 0) !important;
+  }
+}
+
+/* Ensure body inherits colorblind styles when active */
+body.colorblind-profile {
+  background-color: oklch(0.98 0 0) !important;
+  color: oklch(0.15 0 0) !important;
+}
+
+/* ============================================
+   HEARING ACCESSIBILITY PROFILE
+   ============================================ */
+
+/* Apply when hearing profile is active */
+.hearing-profile,
+[data-hearing="true"] {
+  /* Enhanced visual indicators for audio events */
+  
+  /* Captions styling - large and visible */
+  ::cue {
+    font-size: 2em !important; /* x-large */
+    line-height: 1.6 !important;
+    background-color: rgba(0, 0, 0, 0.9) !important;
+    color: rgba(255, 255, 255, 1) !important;
+    padding: 0.5em 1em !important;
+    border: 3px solid rgba(255, 255, 255, 0.8) !important;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8) !important;
+    white-space: pre-wrap !important;
+    max-width: 90% !important;
+    margin: 0 auto !important;
+  }
+  
+  /* Video and audio players with enhanced visual controls */
+  video, audio {
+    border: 3px solid oklch(0.55 0.20 290) !important;
+    box-shadow: 0 0 12px oklch(0.55 0.20 290 / 0.5) !important;
+  }
+  
+  /* Visual play/pause indicators */
+  video::before, audio::before {
+    content: "" !important;
+    position: absolute !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    width: 80px !important;
+    height: 80px !important;
+    background-color: rgba(0, 0, 0, 0.8) !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    z-index: 10 !important;
+    pointer-events: none !important;
+    opacity: 0 !important;
+    transition: opacity 0.3s !important;
+  }
+  
+  video[data-playing="false"]::before {
+    content: "▶" !important;
+    opacity: 1 !important;
+    font-size: 2em !important;
+    color: white !important;
+  }
+  
+  video[data-playing="true"]::before {
+    content: "⏸" !important;
+    opacity: 0 !important;
+  }
+  
+  /* Enhanced control buttons */
+  video::-webkit-media-controls-play-button,
+  audio::-webkit-media-controls-play-button {
+    width: 48px !important;
+    height: 48px !important;
+    background-color: oklch(0.55 0.20 290) !important;
+    border-radius: 50% !important;
+    border: 3px solid white !important;
+  }
+  
+  video::-webkit-media-controls-pause-button,
+  audio::-webkit-media-controls-pause-button {
+    width: 48px !important;
+    height: 48px !important;
+    background-color: oklch(0.55 0.20 290) !important;
+    border-radius: 50% !important;
+    border: 3px solid white !important;
+  }
+  
+  /* Volume controls with visual indicator */
+  video::-webkit-media-controls-volume-slider,
+  audio::-webkit-media-controls-volume-slider {
+    width: 100px !important;
+    height: 8px !important;
+    background-color: rgba(255, 255, 255, 0.3) !important;
+    border-radius: 4px !important;
+  }
+  
+  video::-webkit-media-controls-mute-button,
+  audio::-webkit-media-controls-mute-button {
+    width: 40px !important;
+    height: 40px !important;
+    border: 2px solid white !important;
+    border-radius: 4px !important;
+  }
+  
+  /* Progress bar with visual indicators */
+  video::-webkit-media-controls-timeline,
+  audio::-webkit-media-controls-timeline {
+    height: 8px !important;
+    background-color: rgba(255, 255, 255, 0.3) !important;
+    border-radius: 4px !important;
+  }
+  
+  video::-webkit-media-controls-current-time-display,
+  audio::-webkit-media-controls-current-time-display,
+  video::-webkit-media-controls-time-remaining-display,
+  audio::-webkit-media-controls-time-remaining-display {
+    font-size: 1.2em !important;
+    font-weight: 600 !important;
+    color: white !important;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8) !important;
+  }
+  
+  /* Visual notifications for audio events */
+  [data-audio-event] {
+    position: relative !important;
+  }
+  
+  [data-audio-event]::after {
+    content: "🔊" !important;
+    position: absolute !important;
+    top: -10px !important;
+    right: -10px !important;
+    width: 32px !important;
+    height: 32px !important;
+    background-color: oklch(0.55 0.20 290) !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 1.2em !important;
+    border: 2px solid white !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+    animation: pulse-audio 2s infinite !important;
+  }
+  
+  @keyframes pulse-audio {
+    0%, 100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+    50% {
+      transform: scale(1.2);
+      opacity: 0.8;
+    }
+  }
+  
+  /* Audio description indicators */
+  [data-audio-description] {
+    border-left: 4px solid oklch(0.65 0.15 195) !important;
+    padding-left: 1em !important;
+    position: relative !important;
+  }
+  
+  [data-audio-description]::before {
+    content: "📢 Descripción de Audio" !important;
+    display: block !important;
+    font-weight: 600 !important;
+    color: oklch(0.65 0.15 195) !important;
+    margin-bottom: 0.5em !important;
+    font-size: 1.1em !important;
+  }
+  
+  /* Transcript always visible and prominent */
+  [class*="transcript"], [class*="Transcript"],
+  [data-transcript] {
+    background-color: oklch(0.98 0 0) !important;
+    border: 3px solid oklch(0.55 0.20 290) !important;
+    padding: 1.5em !important;
+    border-radius: 8px !important;
+    margin-top: 1em !important;
+    font-size: 1.2em !important;
+    line-height: 1.8 !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+  }
+  
+  [class*="transcript"]::before,
+  [class*="Transcript"]::before,
+  [data-transcript]::before {
+    content: "📝 Transcripción" !important;
+    display: block !important;
+    font-weight: 700 !important;
+    color: oklch(0.55 0.20 290) !important;
+    margin-bottom: 0.75em !important;
+    font-size: 1.3em !important;
+    border-bottom: 2px solid oklch(0.55 0.20 290) !important;
+    padding-bottom: 0.5em !important;
+  }
+  
+  /* Audio message blocks with visual indicators */
+  [class*="AudioMessage"], [class*="audio-message"] {
+    border-left: 6px solid oklch(0.65 0.15 195) !important;
+    position: relative !important;
+  }
+  
+  [class*="AudioMessage"]::before,
+  [class*="audio-message"]::before {
+    content: "🔊 Mensaje de Audio" !important;
+    display: block !important;
+    font-weight: 700 !important;
+    color: oklch(0.65 0.15 195) !important;
+    margin-bottom: 1em !important;
+    font-size: 1.3em !important;
+  }
+  
+  /* Disable sound effects visually */
+  [data-sound-effect] {
+    opacity: 0.5 !important;
+    position: relative !important;
+  }
+  
+  [data-sound-effect]::after {
+    content: "🔇 Efecto de sonido desactivado" !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    background-color: rgba(255, 255, 255, 0.9) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-weight: 600 !important;
+    color: oklch(0.50 0.20 280) !important;
+    border: 2px dashed oklch(0.50 0.20 280) !important;
+    border-radius: 4px !important;
+    pointer-events: none !important;
+  }
+  
+  /* Visual feedback for audio playback state */
+  [data-audio-playing="true"] {
+    border: 3px solid oklch(0.75 0.20 130) !important;
+    box-shadow: 0 0 16px oklch(0.75 0.20 130 / 0.5) !important;
+  }
+  
+  [data-audio-playing="false"] {
+    border: 3px solid oklch(0.70 0 0) !important;
+  }
+  
+  /* Notification badges for audio-related content */
+  [data-has-audio="true"]::after {
+    content: "🔊" !important;
+    position: absolute !important;
+    top: 8px !important;
+    right: 8px !important;
+    width: 32px !important;
+    height: 32px !important;
+    background-color: oklch(0.55 0.20 290) !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 1.2em !important;
+    border: 2px solid white !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+    z-index: 10 !important;
+  }
+  
+  /* Enhanced focus indicators for audio controls */
+  button[aria-label*="play"],
+  button[aria-label*="Play"],
+  button[aria-label*="pause"],
+  button[aria-label*="Pause"],
+  button[aria-label*="audio"],
+  button[aria-label*="Audio"] {
+    outline: 4px solid oklch(0.55 0.20 290) !important;
+    outline-offset: 4px !important;
+    box-shadow: 0 0 12px oklch(0.55 0.20 290 / 0.6) !important;
+  }
+  
+  /* Visual waveform indicators for audio */
+  [data-waveform] {
+    background: repeating-linear-gradient(
+      90deg,
+      oklch(0.55 0.20 290),
+      oklch(0.55 0.20 290) 2px,
+      transparent 2px,
+      transparent 4px
+    ) !important;
+    height: 40px !important;
+    border: 2px solid oklch(0.55 0.20 290) !important;
+    border-radius: 4px !important;
+  }
+  
+  /* Subtitles toggle button - always visible and prominent */
+  button[aria-label*="caption"],
+  button[aria-label*="Caption"],
+  button[aria-label*="subtitle"],
+  button[aria-label*="Subtitle"] {
+    background-color: oklch(0.55 0.20 290) !important;
+    color: white !important;
+    border: 3px solid white !important;
+    font-weight: 700 !important;
+    font-size: 1.1em !important;
+    padding: 0.75em 1.5em !important;
+    min-height: 56px !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+  }
+  
+  button[aria-label*="caption"]:hover,
+  button[aria-label*="Caption"]:hover,
+  button[aria-label*="subtitle"]:hover,
+  button[aria-label*="Subtitle"]:hover {
+    background-color: oklch(0.60 0.22 290) !important;
+    transform: scale(1.05) !important;
+  }
+}
+
+/* Ensure body inherits hearing styles when active */
+body.hearing-profile {
+  /* Subtitles are handled by ::cue pseudo-element */
 }
 
 /* Invert Colors */
@@ -317,6 +1151,323 @@ select:focus-visible {
   width: 100%;
 }
 
+/* ============================================
+   MOTOR ACCESSIBILITY PROFILE
+   ============================================ */
+
+/* Apply when motor profile is active */
+.motor-profile,
+[data-motor="true"] {
+  /* Simplified navigation - hide complex navigation */
+  .sidebar, nav[class*="Sidebar"], [class*="Sidebar"] {
+    display: none !important;
+  }
+  
+  main, [role="main"] {
+    margin-left: 0 !important;
+    width: 100% !important;
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+  
+  /* Larger touch targets - minimum 56px (WCAG AAA) */
+  button, a[role="button"], 
+  input[type="button"], input[type="submit"],
+  [role="button"], [role="link"] {
+    min-height: 56px !important;
+    min-width: 56px !important;
+    padding: 0.875em 1.75em !important;
+    font-size: 1.1em !important;
+    line-height: 1.6 !important;
+  }
+  
+  /* Larger form inputs */
+  input, textarea, select {
+    min-height: 56px !important;
+    padding: 0.875em 1em !important;
+    font-size: 1.1em !important;
+    line-height: 1.6 !important;
+  }
+  
+  /* Larger checkboxes and radio buttons */
+  input[type="checkbox"], input[type="radio"] {
+    min-width: 32px !important;
+    min-height: 32px !important;
+    width: 32px !important;
+    height: 32px !important;
+  }
+  
+  /* Larger spacing between interactive elements */
+  button + button, 
+  a + a,
+  input + input,
+  button + input,
+  input + button {
+    margin-left: 1.5em !important;
+    margin-top: 1em !important;
+  }
+  
+  /* Remove time limits - hide timers */
+  [class*="Timer"], [class*="timer"],
+  [data-timer], [data-time-limit],
+  [aria-label*="timer"], [aria-label*="Timer"],
+  [aria-label*="time"], [aria-label*="Time"] {
+    display: none !important;
+  }
+  
+  /* Hide countdown timers */
+  [class*="Countdown"], [class*="countdown"],
+  [data-countdown] {
+    display: none !important;
+  }
+  
+  /* Disable time pressure indicators */
+  [class*="time-limit"], [class*="TimeLimit"],
+  [data-time-limit] {
+    display: none !important;
+  }
+  
+  /* Auto-pause indicators - show when paused */
+  [data-auto-pause="true"] {
+    position: relative !important;
+  }
+  
+  [data-auto-pause="true"]::before {
+    content: "⏸ Pausa automática activa" !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    background-color: oklch(0.70 0.18 30 / 0.95) !important;
+    color: white !important;
+    padding: 1em !important;
+    text-align: center !important;
+    font-weight: 700 !important;
+    font-size: 1.2em !important;
+    z-index: 1000 !important;
+    border-bottom: 3px solid white !important;
+  }
+  
+  /* Extended pause duration indicator */
+  [data-pause-duration]::after {
+    content: "Pausa: " attr(data-pause-duration) " segundos" !important;
+    display: block !important;
+    margin-top: 0.5em !important;
+    font-size: 0.9em !important;
+    color: oklch(0.50 0.05 280) !important;
+    font-style: italic !important;
+  }
+  
+  /* Larger cards with more padding */
+  .card, [class*="Card"] {
+    padding: 2em !important;
+    margin-bottom: 2em !important;
+  }
+  
+  /* Larger badges */
+  [class*="Badge"], [class*="badge"] {
+    padding: 0.75em 1.25em !important;
+    font-size: 1.1em !important;
+    min-height: 44px !important;
+  }
+  
+  /* Larger tabs */
+  [role="tab"], [class*="Tab"] {
+    min-height: 56px !important;
+    padding: 1em 1.5em !important;
+    font-size: 1.1em !important;
+  }
+  
+  /* Larger dropdowns and selects */
+  [role="listbox"], [role="menu"],
+  [class*="Dropdown"], [class*="Select"] {
+    min-height: 56px !important;
+  }
+  
+  [role="option"], [role="menuitem"] {
+    min-height: 48px !important;
+    padding: 0.75em 1em !important;
+    font-size: 1.1em !important;
+  }
+  
+  /* Larger modals and dialogs */
+  [role="dialog"], [class*="Dialog"], [class*="Modal"] {
+    padding: 2em !important;
+    min-width: 90vw !important;
+    max-width: 95vw !important;
+  }
+  
+  /* Larger progress bars */
+  [class*="Progress"], [role="progressbar"] {
+    height: 16px !important;
+    min-height: 16px !important;
+  }
+  
+  /* Larger sliders */
+  input[type="range"] {
+    height: 24px !important;
+    min-height: 24px !important;
+  }
+  
+  input[type="range"]::-webkit-slider-thumb {
+    width: 32px !important;
+    height: 32px !important;
+  }
+  
+  input[type="range"]::-moz-range-thumb {
+    width: 32px !important;
+    height: 32px !important;
+  }
+  
+  /* Larger tooltips */
+  [role="tooltip"], [class*="Tooltip"] {
+    padding: 1em 1.5em !important;
+    font-size: 1.1em !important;
+    min-height: 48px !important;
+  }
+  
+  /* Simplified navigation - larger menu items */
+  [role="navigation"] a,
+  [role="navigation"] button {
+    min-height: 64px !important;
+    padding: 1em 1.5em !important;
+    font-size: 1.2em !important;
+    margin-bottom: 0.5em !important;
+  }
+  
+  /* Larger icons */
+  svg, [class*="Icon"] {
+    min-width: 32px !important;
+    min-height: 32px !important;
+  }
+  
+  /* Larger spacing in lists */
+  ul, ol {
+    margin-left: 2em !important;
+    margin-bottom: 1.5em !important;
+  }
+  
+  li {
+    margin-bottom: 1em !important;
+    line-height: 1.8 !important;
+  }
+  
+  /* Larger table cells */
+  td, th {
+    padding: 1em !important;
+    min-height: 56px !important;
+  }
+  
+  /* Simplified forms - larger labels */
+  label {
+    font-size: 1.2em !important;
+    margin-bottom: 0.75em !important;
+    font-weight: 600 !important;
+  }
+  
+  /* Larger switches */
+  [role="switch"], [class*="Switch"] {
+    min-width: 64px !important;
+    min-height: 36px !important;
+  }
+  
+  /* Remove complex animations that might cause issues */
+  [class*="animate-"], [class*="motion-"] {
+    animation-duration: 0s !important;
+    transition-duration: 0s !important;
+  }
+  
+  /* Larger focus indicators */
+  *:focus-visible {
+    outline: 4px solid oklch(0.55 0.20 290) !important;
+    outline-offset: 4px !important;
+    box-shadow: 0 0 12px oklch(0.55 0.20 290 / 0.5) !important;
+  }
+  
+  /* Larger skip links */
+  .skip-link {
+    min-height: 64px !important;
+    padding: 1.25em 2em !important;
+    font-size: 1.3em !important;
+  }
+  
+  /* Quiz specific - remove time pressure */
+  [class*="Quiz"] [class*="Timer"],
+  [class*="quiz"] [class*="timer"],
+  [data-quiz] [data-timer] {
+    display: none !important;
+  }
+  
+  /* Show "No time limit" indicator */
+  [class*="Quiz"]::before,
+  [class*="quiz"]::before,
+  [data-quiz]::before {
+    content: "⏱ Sin límite de tiempo" !important;
+    display: block !important;
+    background-color: oklch(0.75 0.20 130 / 0.2) !important;
+    color: oklch(0.75 0.20 130) !important;
+    padding: 0.75em 1em !important;
+    border-radius: 8px !important;
+    margin-bottom: 1em !important;
+    font-weight: 600 !important;
+    font-size: 1.1em !important;
+    border: 2px solid oklch(0.75 0.20 130) !important;
+  }
+  
+  /* Larger quiz answer options */
+  [class*="Quiz"] button,
+  [class*="quiz"] button,
+  [data-quiz] button {
+    min-height: 64px !important;
+    padding: 1.25em 1.75em !important;
+    font-size: 1.2em !important;
+    margin-bottom: 1em !important;
+    text-align: left !important;
+  }
+  
+  /* Larger quiz navigation buttons */
+  [class*="Quiz"] [class*="Next"],
+  [class*="Quiz"] [class*="Previous"],
+  [class*="quiz"] [class*="next"],
+  [class*="quiz"] [class*="previous"] {
+    min-height: 72px !important;
+    padding: 1.5em 2em !important;
+    font-size: 1.3em !important;
+    font-weight: 700 !important;
+  }
+  
+  /* Simplified breadcrumbs - larger */
+  [aria-label*="breadcrumb"], [class*="Breadcrumb"] {
+    font-size: 1.2em !important;
+  }
+  
+  [aria-label*="breadcrumb"] a,
+  [class*="Breadcrumb"] a {
+    min-height: 48px !important;
+    padding: 0.75em 1em !important;
+  }
+  
+  /* Larger pagination */
+  [role="navigation"][aria-label*="pagination"],
+  [class*="Pagination"] {
+    font-size: 1.2em !important;
+  }
+  
+  [role="navigation"][aria-label*="pagination"] a,
+  [role="navigation"][aria-label*="pagination"] button,
+  [class*="Pagination"] a,
+  [class*="Pagination"] button {
+    min-height: 56px !important;
+    min-width: 56px !important;
+    padding: 1em !important;
+  }
+}
+
+/* Ensure body inherits motor styles when active */
+body.motor-profile {
+  /* Simplified navigation already handled */
+}
+
 /* Reading Mode Simplified */
 .reading-mode-simplified {
   font-size: 1.2em;
@@ -332,4 +1483,685 @@ select:focus-visible {
 
 .reading-mode-simplified p {
   margin-bottom: 1.5em;
+}
+
+/* ============================================
+   COGNITIVE ACCESSIBILITY PROFILE
+   ============================================ */
+
+/* Apply when cognitive profile is active */
+.cognitive-profile,
+[data-cognitive="true"] {
+  /* Simplified reading mode */
+  font-size: 1.25em !important;
+  line-height: 2 !important;
+  letter-spacing: 0.02em !important;
+  
+  /* Clear structure with more spacing */
+  h1, h2, h3, h4, h5, h6 {
+    margin-top: 2em !important;
+    margin-bottom: 1.5em !important;
+    line-height: 1.6 !important;
+    font-weight: 700 !important;
+    border-bottom: 2px solid oklch(0.70 0 0) !important;
+    padding-bottom: 0.5em !important;
+  }
+  
+  h1 {
+    font-size: 2.5em !important;
+  }
+  
+  h2 {
+    font-size: 2em !important;
+  }
+  
+  h3 {
+    font-size: 1.75em !important;
+  }
+  
+  /* Paragraphs with better spacing */
+  p {
+    margin-bottom: 2em !important;
+    line-height: 2 !important;
+    max-width: 70ch !important; /* Optimal reading width */
+  }
+  
+  /* Lists with better spacing */
+  ul, ol {
+    margin-left: 2em !important;
+    margin-bottom: 2em !important;
+    padding-left: 1.5em !important;
+  }
+  
+  li {
+    margin-bottom: 1em !important;
+    line-height: 2 !important;
+  }
+  
+  /* Tooltips always visible */
+  [role="tooltip"], [class*="Tooltip"], [data-tooltip],
+  [data-slot="tooltip-content"] {
+    display: block !important;
+    position: static !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    background-color: oklch(0.98 0.02 280) !important;
+    color: oklch(0.25 0.08 280) !important;
+    border: 2px solid oklch(0.55 0.20 290) !important;
+    padding: 1em 1.5em !important;
+    margin-top: 0.5em !important;
+    margin-bottom: 1em !important;
+    border-radius: 8px !important;
+    font-size: 1.1em !important;
+    line-height: 1.6 !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+  }
+  
+  /* Show tooltip content next to triggers */
+  [data-slot="tooltip-trigger"] + [data-slot="tooltip-content"],
+  [aria-describedby] + [role="tooltip"] {
+    display: block !important;
+  }
+  
+  /* Help icons always visible */
+  [aria-label*="help"], [aria-label*="Help"],
+  [title], [data-help] {
+    position: relative !important;
+  }
+  
+  [aria-label*="help"]::after,
+  [aria-label*="Help"]::after,
+  [title]::after,
+  [data-help]::after {
+    content: "ℹ️ " attr(title) " " attr(data-help) !important;
+    display: block !important;
+    margin-top: 0.5em !important;
+    padding: 0.75em 1em !important;
+    background-color: oklch(0.95 0.05 200) !important;
+    color: oklch(0.25 0.08 280) !important;
+    border-left: 4px solid oklch(0.55 0.20 290) !important;
+    border-radius: 4px !important;
+    font-size: 1em !important;
+    line-height: 1.6 !important;
+  }
+  
+  /* Remove time limits */
+  [class*="Timer"], [class*="timer"],
+  [data-timer], [data-time-limit],
+  [aria-label*="timer"], [aria-label*="Timer"],
+  [aria-label*="time"], [aria-label*="Time"],
+  [class*="Countdown"], [class*="countdown"],
+  [data-countdown] {
+    display: none !important;
+  }
+  
+  /* Show "No time limit" indicator */
+  [class*="Quiz"]::before,
+  [class*="quiz"]::before,
+  [data-quiz]::before,
+  [class*="Activity"]::before,
+  [class*="activity"]::before {
+    content: "⏱ Sin límite de tiempo - Tómate tu tiempo" !important;
+    display: block !important;
+    background-color: oklch(0.95 0.10 130) !important;
+    color: oklch(0.30 0.15 130) !important;
+    padding: 1em 1.5em !important;
+    border-radius: 8px !important;
+    margin-bottom: 1.5em !important;
+    font-weight: 600 !important;
+    font-size: 1.2em !important;
+    border: 2px solid oklch(0.75 0.20 130) !important;
+    text-align: center !important;
+  }
+  
+  /* Auto-pause indicators */
+  [data-auto-pause="true"] {
+    position: relative !important;
+  }
+  
+  [data-auto-pause="true"]::before {
+    content: "⏸ Pausa automática - Tómate un descanso" !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    background-color: oklch(0.95 0.10 30) !important;
+    color: oklch(0.30 0.15 30) !important;
+    padding: 1em !important;
+    text-align: center !important;
+    font-weight: 700 !important;
+    font-size: 1.2em !important;
+    z-index: 1000 !important;
+    border-bottom: 3px solid oklch(0.70 0.18 30) !important;
+  }
+  
+  /* Simplified language indicators */
+  [data-simplified="true"] {
+    border-left: 4px solid oklch(0.75 0.20 130) !important;
+    padding-left: 1.5em !important;
+    background-color: oklch(0.98 0.02 130) !important;
+    padding: 1em 1.5em !important;
+    margin: 1em 0 !important;
+    border-radius: 4px !important;
+  }
+  
+  [data-simplified="true"]::before {
+    content: "📖 Contenido simplificado" !important;
+    display: block !important;
+    font-weight: 700 !important;
+    color: oklch(0.75 0.20 130) !important;
+    margin-bottom: 0.5em !important;
+    font-size: 1.1em !important;
+  }
+  
+  /* Clear section dividers */
+  section, [role="region"] {
+    border-top: 3px solid oklch(0.70 0 0) !important;
+    padding-top: 2em !important;
+    margin-top: 2em !important;
+    margin-bottom: 2em !important;
+  }
+  
+  section::before, [role="region"]::before {
+    content: attr(aria-label) !important;
+    display: block !important;
+    font-weight: 700 !important;
+    font-size: 1.5em !important;
+    color: oklch(0.55 0.20 290) !important;
+    margin-bottom: 1em !important;
+    padding-bottom: 0.5em !important;
+    border-bottom: 2px solid oklch(0.55 0.20 290) !important;
+  }
+  
+  /* Simplified buttons with clear labels */
+  button {
+    min-height: 56px !important;
+    padding: 1em 2em !important;
+    font-size: 1.2em !important;
+    font-weight: 600 !important;
+    border-width: 2px !important;
+    border-radius: 8px !important;
+  }
+  
+  button[aria-label]::after {
+    content: " (" attr(aria-label) ")" !important;
+    font-size: 0.9em !important;
+    font-weight: 400 !important;
+    opacity: 0.8 !important;
+  }
+  
+  /* Clear form labels */
+  label {
+    font-size: 1.3em !important;
+    font-weight: 600 !important;
+    margin-bottom: 0.75em !important;
+    display: block !important;
+    color: oklch(0.25 0.08 280) !important;
+  }
+  
+  label::after {
+    content: ":" !important;
+  }
+  
+  /* Inputs with clear borders */
+  input, textarea, select {
+    border-width: 2px !important;
+    border-color: oklch(0.70 0 0) !important;
+    padding: 1em !important;
+    font-size: 1.2em !important;
+    border-radius: 8px !important;
+    min-height: 56px !important;
+  }
+  
+  input:focus, textarea:focus, select:focus {
+    border-color: oklch(0.55 0.20 290) !important;
+    outline: 4px solid oklch(0.55 0.20 290 / 0.3) !important;
+    outline-offset: 2px !important;
+  }
+  
+  /* Placeholder text more visible */
+  ::placeholder {
+    color: oklch(0.50 0.05 280) !important;
+    opacity: 1 !important;
+    font-size: 1.1em !important;
+  }
+  
+  /* Clear error messages */
+  [role="alert"], [class*="Error"], [class*="error"],
+  [class*="Alert"][class*="destructive"] {
+    background-color: oklch(0.98 0.05 25) !important;
+    color: oklch(0.50 0.25 25) !important;
+    border: 3px solid oklch(0.50 0.25 25) !important;
+    padding: 1.5em !important;
+    border-radius: 8px !important;
+    font-size: 1.2em !important;
+    font-weight: 600 !important;
+    margin: 1em 0 !important;
+  }
+  
+  [role="alert"]::before,
+  [class*="Error"]::before,
+  [class*="error"]::before {
+    content: "⚠️ Error: " !important;
+    font-weight: 700 !important;
+  }
+  
+  /* Clear success messages */
+  [class*="Success"], [class*="success"],
+  [class*="Alert"][class*="success"] {
+    background-color: oklch(0.98 0.05 130) !important;
+    color: oklch(0.50 0.20 130) !important;
+    border: 3px solid oklch(0.75 0.20 130) !important;
+    padding: 1.5em !important;
+    border-radius: 8px !important;
+    font-size: 1.2em !important;
+    font-weight: 600 !important;
+    margin: 1em 0 !important;
+  }
+  
+  [class*="Success"]::before,
+  [class*="success"]::before {
+    content: "✅ Éxito: " !important;
+    font-weight: 700 !important;
+  }
+  
+  /* Clear info messages */
+  [class*="Info"], [class*="info"],
+  [class*="Alert"][class*="info"] {
+    background-color: oklch(0.98 0.05 200) !important;
+    color: oklch(0.50 0.20 240) !important;
+    border: 3px solid oklch(0.60 0.20 240) !important;
+    padding: 1.5em !important;
+    border-radius: 8px !important;
+    font-size: 1.2em !important;
+    font-weight: 600 !important;
+    margin: 1em 0 !important;
+  }
+  
+  [class*="Info"]::before,
+  [class*="info"]::before {
+    content: "ℹ️ Información: " !important;
+    font-weight: 700 !important;
+  }
+  
+  /* Simplified cards */
+  .card, [class*="Card"] {
+    border: 2px solid oklch(0.70 0 0) !important;
+    padding: 2em !important;
+    border-radius: 12px !important;
+    margin-bottom: 2em !important;
+    background-color: oklch(0.98 0 0) !important;
+  }
+  
+  /* Clear progress indicators */
+  [class*="Progress"], [role="progressbar"] {
+    height: 20px !important;
+    border: 2px solid oklch(0.70 0 0) !important;
+    border-radius: 10px !important;
+    background-color: oklch(0.95 0 0) !important;
+  }
+  
+  [class*="Progress"]::after,
+  [role="progressbar"]::after {
+    content: attr(aria-valuenow) "% completado" !important;
+    display: block !important;
+    margin-top: 0.5em !important;
+    font-weight: 600 !important;
+    font-size: 1.1em !important;
+    color: oklch(0.55 0.20 290) !important;
+  }
+  
+  /* Simplified tables */
+  table {
+    border: 3px solid oklch(0.70 0 0) !important;
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+    width: 100% !important;
+  }
+  
+  th {
+    background-color: oklch(0.95 0 0) !important;
+    color: oklch(0.25 0.08 280) !important;
+    font-weight: 700 !important;
+    font-size: 1.2em !important;
+    padding: 1.5em !important;
+    border: 2px solid oklch(0.70 0 0) !important;
+    text-align: left !important;
+  }
+  
+  td {
+    padding: 1.5em !important;
+    border: 1px solid oklch(0.90 0 0) !important;
+    font-size: 1.1em !important;
+    line-height: 1.8 !important;
+  }
+  
+  /* Clear links */
+  a {
+    text-decoration: underline !important;
+    text-decoration-thickness: 2px !important;
+    text-underline-offset: 0.2em !important;
+    color: oklch(0.55 0.20 290) !important;
+    font-weight: 600 !important;
+  }
+  
+  a:hover, a:focus {
+    background-color: oklch(0.55 0.20 290 / 0.1) !important;
+    outline: 3px solid oklch(0.55 0.20 290) !important;
+    outline-offset: 2px !important;
+  }
+  
+  /* Simplified navigation */
+  nav, [role="navigation"] {
+    border-bottom: 3px solid oklch(0.70 0 0) !important;
+    padding-bottom: 1em !important;
+    margin-bottom: 2em !important;
+  }
+  
+  nav a, [role="navigation"] a {
+    display: block !important;
+    padding: 1em 1.5em !important;
+    margin-bottom: 0.5em !important;
+    border-left: 4px solid transparent !important;
+    border-radius: 4px !important;
+    font-size: 1.2em !important;
+  }
+  
+  nav a:hover, nav a:focus,
+  [role="navigation"] a:hover, [role="navigation"] a:focus {
+    border-left-color: oklch(0.55 0.20 290) !important;
+    background-color: oklch(0.98 0.02 280) !important;
+  }
+  
+  /* Clear breadcrumbs */
+  [aria-label*="breadcrumb"], [class*="Breadcrumb"] {
+    font-size: 1.3em !important;
+    margin-bottom: 1.5em !important;
+  }
+  
+  [aria-label*="breadcrumb"] a,
+  [class*="Breadcrumb"] a {
+    padding: 0.5em 1em !important;
+    border-radius: 4px !important;
+  }
+  
+  [aria-label*="breadcrumb"] a:hover,
+  [class*="Breadcrumb"] a:hover {
+    background-color: oklch(0.95 0 0) !important;
+  }
+  
+  /* Simplified quizzes */
+  [class*="Quiz"] button,
+  [class*="quiz"] button {
+    min-height: 64px !important;
+    padding: 1.25em 2em !important;
+    font-size: 1.3em !important;
+    margin-bottom: 1em !important;
+    text-align: left !important;
+    border: 2px solid oklch(0.70 0 0) !important;
+    border-radius: 8px !important;
+  }
+  
+  [class*="Quiz"] button:hover,
+  [class*="quiz"] button:hover {
+    border-color: oklch(0.55 0.20 290) !important;
+    background-color: oklch(0.98 0.02 280) !important;
+  }
+  
+  /* Clear focus indicators */
+  *:focus-visible {
+    outline: 4px solid oklch(0.55 0.20 290) !important;
+    outline-offset: 4px !important;
+    box-shadow: 0 0 12px oklch(0.55 0.20 290 / 0.5) !important;
+  }
+  
+  /* Reduce cognitive load - remove unnecessary animations */
+  [class*="animate-"], [class*="motion-"] {
+    animation-duration: 0s !important;
+    transition-duration: 0.2s !important; /* Keep minimal transitions for feedback */
+  }
+  
+  /* Clear step indicators */
+  [class*="Step"], [class*="step"],
+  [data-step] {
+    border-left: 4px solid oklch(0.55 0.20 290) !important;
+    padding-left: 1.5em !important;
+    margin-bottom: 2em !important;
+  }
+  
+  [class*="Step"]::before,
+  [class*="step"]::before,
+  [data-step]::before {
+    content: "Paso " attr(data-step) ": " !important;
+    font-weight: 700 !important;
+    color: oklch(0.55 0.20 290) !important;
+    font-size: 1.2em !important;
+  }
+}
+
+/* Ensure body inherits cognitive styles when active */
+body.cognitive-profile {
+  font-size: 1.25em !important;
+  line-height: 2 !important;
+}
+
+/* ============================================
+   DYSLEXIA ACCESSIBILITY PROFILE
+   ============================================ */
+
+/* Apply when fontFamily is 'dyslexia' */
+.dyslexia-profile,
+[data-font-family="dyslexia"] {
+  /* Font family - OpenDyslexic is loaded from CDN */
+  font-family: 'OpenDyslexic', 'Comic Sans MS', system-ui, sans-serif !important;
+  
+  /* Typography improvements */
+  font-size: 1.25em; /* 125% - large text size */
+  line-height: 1.8 !important; /* relaxed line height */
+  letter-spacing: 0.05em !important; /* wide letter spacing */
+  word-spacing: 0.2em !important; /* wide word spacing */
+  
+  /* Avoid text justification - left align for better readability */
+  text-align: left !important;
+  
+  /* Better paragraph spacing */
+  p {
+    margin-bottom: 1.5em !important;
+    text-align: left !important;
+  }
+  
+  /* Headings with better spacing */
+  h1, h2, h3, h4, h5, h6 {
+    line-height: 1.6 !important;
+    letter-spacing: 0.03em !important;
+    margin-top: 1.5em !important;
+    margin-bottom: 1em !important;
+    text-align: left !important;
+  }
+  
+  /* Lists with better spacing */
+  ul, ol {
+    margin-left: 1.5em !important;
+    margin-bottom: 1.5em !important;
+    padding-left: 1em !important;
+  }
+  
+  li {
+    margin-bottom: 0.75em !important;
+    line-height: 1.8 !important;
+  }
+  
+  /* Avoid all caps - convert to sentence case */
+  * {
+    text-transform: none !important;
+  }
+  
+  /* Better contrast for links */
+  a {
+    text-decoration: underline !important;
+    text-decoration-thickness: 2px !important;
+    text-underline-offset: 0.2em !important;
+  }
+  
+  /* Better spacing for form elements */
+  input, textarea, select {
+    line-height: 1.8 !important;
+    padding: 0.75em !important;
+    font-size: 1.1em !important;
+  }
+  
+  /* Cards and containers with better spacing */
+  .card, [class*="Card"] {
+    padding: 1.5em !important;
+  }
+  
+  /* Buttons with better spacing */
+  button {
+    padding: 0.75em 1.5em !important;
+    font-size: 1.1em !important;
+    line-height: 1.6 !important;
+  }
+  
+  /* Tables with better spacing */
+  table {
+    border-spacing: 0.5em !important;
+  }
+  
+  td, th {
+    padding: 0.75em !important;
+    line-height: 1.8 !important;
+  }
+  
+  /* Avoid italic text - harder to read for dyslexics */
+  em, i {
+    font-style: normal !important;
+    font-weight: 600 !important;
+  }
+  
+  /* Better code blocks */
+  code, pre {
+    font-family: 'OpenDyslexic Mono', 'Courier New', monospace !important;
+    line-height: 1.8 !important;
+    padding: 0.5em !important;
+  }
+  
+  /* Better blockquotes */
+  blockquote {
+    border-left: 4px solid var(--primary);
+    padding-left: 1.5em;
+    margin: 1.5em 0;
+    font-style: normal;
+    line-height: 1.8;
+  }
+}
+
+/* Ensure body inherits dyslexia styles when active */
+body.dyslexia-profile {
+  font-family: 'OpenDyslexic', 'Comic Sans MS', system-ui, sans-serif !important;
+}
+
+/* ============================================
+   MOBILE RESPONSIVE UTILITIES
+   ============================================ */
+
+/* Touch Targets - WCAG 2.5.5: Minimum 44x44px */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Touch-friendly buttons */
+button,
+a[role="button"],
+input[type="button"],
+input[type="submit"] {
+  min-height: 44px;
+  touch-action: manipulation; /* Prevents double-tap zoom */
+}
+
+/* Mobile tap highlight */
+* {
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive Typography */
+@media (max-width: 640px) {
+  body {
+    font-size: 16px; /* Prevent iOS zoom on input focus */
+  }
+  
+  h1 {
+    font-size: 28px;
+    line-height: 1.2;
+  }
+  
+  h2 {
+    font-size: 24px;
+    line-height: 1.3;
+  }
+  
+  h3 {
+    font-size: 20px;
+    line-height: 1.4;
+  }
+}
+
+/* Mobile-first spacing utilities */
+@media (max-width: 640px) {
+  .mobile-p-2 { padding: 0.5rem; }
+  .mobile-p-4 { padding: 1rem; }
+  .mobile-p-6 { padding: 1.5rem; }
+  .mobile-gap-2 { gap: 0.5rem; }
+  .mobile-gap-4 { gap: 1rem; }
+  .mobile-gap-6 { gap: 1.5rem; }
+}
+
+/* Prevent horizontal scroll on mobile */
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+/* Safe area insets for notched devices */
+@supports (padding: max(0px)) {
+  .safe-top {
+    padding-top: max(1rem, env(safe-area-inset-top));
+  }
+  
+  .safe-bottom {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+  
+  .safe-left {
+    padding-left: max(1rem, env(safe-area-inset-left));
+  }
+  
+  .safe-right {
+    padding-right: max(1rem, env(safe-area-inset-right));
+  }
+}
+
+/* Mobile-optimized scrollbars */
+@media (max-width: 768px) {
+  ::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: var(--muted-foreground);
+    border-radius: 2px;
+  }
+}
+
+/* Reduced motion for mobile (if user prefers) */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

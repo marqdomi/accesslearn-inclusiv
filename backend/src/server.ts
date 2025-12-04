@@ -1352,6 +1352,203 @@ app.delete('/api/categories/:categoryId',
   }
 );
 
+// ============================================
+// Accessibility Profiles API
+// ============================================
+
+// GET /api/accessibility-profiles - Get all profiles for tenant (admin)
+app.get('/api/accessibility-profiles',
+  requireAuth,
+  requirePermission('settings:read'),
+  async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const { getAccessibilityProfiles } = await import('./functions/AccessibilityProfileFunctions');
+      const profiles = await getAccessibilityProfiles(user.tenantId);
+      res.json(profiles);
+    } catch (error: any) {
+      console.error('[API] Error getting accessibility profiles:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+);
+
+// GET /api/accessibility-profiles/enabled - Get only enabled profiles (for end users)
+app.get('/api/accessibility-profiles/enabled',
+  requireAuth,
+  async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const { getEnabledAccessibilityProfiles } = await import('./functions/AccessibilityProfileFunctions');
+      const profiles = await getEnabledAccessibilityProfiles(user.tenantId);
+      res.json(profiles);
+    } catch (error: any) {
+      console.error('[API] Error getting enabled accessibility profiles:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+);
+
+// GET /api/accessibility-profiles/:id - Get specific profile
+app.get('/api/accessibility-profiles/:id',
+  requireAuth,
+  async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const { id } = req.params;
+      const { getAccessibilityProfile } = await import('./functions/AccessibilityProfileFunctions');
+      const profile = await getAccessibilityProfile(id, user.tenantId);
+      
+      if (!profile) {
+        return res.status(404).json({ error: 'Accessibility profile not found' });
+      }
+      
+      res.json(profile);
+    } catch (error: any) {
+      console.error('[API] Error getting accessibility profile:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+);
+
+// POST /api/accessibility-profiles - Create new profile
+app.post('/api/accessibility-profiles',
+  requireAuth,
+  requirePermission('settings:write'),
+  async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const { createAccessibilityProfile } = await import('./functions/AccessibilityProfileFunctions');
+      
+      const profileData = {
+        ...req.body,
+        tenantId: user.tenantId,
+        createdBy: user.id,
+      };
+      
+      const profile = await createAccessibilityProfile(profileData);
+      res.status(201).json(profile);
+    } catch (error: any) {
+      console.error('[API] Error creating accessibility profile:', error);
+      if (error.message.includes('already exists')) {
+        res.status(409).json({ error: error.message });
+      } else if (error.message.includes('cannot be empty')) {
+        res.status(400).json({ error: error.message });
+      } else {
+        res.status(500).json({ error: error.message });
+      }
+    }
+  }
+);
+
+// PUT /api/accessibility-profiles/:id - Update profile
+app.put('/api/accessibility-profiles/:id',
+  requireAuth,
+  requirePermission('settings:write'),
+  async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const { id } = req.params;
+      const { updateAccessibilityProfile } = await import('./functions/AccessibilityProfileFunctions');
+      
+      const profile = await updateAccessibilityProfile(id, user.tenantId, req.body);
+      res.json(profile);
+    } catch (error: any) {
+      console.error('[API] Error updating accessibility profile:', error);
+      if (error.message.includes('not found')) {
+        res.status(404).json({ error: error.message });
+      } else if (error.message.includes('already exists')) {
+        res.status(409).json({ error: error.message });
+      } else {
+        res.status(500).json({ error: error.message });
+      }
+    }
+  }
+);
+
+// DELETE /api/accessibility-profiles/:id - Delete profile
+app.delete('/api/accessibility-profiles/:id',
+  requireAuth,
+  requirePermission('settings:write'),
+  async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const { id } = req.params;
+      const { deleteAccessibilityProfile } = await import('./functions/AccessibilityProfileFunctions');
+      
+      await deleteAccessibilityProfile(id, user.tenantId);
+      res.status(204).send();
+    } catch (error: any) {
+      console.error('[API] Error deleting accessibility profile:', error);
+      if (error.message.includes('not found')) {
+        res.status(404).json({ error: error.message });
+      } else if (error.message.includes('Cannot delete')) {
+        res.status(403).json({ error: error.message });
+      } else {
+        res.status(500).json({ error: error.message });
+      }
+    }
+  }
+);
+
+// PATCH /api/accessibility-profiles/:id/toggle - Toggle enabled status
+app.patch('/api/accessibility-profiles/:id/toggle',
+  requireAuth,
+  requirePermission('settings:write'),
+  async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const { id } = req.params;
+      const { enabled } = req.body;
+      const { toggleAccessibilityProfileEnabled } = await import('./functions/AccessibilityProfileFunctions');
+      
+      if (typeof enabled !== 'boolean') {
+        return res.status(400).json({ error: 'enabled must be a boolean' });
+      }
+      
+      const profile = await toggleAccessibilityProfileEnabled(id, user.tenantId, enabled);
+      res.json(profile);
+    } catch (error: any) {
+      console.error('[API] Error toggling accessibility profile:', error);
+      if (error.message.includes('not found')) {
+        res.status(404).json({ error: error.message });
+      } else {
+        res.status(500).json({ error: error.message });
+      }
+    }
+  }
+);
+
+// POST /api/accessibility-profiles/:id/duplicate - Duplicate profile
+app.post('/api/accessibility-profiles/:id/duplicate',
+  requireAuth,
+  requirePermission('settings:write'),
+  async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const { id } = req.params;
+      const { newName } = req.body;
+      const { duplicateAccessibilityProfile } = await import('./functions/AccessibilityProfileFunctions');
+      
+      if (!newName || !newName.trim()) {
+        return res.status(400).json({ error: 'newName is required' });
+      }
+      
+      const profile = await duplicateAccessibilityProfile(id, user.tenantId, newName.trim(), user.id);
+      res.status(201).json(profile);
+    } catch (error: any) {
+      console.error('[API] Error duplicating accessibility profile:', error);
+      if (error.message.includes('not found')) {
+        res.status(404).json({ error: error.message });
+      } else if (error.message.includes('already exists')) {
+        res.status(409).json({ error: error.message });
+      } else {
+        res.status(500).json({ error: error.message });
+      }
+    }
+  }
+);
+
 // POST /api/courses/:courseId/archive - Archive course
 app.post('/api/courses/:courseId/archive',
   requireAuth,

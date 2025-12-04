@@ -72,8 +72,8 @@ export function ModernCourseBuilder({ courseId, onBack }: ModernCourseBuilderPro
         const backendCourse = await ApiService.getCourseById(courseId)
         
         if (isMounted) {
-          const frontendCourse = adaptBackendCourseToFrontend(backendCourse)
-          setCourse(frontendCourse)
+        const frontendCourse = adaptBackendCourseToFrontend(backendCourse)
+        setCourse(frontendCourse)
           // Mark as saved to backend since we loaded it from backend
           setHasBeenSavedToBackend(true)
           console.log('[ModernCourseBuilder] Loaded course from backend:', courseId)
@@ -81,11 +81,11 @@ export function ModernCourseBuilder({ courseId, onBack }: ModernCourseBuilderPro
       } catch (error) {
         console.error('Error loading course:', error)
         if (isMounted) {
-          toast.error('Error al cargar el curso')
+        toast.error('Error al cargar el curso')
         }
       } finally {
         if (isMounted) {
-          setLoading(false)
+        setLoading(false)
         }
       }
     }

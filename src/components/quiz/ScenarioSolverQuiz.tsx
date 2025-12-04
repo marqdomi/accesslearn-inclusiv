@@ -52,15 +52,50 @@ export function ScenarioSolverQuiz({
   onAnswer,
   isAnswered: initialAnswered,
 }: ScenarioSolverQuizProps) {
-  const [currentStepId, setCurrentStepId] = useState(question.startStepId)
+  // Validar que question y sus propiedades existan ANTES de usar hooks
+  const isValidQuestion = question && 
+    question.steps && 
+    Array.isArray(question.steps) && 
+    question.steps.length > 0
+
+  // Usar valores por defecto seguros
+  const safeStartStepId = isValidQuestion 
+    ? (question.startStepId || question.steps[0]?.id || '')
+    : ''
+
+  const [currentStepId, setCurrentStepId] = useState(safeStartStepId)
   const [selectedOption, setSelectedOption] = useState<string | null>(null)
   const [totalScore, setTotalScore] = useState(0)
   const [path, setPath] = useState<Array<{ stepId: string; optionId: string; score: number }>>([])
   const [isFinished, setIsFinished] = useState(false)
   const [showConsequence, setShowConsequence] = useState(false)
 
+  // Mostrar error si los datos no son válidos
+  if (!isValidQuestion) {
+    console.error('[ScenarioSolverQuiz] Invalid question data:', question)
+    return (
+      <Card className="p-6">
+        <div className="text-center text-destructive">
+          <AlertCircle className="h-12 w-12 mx-auto mb-4" />
+          <p className="font-semibold mb-2">Error al cargar el quiz</p>
+          <p className="text-sm text-muted-foreground">
+            Los datos del escenario no están disponibles. Por favor, recarga la página.
+          </p>
+          {question && (
+            <div className="mt-4 text-xs text-muted-foreground text-left">
+              <p>Datos recibidos:</p>
+              <pre className="mt-2 p-2 bg-muted rounded overflow-auto">
+                {JSON.stringify(question, null, 2)}
+              </pre>
+            </div>
+          )}
+        </div>
+      </Card>
+    )
+  }
+
   const currentStep = question.steps.find(s => s.id === currentStepId)
-  const selectedOptionData = currentStep?.options.find(o => o.id === selectedOption)
+  const selectedOptionData = currentStep?.options?.find(o => o.id === selectedOption)
 
   const handleSelectOption = (optionId: string) => {
     if (showConsequence) return
@@ -68,7 +103,7 @@ export function ScenarioSolverQuiz({
   }
 
   const handleConfirmChoice = () => {
-    if (!selectedOption || !currentStep) return
+    if (!selectedOption || !currentStep || !currentStep.options) return
 
     const option = currentStep.options.find(o => o.id === selectedOption)
     if (!option) return
@@ -118,7 +153,19 @@ export function ScenarioSolverQuiz({
     return <ThumbsDown className="h-5 w-5" />
   }
 
-  if (!currentStep) return null
+  if (!currentStep || !currentStep.options || currentStep.options.length === 0) {
+    return (
+      <Card className="p-6">
+        <div className="text-center text-destructive">
+          <AlertCircle className="h-12 w-12 mx-auto mb-4" />
+          <p className="font-semibold mb-2">Error al cargar el paso actual</p>
+          <p className="text-sm text-muted-foreground">
+            El paso del escenario no está disponible. Por favor, recarga la página.
+          </p>
+        </div>
+      </Card>
+    )
+  }
 
   if (isFinished) {
     const percentage = (totalScore / question.perfectScore) * 100
@@ -170,8 +217,8 @@ export function ScenarioSolverQuiz({
 
           <div className="space-y-3">
             {path.map((step, idx) => {
-              const stepData = question.steps.find(s => s.id === step.stepId)
-              const optionData = stepData?.options.find(o => o.id === step.optionId)
+              const stepData = question.steps?.find(s => s.id === step.stepId)
+              const optionData = stepData?.options?.find(o => o.id === step.optionId)
 
               return (
                 <div 

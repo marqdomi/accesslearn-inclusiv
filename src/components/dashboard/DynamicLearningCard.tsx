@@ -86,7 +86,7 @@ export function DynamicLearningCard({
         transition={{ duration: 0.3 }}
       >
         <Card className="border-2 border-dashed border-muted hover:border-primary/50 transition-colors">
-          <CardContent className="p-8 md:p-12">
+          <CardContent className="p-4 sm:p-6 md:p-8 lg:p-12">
             <div className="text-center space-y-6">
               <motion.div
                 initial={{ scale: 0.8 }}
@@ -97,7 +97,7 @@ export function DynamicLearningCard({
                 <BookOpen className="h-10 w-10 text-primary" />
               </motion.div>
               <div className="space-y-3">
-                <h3 className="text-xl font-bold">¡Comienza tu aprendizaje!</h3>
+                <h3 className="text-lg sm:text-xl font-bold">¡Comienza tu aprendizaje!</h3>
                 <p className="text-sm text-muted-foreground max-w-md mx-auto">
                   Explora el catálogo de cursos y encuentra el perfecto para ti. 
                   Cada curso te acerca más a tus objetivos profesionales.
@@ -154,20 +154,20 @@ export function DynamicLearningCard({
             <Button
               variant="ghost"
               size="icon"
-              className="absolute left-2 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full bg-background/80 backdrop-blur-sm hover:bg-background shadow-md"
+              className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-10 h-10 w-10 sm:h-8 sm:w-8 rounded-full bg-background/80 backdrop-blur-sm hover:bg-background shadow-md touch-target"
               onClick={handlePrevious}
               aria-label="Curso anterior"
             >
-              <ChevronLeft className="h-4 w-4" />
+              <ChevronLeft className="h-5 w-5 sm:h-4 sm:w-4" />
             </Button>
             <Button
               variant="ghost"
               size="icon"
-              className="absolute right-2 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full bg-background/80 backdrop-blur-sm hover:bg-background shadow-md"
+              className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-10 h-10 w-10 sm:h-8 sm:w-8 rounded-full bg-background/80 backdrop-blur-sm hover:bg-background shadow-md touch-target"
               onClick={handleNext}
               aria-label="Siguiente curso"
             >
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRight className="h-5 w-5 sm:h-4 sm:w-4" />
             </Button>
             
             {/* Carousel Indicators */}
@@ -191,7 +191,7 @@ export function DynamicLearningCard({
           </>
         )}
 
-        <CardContent className="p-6">
+        <CardContent className="p-4 sm:p-6">
           <AnimatePresence mode="wait">
             <motion.div
               key={currentIndex}
@@ -199,7 +199,7 @@ export function DynamicLearningCard({
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
               transition={{ duration: 0.3 }}
-              className="flex flex-col md:flex-row gap-6"
+              className="flex flex-col md:flex-row gap-4 sm:gap-6"
             >
               {/* Left: Course Info */}
               <div className="flex-1 space-y-4">
@@ -232,10 +232,10 @@ export function DynamicLearningCard({
                         </>
                       )}
                     </div>
-                    <h3 className="text-xl font-bold mb-2 line-clamp-2">
+                    <h3 className="text-lg sm:text-xl font-bold mb-2 line-clamp-2">
                       {isInProgress ? 'Continúa donde te quedaste' : 'Tus cursos inscritos'}
                     </h3>
-                    <h4 className="text-lg font-semibold mb-2 line-clamp-1">
+                    <h4 className="text-base sm:text-lg font-semibold mb-2 line-clamp-1">
                       {course.title}
                     </h4>
                     <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
@@ -272,12 +272,12 @@ export function DynamicLearningCard({
                 )}
 
                 {/* Actions */}
-                <div className="flex items-center gap-3 pt-2">
-                  <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 pt-2">
+                  <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="flex-1">
                     <Button 
                       onClick={handleContinue}
                       size="lg"
-                      className="gap-2 flex-1 md:flex-initial shadow-md hover:shadow-lg transition-shadow"
+                      className="gap-2 w-full sm:w-auto shadow-md hover:shadow-lg transition-shadow touch-target"
                     >
                       {isInProgress ? (
                         <>
@@ -296,7 +296,7 @@ export function DynamicLearningCard({
                   <Button
                     variant="outline"
                     onClick={() => navigate(`/courses/${course.id}`)}
-                    className="hidden md:flex gap-2 hover:bg-primary/5 transition-colors"
+                    className="w-full sm:w-auto gap-2 hover:bg-primary/5 transition-colors touch-target"
                   >
                     Ver Detalles
                   </Button>

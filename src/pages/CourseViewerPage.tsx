@@ -20,8 +20,10 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { ArrowLeft, CheckCircle, ChevronLeft, ChevronRight, Trophy, PanelRightClose, PanelLeftClose } from 'lucide-react'
+import { ArrowLeft, CheckCircle, ChevronLeft, ChevronRight, Trophy, PanelRightClose, PanelLeftClose, Menu } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
+import { useIsMobile } from '@/hooks/use-mobile'
 
 interface Lesson {
   id: string
@@ -71,8 +73,10 @@ export function CourseViewerPage() {
   const [completing, setCompleting] = useState(false)
   const [courseCompleted, setCourseCompleted] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
   const [gameNotifications, setGameNotifications] = useState<GameNotification[]>([])
   const [navigatorMode, setNavigatorMode] = useState<'heatmap' | 'list'>('heatmap')
+  const isMobile = useIsMobile()
   
   // Gamification states
   const [showXPAnimation, setShowXPAnimation] = useState(false)
@@ -113,7 +117,26 @@ export function CourseViewerPage() {
         const questionId = q.id || `q-${lesson.id}-${index}`
         
         // Build question object based on type
-        let questionObj: any = {
+        let questionObj: any
+        
+        if (questionType === 'scenario-solver') {
+          // Para scenario-solver, pasar el objeto completo ScenarioQuestion
+          // Si q.question ya es un objeto ScenarioQuestion, usarlo directamente
+          // Si no, intentar construir uno desde q
+          if (q.question && typeof q.question === 'object' && q.question.steps) {
+            questionObj = q.question
+          } else {
+            // Intentar construir desde las propiedades del quiz
+            questionObj = {
+              title: q.title || q.question || q.text || 'Escenario',
+              description: q.description || q.explanation || '',
+              steps: q.steps || q.question?.steps || [],
+              startStepId: q.startStepId || q.question?.startStepId || '',
+              perfectScore: q.perfectScore || q.question?.perfectScore || 100
+            }
+          }
+        } else {
+          questionObj = {
           question: q.question || q.text || '',
           explanation: q.explanation || ''
         }
@@ -139,6 +162,7 @@ export function CourseViewerPage() {
         } else if (questionType === 'fill-blank') {
           questionObj.blanks = q.blanks || []
           questionObj.correctAnswers = q.correctAnswers || []
+          }
         }
         
         return {
@@ -671,21 +695,92 @@ export function CourseViewerPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b bg-background sticky top-0 z-10 shadow-sm">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+      <header className="border-b bg-background sticky top-0 z-10 shadow-sm safe-top">
+        <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4">
+          <div className="flex items-center justify-between gap-2 sm:gap-4">
+            <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
               <Button
                 variant="ghost"
                 onClick={() => navigate('/library')}
-                className="gap-2"
+                className="gap-2 flex-shrink-0 touch-target"
               >
                 <ArrowLeft size={18} />
-                Mi Biblioteca
+                <span className="hidden sm:inline">Mi Biblioteca</span>
               </Button>
-              <div className="border-l pl-4">
-                <h1 className="text-lg font-bold">{course.title}</h1>
-                <p className="text-sm text-muted-foreground">
+              {/* Mobile: Menu button for sidebar */}
+              {isMobile && (
+                <Sheet open={mobileSidebarOpen} onOpenChange={setMobileSidebarOpen}>
+                  <SheetTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-10 w-10 touch-target flex-shrink-0"
+                    >
+                      <Menu className="h-5 w-5" />
+                      <span className="sr-only">Abrir navegación</span>
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent side="left" className="w-[280px] sm:w-[320px] p-0">
+                    <SheetHeader className="p-4 border-b">
+                      <SheetTitle className="text-left">Navegación del Curso</SheetTitle>
+                    </SheetHeader>
+                    <div className="p-4 space-y-4 max-h-[calc(100vh-80px)] overflow-y-auto">
+                      {/* Sidebar content */}
+                      <div className="flex items-center justify-between gap-2 mb-3">
+                        <div className="flex items-center rounded-full border bg-muted/40 p-1 text-xs font-medium flex-1">
+                          <button
+                            className={cn(
+                              'flex-1 rounded-full px-3 py-1.5 transition touch-target',
+                              navigatorMode === 'heatmap'
+                                ? 'bg-background shadow-sm'
+                                : 'text-muted-foreground'
+                            )}
+                            onClick={() => setNavigatorMode('heatmap')}
+                          >
+                            Mapa
+                          </button>
+                          <button
+                            className={cn(
+                              'flex-1 rounded-full px-3 py-1.5 transition touch-target',
+                              navigatorMode === 'list'
+                                ? 'bg-background shadow-sm'
+                                : 'text-muted-foreground'
+                            )}
+                            onClick={() => setNavigatorMode('list')}
+                          >
+                            Lista
+                          </button>
+                        </div>
+                      </div>
+
+                      {navigatorMode === 'heatmap' ? (
+                        <CourseHeatmapNavigator
+                          modules={moduleNavigatorData}
+                          currentLessonId={currentLessonId}
+                          onLessonSelect={(moduleId, lessonId) => {
+                            handleLessonSelect(moduleId, lessonId)
+                            setMobileSidebarOpen(false)
+                          }}
+                        />
+                      ) : (
+                        <div className="rounded-2xl border bg-card p-4 shadow-sm">
+                          <ModuleNavigation
+                            modules={moduleNavigatorData}
+                            currentLessonId={currentLessonId}
+                            onLessonSelect={(moduleId, lessonId) => {
+                              handleLessonSelect(moduleId, lessonId)
+                              setMobileSidebarOpen(false)
+                            }}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </SheetContent>
+                </Sheet>
+              )}
+              <div className="border-l pl-2 sm:pl-4 min-w-0 flex-1">
+                <h1 className="text-base sm:text-lg font-bold truncate">{course.title}</h1>
+                <p className="text-xs sm:text-sm text-muted-foreground">
                   {completedLessons.size} de {totalLessons || 0} lecciones completadas
                 </p>
               </div>
@@ -709,9 +804,10 @@ export function CourseViewerPage() {
       </header>
 
       {/* Main Content */}
-      <div className="container mx-auto px-4 py-6">
-        <div className={`grid grid-cols-1 gap-6 ${sidebarCollapsed ? '' : 'lg:grid-cols-12'}`}>
-          {!sidebarCollapsed && (
+      <div className="container mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6">
+        <div className={`grid grid-cols-1 gap-4 sm:gap-6 ${sidebarCollapsed || isMobile ? '' : 'lg:grid-cols-12'}`}>
+          {/* Desktop Sidebar */}
+          {!sidebarCollapsed && !isMobile && (
             <aside className="lg:col-span-3 space-y-4 max-w-[260px]">
               <div className="flex items-center justify-between gap-2 mb-3">
                 <div className="flex items-center rounded-full border bg-muted/40 p-1 text-xs font-medium flex-1">
@@ -774,8 +870,8 @@ export function CourseViewerPage() {
           )}
 
           {/* Main Content Area */}
-          <main className={sidebarCollapsed ? 'lg:col-span-12' : 'lg:col-span-9'}>
-            {sidebarCollapsed && (
+          <main className={sidebarCollapsed || isMobile ? 'lg:col-span-12' : 'lg:col-span-9'}>
+            {sidebarCollapsed && !isMobile && (
               <div className="mb-4">
                 <TooltipProvider>
                   <Tooltip>
@@ -784,7 +880,7 @@ export function CourseViewerPage() {
                         variant="outline"
                         size="sm"
                         onClick={() => setSidebarCollapsed(false)}
-                        className="p-2"
+                        className="p-2 touch-target"
                       >
                         <PanelRightClose className="h-4 w-4" />
                       </Button>
@@ -832,13 +928,13 @@ export function CourseViewerPage() {
                 )}
 
                 {/* Navigation and Complete Button */}
-                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-end border rounded-2xl p-4 shadow-sm bg-card">
-                  <div className="flex flex-wrap items-center justify-end gap-3">
+                <div className="flex flex-col gap-3 sm:gap-4 md:flex-row md:items-center md:justify-end border rounded-2xl p-3 sm:p-4 shadow-sm bg-card">
+                  <div className="flex flex-wrap items-stretch sm:items-center justify-end gap-2 sm:gap-3">
                     <Button
                       variant="outline"
                       onClick={goToPreviousLesson}
                       disabled={isFirstLesson()}
-                      className="min-w-[120px]"
+                      className="min-w-[120px] touch-target flex-1 sm:flex-initial"
                     >
                       <ChevronLeft className="h-4 w-4 mr-2" />
                       Anterior
@@ -847,7 +943,7 @@ export function CourseViewerPage() {
                       <Button
                         onClick={handleCompleteLesson}
                         disabled={completing || !canCompleteLesson}
-                        className="gap-2 min-w-[190px]"
+                        className="gap-2 min-w-[190px] touch-target flex-1 sm:flex-initial"
                         title={
                           isCurrentLessonQuiz && !isQuizCompleted
                             ? 'Debes completar el quiz antes de marcar la lección como completada'
@@ -855,7 +951,8 @@ export function CourseViewerPage() {
                         }
                       >
                         <CheckCircle className="h-4 w-4" />
-                        {completing ? 'Completando...' : 'Marcar como completada'}
+                        <span className="hidden sm:inline">{completing ? 'Completando...' : 'Marcar como completada'}</span>
+                        <span className="sm:hidden">{completing ? 'Completando...' : 'Completar'}</span>
                       </Button>
                     )}
 
@@ -863,7 +960,7 @@ export function CourseViewerPage() {
                       variant={isCurrentLessonCompleted ? 'default' : 'outline'}
                       onClick={goToNextLesson}
                       disabled={isLastLesson()}
-                      className="min-w-[140px]"
+                      className="min-w-[120px] touch-target flex-1 sm:flex-initial"
                     >
                       Siguiente
                       <ChevronRight className="h-4 w-4 ml-2" />

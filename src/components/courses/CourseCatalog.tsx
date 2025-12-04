@@ -200,20 +200,33 @@ export function CourseCatalog({ onCourseEnrolled }: CourseCatalogProps) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold">Catálogo de Cursos</h1>
-        <p className="text-muted-foreground">
+      <div className="space-y-1 sm:space-y-2">
+        <h1 className="text-2xl sm:text-3xl font-bold">Catálogo de Cursos</h1>
+        <p className="text-sm sm:text-base text-muted-foreground">
           Explora y inscríbete en los cursos disponibles
         </p>
       </div>
 
-      {/* Stats */}
-      <div className="grid gap-4 md:grid-cols-3">
+      {/* Stats - Compact design similar to StatsCard */}
+      <div className="grid gap-2 sm:gap-3 md:gap-4 grid-cols-2 md:grid-cols-3">
+        {/* Mobile: Compact horizontal layout */}
         <Card className="bg-blue-50/80 dark:bg-blue-950/30 border-blue-200/60 dark:border-blue-800">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
+          <CardContent className="p-2 sm:p-4 sm:pt-6">
+            <div className="flex sm:hidden items-center gap-2.5">
+              <div className="p-1.5 rounded-md bg-blue-100 dark:bg-blue-900/50 flex-shrink-0">
+                <BookOpen className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] font-medium text-muted-foreground truncate leading-tight">
+                  Total de Cursos
+                </p>
+                <p className="text-lg font-bold leading-none mt-0.5">{courses.length}</p>
+              </div>
+            </div>
+            {/* Desktop: Original vertical layout */}
+            <div className="hidden sm:flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Total de Cursos</p>
                 <p className="text-2xl font-bold mt-1">{courses.length}</p>
@@ -226,8 +239,19 @@ export function CourseCatalog({ onCourseEnrolled }: CourseCatalogProps) {
         </Card>
 
         <Card className="bg-purple-50/80 dark:bg-purple-950/30 border-purple-200/60 dark:border-purple-800">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
+          <CardContent className="p-2 sm:p-4 sm:pt-6">
+            <div className="flex sm:hidden items-center gap-2.5">
+              <div className="p-1.5 rounded-md bg-purple-100 dark:bg-purple-900/50 flex-shrink-0">
+                <FunnelSimple className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] font-medium text-muted-foreground truncate leading-tight">
+                  Categorías
+                </p>
+                <p className="text-lg font-bold leading-none mt-0.5">{categories.length}</p>
+              </div>
+            </div>
+            <div className="hidden sm:flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Categorías</p>
                 <p className="text-2xl font-bold mt-1">{categories.length}</p>
@@ -240,8 +264,19 @@ export function CourseCatalog({ onCourseEnrolled }: CourseCatalogProps) {
         </Card>
 
         <Card className="bg-green-50/80 dark:bg-green-950/30 border-green-200/60 dark:border-green-800">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
+          <CardContent className="p-2 sm:p-4 sm:pt-6">
+            <div className="flex sm:hidden items-center gap-2.5">
+              <div className="p-1.5 rounded-md bg-green-100 dark:bg-green-900/50 flex-shrink-0">
+                <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] font-medium text-muted-foreground truncate leading-tight">
+                  Resultados
+                </p>
+                <p className="text-lg font-bold leading-none mt-0.5">{filteredCourses.length}</p>
+              </div>
+            </div>
+            <div className="hidden sm:flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Resultados</p>
                 <p className="text-2xl font-bold mt-1">{filteredCourses.length}</p>
@@ -256,7 +291,7 @@ export function CourseCatalog({ onCourseEnrolled }: CourseCatalogProps) {
 
       {/* Search and Filters */}
       <Card>
-        <CardContent className="pt-6 space-y-4">
+        <CardContent className="p-4 sm:p-6 pt-4 sm:pt-6 space-y-3 sm:space-y-4">
           {/* Search */}
           <div className="relative">
             <MagnifyingGlass 
@@ -267,14 +302,14 @@ export function CourseCatalog({ onCourseEnrolled }: CourseCatalogProps) {
               placeholder="Buscar por título, descripción, instructor..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
+              className="pl-10 h-12 touch-target"
             />
           </div>
 
           {/* Filters */}
-          <div className="flex gap-4">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="w-[200px]">
+              <SelectTrigger className="w-full sm:w-[200px] h-12 touch-target">
                 <SelectValue placeholder="Todas las categorías" />
               </SelectTrigger>
               <SelectContent>
@@ -286,7 +321,7 @@ export function CourseCatalog({ onCourseEnrolled }: CourseCatalogProps) {
             </Select>
 
             <Select value={levelFilter} onValueChange={setLevelFilter}>
-              <SelectTrigger className="w-[200px]">
+              <SelectTrigger className="w-full sm:w-[200px] h-12 touch-target">
                 <SelectValue placeholder="Todos los niveles" />
               </SelectTrigger>
               <SelectContent>
@@ -303,12 +338,13 @@ export function CourseCatalog({ onCourseEnrolled }: CourseCatalogProps) {
       {/* Courses Grid */}
       {filteredCourses.length === 0 ? (
         <Card>
-          <CardContent className="py-16 text-center">
-            <BookOpen size={64} className="mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-xl font-semibold mb-2">
+          <CardContent className="py-12 sm:py-16 text-center p-4 sm:p-6">
+            <BookOpen size={48} className="sm:hidden mx-auto text-muted-foreground mb-4" />
+            <BookOpen size={64} className="hidden sm:block mx-auto text-muted-foreground mb-4" />
+            <h3 className="text-lg sm:text-xl font-semibold mb-2">
               {courses.length === 0 ? 'No hay cursos disponibles' : 'No se encontraron cursos'}
             </h3>
-            <p className="text-muted-foreground">
+            <p className="text-sm sm:text-base text-muted-foreground">
               {searchQuery || categoryFilter !== 'all' || levelFilter !== 'all'
                 ? 'Intenta ajustar los filtros de búsqueda'
                 : 'Pronto habrá nuevos cursos disponibles'}
@@ -316,7 +352,7 @@ export function CourseCatalog({ onCourseEnrolled }: CourseCatalogProps) {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-3 sm:gap-4 md:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
           {filteredCourses.map((course) => {
             const isEnrolled = enrolledCourseIds.has(course.id)
             const isEnrolling = enrolling === course.id
@@ -324,7 +360,7 @@ export function CourseCatalog({ onCourseEnrolled }: CourseCatalogProps) {
             return (
               <Card key={course.id} className="h-full flex flex-col hover:shadow-lg transition-shadow relative">
                 {course.coverImage && (
-                  <div className="h-48 overflow-hidden rounded-t-lg">
+                  <div className="h-40 sm:h-48 overflow-hidden rounded-t-lg">
                     <img 
                       src={course.coverImage} 
                       alt={course.title}
@@ -335,65 +371,66 @@ export function CourseCatalog({ onCourseEnrolled }: CourseCatalogProps) {
                 
                 {isEnrolled && (
                   <Badge 
-                    className="absolute top-4 right-4 bg-emerald-100 text-emerald-700 border-emerald-200"
+                    className="absolute top-2 right-2 sm:top-4 sm:right-4 bg-emerald-100 text-emerald-700 border-emerald-200 text-xs"
                     variant="outline"
                   >
                     Inscrito
                   </Badge>
                 )}
                 
-                <CardHeader>
-                  <CardTitle className="text-xl line-clamp-2">
+                <CardHeader className="p-4 sm:p-6">
+                  <CardTitle className="text-lg sm:text-xl line-clamp-2">
                     {course.title}
                   </CardTitle>
-                  <CardDescription className="line-clamp-3">
+                  <CardDescription className="line-clamp-2 sm:line-clamp-3 text-sm">
                     {course.description}
                   </CardDescription>
                 </CardHeader>
 
-                <CardContent className="flex-1 space-y-3">
-                  <div className="flex flex-wrap gap-2">
+                <CardContent className="flex-1 space-y-2 sm:space-y-3 p-4 sm:p-6 pt-0">
+                  <div className="flex flex-wrap gap-1.5 sm:gap-2">
                     {course.category && (
-                      <Badge variant="outline">{course.category}</Badge>
+                      <Badge variant="outline" className="text-xs">{course.category}</Badge>
                     )}
                     {course.level && (
-                      <Badge variant="secondary">{course.level}</Badge>
+                      <Badge variant="secondary" className="text-xs">{course.level}</Badge>
                     )}
                   </div>
 
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-3 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
                     {course.duration && (
                       <div className="flex items-center gap-1">
-                        <Clock size={16} />
+                        <Clock size={14} className="sm:w-4 sm:h-4" />
                         <span>{course.duration}h</span>
                       </div>
                     )}
                     {course.totalXP && (
                       <div className="flex items-center gap-1">
-                        <Star size={16} weight="fill" className="text-yellow-500" />
+                        <Star size={14} weight="fill" className="sm:w-4 sm:h-4 text-yellow-500" />
                         <span>{course.totalXP} XP</span>
                       </div>
                     )}
                   </div>
 
                   {course.instructorName && (
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-xs sm:text-sm text-muted-foreground line-clamp-1">
                       Instructor: {course.instructorName}
                     </p>
                   )}
                 </CardContent>
 
-                <CardFooter>
+                <CardFooter className="p-4 sm:p-6 pt-0">
                   <Button 
                     onClick={() => handleEnroll(course)} 
-                    className="w-full gap-2"
+                    className="w-full gap-2 touch-target h-12"
                     disabled={isEnrolling || isEnrolled}
                     variant={isEnrolled ? 'outline' : 'default'}
                   >
                     {isEnrolled ? (
                       <>
                         <CheckCircle size={18} weight="fill" />
-                        Inscrito
+                        <span className="hidden sm:inline">Inscrito</span>
+                        <span className="sm:hidden">Inscrito</span>
                       </>
                     ) : isEnrolling ? (
                       <>

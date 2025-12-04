@@ -86,7 +86,7 @@ export function RecommendedCourses({
           <div className="h-6 bg-muted rounded w-1/3 animate-pulse"></div>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-3 sm:gap-4 grid-cols-1 md:grid-cols-2">
             {[1, 2, 3, 4].map((i) => (
               <div key={i} className="h-32 bg-muted rounded animate-pulse"></div>
             ))}
@@ -120,27 +120,28 @@ export function RecommendedCourses({
 
   return (
     <Card className="border-2 overflow-hidden">
-      <CardHeader className="bg-gradient-to-r from-primary/5 to-primary/10">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Star className="h-5 w-5 text-primary" />
-            <CardTitle>Recomendados para Ti</CardTitle>
+      <CardHeader className="bg-gradient-to-r from-primary/5 to-primary/10 p-3 sm:p-6">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <Star className="h-4 w-4 sm:h-5 sm:w-5 text-primary flex-shrink-0" />
+            <CardTitle className="text-sm sm:text-base truncate">Recomendados para Ti</CardTitle>
           </div>
           {courses.length > recommended.length && (
             <Button
               variant="ghost"
               size="sm"
               onClick={() => navigate('/catalog')}
-              className="gap-1"
+              className="gap-1 flex-shrink-0 text-xs sm:text-sm touch-target"
             >
-              Ver todos
-              <ChevronRight className="h-4 w-4" />
+              <span className="hidden sm:inline">Ver todos</span>
+              <span className="sm:hidden">Todos</span>
+              <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4" />
             </Button>
           )}
         </div>
       </CardHeader>
-      <CardContent className="pt-6">
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <CardContent className="pt-3 sm:pt-6 p-3 sm:p-6">
+        <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
           {recommended.map((course, index) => (
             <motion.div
               key={course.id}
@@ -150,13 +151,13 @@ export function RecommendedCourses({
             >
               <div
                 className={cn(
-                  "group relative p-4 rounded-lg border-2 border-border/50",
-                  "hover:border-primary/50 hover:shadow-md transition-all cursor-pointer",
+                  "group relative p-3 sm:p-4 rounded-lg border-2 border-border/50",
+                  "hover:border-primary/50 hover:shadow-md transition-all cursor-pointer touch-target",
                   "bg-card"
                 )}
                 onClick={() => navigate(`/courses/${course.id}`)}
               >
-                <div className="space-y-3">
+                <div className="space-y-2 sm:space-y-3">
                   {/* Header */}
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">

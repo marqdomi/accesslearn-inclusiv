@@ -187,21 +187,21 @@ export function CategoryManagement() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold">Gestión de Categorías</h2>
-          <p className="text-muted-foreground mt-1">
+          <h2 className="text-xl sm:text-2xl font-bold">Gestión de Categorías</h2>
+          <p className="text-sm sm:text-base text-muted-foreground mt-1">
             Administra las categorías de cursos disponibles en tu organización
           </p>
         </div>
-        <Button onClick={() => setIsCreating(true)} className="gap-2">
+        <Button onClick={() => setIsCreating(true)} className="gap-2 w-full sm:w-auto touch-target">
           <Plus size={18} />
           Nueva Categoría
         </Button>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-3">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -249,88 +249,146 @@ export function CategoryManagement() {
 
       {/* Categories Table */}
       <Card>
-        <CardHeader>
-          <CardTitle>Categorías</CardTitle>
-          <CardDescription>
+        <CardHeader className="p-4 sm:p-6">
+          <CardTitle className="text-lg sm:text-xl">Categorías</CardTitle>
+          <CardDescription className="text-sm">
             Lista de todas las categorías disponibles. Las categorías en uso no pueden eliminarse.
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-4 sm:p-6">
           {categories.length === 0 ? (
             <div className="text-center py-8">
               <Tag className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
               <p className="text-muted-foreground">No hay categorías creadas aún</p>
-              <Button onClick={() => setIsCreating(true)} className="mt-4 gap-2">
+              <Button onClick={() => setIsCreating(true)} className="mt-4 gap-2 touch-target">
                 <Plus size={18} />
                 Crear Primera Categoría
               </Button>
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nombre</TableHead>
-                  <TableHead>Cursos</TableHead>
-                  <TableHead>Estado</TableHead>
-                  <TableHead className="text-right">Acciones</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+            <>
+              {/* Desktop: Table */}
+              <div className="hidden md:block overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Nombre</TableHead>
+                      <TableHead>Cursos</TableHead>
+                      <TableHead>Estado</TableHead>
+                      <TableHead className="text-right">Acciones</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {categories.map((category) => (
+                      <TableRow key={category.id}>
+                        <TableCell className="font-medium">{category.name}</TableCell>
+                        <TableCell>
+                          <Badge variant="secondary">{category.courseCount}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          {category.courseCount > 0 ? (
+                            <Badge variant="default" className="bg-green-100 text-green-800">
+                              <CheckCircle className="h-3 w-3 mr-1" />
+                              En uso
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline">Disponible</Badge>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setEditingCategory(category)
+                                setEditCategoryName(category.name)
+                              }}
+                              disabled={category.courseCount > 0}
+                              title={category.courseCount > 0 ? 'No se puede editar categorías en uso' : 'Editar categoría'}
+                              className="touch-target"
+                            >
+                              <Edit2 className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setDeletingCategory(category)}
+                              disabled={category.courseCount > 0}
+                              title={category.courseCount > 0 ? 'No se puede eliminar categorías en uso' : 'Eliminar categoría'}
+                              className="touch-target"
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Mobile: Cards */}
+              <div className="md:hidden space-y-3">
                 {categories.map((category) => (
-                  <TableRow key={category.id}>
-                    <TableCell className="font-medium">{category.name}</TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">{category.courseCount}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      {category.courseCount > 0 ? (
-                        <Badge variant="default" className="bg-green-100 text-green-800">
-                          <CheckCircle className="h-3 w-3 mr-1" />
-                          En uso
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline">Disponible</Badge>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setEditingCategory(category)
-                            setEditCategoryName(category.name)
-                          }}
-                          disabled={category.courseCount > 0}
-                          title={category.courseCount > 0 ? 'No se puede editar categorías en uso' : 'Editar categoría'}
-                        >
-                          <Edit2 className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setDeletingCategory(category)}
-                          disabled={category.courseCount > 0}
-                          title={category.courseCount > 0 ? 'No se puede eliminar categorías en uso' : 'Eliminar categoría'}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
+                  <Card key={category.id} className="p-4">
+                    <div className="flex items-start justify-between gap-3 mb-3">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-base mb-2">{category.name}</h3>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Badge variant="secondary" className="text-xs">
+                            {category.courseCount} cursos
+                          </Badge>
+                          {category.courseCount > 0 ? (
+                            <Badge variant="default" className="bg-green-100 text-green-800 text-xs">
+                              <CheckCircle className="h-3 w-3 mr-1" />
+                              En uso
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-xs">Disponible</Badge>
+                          )}
+                        </div>
                       </div>
-                    </TableCell>
-                  </TableRow>
+                    </div>
+                    <div className="flex items-center justify-end gap-2 pt-3 border-t">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setEditingCategory(category)
+                          setEditCategoryName(category.name)
+                        }}
+                        disabled={category.courseCount > 0}
+                        className="touch-target flex-1"
+                      >
+                        <Edit2 className="h-4 w-4 mr-2" />
+                        Editar
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setDeletingCategory(category)}
+                        disabled={category.courseCount > 0}
+                        className="touch-target flex-1 text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Eliminar
+                      </Button>
+                    </div>
+                  </Card>
                 ))}
-              </TableBody>
-            </Table>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
 
       {/* Create Category Dialog */}
       <Dialog open={isCreating} onOpenChange={setIsCreating}>
-        <DialogContent>
+        <DialogContent className="max-w-[95vw] sm:max-w-md p-4 sm:p-6">
           <DialogHeader>
-            <DialogTitle>Nueva Categoría</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-lg sm:text-xl">Nueva Categoría</DialogTitle>
+            <DialogDescription className="text-sm">
               Crea una nueva categoría para organizar tus cursos
             </DialogDescription>
           </DialogHeader>
@@ -347,14 +405,15 @@ export function CategoryManagement() {
                   }
                 }}
                 autoFocus
+                className="h-12 touch-target"
               />
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsCreating(false)}>
+          <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setIsCreating(false)} className="w-full sm:w-auto touch-target">
               Cancelar
             </Button>
-            <Button onClick={handleCreateCategory} disabled={!newCategoryName.trim()}>
+            <Button onClick={handleCreateCategory} disabled={!newCategoryName.trim()} className="w-full sm:w-auto touch-target">
               Crear
             </Button>
           </DialogFooter>
@@ -363,10 +422,10 @@ export function CategoryManagement() {
 
       {/* Edit Category Dialog */}
       <Dialog open={!!editingCategory} onOpenChange={(open) => !open && setEditingCategory(null)}>
-        <DialogContent>
+        <DialogContent className="max-w-[95vw] sm:max-w-md p-4 sm:p-6">
           <DialogHeader>
-            <DialogTitle>Editar Categoría</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-lg sm:text-xl">Editar Categoría</DialogTitle>
+            <DialogDescription className="text-sm">
               Modifica el nombre de la categoría
             </DialogDescription>
           </DialogHeader>
@@ -383,6 +442,7 @@ export function CategoryManagement() {
                   }
                 }}
                 autoFocus
+                className="h-12 touch-target"
               />
             </div>
             <Alert>
@@ -429,14 +489,15 @@ export function CategoryManagement() {
               </Alert>
             </div>
           )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDeletingCategory(null)}>
+          <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setDeletingCategory(null)} className="w-full sm:w-auto touch-target">
               Cancelar
             </Button>
             <Button
               variant="destructive"
               onClick={handleDeleteCategory}
               disabled={deletingCategory ? coursesByCategory[deletingCategory.name] > 0 : false}
+              className="w-full sm:w-auto touch-target"
             >
               Eliminar
             </Button>

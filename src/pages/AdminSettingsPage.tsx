@@ -12,7 +12,8 @@ import {
   Tag,
   ChevronRight,
   Info,
-  Users
+  Users,
+  Accessibility
 } from 'lucide-react'
 
 interface SettingSection {
@@ -71,6 +72,15 @@ export function AdminSettingsPage() {
       icon: Tag,
       onClick: () => {
         navigate('/admin/settings/categories')
+      }
+    },
+    {
+      id: 'accessibility',
+      title: 'Accesibilidad e Inclusión',
+      description: 'Gestiona y personaliza los perfiles de accesibilidad para tu organización',
+      icon: Accessibility,
+      onClick: () => {
+        navigate('/admin/settings/accessibility')
       }
     },
     {

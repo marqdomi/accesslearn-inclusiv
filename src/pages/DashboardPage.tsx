@@ -320,7 +320,7 @@ export function DashboardPage() {
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background">
       <AppNavbar userXP={stats.totalXP} />
 
-      <main className="container mx-auto px-4 py-6 md:py-8">
+      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
         {/* Welcome Section - More Compact */}
         <div className="mb-6 md:mb-8">
           <h1 className="text-2xl md:text-3xl font-bold mb-1">
@@ -340,8 +340,8 @@ export function DashboardPage() {
           />
         </div>
 
-        {/* Stats Grid - More Compact */}
-        <div className="grid gap-3 md:gap-4 grid-cols-2 lg:grid-cols-4 mb-6 md:mb-8">
+        {/* Stats Grid - More Compact - 2 columns on mobile for better space usage */}
+        <div className="grid gap-2 sm:gap-3 md:gap-4 grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 mb-6 md:mb-8">
           <StatsCard
             title="Total de Cursos"
             value={stats.totalCourses}

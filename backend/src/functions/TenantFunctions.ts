@@ -1,5 +1,6 @@
 import { getContainer } from "../services/cosmosdb.service"
 import { Tenant, CreateTenantRequest } from "../models/Tenant"
+import { seedAccessibilityProfiles } from "../scripts/seed-accessibility-profiles"
 
 // Plan limits
 const PLAN_LIMITS = {
@@ -69,6 +70,15 @@ export async function createTenant(
 
   if (!resource) {
     throw new Error("Failed to create tenant")
+  }
+
+  // Seed default accessibility profiles for the new tenant
+  try {
+    await seedAccessibilityProfiles(resource.id)
+    console.log(`[Tenant] Default accessibility profiles created for tenant: ${resource.id}`)
+  } catch (error: any) {
+    // Log error but don't fail tenant creation if seed fails
+    console.error(`[Tenant] Error seeding accessibility profiles for tenant ${resource.id}:`, error.message)
   }
 
   return resource as Tenant

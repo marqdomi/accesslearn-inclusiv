@@ -55,20 +55,22 @@ export function CourseCard({ course, progress, onSelect }: CourseCardProps) {
         role="article"
         aria-labelledby={`course-title-${course.id}`}
       >
-        <div className="flex flex-1 flex-col gap-4 p-6">
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <span className="text-3xl" role="img" aria-label="Course icon">
+        <div className="flex flex-1 flex-col gap-3 sm:gap-4 p-4 sm:p-6">
+          <div className="flex items-start justify-between gap-2 sm:gap-3">
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              <span className="text-2xl sm:text-3xl flex-shrink-0" role="img" aria-label="Course icon">
                 {course.coverImage}
               </span>
-              <h3 id={`course-title-${course.id}`} className="text-xl font-bold">
+              <h3 id={`course-title-${course.id}`} className="text-lg sm:text-xl font-bold line-clamp-2">
                 {course.title}
               </h3>
             </div>
+            <div className="flex-shrink-0">
             {getStatusBadge()}
+            </div>
           </div>
 
-          <p className="flex-1 text-base text-muted-foreground line-clamp-2">{course.description}</p>
+          <p className="flex-1 text-sm sm:text-base text-muted-foreground line-clamp-2 sm:line-clamp-3">{course.description}</p>
 
           <div className="space-y-3">
             <div className="flex flex-wrap items-center gap-3 text-sm">
@@ -99,7 +101,7 @@ export function CourseCard({ course, progress, onSelect }: CourseCardProps) {
 
           <Button
             onClick={onSelect}
-            className="mt-2 w-full bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 transition-all"
+            className="mt-2 w-full bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 transition-all touch-target"
             size="lg"
           >
             {!progress || progress.status === 'not-started' ? '🚀 Start Quest' : '⚡ Continue Quest'}

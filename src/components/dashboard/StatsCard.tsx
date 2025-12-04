@@ -61,8 +61,17 @@ export function StatsCard({
   if (loading) {
     return (
       <Card className={cn("border", colors.border)}>
-        <CardContent className="p-4">
-          <div className="animate-pulse space-y-3">
+        <CardContent className="p-2 sm:p-4">
+          {/* Mobile skeleton */}
+          <div className="flex sm:hidden items-center gap-2.5">
+            <div className="h-7 w-7 bg-muted rounded-md animate-pulse"></div>
+            <div className="flex-1 space-y-1.5">
+              <div className="h-2.5 bg-muted rounded w-2/3 animate-pulse"></div>
+              <div className="h-5 bg-muted rounded w-1/2 animate-pulse"></div>
+            </div>
+          </div>
+          {/* Desktop skeleton */}
+          <div className="hidden sm:block animate-pulse space-y-3">
             <div className="h-4 bg-muted rounded w-2/3"></div>
             <div className="h-8 bg-muted rounded w-1/2"></div>
           </div>
@@ -90,8 +99,30 @@ export function StatsCard({
         colors.border,
         colors.bg
       )}>
-        <CardContent className="p-4">
-          <div className="flex items-start justify-between">
+        <CardContent className="p-2 sm:p-4">
+          {/* Mobile: Compact horizontal layout */}
+          <div className="flex sm:hidden items-center gap-2.5">
+            <div className={cn("p-1.5 rounded-md flex-shrink-0", colors.iconBg)}>
+              <Icon className={cn("h-4 w-4", colors.icon)} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] font-medium text-muted-foreground truncate leading-tight">
+                {title}
+              </p>
+              <div className="flex items-baseline gap-1.5 mt-0.5">
+                <p className="text-lg font-bold leading-none">{value}</p>
+                {trend && TrendIcon && (
+                  <div className={cn("flex items-center gap-0.5 text-[10px]", trendColor)}>
+                    <TrendIcon className="h-2.5 w-2.5" />
+                    <span>{Math.abs(trend.value)}%</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Desktop: Original vertical layout */}
+          <div className="hidden sm:flex items-start justify-between">
             <div className="flex-1 min-w-0">
               <p className="text-xs font-medium text-muted-foreground mb-1.5 truncate">
                 {title}

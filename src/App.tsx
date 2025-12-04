@@ -24,6 +24,7 @@ import { NotificationSettingsPage } from '@/pages/NotificationSettingsPage'
 import { SecuritySettingsPage } from '@/pages/SecuritySettingsPage'
 import { DataSettingsPage } from '@/pages/DataSettingsPage'
 import { CategoryManagementPage } from '@/pages/CategoryManagementPage'
+import { AccessibilitySettingsPage } from '@/pages/AccessibilitySettingsPage'
 import { AdvancedAccessibilityPanel } from '@/components/accessibility/AdvancedAccessibilityPanel'
 import { AdminAnalyticsPage } from '@/pages/AdminAnalyticsPage'
 import { ProfilePage } from '@/pages/ProfilePage'
@@ -209,6 +210,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <CategoryManagementPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/settings/accessibility"
+        element={
+          <ProtectedRoute>
+            <AccessibilitySettingsPage />
           </ProtectedRoute>
         }
       />

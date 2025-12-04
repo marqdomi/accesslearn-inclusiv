@@ -131,33 +131,35 @@ export function MentorDirectoryPage() {
   const specialties = getAllSpecialties()
 
   return (
-    <div className="container mx-auto px-4 py-8 space-y-8">
+    <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 space-y-4 sm:space-y-8">
       {/* Header */}
-      <div className="mb-6">
+      <div className="mb-4 sm:mb-6">
         <Button
           variant="ghost"
           onClick={() => navigate('/dashboard')}
-          className="gap-2 mb-4"
+          className="gap-2 mb-3 sm:mb-4 touch-target"
         >
           <ArrowLeft size={18} />
-          Volver al Dashboard
+          <span className="hidden sm:inline">Volver al Dashboard</span>
+          <span className="sm:hidden">Volver</span>
         </Button>
       </div>
 
-      <div className="flex items-center justify-between mb-6">
-        <div className="space-y-2">
-          <h1 className="text-3xl font-bold">Directorio de Mentores</h1>
-          <p className="text-muted-foreground">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-6 mb-4 sm:mb-6">
+        <div className="space-y-1 sm:space-y-2 flex-1 min-w-0">
+          <h1 className="text-2xl sm:text-3xl font-bold">Directorio de Mentores</h1>
+          <p className="text-sm sm:text-base text-muted-foreground line-clamp-2">
             Encuentra el mentor perfecto para tu desarrollo profesional
           </p>
         </div>
         <Button
           variant="outline"
           onClick={() => navigate('/my-mentorships')}
-          className="gap-2 relative"
+          className="gap-2 relative w-full sm:w-auto touch-target h-12"
         >
           <ClipboardList className="h-4 w-4" />
-          Mis Solicitudes
+          <span className="hidden sm:inline">Mis Solicitudes</span>
+          <span className="sm:hidden">Solicitudes</span>
           {notificationCount > 0 && (
             <Badge 
               variant="default" 
@@ -171,8 +173,8 @@ export function MentorDirectoryPage() {
 
       {/* Search and Filters */}
       <Card>
-        <div className="p-6 space-y-4">
-          <div className="flex flex-col md:flex-row gap-4">
+        <div className="p-4 sm:p-6 space-y-3 sm:space-y-4">
+          <div className="flex flex-col md:flex-row gap-3 sm:gap-4">
             {/* Search Bar */}
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -180,7 +182,7 @@ export function MentorDirectoryPage() {
                 placeholder="Buscar por nombre, especialidad o tema..."
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                className="pl-10"
+                className="pl-10 h-12 touch-target"
               />
             </div>
 
@@ -188,7 +190,7 @@ export function MentorDirectoryPage() {
             <select
               value={selectedSpecialty}
               onChange={e => setSelectedSpecialty(e.target.value)}
-              className="px-4 py-2 rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground w-[200px]"
+              className="px-4 py-3 h-12 rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground w-full md:w-[200px] touch-target"
               aria-label="Filtrar por especialidad"
               title="Filtrar por especialidad"
             >
@@ -202,7 +204,7 @@ export function MentorDirectoryPage() {
           </div>
 
           {/* Results Count */}
-          <div className="text-sm text-muted-foreground">
+          <div className="text-xs sm:text-sm text-muted-foreground">
             {filteredMentors.length} {filteredMentors.length === 1 ? 'mentor encontrado' : 'mentores encontrados'}
           </div>
         </div>
@@ -210,48 +212,48 @@ export function MentorDirectoryPage() {
 
       {/* Mentors Grid */}
       {filteredMentors.length === 0 ? (
-        <Card className="p-12 text-center">
-          <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-lg font-semibold mb-2">
+        <Card className="p-8 sm:p-12 text-center">
+          <Users className="h-10 w-10 sm:h-12 sm:w-12 text-muted-foreground mx-auto mb-4" />
+          <h3 className="text-base sm:text-lg font-semibold mb-2">
             No se encontraron mentores
           </h3>
-          <p className="text-muted-foreground">
+          <p className="text-sm sm:text-base text-muted-foreground">
             Intenta ajustar los filtros de búsqueda
           </p>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {filteredMentors.map((mentor) => (
-            <Card key={mentor.userId} className="p-6 h-full flex flex-col hover:shadow-lg transition-shadow">
+            <Card key={mentor.userId} className="p-4 sm:p-6 h-full flex flex-col hover:shadow-lg transition-shadow">
                 {/* Header with Avatar */}
-                <div className="flex items-start gap-4 mb-4">
+                <div className="flex items-start gap-3 sm:gap-4 mb-3 sm:mb-4">
                   <div className="relative shrink-0">
                     {mentor.avatar ? (
                       <img
                         src={mentor.avatar}
                         alt={mentor.name}
-                        className="w-16 h-16 rounded-full"
+                        className="w-12 h-12 sm:w-16 sm:h-16 rounded-full"
                       />
                     ) : (
-                      <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                        <span className="text-2xl">👨‍🏫</span>
+                      <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                        <span className="text-xl sm:text-2xl">👨‍🏫</span>
                       </div>
                     )}
                     {mentor.isAvailable && (
-                      <div className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 rounded-full border-2 border-background"></div>
+                      <div className="absolute bottom-0 right-0 w-3 h-3 sm:w-4 sm:h-4 bg-green-500 rounded-full border-2 border-background"></div>
                     )}
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-lg truncate">{mentor.name}</h3>
+                    <h3 className="font-bold text-base sm:text-lg truncate">{mentor.name}</h3>
                     <div className="flex items-center gap-2 mt-1">
                       <div className="flex items-center gap-1">
-                        <Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
-                        <span className="text-sm font-semibold">
+                        <Star className="h-3 w-3 sm:h-4 sm:w-4 fill-yellow-500 text-yellow-500" />
+                        <span className="text-xs sm:text-sm font-semibold">
                           {mentor.rating.toFixed(1)}
                         </span>
                       </div>
-                      <span className="text-xs text-muted-foreground">
+                      <span className="text-[10px] sm:text-xs text-muted-foreground">
                         ({mentor.totalSessions} sesiones)
                       </span>
                     </div>
@@ -259,55 +261,56 @@ export function MentorDirectoryPage() {
                 </div>
 
                 {/* Specialties */}
-                <div className="flex flex-wrap gap-2 mb-4">
+                <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-3 sm:mb-4">
                   {mentor.specialties.slice(0, 4).map(specialty => (
-                    <Badge key={specialty} variant="secondary" className="text-xs">
+                    <Badge key={specialty} variant="secondary" className="text-[10px] sm:text-xs">
                       {specialty}
                     </Badge>
                   ))}
                   {mentor.specialties.length > 4 && (
-                    <Badge variant="outline" className="text-xs">
+                    <Badge variant="outline" className="text-[10px] sm:text-xs">
                       +{mentor.specialties.length - 4}
                     </Badge>
                   )}
                 </div>
 
                 {/* Bio */}
-                <p className="text-sm text-muted-foreground mb-4 flex-1 line-clamp-3">
+                <p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4 flex-1 line-clamp-3">
                   {mentor.bio}
                 </p>
 
                 {/* Stats */}
-                <div className="grid grid-cols-2 gap-4 mb-4 py-4 border-y">
+                <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-3 sm:mb-4 py-3 sm:py-4 border-y">
                   <div className="text-center">
                     <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1">
-                      <Users className="h-4 w-4" />
+                      <Users className="h-3 w-3 sm:h-4 sm:w-4" />
                     </div>
-                    <div className="text-lg font-bold">{mentor.totalMentees}</div>
-                    <div className="text-xs text-muted-foreground">Mentorados</div>
+                    <div className="text-base sm:text-lg font-bold">{mentor.totalMentees}</div>
+                    <div className="text-[10px] sm:text-xs text-muted-foreground">Mentorados</div>
                   </div>
                   <div className="text-center">
                     <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1">
-                      <TrendingUp className="h-4 w-4" />
+                      <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4" />
                     </div>
-                    <div className="text-lg font-bold">{mentor.totalSessions}</div>
-                    <div className="text-xs text-muted-foreground">Sesiones</div>
+                    <div className="text-base sm:text-lg font-bold">{mentor.totalSessions}</div>
+                    <div className="text-[10px] sm:text-xs text-muted-foreground">Sesiones</div>
                   </div>
                 </div>
 
                 {/* Action Button */}
                 <Button
-                  className="w-full gap-2"
+                  className="w-full gap-2 touch-target h-12"
                   onClick={() => handleRequestMentorship(mentor)}
                   disabled={!mentor.isAvailable}
                 >
                   <MessageSquare className="h-4 w-4" />
-                  {mentor.isAvailable ? 'Solicitar Mentoría' : 'No disponible'}
+                  <span className="hidden sm:inline">{mentor.isAvailable ? 'Solicitar Mentoría' : 'No disponible'}</span>
+                  <span className="sm:hidden">{mentor.isAvailable ? 'Solicitar' : 'No disponible'}</span>
                 </Button>
 
                 {/* Availability hint */}
                 {mentor.isAvailable && Object.keys(mentor.availability).length > 0 && (
-                  <div className="mt-2 text-xs text-center text-muted-foreground flex items-center justify-center gap-1">
+                  <div className="mt-2 text-[10px] sm:text-xs text-center text-muted-foreground flex items-center justify-center gap-1">
                     <Calendar className="h-3 w-3" />
                     Disponible {Object.keys(mentor.availability).length} días/semana
                   </div>
@@ -318,14 +321,14 @@ export function MentorDirectoryPage() {
       )}
 
       {/* Info Card */}
-      <Card className="p-6 bg-primary/5 border-primary/20">
-        <div className="flex items-start gap-4">
-          <div className="p-3 rounded-full bg-primary/10">
-            <Star className="h-6 w-6 text-primary" />
+      <Card className="p-4 sm:p-6 bg-primary/5 border-primary/20">
+        <div className="flex items-start gap-3 sm:gap-4">
+          <div className="p-2 sm:p-3 rounded-full bg-primary/10 flex-shrink-0">
+            <Star className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
           </div>
-          <div className="flex-1">
-            <h3 className="font-semibold mb-2">¿Cómo funcionan las mentorías?</h3>
-            <ul className="space-y-1 text-sm text-muted-foreground">
+          <div className="flex-1 min-w-0">
+            <h3 className="font-semibold mb-2 text-sm sm:text-base">¿Cómo funcionan las mentorías?</h3>
+            <ul className="space-y-1 text-xs sm:text-sm text-muted-foreground">
               <li>✓ Selecciona un mentor con la especialidad que necesitas</li>
               <li>✓ Solicita una mentoría explicando tu objetivo</li>
               <li>✓ El mentor revisará tu solicitud y programará una sesión</li>

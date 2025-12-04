@@ -170,14 +170,14 @@ export function AppNavbar({ userXP = 0 }: AppNavbarProps) {
   }
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container mx-auto px-4 py-2">
-        <div className="flex h-16 items-center justify-between">
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 safe-top">
+      <div className="container mx-auto px-3 sm:px-4 py-2">
+        <div className="flex h-14 sm:h-16 items-center justify-between">
           {/* Left: Logo and Tenant Name */}
-          <div className="flex items-center gap-3 min-w-0 flex-1">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
             <TenantLogo size="md" className="flex-shrink-0" />
-            <div className="min-w-0 hidden sm:block">
-              <h1 className="text-lg font-bold truncate">
+            <div className="min-w-0 hidden xs:block">
+              <h1 className="text-base sm:text-lg font-bold truncate">
                 {currentTenant?.name || 'Kaido'}
               </h1>
               <p className="text-xs text-muted-foreground hidden md:block">
@@ -408,7 +408,7 @@ export function AppNavbar({ userXP = 0 }: AppNavbarProps) {
           <div className="flex md:hidden items-center gap-2">
             <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-9 w-9">
+                <Button variant="ghost" size="icon" className="h-10 w-10 touch-target">
                   <Menu className="h-5 w-5" />
                   <span className="sr-only">Abrir menú</span>
                 </Button>

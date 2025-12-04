@@ -177,66 +177,66 @@ export function LibraryPage() {
           <ArrowLeft className="mr-2 h-4 w-4" />
           Volver al Dashboard
         </Button>
-        <h1 className="text-3xl font-bold mb-2">Mi Biblioteca</h1>
-        <p className="text-muted-foreground">
+        <h1 className="text-2xl sm:text-3xl font-bold mb-2">Mi Biblioteca</h1>
+        <p className="text-sm sm:text-base text-muted-foreground">
           Gestiona tus cursos y realiza seguimiento de tu progreso
         </p>
       </div>
 
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4 mb-6 sm:mb-8">
+        <Card className="p-3 sm:p-6">
+          <CardHeader className="pb-2 p-0">
+            <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
               Total de Cursos
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-0 pt-2">
             <div className="flex items-center gap-2">
-              <BookOpen className="h-5 w-5 text-primary" />
-              <span className="text-2xl font-bold">{library.length}</span>
+              <BookOpen className="h-4 w-4 sm:h-5 sm:w-5 text-primary flex-shrink-0" />
+              <span className="text-xl sm:text-2xl font-bold">{library.length}</span>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+        <Card className="p-3 sm:p-6">
+          <CardHeader className="pb-2 p-0">
+            <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
               XP Total Ganado
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-0 pt-2">
             <div className="flex items-center gap-2">
-              <Trophy className="h-5 w-5 text-yellow-500" />
-              <span className="text-2xl font-bold">{totalXP}</span>
+              <Trophy className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-500 flex-shrink-0" />
+              <span className="text-xl sm:text-2xl font-bold">{totalXP}</span>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+        <Card className="p-3 sm:p-6">
+          <CardHeader className="pb-2 p-0">
+            <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
               Promedio de Calificación
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-0 pt-2">
             <div className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-green-500 dark:text-green-400" />
-              <span className="text-2xl font-bold">{averageScore.toFixed(0)}%</span>
+              <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-green-500 dark:text-green-400 flex-shrink-0" />
+              <span className="text-xl sm:text-2xl font-bold">{averageScore.toFixed(0)}%</span>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+        <Card className="p-3 sm:p-6">
+          <CardHeader className="pb-2 p-0">
+            <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
               Total de Intentos
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-0 pt-2">
             <div className="flex items-center gap-2">
-              <History className="h-5 w-5 text-blue-500 dark:text-blue-400" />
-              <span className="text-2xl font-bold">{totalAttempts}</span>
+              <History className="h-4 w-4 sm:h-5 sm:w-5 text-blue-500 dark:text-blue-400 flex-shrink-0" />
+              <span className="text-xl sm:text-2xl font-bold">{totalAttempts}</span>
             </div>
           </CardContent>
         </Card>
@@ -244,14 +244,18 @@ export function LibraryPage() {
 
       {/* Tabs */}
       <Tabs defaultValue="in-progress" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="in-progress">
-            En Progreso ({inProgressItems.length})
+        <TabsList className="grid w-full grid-cols-3 h-auto">
+          <TabsTrigger value="in-progress" className="text-xs sm:text-sm py-2 sm:py-3 px-2 sm:px-4 touch-target">
+            <span className="hidden sm:inline">En Progreso</span>
+            <span className="sm:hidden">Progreso</span>
+            <span className="ml-1">({inProgressItems.length})</span>
           </TabsTrigger>
-          <TabsTrigger value="completed">
-            Completados ({completedItems.length})
+          <TabsTrigger value="completed" className="text-xs sm:text-sm py-2 sm:py-3 px-2 sm:px-4 touch-target">
+            <span className="hidden sm:inline">Completados</span>
+            <span className="sm:hidden">Complet.</span>
+            <span className="ml-1">({completedItems.length})</span>
           </TabsTrigger>
-          <TabsTrigger value="all">
+          <TabsTrigger value="all" className="text-xs sm:text-sm py-2 sm:py-3 px-2 sm:px-4 touch-target">
             Todos ({library.length})
           </TabsTrigger>
         </TabsList>
@@ -267,7 +271,7 @@ export function LibraryPage() {
               </CardContent>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {inProgressItems.map(({ course, progress }) => (
                 <CourseLibraryCard
                   key={course.id}
@@ -291,7 +295,7 @@ export function LibraryPage() {
               </CardContent>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {completedItems.map(({ course, progress }) => (
                 <CourseLibraryCard
                   key={course.id}
@@ -315,7 +319,7 @@ export function LibraryPage() {
               </CardContent>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {library.map(({ course, progress }) => (
                 <CourseLibraryCard
                   key={course.id}
@@ -366,20 +370,20 @@ function CourseLibraryCard({ course, progress, onRetake }: CourseLibraryCardProp
 
   return (
     <Card className="hover:shadow-lg transition-shadow">
-      <CardHeader>
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <CardTitle className="text-lg mb-1">{course.title}</CardTitle>
-            <CardDescription className="line-clamp-2">
+      <CardHeader className="p-4 sm:p-6">
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex-1 min-w-0">
+            <CardTitle className="text-base sm:text-lg mb-1 line-clamp-2">{course.title}</CardTitle>
+            <CardDescription className="line-clamp-2 text-xs sm:text-sm">
               {course.description}
             </CardDescription>
           </div>
           {isCompleted && (
-            <Award className="h-6 w-6 text-yellow-500 shrink-0" />
+            <Award className="h-5 w-5 sm:h-6 sm:w-6 text-yellow-500 shrink-0" />
           )}
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-3 sm:space-y-4 p-4 sm:p-6 pt-0">
         {/* Progress Bar */}
         <div className="space-y-2">
           <div className="flex items-center justify-between text-sm">
@@ -407,7 +411,7 @@ function CourseLibraryCard({ course, progress, onRetake }: CourseLibraryCardProp
         </div>
 
         {/* Actions */}
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-2">
           {!isCompleted && (
             <Button
               onClick={() => {
