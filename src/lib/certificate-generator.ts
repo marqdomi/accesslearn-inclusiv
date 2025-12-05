@@ -137,10 +137,21 @@ export async function generateCertificatePDF(
   ctx.font = `${finalTemplate.bodyFontSize}px ${finalTemplate.bodyFont}, sans-serif`
   ctx.fillText(awardedToText, canvas.width / 2, 460)
 
-  // User Name
-  ctx.fillStyle = finalTemplate.textColor
+  // User Name - Truncate if too long
+  const maxNameWidth = canvas.width - 200
+  let userName = certificate.userFullName
   ctx.font = `bold ${finalTemplate.nameFontSize}px ${finalTemplate.nameFont}, sans-serif`
-  ctx.fillText(certificate.userFullName, canvas.width / 2, 580)
+  let nameWidth = ctx.measureText(userName).width
+  if (nameWidth > maxNameWidth) {
+    // Truncate name with ellipsis
+    while (nameWidth > maxNameWidth && userName.length > 0) {
+      userName = userName.slice(0, -1)
+      nameWidth = ctx.measureText(userName + '...').width
+    }
+    userName = userName + '...'
+  }
+  ctx.fillStyle = finalTemplate.textColor
+  ctx.fillText(userName, canvas.width / 2, 580)
 
   // Completion Text - use template text or translation
   const completionText = finalTemplate.completionText || translations.completion
@@ -148,10 +159,21 @@ export async function generateCertificatePDF(
   ctx.font = `${finalTemplate.bodyFontSize}px ${finalTemplate.bodyFont}, sans-serif`
   ctx.fillText(completionText, canvas.width / 2, 680)
 
-  // Course Title
-  ctx.fillStyle = finalTemplate.accentColor
+  // Course Title - Truncate if too long
+  const maxCourseWidth = canvas.width - 200
+  let courseTitle = certificate.courseTitle
   ctx.font = `bold ${Math.floor(finalTemplate.bodyFontSize * 1.4)}px ${finalTemplate.bodyFont}, sans-serif`
-  ctx.fillText(certificate.courseTitle, canvas.width / 2, 800)
+  let courseWidth = ctx.measureText(courseTitle).width
+  if (courseWidth > maxCourseWidth) {
+    // Truncate course title with ellipsis
+    while (courseWidth > maxCourseWidth && courseTitle.length > 0) {
+      courseTitle = courseTitle.slice(0, -1)
+      courseWidth = ctx.measureText(courseTitle + '...').width
+    }
+    courseTitle = courseTitle + '...'
+  }
+  ctx.fillStyle = finalTemplate.accentColor
+  ctx.fillText(courseTitle, canvas.width / 2, 800)
 
   const date = new Date(certificate.completionDate)
   const formattedDate = date.toLocaleDateString('es-ES', {

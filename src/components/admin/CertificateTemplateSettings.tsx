@@ -123,13 +123,51 @@ export function CertificateTemplateSettings({ onBack }: CertificateTemplateSetti
   const handleSave = async () => {
     if (!template) return
 
+    // Validaciones básicas
+    if (!template.certificateTitle || template.certificateTitle.trim().length === 0) {
+      toast.error('El título del certificado es requerido')
+      return
+    }
+
+    if (!template.awardedToText || template.awardedToText.trim().length === 0) {
+      toast.error('El texto "Otorgado a" es requerido')
+      return
+    }
+
+    if (!template.completionText || template.completionText.trim().length === 0) {
+      toast.error('El texto de completación es requerido')
+      return
+    }
+
+    if (!template.signatureText || template.signatureText.trim().length === 0) {
+      toast.error('El texto de firma es requerido')
+      return
+    }
+
+    // Validar tamaños de fuente
+    if (template.titleFontSize < 40 || template.titleFontSize > 120) {
+      toast.error('El tamaño del título debe estar entre 40 y 120 píxeles')
+      return
+    }
+
+    if (template.nameFontSize < 40 || template.nameFontSize > 120) {
+      toast.error('El tamaño del nombre debe estar entre 40 y 120 píxeles')
+      return
+    }
+
+    if (template.bodyFontSize < 20 || template.bodyFontSize > 60) {
+      toast.error('El tamaño del cuerpo debe estar entre 20 y 60 píxeles')
+      return
+    }
+
     setSaving(true)
     try {
       await ApiService.updateCertificateTemplate(template)
       toast.success('Plantilla de certificados guardada exitosamente')
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving certificate template:', error)
-      toast.error('Error al guardar la plantilla')
+      const errorMessage = error?.message || 'Error desconocido'
+      toast.error(`Error al guardar la plantilla: ${errorMessage}`)
     } finally {
       setSaving(false)
     }

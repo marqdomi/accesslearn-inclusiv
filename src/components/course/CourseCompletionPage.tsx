@@ -10,7 +10,6 @@ import {
   Target, 
   BookOpen,
   Home,
-  Share2,
   Download,
   Award,
   AlertCircle,
@@ -449,31 +448,27 @@ export function CourseCompletionPage({
             Volver al Dashboard
           </Button>
 
-          <Button
-            size="lg"
-            variant="outline"
-            onClick={() => {
-              // TODO: Implement certificate download
-              alert('Función de certificado próximamente')
-            }}
-            className="gap-2"
-          >
-            <Download className="h-5 w-5" />
-            Descargar Certificado
-          </Button>
-
-          <Button
-            size="lg"
-            variant="outline"
-            onClick={() => {
-              // TODO: Implement share functionality
-              alert('Función de compartir próximamente')
-            }}
-            className="gap-2"
-          >
-            <Share2 className="h-5 w-5" />
-            Compartir Logro
-          </Button>
+          {certificateEarned && certificate && (
+            <Button
+              size="lg"
+              variant="outline"
+              onClick={handleDownloadCertificate}
+              disabled={isDownloading}
+              className="gap-2"
+            >
+              {isDownloading ? (
+                <>
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  Generando...
+                </>
+              ) : (
+                <>
+                  <Download className="h-5 w-5" />
+                  Descargar Certificado
+                </>
+              )}
+            </Button>
+          )}
         </motion.div>
 
         {/* Next Steps */}

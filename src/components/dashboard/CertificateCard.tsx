@@ -83,8 +83,8 @@ export function CertificateCard({ certificate, companySettings, variant = 'compa
         <CardContent className="p-6">
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-start gap-4 flex-1">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br from-primary via-secondary to-accent shrink-0">
-                <CertificateIcon size={24} weight="fill" className="text-white" />
+              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 shrink-0">
+                <CertificateIcon size={24} className="text-primary" />
               </div>
               <div className="flex-1 min-w-0">
                 <h3 className="font-semibold text-lg text-foreground truncate">
@@ -119,17 +119,17 @@ export function CertificateCard({ certificate, companySettings, variant = 'compa
       animate={{ opacity: 1, y: 0 }}
       className="relative"
     >
-      <Card className="overflow-hidden border-2 border-primary/20 bg-gradient-to-br from-card via-card to-primary/5">
+      <Card className="overflow-hidden border-2 border-primary/20">
         <CardContent className="p-8">
           <div className="text-center space-y-6">
             <div className="flex justify-center">
-              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-primary via-secondary to-accent">
-                <CertificateIcon size={40} weight="fill" className="text-white" />
+              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary/10">
+                <CertificateIcon size={40} className="text-primary" />
               </div>
             </div>
             
             <div>
-              <h2 className="text-3xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent mb-2">
+              <h2 className="text-3xl font-bold text-foreground mb-2">
                 {t('certificate.title')}
               </h2>
               <p className="text-muted-foreground">{t('certificate.awardedTo')}</p>
