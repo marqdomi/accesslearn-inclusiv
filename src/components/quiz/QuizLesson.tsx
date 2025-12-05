@@ -55,6 +55,12 @@ export function QuizLesson({
   timeLimit = 0,
   passingScore = 70,
   onComplete,
+  examModeType,
+  examDuration,
+  examMinPassingScore,
+  examQuestionCount,
+  questionBank,
+  useRandomSelection,
 }: QuizLessonProps) {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
   const [lives, setLives] = useState(maxLives)
@@ -70,12 +76,33 @@ export function QuizLesson({
   const [scenarioPerfectScore, setScenarioPerfectScore] = useState(0)
   const [answeredQuestions, setAnsweredQuestions] = useState<Set<number>>(new Set())
 
-  const currentQuestion = questions[currentQuestionIndex]
-  const progress = ((currentQuestionIndex + 1) / questions.length) * 100
-  const isLastQuestion = currentQuestionIndex === questions.length - 1
-  const isScenario = currentQuestion.type === 'scenario-solver'
+  // Seleccionar preguntas efectivas: usar selección aleatoria si está habilitada, sino usar todas
+  const effectiveQuestions = useRandomSelection && questionBank && examQuestionCount
+    ? (() => {
+        // Seleccionar preguntas aleatorias del banco
+        const shuffled = [...questionBank].sort(() => Math.random() - 0.5)
+        return shuffled.slice(0, Math.min(examQuestionCount, questionBank.length))
+      })()
+    : questions
+
+  // Calcular límite de tiempo efectivo
+  const effectiveTimeLimit = examModeType === 'timed' && examDuration
+    ? examDuration * 60 // Convertir minutos a segundos
+    : timeLimit > 0
+    ? timeLimit
+    : 0
+
+  // Usar passing score del examen si está configurado, sino usar el general
+  const effectivePassingScore = examMinPassingScore !== undefined
+    ? examMinPassingScore
+    : passingScore
+
+  const currentQuestion = effectiveQuestions[currentQuestionIndex]
+  const progress = ((currentQuestionIndex + 1) / effectiveQuestions.length) * 100
+  const isLastQuestion = currentQuestionIndex === effectiveQuestions.length - 1
+  const isScenario = currentQuestion?.type === 'scenario-solver'
   // Verificar si TODAS las preguntas son scenarios (no solo la actual)
-  const allQuestionsAreScenarios = questions.every(q => q.type === 'scenario-solver')
+  const allQuestionsAreScenarios = effectiveQuestions.every(q => q.type === 'scenario-solver')
 
   // Timer effect - Solo contar tiempo si es modo timed o si showTimer está activo
   useEffect(() => {
@@ -113,6 +140,9 @@ export function QuizLesson({
   // Calcular tiempo restante si hay límite
   const timeRemaining = effectiveTimeLimit > 0 ? Math.max(0, effectiveTimeLimit - timeElapsed) : null
   const isTimeRunningOut = timeRemaining !== null && timeRemaining <= 60 && timeRemaining > 0 // Último minuto
+
+  // Determinar si se debe mostrar el timer visualmente
+  const shouldShowTimer = showTimer || examModeType === 'timed'
 
   const handleAnswer = (isCorrect: boolean, answerOrScore: any, perfectScore?: number) => {
     try {
@@ -195,11 +225,11 @@ export function QuizLesson({
 
   const finishQuiz = () => {
     const results: QuizResults = {
-      totalQuestions: questions.length,
+      totalQuestions: effectiveQuestions.length,
       correctAnswers: correctCount,
       incorrectAnswers: incorrectCount,
       totalXP: earnedXP,
-      accuracy: (correctCount / questions.length) * 100,
+      accuracy: (correctCount / effectiveQuestions.length) * 100,
       timeTaken: timeElapsed,
       isPerfectScore: correctCount === questions.length && lives === maxLives,
       usedHints: 0,
@@ -240,11 +270,11 @@ export function QuizLesson({
     // Solo usar score para scenarios cuando TODAS las preguntas son scenarios
     const calculatedAccuracy = allQuestionsAreScenarios && scenarioPerfectScore > 0
       ? (earnedXP / scenarioPerfectScore) * 100
-      : (correctCount / questions.length) * 100
+      : (correctCount / effectiveQuestions.length) * 100
     
     // Asegurar que accuracy nunca sea NaN o Infinity
     const safeAccuracy = isNaN(calculatedAccuracy) || !isFinite(calculatedAccuracy) 
-      ? (correctCount / questions.length) * 100 
+      ? (correctCount / effectiveQuestions.length) * 100 
       : Math.max(0, Math.min(100, calculatedAccuracy))
     
     // Calcular XP: solo aplicar retry penalty si NO es un quiz completamente de scenarios
@@ -255,7 +285,7 @@ export function QuizLesson({
     return (
       <QuizResultsPage
         results={{
-          totalQuestions: questions.length,
+          totalQuestions: effectiveQuestions.length,
           correctAnswers: correctCount,
           incorrectAnswers: incorrectCount,
           totalXP: calculatedXP,
@@ -263,7 +293,7 @@ export function QuizLesson({
           timeTaken: allQuestionsAreScenarios ? 0 : timeElapsed,
           isPerfectScore: allQuestionsAreScenarios
             ? earnedXP === scenarioPerfectScore && scenarioPerfectScore > 0
-            : correctCount === questions.length && lives === maxLives,
+            : correctCount === effectiveQuestions.length && lives === maxLives,
           usedHints: 0,
           livesRemaining: allQuestionsAreScenarios ? maxLives : lives,
           combo: allQuestionsAreScenarios ? 0 : maxCombo,
@@ -296,7 +326,7 @@ export function QuizLesson({
             <div>
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-medium">
-                  Pregunta {currentQuestionIndex + 1} de {questions.length}
+                  Pregunta {currentQuestionIndex + 1} de {effectiveQuestions.length}
                 </span>
                 <span className="text-sm text-muted-foreground">
                   {Math.round(progress)}%
@@ -484,7 +514,7 @@ export function QuizLesson({
                 <div className="text-6xl">💔</div>
                 <h2 className="text-2xl font-bold">Se acabaron las vidas</h2>
                 <p className="text-muted-foreground">
-                  Completaste {correctCount} de {questions.length} preguntas correctamente.
+                  Completaste {correctCount} de {effectiveQuestions.length} preguntas correctamente.
                 </p>
               </Card>
             </motion.div>
