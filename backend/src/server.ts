@@ -2609,7 +2609,7 @@ app.get('/api/company-settings', requireAuth, async (req, res) => {
 });
 
 // PUT /api/company-settings - Update company settings
-app.put('/api/company-settings', requireAuth, requirePermission('admin'), async (req, res) => {
+app.put('/api/company-settings', requireAuth, requirePermission('settings:branding'), async (req, res) => {
   try {
     const user = (req as any).user;
     const { companyName, companyLogo } = req.body;
@@ -2651,7 +2651,7 @@ app.get('/api/certificate-templates', requireAuth, async (req, res) => {
 });
 
 // PUT /api/certificate-templates - Update certificate template
-app.put('/api/certificate-templates', requireAuth, requirePermission('admin'), async (req, res) => {
+app.put('/api/certificate-templates', requireAuth, requirePermission('settings:write'), async (req, res) => {
   try {
     const user = (req as any).user;
     const templateData = req.body;

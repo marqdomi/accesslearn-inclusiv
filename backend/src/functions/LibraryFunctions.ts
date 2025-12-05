@@ -317,7 +317,9 @@ export async function completeCourseAttempt(
       
       // Get user information for certificate
       const user = await getUserById(userId, tenantId);
-      const userFullName = user?.fullName || user?.name || user?.email?.split('@')[0] || 'Usuario';
+      const userFullName = user 
+        ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email?.split('@')[0] || 'Usuario'
+        : 'Usuario';
       
       // Create certificate in database
       const certificate = await createCertificate(
