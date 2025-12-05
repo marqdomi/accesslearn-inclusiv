@@ -12,10 +12,10 @@ import { GroupManagement } from './GroupManagement'
 import { MentorshipManagement } from './MentorshipManagement'
 import { TeamManagement } from './TeamManagement'
 import { AnalyticsDashboard } from './analytics/AnalyticsDashboard'
-import { CompanySettings } from './CompanySettings'
 import { BrandingManagement } from './BrandingManagement'
+import { CertificateTemplateSettings } from './CertificateTemplateSettings'
 
-type AdminSection = 'dashboard' | 'courses' | 'users' | 'gamification' | 'reports' | 'enrollment' | 'manual-enrollment' | 'corporate-reports' | 'assignments' | 'groups' | 'mentorship' | 'teams' | 'analytics' | 'company-settings' | 'branding'
+type AdminSection = 'dashboard' | 'courses' | 'users' | 'gamification' | 'reports' | 'enrollment' | 'manual-enrollment' | 'corporate-reports' | 'assignments' | 'groups' | 'mentorship' | 'teams' | 'analytics' | 'certificate-templates' | 'branding'
 
 export function AdminPanel() {
   const [currentSection, setCurrentSection] = useState<AdminSection>('dashboard')
@@ -110,8 +110,8 @@ export function AdminPanel() {
       {currentSection === 'analytics' && (
         <AnalyticsDashboard onBack={() => setCurrentSection('dashboard')} />
       )}
-      {currentSection === 'company-settings' && (
-        <CompanySettings onBack={() => setCurrentSection('dashboard')} />
+      {currentSection === 'certificate-templates' && (
+        <CertificateTemplateSettings onBack={() => setCurrentSection('dashboard')} />
       )}
       {currentSection === 'branding' && (
         <BrandingManagement onBack={() => setCurrentSection('dashboard')} />

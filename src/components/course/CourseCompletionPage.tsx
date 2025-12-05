@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Card } from '@/components/ui/card'
@@ -15,12 +15,22 @@ import {
   Award,
   AlertCircle,
   Info,
-  RotateCcw
+  RotateCcw,
+  Loader2
 } from 'lucide-react'
 import confetti from 'canvas-confetti'
+import { useAuth } from '@/contexts/AuthContext'
+import { useTenant } from '@/contexts/TenantContext'
+import { ApiService } from '@/services/api.service'
+import { useCompanySettings, useCertificateTemplate } from '@/hooks/use-certificates'
+import { generateCertificatePDF, downloadCertificate } from '@/lib/certificate-generator'
+import { Certificate } from '@/lib/types'
+import { useTranslation } from 'react-i18next'
+import { toast } from 'sonner'
 
 interface CourseCompletionPageProps {
   courseTitle: string
+  courseId?: string
   totalXP: number
   totalLessons: number
   totalModules: number
@@ -39,6 +49,7 @@ interface CourseCompletionPageProps {
 
 export function CourseCompletionPage({
   courseTitle,
+  courseId,
   totalXP,
   totalLessons,
   totalModules,
@@ -49,6 +60,98 @@ export function CourseCompletionPage({
   quizzesToRetake = [],
 }: CourseCompletionPageProps) {
   const navigate = useNavigate()
+  const { user } = useAuth()
+  const { currentTenant } = useTenant()
+  const { t } = useTranslation()
+  const { companySettings } = useCompanySettings()
+  const { template } = useCertificateTemplate()
+  const [certificate, setCertificate] = useState<Certificate | null>(null)
+  const [isLoadingCertificate, setIsLoadingCertificate] = useState(false)
+  const [isDownloading, setIsDownloading] = useState(false)
+
+  // Load certificate when component mounts if certificate was earned
+  useEffect(() => {
+    if (certificateEarned && courseId && user?.id && currentTenant) {
+      loadCertificate()
+    }
+  }, [certificateEarned, courseId, user?.id, currentTenant?.id])
+
+  const loadCertificate = async () => {
+    if (!courseId || !user?.id) return
+    
+    setIsLoadingCertificate(true)
+    try {
+      const cert = await ApiService.getCertificateByCourse(user.id, courseId)
+      if (cert) {
+        // Convert completionDate from ISO string to timestamp if needed
+        const certificateData: Certificate = {
+          ...cert,
+          completionDate: typeof cert.completionDate === 'string' 
+            ? new Date(cert.completionDate).getTime() 
+            : cert.completionDate
+        }
+        setCertificate(certificateData)
+      }
+    } catch (error) {
+      console.error('Error loading certificate:', error)
+    } finally {
+      setIsLoadingCertificate(false)
+    }
+  }
+
+  const handleDownloadCertificate = async () => {
+    if (!certificate || !companySettings) {
+      toast.error('Certificado no disponible')
+      return
+    }
+
+    setIsDownloading(true)
+    try {
+      const translations = {
+        certificateTitle: t('certificate.title', 'Certificado de Completación'),
+        awardedTo: t('certificate.awardedTo', 'Este certificado se otorga a'),
+        completion: t('certificate.completion', 'por la completación exitosa de'),
+        courseLabel: t('certificate.course', 'Curso'),
+        dateLabel: t('certificate.dateLabel', 'Fecha de Completación'),
+        companyLabel: t('certificate.company', 'Empresa'),
+        certificateId: t('certificate.certificateId', 'ID del Certificado'),
+        signature: t('certificate.signature', 'Firma Autorizada')
+      }
+
+      // Pass template if available
+      const templateData = template ? {
+        primaryColor: template.primaryColor,
+        secondaryColor: template.secondaryColor,
+        accentColor: template.accentColor,
+        textColor: template.textColor,
+        secondaryTextColor: template.secondaryTextColor,
+        titleFont: template.titleFont,
+        nameFont: template.nameFont,
+        bodyFont: template.bodyFont,
+        titleFontSize: template.titleFontSize,
+        nameFontSize: template.nameFontSize,
+        bodyFontSize: template.bodyFontSize,
+        borderWidth: template.borderWidth,
+        borderStyle: template.borderStyle,
+        showDecorativeGradient: template.showDecorativeGradient,
+        logoSize: template.logoSize,
+        certificateTitle: template.certificateTitle,
+        awardedToText: template.awardedToText,
+        completionText: template.completionText,
+        signatureText: template.signatureText
+      } : undefined
+
+      const blob = await generateCertificatePDF(certificate, companySettings, translations, templateData)
+      const fileName = `certificate-${certificate.certificateCode}-${courseTitle.replace(/[^a-z0-9]/gi, '-').toLowerCase()}.png`
+      downloadCertificate(blob, fileName)
+      toast.success('Certificado descargado exitosamente')
+    } catch (error) {
+      console.error('Error generating certificate:', error)
+      toast.error('Error al generar el certificado. Por favor intenta de nuevo.')
+    } finally {
+      setIsDownloading(false)
+    }
+  }
 
   useEffect(() => {
     // Epic celebration with multiple bursts
@@ -194,9 +297,39 @@ export function CourseCompletionPage({
                         {certificateEarned ? '¡Certificado Obtenido!' : 'Certificado Disponible'}
                       </h3>
                       {certificateEarned ? (
-                        <p className="text-muted-foreground">
-                          Has cumplido con todos los requisitos para obtener el certificado de completación.
-                        </p>
+                        <>
+                          <p className="text-muted-foreground mb-4">
+                            Has cumplido con todos los requisitos para obtener el certificado de completación.
+                          </p>
+                          {isLoadingCertificate ? (
+                            <Button disabled variant="outline" className="gap-2">
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                              Cargando certificado...
+                            </Button>
+                          ) : certificate ? (
+                            <Button 
+                              onClick={handleDownloadCertificate}
+                              disabled={isDownloading}
+                              className="gap-2 bg-purple-600 hover:bg-purple-700"
+                            >
+                              {isDownloading ? (
+                                <>
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                  Generando...
+                                </>
+                              ) : (
+                                <>
+                                  <Download className="h-4 w-4" />
+                                  Descargar Certificado
+                                </>
+                              )}
+                            </Button>
+                          ) : (
+                            <p className="text-sm text-muted-foreground">
+                              El certificado se está procesando. Por favor intenta más tarde.
+                            </p>
+                          )}
+                        </>
                       ) : courseConfig.certificateRequiresPassingScore ? (
                         <p className="text-muted-foreground">
                           Necesitas un score mínimo de {courseConfig.minimumScoreForCertificate || 70}% para obtener el certificado.

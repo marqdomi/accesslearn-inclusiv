@@ -939,6 +939,7 @@ export function CourseViewerPage() {
     return (
       <CourseCompletionPage
         courseTitle={course.title}
+        courseId={course.id}
         totalXP={totalXP}
         totalLessons={totalLessons}
         totalModules={course.modules?.length || 0}

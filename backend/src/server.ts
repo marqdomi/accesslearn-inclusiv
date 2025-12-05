@@ -128,6 +128,15 @@ import {
   getCourseCertificates
 } from './functions/CertificateFunctions';
 import {
+  getCompanySettings,
+  upsertCompanySettings
+} from './functions/CompanySettingsFunctions';
+import {
+  getCertificateTemplate,
+  getCertificateTemplateWithDefaults,
+  upsertCertificateTemplate
+} from './functions/CertificateTemplateFunctions';
+import {
   getHighLevelStats,
   getUserProgressReport,
   getCourseReport,
@@ -2460,6 +2469,22 @@ app.get('/api/certificates/user/:userId', requireAuth, requireOwnershipOrAdmin('
   }
 });
 
+// GET /api/certificates/user/:userId/course/:courseId - Get certificate for a user and course
+app.get('/api/certificates/user/:userId/course/:courseId', requireAuth, requireOwnershipOrAdmin('userId'), async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const { userId, courseId } = req.params;
+    const certificate = await getCertificateByUserAndCourse(userId, courseId, user.tenantId);
+    if (!certificate) {
+      return res.status(404).json({ error: 'Certificate not found' });
+    }
+    res.json(certificate);
+  } catch (error: any) {
+    console.error('[API] Error getting certificate by course:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // GET /api/certificates/:certificateId - Get certificate by ID
 app.get('/api/certificates/:certificateId', requireAuth, async (req, res) => {
   try {
@@ -2551,6 +2576,90 @@ app.delete('/api/certificates/:certificateId', requireAuth, requirePermission('c
     res.status(204).send();
   } catch (error: any) {
     console.error('[API] Error deleting certificate:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ============================================
+// COMPANY SETTINGS ENDPOINTS
+// ============================================
+
+// GET /api/company-settings - Get company settings for current tenant
+app.get('/api/company-settings', requireAuth, async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const settings = await getCompanySettings(user.tenantId);
+    
+    if (!settings) {
+      // Return default settings if none exist
+      return res.json({
+        companyName: 'Kaido',
+        companyLogo: undefined
+      });
+    }
+    
+    res.json({
+      companyName: settings.companyName,
+      companyLogo: settings.companyLogo
+    });
+  } catch (error: any) {
+    console.error('[API] Error getting company settings:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// PUT /api/company-settings - Update company settings
+app.put('/api/company-settings', requireAuth, requirePermission('admin'), async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const { companyName, companyLogo } = req.body;
+    
+    if (!companyName || !companyName.trim()) {
+      return res.status(400).json({ error: 'companyName is required' });
+    }
+    
+    const settings = await upsertCompanySettings(
+      user.tenantId,
+      companyName.trim(),
+      companyLogo
+    );
+    
+    res.json({
+      companyName: settings.companyName,
+      companyLogo: settings.companyLogo
+    });
+  } catch (error: any) {
+    console.error('[API] Error updating company settings:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ============================================
+// CERTIFICATE TEMPLATE ENDPOINTS
+// ============================================
+
+// GET /api/certificate-templates - Get certificate template for current tenant
+app.get('/api/certificate-templates', requireAuth, async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const template = await getCertificateTemplateWithDefaults(user.tenantId);
+    res.json(template);
+  } catch (error: any) {
+    console.error('[API] Error getting certificate template:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// PUT /api/certificate-templates - Update certificate template
+app.put('/api/certificate-templates', requireAuth, requirePermission('admin'), async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const templateData = req.body;
+    
+    const template = await upsertCertificateTemplate(user.tenantId, templateData);
+    res.json(template);
+  } catch (error: any) {
+    console.error('[API] Error updating certificate template:', error);
     res.status(500).json({ error: error.message });
   }
 });

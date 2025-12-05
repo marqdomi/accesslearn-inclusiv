@@ -95,13 +95,102 @@ export function useCertificates(userId?: string) {
 }
 
 export function useCompanySettings() {
-  const [companySettings, setCompanySettings] = useKV<CompanySettings>('company-settings', {
+  const { currentTenant } = useTenant()
+  const [companySettings, setCompanySettingsState] = useState<CompanySettings>({
     companyName: 'Kaido',
     companyLogo: undefined
   })
+  const [loading, setLoading] = useState(true)
+
+  // Load company settings from Tenant (where BrandingSettingsPage stores them)
+  useEffect(() => {
+    if (currentTenant?.id) {
+      loadCompanySettings()
+    }
+  }, [currentTenant?.id, currentTenant?.name, currentTenant?.logo])
+
+  const loadCompanySettings = async () => {
+    try {
+      setLoading(true)
+      
+      // Get company name and logo from tenant
+      let logoUrl = currentTenant?.logo || undefined
+      
+      // If logo is a blobName (format: container/blobName), generate URL with SAS
+      if (logoUrl && !logoUrl.startsWith('http') && !logoUrl.startsWith('data:') && logoUrl.includes('/')) {
+        try {
+          const [containerName, ...blobNameParts] = logoUrl.split('/')
+          const blobName = blobNameParts.join('/')
+          const { url } = await ApiService.getMediaUrl(containerName, blobName)
+          logoUrl = url
+        } catch (error) {
+          console.error('Error generating logo URL:', error)
+          // Keep blobName if URL generation fails
+        }
+      }
+      
+      setCompanySettingsState({
+        companyName: currentTenant?.name || 'Kaido',
+        companyLogo: logoUrl
+      })
+    } catch (error) {
+      console.error('Error loading company settings:', error)
+      // Use tenant data or defaults on error
+      setCompanySettingsState({
+        companyName: currentTenant?.name || 'Kaido',
+        companyLogo: currentTenant?.logo || undefined
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Note: setCompanySettings is kept for backward compatibility but should not be used
+  // Company settings should be updated via BrandingSettingsPage which updates the tenant
+  const setCompanySettings = async (settings: CompanySettings | ((prev: CompanySettings) => CompanySettings)) => {
+    console.warn('useCompanySettings.setCompanySettings is deprecated. Use BrandingSettingsPage to update company settings.')
+    const newSettings = typeof settings === 'function' 
+      ? settings(companySettings) 
+      : settings
+    setCompanySettingsState(newSettings)
+  }
 
   return {
-    companySettings: companySettings || { companyName: 'Kaido' },
-    setCompanySettings
+    companySettings: companySettings || { companyName: currentTenant?.name || 'Kaido', companyLogo: undefined },
+    setCompanySettings,
+    loading,
+    refresh: loadCompanySettings
+  }
+}
+
+export function useCertificateTemplate() {
+  const { currentTenant } = useTenant()
+  const [template, setTemplate] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (currentTenant?.id) {
+      loadTemplate()
+    }
+  }, [currentTenant?.id])
+
+  const loadTemplate = async () => {
+    try {
+      setLoading(true)
+      const data = await ApiService.getCertificateTemplate()
+      setTemplate(data)
+    } catch (error) {
+      console.error('Error loading certificate template:', error)
+      // Use defaults on error
+      setTemplate(null)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return {
+    template,
+    loading,
+    refresh: loadTemplate
   }
 }

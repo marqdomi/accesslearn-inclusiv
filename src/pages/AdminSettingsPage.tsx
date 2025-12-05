@@ -17,7 +17,9 @@ import {
   Accessibility,
   Building2,
   Globe,
-  Package
+  Package,
+  Award,
+  FileText
 } from 'lucide-react'
 
 interface SettingSection {
@@ -94,6 +96,15 @@ export function AdminSettingsPage() {
       icon: Users,
       onClick: () => {
         navigate('/admin/users')
+      }
+    },
+    {
+      id: 'certificates',
+      title: 'Certificados',
+      description: 'Personaliza el diseño, colores y textos de las plantillas de certificados',
+      icon: Award,
+      onClick: () => {
+        navigate('/admin/settings/certificates')
       }
     }
   ]

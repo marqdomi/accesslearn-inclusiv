@@ -310,8 +310,32 @@ export async function completeCourseAttempt(
 
   // Issue certificate if conditions are met
   if (shouldIssueCertificate && !progressData.certificateEarned) {
-    progressData.certificateEarned = true;
-    progressData.certificateId = `cert-${userId}-${courseId}-${Date.now()}`;
+    try {
+      // Import certificate functions dynamically to avoid circular dependencies
+      const { createCertificate } = await import('./CertificateFunctions');
+      const { getUserById } = await import('./UserFunctions');
+      
+      // Get user information for certificate
+      const user = await getUserById(userId, tenantId);
+      const userFullName = user?.fullName || user?.name || user?.email?.split('@')[0] || 'Usuario';
+      
+      // Create certificate in database
+      const certificate = await createCertificate(
+        tenantId,
+        userId,
+        courseId,
+        course.title,
+        userFullName
+      );
+      
+      progressData.certificateEarned = true;
+      progressData.certificateId = certificate.id;
+    } catch (error) {
+      console.error('[completeCourseAttempt] Error creating certificate:', error);
+      // Don't fail the course completion if certificate creation fails
+      // Just mark as earned but without certificateId
+      progressData.certificateEarned = true;
+    }
   }
 
   // Actualizar lecciones y quizzes acumulativos

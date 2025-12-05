@@ -28,6 +28,7 @@ import { AccessibilitySettingsPage } from '@/pages/AccessibilitySettingsPage'
 import { AdvancedAccessibilityPanel } from '@/components/accessibility/AdvancedAccessibilityPanel'
 import { AdminAnalyticsPage } from '@/pages/AdminAnalyticsPage'
 import { ProfilePage } from '@/pages/ProfilePage'
+import { CertificateSettingsPage } from '@/pages/CertificateSettingsPage'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth()
@@ -218,6 +219,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <AccessibilitySettingsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/settings/certificates"
+        element={
+          <ProtectedRoute>
+            <CertificateSettingsPage />
           </ProtectedRoute>
         }
       />

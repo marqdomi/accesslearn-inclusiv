@@ -1178,6 +1178,17 @@ class ApiServiceClass {
     return this.fetchWithAuth<any[]>(`/certificates/course/${courseId}`)
   }
 
+  async getCertificateByCourse(userId: string, courseId: string) {
+    try {
+      return await this.fetchWithAuth<any>(`/certificates/user/${userId}/course/${courseId}`)
+    } catch (error: any) {
+      if (error.status === 404) {
+        return null
+      }
+      throw error
+    }
+  }
+
   async createCertificate(data: {
     userId: string
     courseId: string
@@ -1186,6 +1197,42 @@ class ApiServiceClass {
   }) {
     return this.fetchWithAuth<any>(`/certificates`, {
       method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async downloadCertificate(certificateId: string): Promise<Blob> {
+    const response = await fetch(`${API_BASE_URL}/certificates/${certificateId}/download`, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      },
+    })
+    if (!response.ok) {
+      throw new Error('Failed to download certificate')
+    }
+    return response.blob()
+  }
+
+  // Company Settings
+  async getCompanySettings() {
+    return this.fetchWithAuth<{ companyName: string; companyLogo?: string }>('/company-settings')
+  }
+
+  async updateCompanySettings(data: { companyName: string; companyLogo?: string }) {
+    return this.fetchWithAuth<{ companyName: string; companyLogo?: string }>('/company-settings', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    })
+  }
+
+  // Certificate Templates
+  async getCertificateTemplate() {
+    return this.fetchWithAuth<any>('/certificate-templates')
+  }
+
+  async updateCertificateTemplate(data: any) {
+    return this.fetchWithAuth<any>('/certificate-templates', {
+      method: 'PUT',
       body: JSON.stringify(data),
     })
   }

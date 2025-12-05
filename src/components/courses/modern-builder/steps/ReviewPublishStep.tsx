@@ -263,6 +263,218 @@ export function ReviewPublishStep({ course, updateCourse, onSaveDraft, onSubmitF
         </CardContent>
       </Card>
       
+      {/* Course Completion & Certification Configuration */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <GraduationCap size={20} />
+            Configuración de Completación y Certificación
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Completion Mode */}
+          <div className="space-y-2">
+            <Label htmlFor="completion-mode">Modo de Completación</Label>
+            <Select
+              value={course.completionMode || 'modules-and-quizzes'}
+              onValueChange={(value: 'modules-only' | 'modules-and-quizzes' | 'exam-mode' | 'study-guide') => {
+                updateCourse({ completionMode: value })
+              }}
+            >
+              <SelectTrigger id="completion-mode">
+                <SelectValue placeholder="Selecciona el modo de completación" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="modules-only">Solo Módulos</SelectItem>
+                <SelectItem value="modules-and-quizzes">Módulos + Quizzes</SelectItem>
+                <SelectItem value="exam-mode">Modo Examen</SelectItem>
+                <SelectItem value="study-guide">Guía de Estudio</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              {course.completionMode === 'modules-only' && 'Los estudiantes solo necesitan completar los módulos para finalizar el curso.'}
+              {course.completionMode === 'modules-and-quizzes' && 'Los estudiantes deben completar módulos y quizzes para finalizar el curso.'}
+              {course.completionMode === 'exam-mode' && 'El curso se evalúa como un examen con calificación final.'}
+              {course.completionMode === 'study-guide' && 'El curso es una guía de estudio sin requisitos estrictos de completación.'}
+            </p>
+          </div>
+
+          {/* Quiz Requirement (only if there are quizzes) */}
+          {totalQuizzes > 0 && (
+            <>
+              <Separator />
+              <div className="space-y-2">
+                <Label htmlFor="quiz-requirement">Requisitos de Quizzes</Label>
+                <Select
+                  value={course.quizRequirement || 'required'}
+                  onValueChange={(value: 'required' | 'optional' | 'none') => {
+                    updateCourse({ quizRequirement: value })
+                  }}
+                >
+                  <SelectTrigger id="quiz-requirement">
+                    <SelectValue placeholder="Selecciona los requisitos de quizzes" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="required">Requeridos</SelectItem>
+                    <SelectItem value="optional">Opcionales</SelectItem>
+                    <SelectItem value="none">Ninguno</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Define si los quizzes son obligatorios, opcionales o no se requieren para completar el curso.
+                </p>
+              </div>
+
+              {/* Require All Quizzes Passed */}
+              {course.quizRequirement === 'required' && (
+                <div className="flex items-center justify-between p-3 border rounded-lg">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="require-all-quizzes">Requerir pasar todos los quizzes</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Los estudiantes deben aprobar todos los quizzes para completar el curso.
+                    </p>
+                  </div>
+                  <Switch
+                    id="require-all-quizzes"
+                    checked={course.requireAllQuizzesPassed || false}
+                    onCheckedChange={(checked) => {
+                      updateCourse({ requireAllQuizzesPassed: checked })
+                    }}
+                  />
+                </div>
+              )}
+
+              {/* Minimum Score for Completion */}
+              {course.completionMode === 'exam-mode' && (
+                <div className="space-y-2">
+                  <Label htmlFor="min-score-completion">Calificación Mínima para Completar (%)</Label>
+                  <Input
+                    id="min-score-completion"
+                    type="number"
+                    min={0}
+                    max={100}
+                    value={course.minimumScoreForCompletion || 70}
+                    onChange={(e) => {
+                      const value = parseInt(e.target.value) || 70
+                      updateCourse({ minimumScoreForCompletion: value })
+                    }}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Calificación mínima requerida para considerar el curso completado.
+                  </p>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* Certificate Configuration */}
+          <Separator />
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label htmlFor="certificate-enabled">Certificado Disponible</Label>
+                <p className="text-xs text-muted-foreground">
+                  Los estudiantes pueden obtener un certificado al completar el curso.
+                </p>
+              </div>
+              <Switch
+                id="certificate-enabled"
+                checked={course.certificateEnabled !== false}
+                onCheckedChange={(checked) => {
+                  updateCourse({ certificateEnabled: checked })
+                }}
+              />
+            </div>
+
+            {course.certificateEnabled !== false && (
+              <>
+                <div className="flex items-center justify-between p-3 border rounded-lg">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="certificate-requires-score">Certificado requiere calificación aprobatoria</Label>
+                    <p className="text-xs text-muted-foreground">
+                      El certificado solo se otorga si el estudiante alcanza la calificación mínima.
+                    </p>
+                  </div>
+                  <Switch
+                    id="certificate-requires-score"
+                    checked={course.certificateRequiresPassingScore || false}
+                    onCheckedChange={(checked) => {
+                      updateCourse({ certificateRequiresPassingScore: checked })
+                    }}
+                  />
+                </div>
+
+                {course.certificateRequiresPassingScore && (
+                  <div className="space-y-2">
+                    <Label htmlFor="min-score-certificate">Calificación Mínima para Certificado (%)</Label>
+                    <Input
+                      id="min-score-certificate"
+                      type="number"
+                      min={0}
+                      max={100}
+                      value={course.minimumScoreForCertificate || 70}
+                      onChange={(e) => {
+                        const value = parseInt(e.target.value) || 70
+                        updateCourse({ minimumScoreForCertificate: value })
+                      }}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Calificación mínima requerida para obtener el certificado.
+                    </p>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+
+          {/* Retake Configuration */}
+          {totalQuizzes > 0 && (
+            <>
+              <Separator />
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="allow-retakes">Permitir Reintentos</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Los estudiantes pueden reintentar quizzes para mejorar su calificación.
+                    </p>
+                  </div>
+                  <Switch
+                    id="allow-retakes"
+                    checked={course.allowRetakes || false}
+                    onCheckedChange={(checked) => {
+                      updateCourse({ allowRetakes: checked })
+                    }}
+                  />
+                </div>
+
+                {course.allowRetakes && (
+                  <div className="space-y-2">
+                    <Label htmlFor="max-retakes">Máximo de Reintentos por Quiz</Label>
+                    <Input
+                      id="max-retakes"
+                      type="number"
+                      min={0}
+                      max={10}
+                      value={course.maxRetakesPerQuiz || 0}
+                      onChange={(e) => {
+                        const value = parseInt(e.target.value) || 0
+                        updateCourse({ maxRetakesPerQuiz: value })
+                      }}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      {course.maxRetakesPerQuiz === 0 
+                        ? 'Ilimitado: Los estudiantes pueden reintentar sin límite.'
+                        : `Los estudiantes pueden reintentar hasta ${course.maxRetakesPerQuiz} vez(es) por quiz.`}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Validation Checklist */}
       <Card>
         <CardHeader>

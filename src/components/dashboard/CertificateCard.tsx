@@ -7,6 +7,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Certificate as CertificateIcon, Download, Check } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { motion } from 'framer-motion'
+import { useCertificateTemplate } from '@/hooks/use-certificates'
 
 interface CertificateCardProps {
   certificate: Certificate
@@ -17,6 +18,7 @@ interface CertificateCardProps {
 export function CertificateCard({ certificate, companySettings, variant = 'compact' }: CertificateCardProps) {
   const { t } = useTranslation()
   const [isDownloading, setIsDownloading] = useState(false)
+  const { template } = useCertificateTemplate()
 
   const handleDownload = async () => {
     setIsDownloading(true)
@@ -33,7 +35,30 @@ export function CertificateCard({ certificate, companySettings, variant = 'compa
         signature: t('certificate.signature')
       }
 
-      const blob = await generateCertificatePDF(certificate, companySettings, translations)
+      // Pass template if available
+      const templateData = template ? {
+        primaryColor: template.primaryColor,
+        secondaryColor: template.secondaryColor,
+        accentColor: template.accentColor,
+        textColor: template.textColor,
+        secondaryTextColor: template.secondaryTextColor,
+        titleFont: template.titleFont,
+        nameFont: template.nameFont,
+        bodyFont: template.bodyFont,
+        titleFontSize: template.titleFontSize,
+        nameFontSize: template.nameFontSize,
+        bodyFontSize: template.bodyFontSize,
+        borderWidth: template.borderWidth,
+        borderStyle: template.borderStyle,
+        showDecorativeGradient: template.showDecorativeGradient,
+        logoSize: template.logoSize,
+        certificateTitle: template.certificateTitle,
+        awardedToText: template.awardedToText,
+        completionText: template.completionText,
+        signatureText: template.signatureText
+      } : undefined
+
+      const blob = await generateCertificatePDF(certificate, companySettings, translations, templateData)
       const fileName = `Certificate-${certificate.courseTitle.replace(/[^a-z0-9]/gi, '-')}-${certificate.certificateCode}.png`
       downloadCertificate(blob, fileName)
       
@@ -46,7 +71,7 @@ export function CertificateCard({ certificate, companySettings, variant = 'compa
     }
   }
 
-  const completionDate = new Date(certificate.completionDate).toLocaleDateString(undefined, {
+  const completionDate = new Date(certificate.completionDate).toLocaleDateString('es-ES', {
     year: 'numeric',
     month: 'long',
     day: 'numeric'
