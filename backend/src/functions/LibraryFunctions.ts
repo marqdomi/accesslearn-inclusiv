@@ -273,16 +273,22 @@ export async function completeCourseAttempt(
 
   // Actualizar lecciones y quizzes acumulativos
   progressData.completedLessons = [
-    ...new Set([...progressData.completedLessons, ...completedLessons]),
+    ...new Set([...(progressData.completedLessons || []), ...completedLessons]),
   ];
   
+  // Inicializar quizScores si no existe
+  if (!progressData.quizScores) {
+    progressData.quizScores = [];
+  }
+  
+  // Actualizar o agregar quiz scores
   progressData.quizScores = quizScores.map((newQuiz) => {
-    const existingQuiz = progressData.quizScores.find((q) => q.quizId === newQuiz.quizId);
+    const existingQuiz = progressData.quizScores!.find((q) => q.quizId === newQuiz.quizId);
     if (existingQuiz) {
       return {
         ...existingQuiz,
         score: Math.max(existingQuiz.score, newQuiz.score),
-        attempts: existingQuiz.attempts + 1,
+        attempts: (existingQuiz.attempts || 0) + 1,
         completedAt: newQuiz.completedAt,
       };
     }

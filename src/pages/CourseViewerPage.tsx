@@ -941,12 +941,15 @@ export function CourseViewerPage() {
                   <LessonContent 
                     lesson={currentLesson}
                     onQuizComplete={(results) => {
-                      // Guardar score del quiz para el cálculo final
-                      if (currentLessonId && results.score !== undefined) {
-                        setQuizScores(prev => new Map(prev).set(currentLessonId, results.score))
-                        console.log('Quiz completed:', results, 'Score:', results.score)
+                      // Guardar score del quiz (accuracy) para el cálculo final
+                      // Incluso si no pasó el quiz, guardamos el score para el cálculo del curso
+                      if (currentLessonId && results.accuracy !== undefined) {
+                        setQuizScores(prev => new Map(prev).set(currentLessonId, results.accuracy))
+                        console.log('Quiz completed:', results, 'Accuracy:', results.accuracy)
                       }
                       // Marcar el quiz como completado para habilitar el botón de completar lección
+                      // IMPORTANTE: Permitimos completar el quiz aunque no se haya pasado (score bajo)
+                      // Esto permite al usuario avanzar y completar el curso, aunque con menor puntuación
                       if (currentLessonId) {
                         setCompletedQuizzes(prev => new Set([...prev, currentLessonId]))
                       }
