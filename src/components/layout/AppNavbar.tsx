@@ -93,7 +93,7 @@ export function AppNavbar({ userXP = 0 }: AppNavbarProps) {
   const location = useLocation()
   const { user, logout } = useAuth()
   const { currentTenant } = useTenant()
-  const { i18n } = useTranslation()
+  const { i18n, t } = useTranslation()
   const { hasAnyPermission } = usePermissions()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [notificationsOpen, setNotificationsOpen] = useState(false)
@@ -254,10 +254,14 @@ export function AppNavbar({ userXP = 0 }: AppNavbarProps) {
                             onClick={() => handleNotificationClick(notification)}
                           >
                             <p className="text-sm font-medium line-clamp-1">
-                              {notification.title || 'Actualización'}
+                              {notification.titleKey
+                                ? t(notification.titleKey, notification.messageParams)
+                                : notification.title || 'Actualización'}
                             </p>
                             <p className="text-xs text-muted-foreground line-clamp-2">
-                              {notification.message || 'Revisa los detalles'}
+                              {notification.messageKey
+                                ? t(notification.messageKey, notification.messageParams)
+                                : notification.message || 'Revisa los detalles'}
                             </p>
                             <p className="text-[11px] text-muted-foreground mt-1">
                               {formatNotificationTime(notification.timestamp)}

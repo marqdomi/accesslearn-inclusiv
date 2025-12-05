@@ -21,6 +21,7 @@ import { AdminUsersPage } from '@/pages/AdminUsersPage'
 import { AdminSettingsPage } from '@/pages/AdminSettingsPage'
 import { BrandingSettingsPage } from '@/pages/BrandingSettingsPage'
 import { NotificationSettingsPage } from '@/pages/NotificationSettingsPage'
+import { NotificationsPage } from '@/pages/NotificationsPage'
 import { SecuritySettingsPage } from '@/pages/SecuritySettingsPage'
 import { DataSettingsPage } from '@/pages/DataSettingsPage'
 import { CategoryManagementPage } from '@/pages/CategoryManagementPage'
@@ -163,6 +164,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <AdminAnalyticsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/notifications"
+        element={
+          <ProtectedRoute>
+            <NotificationsPage />
           </ProtectedRoute>
         }
       />
