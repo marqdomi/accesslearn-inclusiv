@@ -256,9 +256,17 @@ app.use(helmet({
 }));
 
 // Rate limiting - General API rate limit
+// More permissive for authenticated users, stricter for anonymous
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: process.env.NODE_ENV === 'production' ? 100 : 1000, // Limit each IP to 100 requests per windowMs in production
+  max: (req) => {
+    // Authenticated users get much higher limits to prevent false positives
+    if (req.user) {
+      return process.env.NODE_ENV === 'production' ? 1000 : 5000; // 1000 requests per 15 min for authenticated users
+    }
+    // Anonymous users get lower limits
+    return process.env.NODE_ENV === 'production' ? 100 : 1000; // 100 requests per 15 min for anonymous
+  },
   message: {
     error: 'Demasiadas solicitudes desde esta IP, por favor intenta de nuevo más tarde.',
   },

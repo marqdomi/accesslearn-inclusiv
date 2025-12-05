@@ -16,7 +16,14 @@ export async function initializeCosmos(): Promise<void> {
     )
   }
 
-  cosmosClient = new CosmosClient({ endpoint, key })
+  // Configure Cosmos DB client
+  // Note: SDK v4 handles retries automatically, but we can configure connection behavior
+  cosmosClient = new CosmosClient({ 
+    endpoint, 
+    key
+    // The SDK automatically handles retries with exponential backoff
+    // No need to configure retry policy manually in v4
+  })
   database = cosmosClient.database(databaseName)
 
   console.log(`✅ Cosmos DB connected: ${databaseName}`)
