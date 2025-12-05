@@ -21,6 +21,16 @@ interface BackendCourse {
   updatedAt: string
   status: 'draft' | 'pending-review' | 'published' | 'archived'
   publishedAt?: string
+  // Configuración flexible de completación y certificación
+  certificateEnabled?: boolean
+  completionMode?: 'modules-only' | 'modules-and-quizzes' | 'exam-mode' | 'study-guide'
+  quizRequirement?: 'required' | 'optional' | 'none'
+  requireAllQuizzesPassed?: boolean
+  minimumScoreForCompletion?: number
+  minimumScoreForCertificate?: number
+  allowRetakes?: boolean
+  maxRetakesPerQuiz?: number
+  certificateRequiresPassingScore?: boolean
 }
 
 /**
@@ -54,6 +64,16 @@ export function adaptBackendCourseToFrontend(backendCourse: BackendCourse): Cour
     updatedAt: new Date(backendCourse.updatedAt).getTime(),
     createdBy: backendCourse.createdBy,
     status: backendCourse.status,
+    // Configuración flexible de completación y certificación
+    certificateEnabled: backendCourse.certificateEnabled,
+    completionMode: backendCourse.completionMode,
+    quizRequirement: backendCourse.quizRequirement,
+    requireAllQuizzesPassed: backendCourse.requireAllQuizzesPassed,
+    minimumScoreForCompletion: backendCourse.minimumScoreForCompletion,
+    minimumScoreForCertificate: backendCourse.minimumScoreForCertificate,
+    allowRetakes: backendCourse.allowRetakes,
+    maxRetakesPerQuiz: backendCourse.maxRetakesPerQuiz,
+    certificateRequiresPassingScore: backendCourse.certificateRequiresPassingScore,
   } as CourseStructure
 }
 
@@ -72,6 +92,16 @@ export function adaptFrontendCourseToBackend(
     modules: frontendCourse.modules || [],
     coverImage: frontendCourse.coverImage,
     status: (frontendCourse as any).status || (frontendCourse.published ? 'published' : 'draft'),
+    // Configuración flexible de completación y certificación
+    certificateEnabled: frontendCourse.certificateEnabled,
+    completionMode: frontendCourse.completionMode,
+    quizRequirement: frontendCourse.quizRequirement,
+    requireAllQuizzesPassed: frontendCourse.requireAllQuizzesPassed,
+    minimumScoreForCompletion: frontendCourse.minimumScoreForCompletion,
+    minimumScoreForCertificate: frontendCourse.minimumScoreForCertificate,
+    allowRetakes: frontendCourse.allowRetakes,
+    maxRetakesPerQuiz: frontendCourse.maxRetakesPerQuiz,
+    certificateRequiresPassingScore: frontendCourse.certificateRequiresPassingScore,
   }
 }
 

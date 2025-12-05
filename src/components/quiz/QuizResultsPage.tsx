@@ -12,7 +12,10 @@ import {
   Heart,
   RotateCcw,
   ChevronRight,
-  Star
+  Star,
+  Info,
+  AlertCircle,
+  Award
 } from 'lucide-react'
 import { QuizResults } from './QuizContainer'
 import confetti from 'canvas-confetti'
@@ -23,6 +26,16 @@ interface QuizResultsPageProps {
   onRetry?: () => void
   onContinue?: () => void
   allowRetry?: boolean
+  // Course configuration for contextual messages
+  courseConfig?: {
+    allowRetakes?: boolean
+    maxRetakesPerQuiz?: number
+    minimumScoreForCompletion?: number
+    certificateRequiresPassingScore?: boolean
+    minimumScoreForCertificate?: number
+  }
+  retakeCount?: number // Current retake count for this quiz
+  canRetake?: boolean // Whether user can retake this quiz
 }
 
 export function QuizResultsPage({
@@ -30,9 +43,13 @@ export function QuizResultsPage({
   onRetry,
   onContinue,
   allowRetry = true,
+  courseConfig,
+  retakeCount = 0,
+  canRetake = true,
 }: QuizResultsPageProps) {
   const isPerfect = results.isPerfectScore
   const passed = results.accuracy >= 70
+  const canRetakeQuiz = allowRetry && canRetake && (courseConfig?.allowRetakes ?? true)
 
   useEffect(() => {
     if (isPerfect) {
@@ -278,6 +295,70 @@ export function QuizResultsPage({
         </Card>
       </motion.div>
 
+      {/* Contextual Messages */}
+      {courseConfig && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.55 }}
+        >
+          <Card className="p-4 bg-muted/50">
+            <div className="space-y-2 text-sm">
+              {!passed && canRetakeQuiz && (
+                <div className="flex items-start gap-2">
+                  <Info className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="font-medium">Puedes reintentar este quiz</p>
+                    <p className="text-muted-foreground">
+                      {courseConfig.maxRetakesPerQuiz && courseConfig.maxRetakesPerQuiz > 0
+                        ? `Has usado ${retakeCount} de ${courseConfig.maxRetakesPerQuiz} reintentos disponibles`
+                        : 'Reintentos ilimitados disponibles'}
+                    </p>
+                  </div>
+                </div>
+              )}
+              {!passed && !canRetakeQuiz && courseConfig.minimumScoreForCompletion && (
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="h-4 w-4 text-yellow-500 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="font-medium">Score mínimo requerido: {courseConfig.minimumScoreForCompletion}%</p>
+                    <p className="text-muted-foreground">
+                      Tu score actual: {Math.round(results.accuracy)}%
+                    </p>
+                  </div>
+                </div>
+              )}
+              {passed && canRetakeQuiz && !isPerfect && (
+                <div className="flex items-start gap-2">
+                  <Info className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="font-medium">Puedes reintentar para mejorar tu calificación</p>
+                    <p className="text-muted-foreground">
+                      {courseConfig.certificateRequiresPassingScore && courseConfig.minimumScoreForCertificate
+                        ? `Necesitas ${courseConfig.minimumScoreForCertificate}% para obtener el certificado`
+                        : 'Mejora tu score para obtener mejor calificación final'}
+                    </p>
+                  </div>
+                </div>
+              )}
+              {courseConfig.certificateRequiresPassingScore && courseConfig.minimumScoreForCertificate && (
+                <div className="flex items-start gap-2 pt-2 border-t">
+                  <Award className="h-4 w-4 text-purple-500 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="font-medium">Certificado disponible</p>
+                    <p className="text-muted-foreground">
+                      {results.accuracy >= courseConfig.minimumScoreForCertificate
+                        ? '¡Cumples con los requisitos para obtener el certificado!'
+                        : `Necesitas ${courseConfig.minimumScoreForCertificate}% para obtener el certificado`}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </Card>
+        </motion.div>
+      )}
+
       {/* Actions */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -285,10 +366,12 @@ export function QuizResultsPage({
         transition={{ delay: 0.6 }}
         className="flex gap-4 justify-center"
       >
-        {allowRetry && onRetry && !isPerfect && (
+        {canRetakeQuiz && onRetry && !isPerfect && (
           <Button variant="outline" size="lg" onClick={onRetry} className="gap-2">
             <RotateCcw className="h-5 w-5" />
-            Reintentar (-20% XP)
+            Reintentar {courseConfig?.maxRetakesPerQuiz && courseConfig.maxRetakesPerQuiz > 0 
+              ? `(${retakeCount + 1}/${courseConfig.maxRetakesPerQuiz})`
+              : ''}
           </Button>
         )}
         

@@ -50,6 +50,17 @@ export interface Course {
   publishedAt?: string
   archivedAt?: string
   submittedForReviewAt?: string
+  
+  // Configuración flexible de completación y certificación
+  certificateEnabled?: boolean
+  completionMode?: 'modules-only' | 'modules-and-quizzes' | 'exam-mode' | 'study-guide'
+  quizRequirement?: 'required' | 'optional' | 'none'
+  requireAllQuizzesPassed?: boolean
+  minimumScoreForCompletion?: number
+  minimumScoreForCertificate?: number
+  allowRetakes?: boolean
+  maxRetakesPerQuiz?: number
+  certificateRequiresPassingScore?: boolean
 }
 
 export interface CourseCreateInput {

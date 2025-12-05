@@ -50,6 +50,8 @@ import {
 import ReactMarkdown from 'react-markdown'
 import { ApiService } from '@/services/api.service'
 import { toast } from 'sonner'
+import { RichTextEditor } from '../RichTextEditor'
+import { VideoPreview } from '../VideoPreview'
 
 interface ContentEditorStepProps {
   course: CourseStructure
@@ -72,6 +74,7 @@ export function ContentEditorStep({ course, updateCourse, courseId }: ContentEdi
   const [isBlockDialogOpen, setIsBlockDialogOpen] = useState(false)
   const [editingBlock, setEditingBlock] = useState<{ moduleIndex: number; lessonIndex: number; blockIndex: number; data: LessonBlock } | null>(null)
   const [isUploadingImage, setIsUploadingImage] = useState(false)
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null)
   const imageFileInputRef = useRef<HTMLInputElement>(null)
   
   // Form state
@@ -81,7 +84,7 @@ export function ContentEditorStep({ course, updateCourse, courseId }: ContentEdi
     xpValue: 10,
     characterMessage: '',
     videoUrl: '',
-    videoType: 'upload' as 'upload' | 'youtube' | 'vimeo' | 'wistia',
+    videoType: 'upload' as 'upload' | 'youtube' | 'vimeo' | 'wistia' | 'tiktok',
     imageFile: '',
   })
 
@@ -142,11 +145,12 @@ export function ContentEditorStep({ course, updateCourse, courseId }: ContentEdi
       videoType: 'upload',
       imageFile: '',
     })
+    setImagePreviewUrl(null)
     setIsBlockDialogOpen(true)
   }
 
   // Edit existing block
-  const handleEditBlock = (moduleIndex: number, lessonIndex: number, blockIndex: number) => {
+  const handleEditBlock = async (moduleIndex: number, lessonIndex: number, blockIndex: number) => {
     const block = course.modules[moduleIndex].lessons[lessonIndex].blocks[blockIndex]
     setEditingBlock({ moduleIndex, lessonIndex, blockIndex, data: block })
     setBlockForm({
@@ -158,17 +162,57 @@ export function ContentEditorStep({ course, updateCourse, courseId }: ContentEdi
       videoType: block.videoType || 'upload',
       imageFile: block.imageFile || '',
     })
+    
+    // Load image preview if it's an image block with blobName
+    if (block.type === 'image' && block.imageFile) {
+      if (block.imageFile.startsWith('http') || block.imageFile.startsWith('data:')) {
+        setImagePreviewUrl(block.imageFile)
+      } else if (block.imageFile.startsWith('http')) {
+        // It's a blobName, try to get preview URL
+        try {
+          const [containerName, ...blobNameParts] = block.imageFile.split('/')
+          const blobName = blobNameParts.join('/')
+          const { url } = await ApiService.getMediaUrl(containerName, blobName)
+          setImagePreviewUrl(url)
+        } catch (error) {
+          console.error('Error loading image preview:', error)
+          setImagePreviewUrl(null)
+        }
+      }
+    } else {
+      setImagePreviewUrl(null)
+    }
+    
     setIsBlockDialogOpen(true)
   }
 
   // Save block (create or update)
   const handleSaveBlock = () => {
-    if (!selectedLesson || !blockForm.content.trim()) return
+    if (!selectedLesson) return
+
+    // Validate based on block type
+    if (blockForm.type === 'video') {
+      if (!blockForm.videoUrl || !blockForm.videoUrl.trim()) {
+        toast.error('Por favor, ingresa una URL de video válida')
+        return
+      }
+    } else if (blockForm.type === 'image') {
+      if (!blockForm.imageFile || !blockForm.imageFile.trim()) {
+        toast.error('Por favor, sube una imagen o ingresa una URL de imagen válida')
+        return
+      }
+    } else {
+      // For other block types (text, welcome, code, challenge), content is required
+      if (!blockForm.content || !blockForm.content.trim()) {
+        toast.error('Por favor, ingresa el contenido del bloque')
+        return
+      }
+    }
 
     const newBlock: LessonBlock = {
       id: editingBlock ? editingBlock.data.id : `block-${Date.now()}`,
       type: blockForm.type,
-      content: blockForm.content,
+      content: blockForm.content || '', // Allow empty content for video/image blocks
       order: editingBlock ? editingBlock.data.order : selectedLesson.lesson.blocks.length,
       xpValue: blockForm.xpValue || 10,
       characterMessage: blockForm.characterMessage || undefined,
@@ -385,7 +429,7 @@ export function ContentEditorStep({ course, updateCourse, courseId }: ContentEdi
 
       {/* Block Dialog */}
       <Dialog open={isBlockDialogOpen} onOpenChange={setIsBlockDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="!max-w-[90vw] !w-full max-h-[90vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle>
               {editingBlock ? 'Editar Bloque' : 'Nuevo Bloque'}
@@ -395,7 +439,7 @@ export function ContentEditorStep({ course, updateCourse, courseId }: ContentEdi
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto">
+          <div className="space-y-4 py-4 flex-1 overflow-y-auto min-h-0">
             {/* Block Type Selector */}
             <div className="space-y-2">
               <Label>Tipo de Bloque *</Label>
@@ -423,165 +467,82 @@ export function ContentEditorStep({ course, updateCourse, courseId }: ContentEdi
               </Select>
             </div>
 
-            {/* Content - Rich Markdown Editor */}
-            <div className="space-y-2">
-              <Label htmlFor="block-content">Contenido *</Label>
-              
-              <Tabs defaultValue="edit" className="w-full">
-                <div className="flex items-center justify-between mb-2">
-                  <TabsList>
-                    <TabsTrigger value="edit" className="flex items-center gap-1">
-                      <PencilSimple size={14} />
-                      Editar
-                    </TabsTrigger>
-                    <TabsTrigger value="preview" className="flex items-center gap-1">
-                      <Eye size={14} />
-                      Vista Previa
-                    </TabsTrigger>
-                  </TabsList>
-                  <p className="text-xs text-muted-foreground">
-                    {blockForm.content.length}/5000 caracteres
-                  </p>
-                </div>
-
-                <TabsContent value="edit" className="mt-0">
-                  {/* Markdown Toolbar */}
-                  <div className="flex flex-wrap gap-1 mb-2 p-2 bg-muted/30 rounded-t-lg border border-b-0">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 w-8 p-0"
-                      onClick={() => insertMarkdown('**', '**')}
-                      title="Negrita"
-                    >
-                      <TextB size={16} weight="bold" />
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 w-8 p-0"
-                      onClick={() => insertMarkdown('*', '*')}
-                      title="Cursiva"
-                    >
-                      <TextItalic size={16} />
-                    </Button>
-                    <div className="w-px h-6 bg-border my-auto mx-1" />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 px-2"
-                      onClick={() => insertAtCursor('\n## ')}
-                      title="Título"
-                    >
-                      H2
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 px-2"
-                      onClick={() => insertAtCursor('\n### ')}
-                      title="Subtítulo"
-                    >
-                      H3
-                    </Button>
-                    <div className="w-px h-6 bg-border my-auto mx-1" />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 w-8 p-0"
-                      onClick={() => insertAtCursor('\n- ')}
-                      title="Lista con viñetas"
-                    >
-                      <ListBullets size={16} />
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 w-8 p-0"
-                      onClick={() => insertAtCursor('\n1. ')}
-                      title="Lista numerada"
-                    >
-                      <ListNumbers size={16} />
-                    </Button>
-                    <div className="w-px h-6 bg-border my-auto mx-1" />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 w-8 p-0"
-                      onClick={() => insertMarkdown('[', '](url)')}
-                      title="Enlace"
-                    >
-                      <LinkIcon size={16} />
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 w-8 p-0"
-                      onClick={() => insertAtCursor('\n> ')}
-                      title="Cita"
-                    >
-                      <Quotes size={16} />
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 px-2"
-                      onClick={() => insertMarkdown('\n```\n', '\n```\n')}
-                      title="Bloque de código"
-                    >
-                      {'{}'}
-                    </Button>
+            {/* Content - WYSIWYG Editor */}
+            {(blockForm.type === 'text' || blockForm.type === 'welcome' || blockForm.type === 'challenge') && (
+              <div className="space-y-2">
+                <Label htmlFor="block-content">Contenido *</Label>
+                <RichTextEditor
+                  value={blockForm.content}
+                  onChange={(value) => setBlockForm({ ...blockForm, content: value })}
+                  placeholder={
+                    blockForm.type === 'welcome' 
+                      ? 'Escribe un mensaje de bienvenida...' 
+                      : blockForm.type === 'challenge'
+                      ? 'Describe el desafío que los estudiantes deben completar...'
+                      : 'Escribe el contenido de la lección. Usa los botones de formato para aplicar estilos en tiempo real...'
+                  }
+                  maxLength={5000}
+                  className="w-full"
+                />
+                <div className="flex items-start gap-2 p-3 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800">
+                  <Info className="h-4 w-4 text-green-600 dark:text-green-400 mt-0.5 shrink-0" />
+                  <div className="text-xs text-green-900 dark:text-green-100">
+                    <strong>Editor Visual:</strong> Formatea tu texto directamente y ve los cambios en tiempo real, como en Word. 
+                    Selecciona texto y usa los botones de formato, o escribe y aplica estilos mientras escribes.
                   </div>
-
-                  {/* Expandable Textarea */}
-                  <Textarea
-                    id="block-content"
-                    placeholder={
-                      blockForm.type === 'welcome' ? '# Bienvenida\n\nEscribe un mensaje de bienvenida usando **Markdown**...' :
-                      blockForm.type === 'text' ? '## Título de la Sección\n\nEscribe el contenido usando **Markdown**. Puedes usar:\n\n- Listas con viñetas\n- **Negrita** y *cursiva*\n- [Enlaces](url)\n- Bloques de código\n\n¡Y mucho más!' :
-                      blockForm.type === 'challenge' ? '## Desafío\n\nDescribe el desafío que los estudiantes deben completar...' :
-                      blockForm.type === 'code' ? '```javascript\n// Escribe o pega tu código aquí\nfunction ejemplo() {\n  return "Hola Mundo"\n}\n```' :
-                      'Escribe el contenido usando Markdown...'
-                    }
-                    value={blockForm.content}
-                    onChange={(e) => setBlockForm({ ...blockForm, content: e.target.value })}
-                    className="min-h-[300px] max-h-[600px] resize-y rounded-t-none font-mono text-sm"
-                    maxLength={5000}
-                  />
-                </TabsContent>
-
-                <TabsContent value="preview" className="mt-0">
-                  <div className="min-h-[300px] max-h-[600px] overflow-y-auto p-4 border rounded-lg bg-background">
-                    {blockForm.content ? (
-                      <div className="prose prose-sm dark:prose-invert max-w-none">
-                        <ReactMarkdown>{blockForm.content}</ReactMarkdown>
-                      </div>
-                    ) : (
-                      <p className="text-muted-foreground text-center py-8">
-                        Escribe algo en la pestaña "Editar" para ver la vista previa aquí
-                      </p>
-                    )}
-                  </div>
-                </TabsContent>
-              </Tabs>
-
-              <div className="flex items-start gap-2 p-3 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
-                <Info className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 shrink-0" />
-                <div className="text-xs text-blue-900 dark:text-blue-100">
-                  <strong>Formatea con Markdown:</strong> Usa **negrita**, *cursiva*, ## títulos, - listas, [enlaces](url), y bloques de código. 
-                  La vista previa muestra cómo se verá el contenido para los estudiantes.
                 </div>
               </div>
-            </div>
+            )}
+
+            {/* Content - Markdown Editor (for code blocks) */}
+            {(blockForm.type === 'code') && (
+              <div className="space-y-2">
+                <Label htmlFor="block-content">Contenido *</Label>
+                
+                <Tabs defaultValue="edit" className="w-full">
+                  <div className="flex items-center justify-between mb-2">
+                    <TabsList>
+                      <TabsTrigger value="edit" className="flex items-center gap-1">
+                        <PencilSimple size={14} />
+                        Editar
+                      </TabsTrigger>
+                      <TabsTrigger value="preview" className="flex items-center gap-1">
+                        <Eye size={14} />
+                        Vista Previa
+                      </TabsTrigger>
+                    </TabsList>
+                    <p className="text-xs text-muted-foreground">
+                      {blockForm.content.length}/5000 caracteres
+                    </p>
+                  </div>
+
+                  <TabsContent value="edit" className="mt-0">
+                    <Textarea
+                      id="block-content"
+                      placeholder={'```javascript\n// Escribe o pega tu código aquí\nfunction ejemplo() {\n  return "Hola Mundo"\n}\n```'}
+                      value={blockForm.content}
+                      onChange={(e) => setBlockForm({ ...blockForm, content: e.target.value })}
+                      className="min-h-[300px] max-h-[600px] resize-y font-mono text-sm"
+                      maxLength={5000}
+                    />
+                  </TabsContent>
+
+                  <TabsContent value="preview" className="mt-0">
+                    <div className="min-h-[300px] max-h-[600px] overflow-y-auto p-4 border rounded-lg bg-background">
+                      {blockForm.content ? (
+                        <div className="prose prose-sm dark:prose-invert max-w-none">
+                          <ReactMarkdown>{blockForm.content}</ReactMarkdown>
+                        </div>
+                      ) : (
+                        <p className="text-muted-foreground text-center py-8">
+                          Escribe código en la pestaña "Editar" para ver la vista previa aquí
+                        </p>
+                      )}
+                    </div>
+                  </TabsContent>
+                </Tabs>
+              </div>
+            )}
 
             {/* Video URL (only for video blocks) */}
             {blockForm.type === 'video' && (
@@ -598,6 +559,7 @@ export function ContentEditorStep({ course, updateCourse, courseId }: ContentEdi
                     <SelectContent>
                       <SelectItem value="upload">Subir Archivo</SelectItem>
                       <SelectItem value="youtube">YouTube</SelectItem>
+                      <SelectItem value="tiktok">TikTok</SelectItem>
                       <SelectItem value="vimeo">Vimeo</SelectItem>
                       <SelectItem value="wistia">Wistia</SelectItem>
                     </SelectContent>
@@ -608,11 +570,53 @@ export function ContentEditorStep({ course, updateCourse, courseId }: ContentEdi
                   <Label htmlFor="video-url">URL del Video</Label>
                   <Input
                     id="video-url"
-                    placeholder="https://..."
+                    placeholder={
+                      blockForm.videoType === 'youtube' 
+                        ? 'https://www.youtube.com/watch?v=... o https://youtu.be/...'
+                        : blockForm.videoType === 'tiktok'
+                        ? 'https://www.tiktok.com/@usuario/video/...'
+                        : 'https://...'
+                    }
                     value={blockForm.videoUrl}
-                    onChange={(e) => setBlockForm({ ...blockForm, videoUrl: e.target.value })}
+                    onChange={(e) => {
+                      const url = e.target.value
+                      setBlockForm({ ...blockForm, videoUrl: url })
+                      
+                      // Auto-detect video type from URL
+                      if (url) {
+                        if (url.includes('youtube.com') || url.includes('youtu.be')) {
+                          setBlockForm(prev => ({ ...prev, videoUrl: url, videoType: 'youtube' }))
+                        } else if (url.includes('tiktok.com')) {
+                          setBlockForm(prev => ({ ...prev, videoUrl: url, videoType: 'tiktok' }))
+                        } else if (url.includes('vimeo.com')) {
+                          setBlockForm(prev => ({ ...prev, videoUrl: url, videoType: 'vimeo' }))
+                        } else if (url.includes('wistia.com')) {
+                          setBlockForm(prev => ({ ...prev, videoUrl: url, videoType: 'wistia' }))
+                        }
+                      }
+                    }}
                   />
+                  <p className="text-xs text-muted-foreground">
+                    {blockForm.videoType === 'youtube' && 'Pega la URL completa de YouTube'}
+                    {blockForm.videoType === 'tiktok' && 'Pega la URL completa del video de TikTok'}
+                    {blockForm.videoType === 'vimeo' && 'Pega la URL completa de Vimeo'}
+                    {blockForm.videoType === 'wistia' && 'Pega la URL completa de Wistia'}
+                    {blockForm.videoType === 'upload' && 'Sube un archivo de video'}
+                  </p>
                 </div>
+
+                {/* Video Preview */}
+                {blockForm.videoUrl && blockForm.videoType !== 'upload' && (
+                  <div className="space-y-2">
+                    <Label>Vista Previa del Video</Label>
+                    <div className="border rounded-lg p-4 bg-muted/30">
+                      <VideoPreview 
+                        videoUrl={blockForm.videoUrl} 
+                        videoType={blockForm.videoType}
+                      />
+                    </div>
+                  </div>
+                )}
               </>
             )}
 
@@ -658,6 +662,7 @@ export function ContentEditorStep({ course, updateCourse, courseId }: ContentEdi
                           // Guardar blobName en formato container/blobName
                           const blobNameForStorage = `${containerName}/${blobName}`
                           setBlockForm({ ...blockForm, imageFile: blobNameForStorage })
+                          setImagePreviewUrl(url) // Set preview URL
                           toast.success('Imagen subida exitosamente')
                         } catch (error: any) {
                           console.error('Error uploading image:', error)
@@ -685,21 +690,30 @@ export function ContentEditorStep({ course, updateCourse, courseId }: ContentEdi
                   {/* Preview or URL Input */}
                   {blockForm.imageFile && (
                     <div className="space-y-2">
-                      {blockForm.imageFile.startsWith('http') || blockForm.imageFile.startsWith('data:') ? (
+                      {(imagePreviewUrl || blockForm.imageFile.startsWith('http') || blockForm.imageFile.startsWith('data:')) ? (
                         <div className="border rounded-lg p-2">
                           <img 
-                            src={blockForm.imageFile} 
+                            src={imagePreviewUrl || blockForm.imageFile} 
                             alt="Preview" 
                             className="max-w-full h-auto rounded"
                           />
                         </div>
                       ) : (
-                        <Input
-                          id="image-file"
-                          placeholder="blobName o URL de imagen"
-                          value={blockForm.imageFile}
-                          onChange={(e) => setBlockForm({ ...blockForm, imageFile: e.target.value })}
-                        />
+                        <div className="space-y-2">
+                          <Input
+                            id="image-file"
+                            placeholder="blobName o URL de imagen"
+                            value={blockForm.imageFile}
+                            onChange={(e) => setBlockForm({ ...blockForm, imageFile: e.target.value })}
+                            readOnly
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            Imagen guardada: {blockForm.imageFile}
+                          </p>
+                          <p className="text-xs text-blue-600">
+                            La imagen se mostrará correctamente cuando los estudiantes vean el curso
+                          </p>
+                        </div>
                       )}
                     </div>
                   )}
@@ -739,11 +753,20 @@ export function ContentEditorStep({ course, updateCourse, courseId }: ContentEdi
             </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="mt-4 border-t pt-4">
             <Button variant="outline" onClick={() => setIsBlockDialogOpen(false)}>
               Cancelar
             </Button>
-            <Button onClick={handleSaveBlock} disabled={!blockForm.content.trim()}>
+            <Button 
+              onClick={handleSaveBlock} 
+              disabled={
+                blockForm.type === 'video' 
+                  ? !blockForm.videoUrl || !blockForm.videoUrl.trim()
+                  : blockForm.type === 'image'
+                  ? !blockForm.imageFile || !blockForm.imageFile.trim()
+                  : !blockForm.content || !blockForm.content.trim()
+              }
+            >
               {editingBlock ? 'Actualizar' : 'Crear'} Bloque
             </Button>
           </DialogFooter>

@@ -518,6 +518,7 @@ export function ModernCourseBuilder({ courseId, onBack }: ModernCourseBuilderPro
             {currentStep === 5 && (
               <ReviewPublishStep 
                 course={course}
+                updateCourse={updateCourse}
                 onSaveDraft={handleSaveDraft}
                 onSubmitForReview={handleSubmitForReview}
                 onPublish={handlePublishCourse}

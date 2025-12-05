@@ -37,6 +37,13 @@ interface QuizLessonProps {
   timeLimit?: number // Límite de tiempo en segundos (0 = sin límite)
   passingScore?: number
   onComplete?: (results: QuizResults) => void
+  // Configuración avanzada de examen
+  examModeType?: 'timed' | 'untimed' // Tipo de examen: con tiempo o sin tiempo
+  examDuration?: number // Duración del examen en minutos (solo para timed)
+  examMinPassingScore?: number // Calificación mínima aprobatoria específica para el examen
+  examQuestionCount?: number // Número de preguntas en el examen
+  questionBank?: QuizQuestion[] // Banco completo de preguntas
+  useRandomSelection?: boolean // Seleccionar preguntas aleatoriamente del banco
 }
 
 export function QuizLesson({
@@ -70,11 +77,13 @@ export function QuizLesson({
   // Verificar si TODAS las preguntas son scenarios (no solo la actual)
   const allQuestionsAreScenarios = questions.every(q => q.type === 'scenario-solver')
 
-  // Timer effect - Siempre contar tiempo (aunque no se muestre visualmente)
-  // Esto es útil para analytics, incluso si no queremos mostrar presión de tiempo al usuario
+  // Timer effect - Solo contar tiempo si es modo timed o si showTimer está activo
   useEffect(() => {
     // NO iniciar timer para scenarios (son sin tiempo)
     if (allQuestionsAreScenarios) return
+    
+    // NO iniciar timer si es modo untimed (sin tiempo)
+    if (examModeType === 'untimed') return
     
     // Detener timer si el quiz ya terminó
     if (showResults) return
@@ -85,7 +94,7 @@ export function QuizLesson({
         const newTime = prev + 1
         
         // Si hay límite de tiempo y se alcanzó, terminar el quiz automáticamente
-        if (timeLimit > 0 && newTime >= timeLimit) {
+        if (effectiveTimeLimit > 0 && newTime >= effectiveTimeLimit) {
           // Pequeño delay para asegurar que el estado se actualice
           setTimeout(() => {
             if (!showResults) {
@@ -99,10 +108,10 @@ export function QuizLesson({
     }, 1000)
 
     return () => clearInterval(interval)
-  }, [allQuestionsAreScenarios, timeLimit, showResults])
+  }, [allQuestionsAreScenarios, examModeType, effectiveTimeLimit, showResults])
 
   // Calcular tiempo restante si hay límite
-  const timeRemaining = timeLimit > 0 ? Math.max(0, timeLimit - timeElapsed) : null
+  const timeRemaining = effectiveTimeLimit > 0 ? Math.max(0, effectiveTimeLimit - timeElapsed) : null
   const isTimeRunningOut = timeRemaining !== null && timeRemaining <= 60 && timeRemaining > 0 // Último minuto
 
   const handleAnswer = (isCorrect: boolean, answerOrScore: any, perfectScore?: number) => {
@@ -340,7 +349,7 @@ export function QuizLesson({
               )}
 
               {/* Timer */}
-              {showTimer && (
+              {shouldShowTimer && (
                 <div className={cn(
                   "flex items-center gap-2 font-mono",
                   timeRemaining !== null && isTimeRunningOut && "text-red-500 animate-pulse",

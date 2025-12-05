@@ -2,12 +2,12 @@ import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
-import { Course, UserProgress } from '@/lib/types'
-import { Check, Circle, Clock, Lightning, Target } from '@phosphor-icons/react'
+import { Course, UserProgress, CourseStructure } from '@/lib/types'
+import { Check, Circle, Clock, Lightning, Target, Certificate, GraduationCap, BookOpen } from '@phosphor-icons/react'
 import { motion } from 'framer-motion'
 
 interface CourseCardProps {
-  course: Course
+  course: Course | CourseStructure
   progress?: UserProgress
   onSelect: () => void
 }
@@ -44,6 +44,18 @@ export function CourseCard({ course, progress, onSelect }: CourseCardProps) {
 
   const xpReward = course.modules.length * 50 + 200
 
+  // Get course configuration indicators
+  const courseStructure = course as CourseStructure
+  const hasQuizzes = course.modules.some(m => 
+    (m.lessons || []).some(l => l.type === 'quiz' && l.quiz)
+  )
+  const certificateAvailable = courseStructure.certificateEnabled
+  const completionMode = courseStructure.completionMode || 'modules-and-quizzes'
+  const quizRequirement = courseStructure.quizRequirement || (hasQuizzes ? 'required' : 'none')
+  const isExamMode = completionMode === 'exam-mode'
+  const isStudyGuide = completionMode === 'study-guide'
+  const quizzesRequired = quizRequirement === 'required' && hasQuizzes
+
   return (
     <motion.div
       whileHover={{ y: -4 }}
@@ -76,7 +88,7 @@ export function CourseCard({ course, progress, onSelect }: CourseCardProps) {
             <div className="flex flex-wrap items-center gap-3 text-sm">
               <div className="flex items-center gap-1.5 text-muted-foreground">
                 <Clock size={16} aria-hidden="true" />
-                <span>{course.estimatedTime} min</span>
+                <span>{course.estimatedTime || course.estimatedHours || 0} {course.estimatedHours ? 'horas' : 'min'}</span>
               </div>
               <div className="flex items-center gap-1.5 text-muted-foreground">
                 <Target size={16} weight="fill" aria-hidden="true" />
@@ -86,6 +98,40 @@ export function CourseCard({ course, progress, onSelect }: CourseCardProps) {
                 <Lightning size={16} weight="fill" aria-hidden="true" />
                 <span>+{xpReward} XP</span>
               </div>
+            </div>
+
+            {/* Course Configuration Badges */}
+            <div className="flex flex-wrap gap-2">
+              {certificateAvailable && (
+                <Badge variant="outline" className="gap-1 text-xs">
+                  <Certificate size={12} weight="fill" />
+                  Certificado Disponible
+                </Badge>
+              )}
+              {quizzesRequired && (
+                <Badge variant="outline" className="gap-1 text-xs">
+                  <GraduationCap size={12} weight="fill" />
+                  Quizzes Requeridos
+                </Badge>
+              )}
+              {isExamMode && (
+                <Badge variant="outline" className="gap-1 text-xs">
+                  <Target size={12} weight="fill" />
+                  Modo Examen
+                </Badge>
+              )}
+              {isStudyGuide && (
+                <Badge variant="outline" className="gap-1 text-xs">
+                  <BookOpen size={12} weight="fill" />
+                  Guía de Estudio
+                </Badge>
+              )}
+              {courseStructure.allowRetakes && (
+                <Badge variant="outline" className="gap-1 text-xs">
+                  <Circle size={12} weight="fill" />
+                  Reintentos Permitidos
+                </Badge>
+              )}
             </div>
 
             {progress && progress.status !== 'not-started' && (

@@ -88,6 +88,7 @@ export function CourseViewerPage() {
   const [quizScores, setQuizScores] = useState<Map<string, number>>(new Map())
   const [attemptStarted, setAttemptStarted] = useState(false)
   const [completedQuizzes, setCompletedQuizzes] = useState<Set<string>>(new Set())
+  const [quizRetakeCounts, setQuizRetakeCounts] = useState<Map<string, number>>(new Map()) // Track retake counts per quiz
 
   useEffect(() => {
     loadCourse()
@@ -224,59 +225,99 @@ export function CourseViewerPage() {
 
     // Check if lesson has blocks (from CourseStructure format)
     if (lesson.blocks && Array.isArray(lesson.blocks) && lesson.blocks.length > 0) {
-      // Find video block
-      const videoBlock = lesson.blocks.find((b: any) => b.type === 'video')
-      if (videoBlock && videoBlock.videoUrl) {
-        // Determine video provider
-        let videoProvider: 'youtube' | 'vimeo' | 'url' = 'url'
-        let videoId: string | undefined = undefined
-        
-        if (videoBlock.videoUrl.includes('youtube.com') || videoBlock.videoUrl.includes('youtu.be')) {
-          videoProvider = 'youtube'
-          // Extract YouTube video ID
-          const match = videoBlock.videoUrl.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/)
-          videoId = match ? match[1] : undefined
-        } else if (videoBlock.videoUrl.includes('vimeo.com')) {
-          videoProvider = 'vimeo'
-          const match = videoBlock.videoUrl.match(/vimeo\.com\/(\d+)/)
-          videoId = match ? match[1] : undefined
-        }
-        
-        return {
-          id: lesson.id,
-          title: lesson.title,
-          type: 'video',
-          order: lesson.order || 0,
-          duration: lesson.estimatedMinutes || 0,
-          isRequired: true,
-          xpReward: lesson.totalXP || 0,
-          content: {
-            videoProvider,
-            videoId,
-            videoUrl: videoBlock.videoUrl
-          }
-        }
-      }
-
-      // Combine all text blocks into markdown
-      const textBlocks = lesson.blocks
-        .filter((b: any) => ['text', 'welcome', 'code', 'challenge'].includes(b.type))
-        .sort((a: any, b: any) => (a.order || 0) - (b.order || 0))
+      // Sort all blocks by order to maintain correct sequence
+      const sortedBlocks = [...lesson.blocks].sort((a: any, b: any) => (a.order || 0) - (b.order || 0))
       
-      if (textBlocks.length > 0) {
-        // Build markdown from blocks
+      console.log(`[transformLesson] Processing lesson "${lesson.title}" with ${sortedBlocks.length} blocks:`, 
+        sortedBlocks.map(b => ({ type: b.type, order: b.order || 0 }))
+      )
+      
+      // Check if there are any content blocks (text, image, code, challenge, video)
+      const hasContentBlocks = sortedBlocks.some((b: any) => 
+        ['text', 'welcome', 'code', 'challenge', 'image', 'video'].includes(b.type)
+      )
+      
+      // If there are content blocks, combine them all into markdown
+      if (hasContentBlocks) {
         let markdown = ''
-        textBlocks.forEach((block: any) => {
-          if (block.type === 'welcome') {
+        
+        sortedBlocks.forEach((block: any) => {
+          if (block.type === 'video' && block.videoUrl) {
+            // Embed video in markdown
+            let embedUrl = ''
+            let videoProvider = 'youtube'
+            
+            if (block.videoUrl.includes('youtube.com') || block.videoUrl.includes('youtu.be')) {
+              videoProvider = 'youtube'
+              const match = block.videoUrl.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/)
+              const videoId = match ? match[1] : undefined
+              if (videoId) {
+                embedUrl = `https://www.youtube.com/embed/${videoId}`
+              }
+            } else if (block.videoUrl.includes('tiktok.com')) {
+              videoProvider = 'tiktok'
+              embedUrl = block.videoUrl
+            } else if (block.videoUrl.includes('vimeo.com')) {
+              videoProvider = 'vimeo'
+              const match = block.videoUrl.match(/vimeo\.com\/(\d+)/)
+              const videoId = match ? match[1] : undefined
+              if (videoId) {
+                embedUrl = `https://player.vimeo.com/video/${videoId}`
+              }
+            } else if (block.videoUrl.includes('wistia.com') || block.videoUrl.includes('wistia.net')) {
+              videoProvider = 'wistia'
+              let wistiaId = ''
+              if (block.videoUrl.includes('wistia.com/medias/')) {
+                wistiaId = block.videoUrl.split('medias/')[1]?.split('?')[0] || ''
+              } else if (block.videoUrl.includes('wistia.net/embed/iframe/')) {
+                wistiaId = block.videoUrl.split('embed/iframe/')[1]?.split('?')[0] || ''
+              }
+              if (wistiaId) {
+                embedUrl = `https://fast.wistia.net/embed/iframe/${wistiaId}`
+              }
+            } else {
+              embedUrl = block.videoUrl
+            }
+            
+            if (embedUrl) {
+              if (videoProvider === 'tiktok') {
+                // TikTok uses blockquote embed
+                markdown += `<div class="tiktok-video-embed" data-video-url="${embedUrl}"></div>\n\n`
+              } else {
+                // Use iframe for other video providers
+                markdown += `<div class="video-embed"><iframe src="${embedUrl}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>\n\n`
+              }
+            }
+          } else if (block.type === 'welcome') {
             markdown += `# ${lesson.title}\n\n${block.content}\n\n`
           } else if (block.type === 'code') {
             markdown += `\`\`\`\n${block.content}\n\`\`\`\n\n`
           } else if (block.type === 'challenge') {
             markdown += `## 🎯 Desafío\n\n${block.content}\n\n`
-          } else {
+          } else if (block.type === 'image') {
+            // Add image placeholder - will be processed when rendering
+            const altText = block.accessibility?.altText || block.content || 'Imagen'
+            const imageFile = block.imageFile || ''
+            
+            if (imageFile) {
+              if (imageFile.startsWith('http') || imageFile.startsWith('data:')) {
+                markdown += `![${altText}](${imageFile})\n\n`
+              } else {
+                markdown += `![${altText}](BLOB:${imageFile})\n\n`
+              }
+            } else {
+              markdown += `*${altText}*\n\n`
+            }
+            
+            if (block.content && block.content !== altText) {
+              markdown += `${block.content}\n\n`
+            }
+          } else if (block.type === 'text') {
             markdown += `${block.content}\n\n`
           }
         })
+        
+        console.log(`[transformLesson] Generated markdown for "${lesson.title}":`, markdown.substring(0, 200) + '...')
         
         return {
           id: lesson.id,
@@ -480,9 +521,18 @@ export function CourseViewerPage() {
           )
 
           if (allCourseLessonsCompleted) {
-            // Course is 100% complete!
-            await completeCourseAttempt()
-            return // Don't auto-advance, show completion page
+            // Validate if course can be completed based on configuration
+            const validation = canCompleteCourse()
+            if (validation.canComplete) {
+              // Course is 100% complete!
+              await completeCourseAttempt()
+              return // Don't auto-advance, show completion page
+            } else {
+              // Show warning but don't block - user can still navigate
+              toast.warning('Curso no completado', {
+                description: validation.reason || 'No cumples con los requisitos de completación'
+              })
+            }
           }
         }
       }
@@ -501,30 +551,210 @@ export function CourseViewerPage() {
     }
   }
   
+  // Helper function to calculate final score
+  const calculateFinalScore = (): number => {
+    if (!course || !course.modules) return 0
+    
+    const allQuizzes = course.modules.flatMap(m => 
+      (m.lessons || []).filter(l => l.type === 'quiz' && l.quiz)
+    )
+    
+    let totalQuizScore = 0
+    let quizCount = 0
+    
+    allQuizzes.forEach(lesson => {
+      const score = quizScores.get(lesson.id)
+      if (score !== undefined) {
+        totalQuizScore += score
+        quizCount++
+      }
+    })
+    
+    // Calculate final score (average of quiz scores, or 100 if no quizzes)
+    return quizCount > 0 
+      ? Math.round(totalQuizScore / quizCount) 
+      : 100
+  }
+
+  // Helper function to check if all required quizzes passed
+  const allRequiredQuizzesPassed = (): boolean => {
+    if (!course || !course.modules) return true
+    
+    const allQuizzes = course.modules.flatMap(m => 
+      (m.lessons || []).filter(l => l.type === 'quiz' && l.quiz)
+    )
+    
+    if (allQuizzes.length === 0) return true
+    
+    // Get passing score from quiz or use default
+    const defaultPassingScore = 70
+    
+    return allQuizzes.every(lesson => {
+      const score = quizScores.get(lesson.id)
+      if (score === undefined) return false // Quiz not completed
+      
+      const quizPassingScore = lesson.quiz?.passingScore || defaultPassingScore
+      return score >= quizPassingScore
+    })
+  }
+
+  // Check if course can be completed based on configuration
+  const canCompleteCourse = (): { canComplete: boolean; reason?: string } => {
+    if (!course || !course.modules) {
+      return { canComplete: false, reason: 'Curso no disponible' }
+    }
+    
+    // Verify that all modules are completed
+    const allCourseModules = course.modules || []
+    const allCourseLessons = allCourseModules.flatMap(m => m.lessons || [])
+    const allCourseLessonsCompleted = allCourseLessons.length > 0 && allCourseLessons.every(l => 
+      completedLessons.has(l.id)
+    )
+    
+    if (!allCourseLessonsCompleted) {
+      return { canComplete: false, reason: 'No todos los módulos están completados' }
+    }
+    
+    const completionMode = course.completionMode || 'modules-and-quizzes'
+    
+    // Check based on completion mode
+    switch (completionMode) {
+      case 'modules-only':
+      case 'study-guide':
+        // Only modules required
+        return { canComplete: true }
+      
+      case 'modules-and-quizzes':
+        // Check quiz requirements
+        if (course.quizRequirement === 'none') {
+          return { canComplete: true }
+        }
+        
+        if (course.quizRequirement === 'optional') {
+          return { canComplete: true }
+        }
+        
+        // Required quizzes
+        if (course.requireAllQuizzesPassed) {
+          if (!allRequiredQuizzesPassed()) {
+            return { 
+              canComplete: false, 
+              reason: 'Debes pasar todos los quizzes requeridos para completar el curso' 
+            }
+          }
+        }
+        
+        // Check minimum score for completion
+        if (course.minimumScoreForCompletion) {
+          const finalScore = calculateFinalScore()
+          if (finalScore < course.minimumScoreForCompletion) {
+            return { 
+              canComplete: false, 
+              reason: `Score mínimo requerido: ${course.minimumScoreForCompletion}%. Tu score actual: ${finalScore}%` 
+            }
+          }
+        }
+        
+        return { canComplete: true }
+      
+      case 'exam-mode':
+        // Check minimum score if configured
+        if (course.minimumScoreForCompletion) {
+          const finalScore = calculateFinalScore()
+          if (finalScore < course.minimumScoreForCompletion) {
+            return { 
+              canComplete: false, 
+              reason: `Score mínimo requerido: ${course.minimumScoreForCompletion}%. Tu score actual: ${finalScore}%` 
+            }
+          }
+        }
+        return { canComplete: true }
+      
+      default:
+        return { canComplete: true }
+    }
+  }
+
+  // Check if certificate can be earned
+  const canEarnCertificate = (): boolean => {
+    if (!course?.certificateEnabled) return false
+    
+    const { canComplete } = canCompleteCourse()
+    if (!canComplete) return false
+    
+    // If certificate requires passing score, check it
+    if (course.certificateRequiresPassingScore) {
+      const finalScore = calculateFinalScore()
+      const minScore = course.minimumScoreForCertificate || 70
+      return finalScore >= minScore
+    }
+    
+    return canComplete
+  }
+
+  // Check if a quiz can be retaken
+  const canRetakeQuiz = (quizId: string): boolean => {
+    if (!course?.allowRetakes) return false
+    
+    const retakeCount = quizRetakeCounts.get(quizId) || 0
+    const maxRetakes = course.maxRetakesPerQuiz || 0
+    
+    // If maxRetakes is 0, unlimited retakes
+    if (maxRetakes === 0) return true
+    
+    // Check if under limit
+    return retakeCount < maxRetakes
+  }
+
+  // Handle quiz retake
+  const handleQuizRetake = (quizId: string) => {
+    if (!canRetakeQuiz(quizId)) {
+      toast.error('Límite de reintentos alcanzado', {
+        description: `Has alcanzado el máximo de ${course?.maxRetakesPerQuiz || 0} reintentos para este quiz`
+      })
+      return
+    }
+    
+    // Increment retake count
+    setQuizRetakeCounts(prev => {
+      const newMap = new Map(prev)
+      newMap.set(quizId, (newMap.get(quizId) || 0) + 1)
+      return newMap
+    })
+    
+    // Remove quiz from completed quizzes to allow retaking
+    setCompletedQuizzes(prev => {
+      const newSet = new Set(prev)
+      newSet.delete(quizId)
+      return newSet
+    })
+    
+    // Remove score to allow new attempt
+    setQuizScores(prev => {
+      const newMap = new Map(prev)
+      newMap.delete(quizId)
+      return newMap
+    })
+    
+    toast.info('Quiz reiniciado', {
+      description: 'Puedes volver a tomar este quiz para mejorar tu calificación'
+    })
+  }
+
   const completeCourseAttempt = async () => {
     if (!user || !courseId || !currentTenant || !course || !course.modules) return
     
-    try {
-      // Calculate final score based on quiz scores
-      const allQuizzes = course.modules.flatMap(m => 
-        (m.lessons || []).filter(l => l.type === 'quiz')
-      )
-      
-      let totalQuizScore = 0
-      let quizCount = 0
-      
-      allQuizzes.forEach(quiz => {
-        const score = quizScores.get(quiz.id)
-        if (score !== undefined) {
-          totalQuizScore += score
-          quizCount++
-        }
+    // Validate if course can be completed
+    const validation = canCompleteCourse()
+    if (!validation.canComplete) {
+      toast.error('No se puede completar el curso', {
+        description: validation.reason || 'No cumples con los requisitos de completación'
       })
-      
-      // Calculate final score (average of quiz scores, or 100 if no quizzes)
-      const finalScore = quizCount > 0 
-        ? Math.round(totalQuizScore / quizCount) 
-        : 100
+      return
+    }
+    
+    try {
+      const finalScore = calculateFinalScore()
       
       // Convert quiz scores map to array format
       const quizScoresArray = Array.from(quizScores.entries()).map(([quizId, score]) => ({
@@ -534,6 +764,7 @@ export function CourseViewerPage() {
       }))
       
       // Complete the attempt and get XP breakdown
+      // Backend will determine certificate issuance based on course configuration
       const result = await ApiService.completeCourseAttempt(
         user.id,
         courseId,
@@ -687,12 +918,58 @@ export function CourseViewerPage() {
   }))
 
   if (courseCompleted && course) {
+    const finalScore = calculateFinalScore()
+    const certificateEarned = canEarnCertificate()
+    
+    // Find quizzes that can be retaken
+    const quizzesToRetake = course.modules
+      ?.flatMap(m => (m.lessons || []).filter(l => l.type === 'quiz' && l.quiz))
+      .map(lesson => {
+        const score = quizScores.get(lesson.id) || 0
+        const passingScore = lesson.quiz?.passingScore || 70
+        return {
+          id: lesson.id,
+          title: lesson.title,
+          score,
+          passingScore
+        }
+      })
+      .filter(q => q.score < q.passingScore && canRetakeQuiz(q.id)) || []
+    
     return (
       <CourseCompletionPage
         courseTitle={course.title}
         totalXP={totalXP}
         totalLessons={totalLessons}
         totalModules={course.modules?.length || 0}
+        finalScore={finalScore}
+        certificateEarned={certificateEarned}
+        courseConfig={{
+          certificateEnabled: course.certificateEnabled,
+          certificateRequiresPassingScore: course.certificateRequiresPassingScore,
+          minimumScoreForCertificate: course.minimumScoreForCertificate,
+          allowRetakes: course.allowRetakes,
+          completionMode: course.completionMode,
+        }}
+        quizzesToRetake={quizzesToRetake}
+        onRetakeQuizzes={() => {
+          // Navigate to first quiz that can be retaken
+          if (quizzesToRetake.length > 0) {
+            const firstQuiz = quizzesToRetake[0]
+            handleQuizRetake(firstQuiz.id)
+            // Find module and lesson for this quiz
+            const module = course.modules?.find(m => 
+              (m.lessons || []).some(l => l.id === firstQuiz.id)
+            )
+            if (module) {
+              const lesson = module.lessons?.find(l => l.id === firstQuiz.id)
+              if (lesson) {
+                handleLessonSelect(module.id, lesson.id)
+                setCourseCompleted(false) // Exit completion page
+              }
+            }
+          }
+        }}
       />
     )
   }

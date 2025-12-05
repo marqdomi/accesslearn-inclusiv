@@ -241,13 +241,21 @@ export interface Quiz {
   id: string
   title: string
   description: string
-  questions: QuizQuestion[]
+  questions: QuizQuestion[] // Preguntas seleccionadas para el examen actual
   passingScore: number
   maxAttempts: number
   totalXP: number
   showTimer?: boolean // Mostrar timer visualmente durante el quiz (modo examen)
   timeLimit?: number // Límite de tiempo en segundos (opcional, para exámenes de certificación)
   examMode?: boolean // Modo examen de certificación (muestra timer y aplica límite de tiempo)
+  
+  // Configuración avanzada de modo examen
+  examModeType?: 'timed' | 'untimed' // Tipo de examen: con tiempo o sin tiempo (modo estudio)
+  examDuration?: number // Duración del examen en minutos (solo para examModeType: 'timed')
+  examMinPassingScore?: number // Calificación mínima aprobatoria específica para el examen
+  examQuestionCount?: number // Número de preguntas que tendrá el examen (si es diferente del banco completo)
+  questionBank?: QuizQuestion[] // Banco completo de preguntas (para modo examen con selección aleatoria)
+  useRandomSelection?: boolean // Si true, selecciona preguntas aleatoriamente del questionBank
 }
 
 export interface LessonBlock {
@@ -259,7 +267,7 @@ export interface LessonBlock {
   xpValue?: number
   order: number
   videoUrl?: string
-  videoType?: 'upload' | 'youtube' | 'vimeo' | 'wistia'
+  videoType?: 'upload' | 'youtube' | 'vimeo' | 'wistia' | 'tiktok'
   imageFile?: string
 }
 
@@ -303,6 +311,16 @@ export interface CourseStructure {
   createdBy: string
   completionAchievementId?: string
   certificateEnabled?: boolean
+  
+  // Configuración flexible de completación y certificación
+  completionMode?: 'modules-only' | 'modules-and-quizzes' | 'exam-mode' | 'study-guide'
+  quizRequirement?: 'required' | 'optional' | 'none'
+  requireAllQuizzesPassed?: boolean // Si true, todos los quizzes deben pasarse para completar
+  minimumScoreForCompletion?: number // Score mínimo para considerar curso completado (0-100)
+  minimumScoreForCertificate?: number // Score mínimo para otorgar certificado (0-100)
+  allowRetakes?: boolean // Permitir reintentar quizzes para mejorar calificación
+  maxRetakesPerQuiz?: number // Límite de reintentos por quiz (0 = ilimitado)
+  certificateRequiresPassingScore?: boolean // Si true, certificado solo si pasa todos los quizzes
 }
 
 export interface UserLibrary {

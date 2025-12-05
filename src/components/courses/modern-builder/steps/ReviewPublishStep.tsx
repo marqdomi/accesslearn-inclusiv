@@ -1,6 +1,7 @@
 import { CourseStructure } from '@/lib/types'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { motion } from 'framer-motion'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { StatusBadge } from '@/components/courses'
@@ -16,7 +17,10 @@ import {
   Tree,
   Book,
   Article,
-  Question
+  Question,
+  Gear,
+  Certificate,
+  GraduationCap
 } from '@phosphor-icons/react'
 import { useAuth } from '@/contexts/AuthContext'
 import {
@@ -28,9 +32,21 @@ import {
 } from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { Label } from '@/components/ui/label'
+import { Input } from '@/components/ui/input'
+import { Switch } from '@/components/ui/switch'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Separator } from '@/components/ui/separator'
 
 interface ReviewPublishStepProps {
   course: CourseStructure
+  updateCourse: (updates: Partial<CourseStructure>) => void
   onSaveDraft: () => void
   onSubmitForReview: () => void
   onPublish: () => void
@@ -44,9 +60,10 @@ interface ValidationItem {
   required: boolean
 }
 
-export function ReviewPublishStep({ course, onSaveDraft, onSubmitForReview, onPublish }: ReviewPublishStepProps) {
+export function ReviewPublishStep({ course, updateCourse, onSaveDraft, onSubmitForReview, onPublish }: ReviewPublishStepProps) {
   const { user } = useAuth()
   const [isPreviewOpen, setIsPreviewOpen] = useState(false)
+  const [isPublishing, setIsPublishing] = useState(false)
   
   // Calculate totals
   const totalModules = course.modules.length
@@ -316,85 +333,112 @@ export function ReviewPublishStep({ course, onSaveDraft, onSubmitForReview, onPu
         </Button>
 
         {canPublishDirectly ? (
-          <Button 
-            size="lg" 
-            className="w-full"
-            onClick={onPublish}
-            disabled={!canPublish}
+          <motion.div
+            whileTap={{ scale: 0.97 }}
+            whileHover={{ scale: 1.02 }}
+            transition={{ type: "spring", stiffness: 400, damping: 17 }}
           >
-            <RocketLaunch className="mr-2" size={20} />
-            Publicar Curso Inmediatamente
-          </Button>
+            <Button 
+              size="lg" 
+              className="w-full relative overflow-hidden"
+              onClick={() => {
+                if (isPublishing) return
+                setIsPublishing(true)
+                try {
+                  onPublish()
+                } finally {
+                  // Reset after a short delay to show the animation
+                  setTimeout(() => setIsPublishing(false), 500)
+                }
+              }}
+              disabled={!canPublish || isPublishing}
+            >
+              <motion.div
+                className="flex items-center justify-center"
+                animate={isPublishing ? { opacity: [1, 0.5, 1] } : { opacity: 1 }}
+                transition={{ duration: 0.5, repeat: isPublishing ? Infinity : 0 }}
+              >
+                <RocketLaunch className="mr-2" size={20} />
+                {isPublishing ? 'Publicando...' : 'Publicar Curso Inmediatamente'}
+              </motion.div>
+            </Button>
+          </motion.div>
         ) : (
-          <Button 
-            size="lg" 
-            className="w-full"
-            onClick={onSubmitForReview}
-            disabled={!canPublish}
+          <motion.div
+            whileTap={{ scale: 0.97 }}
+            whileHover={{ scale: 1.02 }}
+            transition={{ type: "spring", stiffness: 400, damping: 17 }}
           >
-            <PaperPlaneTilt className="mr-2" size={20} />
-            Enviar para Revisión
-          </Button>
+            <Button 
+              size="lg" 
+              className="w-full"
+              onClick={onSubmitForReview}
+              disabled={!canPublish}
+            >
+              <PaperPlaneTilt className="mr-2" size={20} />
+              Enviar para Revisión
+            </Button>
+          </motion.div>
         )}
       </div>
 
       {/* Preview Dialog */}
       <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
-        <DialogContent className="max-w-4xl max-h-[80vh]">
-          <DialogHeader>
-            <DialogTitle>Vista Previa: {course.title}</DialogTitle>
-            <DialogDescription>
+        <DialogContent className="!max-w-[95vw] sm:!max-w-[90vw] lg:!max-w-7xl !max-h-[95vh] w-full p-0 sm:p-6 overflow-hidden">
+          <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-6 pb-2">
+            <DialogTitle className="text-lg sm:text-xl">Vista Previa: {course.title}</DialogTitle>
+            <DialogDescription className="text-sm">
               Así verán los estudiantes tu curso
             </DialogDescription>
           </DialogHeader>
 
-          <ScrollArea className="h-[60vh] pr-4">
-            <div className="space-y-6">
+          <ScrollArea className="h-[calc(95vh-120px)] sm:h-[calc(95vh-140px)] px-4 sm:px-6">
+            <div className="space-y-4 sm:space-y-6 pb-4">
               {/* Course Header */}
-              <div>
-                <h3 className="text-2xl font-bold mb-2">{course.title}</h3>
-                <p className="text-muted-foreground">{course.description}</p>
-                <div className="flex gap-2 mt-3 flex-wrap">
-                  <Badge variant="outline">{course.category}</Badge>
-                  <Badge variant="outline">Dificultad: {course.difficulty}</Badge>
-                  <Badge variant="outline">{course.estimatedHours || 0} horas</Badge>
-                  <Badge variant="secondary">{totalXP} XP Total</Badge>
+              <div className="bg-muted/30 rounded-lg p-4 sm:p-6">
+                <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-2 sm:mb-3 break-words">{course.title}</h3>
+                <p className="text-sm sm:text-base text-muted-foreground leading-relaxed break-words">{course.description}</p>
+                <div className="flex gap-2 mt-3 sm:mt-4 flex-wrap">
+                  <Badge variant="outline" className="text-xs sm:text-sm">{course.category}</Badge>
+                  <Badge variant="outline" className="text-xs sm:text-sm">Dificultad: {course.difficulty}</Badge>
+                  <Badge variant="outline" className="text-xs sm:text-sm">{course.estimatedHours || 0} horas</Badge>
+                  <Badge variant="secondary" className="text-xs sm:text-sm">{totalXP} XP Total</Badge>
                 </div>
               </div>
 
               {/* Modules and Lessons */}
-              <div className="space-y-4">
-                <h4 className="font-semibold text-lg">Contenido del Curso</h4>
+              <div className="space-y-3 sm:space-y-4">
+                <h4 className="font-semibold text-base sm:text-lg lg:text-xl">Contenido del Curso</h4>
                 {course.modules.map((module, moduleIndex) => (
-                  <Card key={module.id}>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-base">
-                        <Tree size={18} />
-                        Módulo {moduleIndex + 1}: {module.title}
-                        {module.badge && <Badge variant="outline">{module.badge}</Badge>}
+                  <Card key={module.id} className="overflow-hidden">
+                    <CardHeader className="p-4 sm:p-6">
+                      <CardTitle className="flex items-center gap-2 text-sm sm:text-base lg:text-lg flex-wrap">
+                        <Tree size={16} className="sm:w-[18px] sm:h-[18px] flex-shrink-0" />
+                        <span className="break-words">Módulo {moduleIndex + 1}: {module.title}</span>
+                        {module.badge && <Badge variant="outline" className="text-xs">{module.badge}</Badge>}
                       </CardTitle>
-                      <p className="text-sm text-muted-foreground">{module.description}</p>
+                      <p className="text-xs sm:text-sm text-muted-foreground mt-2 break-words">{module.description}</p>
                     </CardHeader>
-                    <CardContent>
-                      <div className="space-y-2">
+                    <CardContent className="p-4 sm:p-6 pt-0">
+                      <div className="space-y-2 sm:space-y-3">
                         {module.lessons.map((lesson, lessonIndex) => (
-                          <div key={lesson.id} className="flex items-start gap-3 p-3 border rounded-lg">
-                            <Book size={16} className="text-muted-foreground mt-1" />
-                            <div className="flex-1">
-                              <p className="font-medium text-sm">
+                          <div key={lesson.id} className="flex items-start gap-2 sm:gap-3 p-2 sm:p-3 border rounded-lg hover:bg-muted/50 transition-colors">
+                            <Book size={14} className="sm:w-4 sm:h-4 text-muted-foreground mt-1 flex-shrink-0" />
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-xs sm:text-sm lg:text-base break-words">
                                 {lessonIndex + 1}. {lesson.title}
                               </p>
-                              <p className="text-xs text-muted-foreground">{lesson.description}</p>
+                              <p className="text-xs sm:text-sm text-muted-foreground mt-1 break-words">{lesson.description}</p>
                               <div className="flex gap-2 mt-2 flex-wrap">
                                 {lesson.blocks.length > 0 && (
                                   <Badge variant="outline" className="text-xs">
-                                    <Article size={12} className="mr-1" />
+                                    <Article size={10} className="sm:w-3 sm:h-3 mr-1" />
                                     {lesson.blocks.length} bloques
                                   </Badge>
                                 )}
                                 {lesson.quiz && (
                                   <Badge variant="outline" className="text-xs">
-                                    <Question size={12} className="mr-1" />
+                                    <Question size={10} className="sm:w-3 sm:h-3 mr-1" />
                                     Quiz ({lesson.quiz.questions.length} preguntas)
                                   </Badge>
                                 )}

@@ -74,6 +74,12 @@ export function QuizBuilderStep({ course, updateCourse }: QuizBuilderStepProps) 
     showTimer: false, // Mostrar timer visualmente
     timeLimit: 0, // Límite de tiempo en minutos (0 = sin límite)
     examMode: false, // Modo examen de certificación
+    // Configuración avanzada de examen
+    examModeType: 'timed' as 'timed' | 'untimed', // Tipo de examen: con tiempo o sin tiempo
+    examDuration: 60, // Duración del examen en minutos (solo para timed)
+    examMinPassingScore: 70, // Calificación mínima aprobatoria específica para el examen
+    examQuestionCount: 0, // Número de preguntas en el examen (0 = todas las preguntas del banco)
+    useRandomSelection: false, // Seleccionar preguntas aleatoriamente del banco
   })
 
   // Question form
@@ -136,6 +142,11 @@ export function QuizBuilderStep({ course, updateCourse }: QuizBuilderStepProps) 
         showTimer: false,
         timeLimit: 0,
         examMode: false,
+        examModeType: 'timed',
+        examDuration: 60,
+        examMinPassingScore: 70,
+        examQuestionCount: 0,
+        useRandomSelection: false,
       })
     }
     setIsQuizMetadataOpen(true)
@@ -161,6 +172,12 @@ export function QuizBuilderStep({ course, updateCourse }: QuizBuilderStepProps) 
         showTimer: quizForm.showTimer || quizForm.examMode,
         timeLimit: quizForm.timeLimit > 0 ? quizForm.timeLimit * 60 : undefined, // Convertir minutos a segundos
         examMode: quizForm.examMode,
+        examModeType: quizForm.examMode ? quizForm.examModeType : undefined,
+        examDuration: quizForm.examMode && quizForm.examModeType === 'timed' ? quizForm.examDuration : undefined,
+        examMinPassingScore: quizForm.examMode ? quizForm.examMinPassingScore : undefined,
+        examQuestionCount: quizForm.examMode && quizForm.useRandomSelection ? quizForm.examQuestionCount : undefined,
+        useRandomSelection: quizForm.examMode ? quizForm.useRandomSelection : undefined,
+        questionBank: undefined, // Se llenará cuando se agreguen preguntas
       }
     } else {
       // Update existing quiz
@@ -171,6 +188,33 @@ export function QuizBuilderStep({ course, updateCourse }: QuizBuilderStepProps) 
       lesson.quiz.showTimer = quizForm.showTimer || quizForm.examMode
       lesson.quiz.timeLimit = quizForm.timeLimit > 0 ? quizForm.timeLimit * 60 : undefined
       lesson.quiz.examMode = quizForm.examMode
+      
+      if (quizForm.examMode) {
+        lesson.quiz.examModeType = quizForm.examModeType
+        if (quizForm.examModeType === 'timed') {
+          lesson.quiz.examDuration = quizForm.examDuration
+        }
+        lesson.quiz.examMinPassingScore = quizForm.examMinPassingScore
+        if (quizForm.useRandomSelection) {
+          lesson.quiz.examQuestionCount = quizForm.examQuestionCount
+          lesson.quiz.useRandomSelection = true
+          // Guardar todas las preguntas actuales en questionBank si aún no existe
+          if (!lesson.quiz.questionBank || lesson.quiz.questionBank.length === 0) {
+            lesson.quiz.questionBank = [...(lesson.quiz.questions || [])]
+          }
+        } else {
+          lesson.quiz.useRandomSelection = false
+          lesson.quiz.examQuestionCount = undefined
+        }
+      } else {
+        // Limpiar configuración de examen si se desactiva
+        lesson.quiz.examModeType = undefined
+        lesson.quiz.examDuration = undefined
+        lesson.quiz.examMinPassingScore = undefined
+        lesson.quiz.examQuestionCount = undefined
+        lesson.quiz.useRandomSelection = undefined
+        lesson.quiz.questionBank = undefined
+      }
     }
 
     updateCourse({ modules: updatedModules })
@@ -327,8 +371,25 @@ export function QuizBuilderStep({ course, updateCourse }: QuizBuilderStepProps) 
 
     if (editingQuestion !== null) {
       quiz.questions[editingQuestion.questionIndex] = newQuestion
+      // Si useRandomSelection está activo, actualizar también el questionBank
+      if (quiz.useRandomSelection && quiz.questionBank) {
+        const bankIndex = quiz.questionBank.findIndex(q => q.id === newQuestion.id)
+        if (bankIndex !== -1) {
+          quiz.questionBank[bankIndex] = newQuestion
+        }
+      }
     } else {
       quiz.questions.push(newQuestion)
+      // Si useRandomSelection está activo, agregar también al questionBank
+      if (quiz.useRandomSelection) {
+        if (!quiz.questionBank) {
+          quiz.questionBank = []
+        }
+        // Solo agregar si no existe ya (por si acaso)
+        if (!quiz.questionBank.find(q => q.id === newQuestion.id)) {
+          quiz.questionBank.push(newQuestion)
+        }
+      }
     }
 
     // Recalculate total XP
@@ -345,7 +406,13 @@ export function QuizBuilderStep({ course, updateCourse }: QuizBuilderStepProps) 
     const updatedModules = [...course.modules]
     const quiz = updatedModules[selectedLesson.moduleIndex].lessons[selectedLesson.lessonIndex].quiz!
     
+    const questionToDelete = quiz.questions[questionIndex]
     quiz.questions = quiz.questions.filter((_, i) => i !== questionIndex)
+    
+    // Si useRandomSelection está activo, eliminar también del questionBank
+    if (quiz.useRandomSelection && quiz.questionBank && questionToDelete) {
+      quiz.questionBank = quiz.questionBank.filter(q => q.id !== questionToDelete.id)
+    }
     quiz.totalXP = quiz.questions.reduce((acc, q) => acc + q.xpValue, 0)
 
     updateCourse({ modules: updatedModules })
@@ -743,6 +810,128 @@ export function QuizBuilderStep({ course, updateCourse }: QuizBuilderStepProps) 
                       : 'Sin límite de tiempo (el timer seguirá contando para analytics)'}
                   </p>
                 </div>
+              )}
+
+              {/* Configuración Avanzada de Examen */}
+              {quizForm.examMode && (
+                <>
+                  <Separator />
+                  <div className="space-y-4">
+                    <h4 className="font-semibold text-sm">Configuración Avanzada de Examen</h4>
+
+                    {/* Tipo de Examen */}
+                    <div className="space-y-2">
+                      <Label htmlFor="exam-mode-type">Tipo de Examen</Label>
+                      <Select
+                        value={quizForm.examModeType}
+                        onValueChange={(value: 'timed' | 'untimed') => {
+                          setQuizForm({ ...quizForm, examModeType: value })
+                        }}
+                      >
+                        <SelectTrigger id="exam-mode-type">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="timed">Con Tiempo y Cronómetro (Examen de Certificación)</SelectItem>
+                          <SelectItem value="untimed">Sin Tiempo (Modo Estudio/Práctica)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-muted-foreground">
+                        {quizForm.examModeType === 'timed' 
+                          ? 'El examen tendrá un límite de tiempo y mostrará un cronómetro visible'
+                          : 'El examen no tendrá límite de tiempo, ideal para estudiar y practicar sin presión'}
+                      </p>
+                    </div>
+
+                    {/* Duración del Examen (solo para timed) */}
+                    {quizForm.examModeType === 'timed' && (
+                      <div className="space-y-2">
+                        <Label htmlFor="exam-duration">Duración del Examen (minutos) *</Label>
+                        <Input
+                          id="exam-duration"
+                          type="number"
+                          min={1}
+                          max={600}
+                          value={quizForm.examDuration}
+                          onChange={(e) => setQuizForm({ ...quizForm, examDuration: parseInt(e.target.value) || 60 })}
+                          placeholder="60"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Tiempo total disponible para completar el examen
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Calificación Mínima Aprobatoria */}
+                    <div className="space-y-2">
+                      <Label htmlFor="exam-min-passing-score">Calificación Mínima Aprobatoria (%) *</Label>
+                      <Input
+                        id="exam-min-passing-score"
+                        type="number"
+                        min={0}
+                        max={100}
+                        value={quizForm.examMinPassingScore}
+                        onChange={(e) => setQuizForm({ ...quizForm, examMinPassingScore: parseInt(e.target.value) || 70 })}
+                        placeholder="70"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Score mínimo requerido para aprobar el examen
+                      </p>
+                    </div>
+
+                    {/* Selección Aleatoria de Preguntas */}
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label htmlFor="use-random-selection">Selección Aleatoria de Preguntas</Label>
+                        <p className="text-xs text-muted-foreground">
+                          Seleccionar preguntas aleatoriamente del banco completo (útil para exámenes de certificación)
+                        </p>
+                      </div>
+                      <Switch
+                        id="use-random-selection"
+                        checked={quizForm.useRandomSelection}
+                        onCheckedChange={(checked) => {
+                          setQuizForm({ ...quizForm, useRandomSelection: checked })
+                        }}
+                      />
+                    </div>
+
+                    {/* Número de Preguntas (solo si useRandomSelection está activo) */}
+                    {quizForm.useRandomSelection && (
+                      <div className="space-y-2">
+                        <Label htmlFor="exam-question-count">
+                          Número de Preguntas en el Examen
+                          {currentQuiz && (
+                            <span className="text-xs text-muted-foreground ml-2">
+                              (Banco disponible: {currentQuiz.questions.length} preguntas)
+                            </span>
+                          )}
+                        </Label>
+                        <Input
+                          id="exam-question-count"
+                          type="number"
+                          min={1}
+                          max={currentQuiz?.questions.length || 100}
+                          value={quizForm.examQuestionCount}
+                          onChange={(e) => {
+                            const count = parseInt(e.target.value) || 0
+                            const maxQuestions = currentQuiz?.questions.length || 100
+                            setQuizForm({ 
+                              ...quizForm, 
+                              examQuestionCount: Math.min(count, maxQuestions)
+                            })
+                          }}
+                          placeholder={`Máximo: ${currentQuiz?.questions.length || 0}`}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          {quizForm.examQuestionCount > 0
+                            ? `El examen seleccionará ${quizForm.examQuestionCount} pregunta${quizForm.examQuestionCount > 1 ? 's' : ''} aleatoriamente del banco de ${currentQuiz?.questions.length || 0} preguntas`
+                            : 'Se usarán todas las preguntas del banco'}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </>
               )}
             </div>
           </div>

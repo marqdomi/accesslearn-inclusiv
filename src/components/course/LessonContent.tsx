@@ -9,7 +9,7 @@ interface LessonContentProps {
     type: 'markdown' | 'video' | 'quiz'
     content: {
       markdown?: string
-      videoProvider?: 'youtube' | 'vimeo' | 'url'
+      videoProvider?: 'youtube' | 'vimeo' | 'tiktok' | 'url'
       videoId?: string
       videoUrl?: string
       quiz?: {
@@ -59,6 +59,12 @@ export function LessonContent({ lesson, onQuizComplete }: LessonContentProps) {
           timeLimit={lesson.content.quiz.timeLimit}
           passingScore={lesson.content.quiz.passingScore}
           onComplete={onQuizComplete}
+          examModeType={lesson.content.quiz.examModeType}
+          examDuration={lesson.content.quiz.examDuration}
+          examMinPassingScore={lesson.content.quiz.examMinPassingScore}
+          examQuestionCount={lesson.content.quiz.examQuestionCount}
+          questionBank={lesson.content.quiz.questionBank}
+          useRandomSelection={lesson.content.quiz.useRandomSelection}
         />
       )
     

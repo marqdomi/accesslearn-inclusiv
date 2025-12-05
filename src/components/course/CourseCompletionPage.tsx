@@ -11,7 +11,11 @@ import {
   BookOpen,
   Home,
   Share2,
-  Download
+  Download,
+  Award,
+  AlertCircle,
+  Info,
+  RotateCcw
 } from 'lucide-react'
 import confetti from 'canvas-confetti'
 
@@ -20,6 +24,17 @@ interface CourseCompletionPageProps {
   totalXP: number
   totalLessons: number
   totalModules: number
+  finalScore?: number
+  certificateEarned?: boolean
+  courseConfig?: {
+    certificateEnabled?: boolean
+    certificateRequiresPassingScore?: boolean
+    minimumScoreForCertificate?: number
+    allowRetakes?: boolean
+    completionMode?: 'modules-only' | 'modules-and-quizzes' | 'exam-mode' | 'study-guide'
+  }
+  onRetakeQuizzes?: () => void
+  quizzesToRetake?: Array<{ id: string; title: string; score: number; passingScore: number }>
 }
 
 export function CourseCompletionPage({
@@ -27,6 +42,11 @@ export function CourseCompletionPage({
   totalXP,
   totalLessons,
   totalModules,
+  finalScore,
+  certificateEarned = false,
+  courseConfig,
+  onRetakeQuizzes,
+  quizzesToRetake = [],
 }: CourseCompletionPageProps) {
   const navigate = useNavigate()
 
@@ -138,13 +158,108 @@ export function CourseCompletionPage({
               initial={{ scale: 0, rotate: -180 }}
               animate={{ scale: 1, rotate: 0 }}
               transition={{ delay: 0.6, type: 'spring' }}
-              className="flex justify-center mb-8"
+              className="flex justify-center mb-8 gap-3 flex-wrap"
             >
-              <Badge className="px-6 py-3 text-lg bg-linear-to-r from-yellow-400 to-orange-500 text-white">
+              <Badge className="px-6 py-3 text-lg bg-gradient-to-r from-yellow-400 to-orange-500 text-white">
                 <Star className="h-6 w-6 mr-2 fill-white" />
-                Curso Completado al 100%
+                Curso Completado {finalScore !== undefined ? `(${finalScore}%)` : ''}
               </Badge>
+              {certificateEarned && (
+                <Badge className="px-6 py-3 text-lg bg-gradient-to-r from-purple-500 to-pink-500 text-white">
+                  <Award className="h-6 w-6 mr-2" />
+                  Certificado Obtenido
+                </Badge>
+              )}
+              {courseConfig?.certificateEnabled && !certificateEarned && courseConfig.certificateRequiresPassingScore && (
+                <Badge variant="outline" className="px-6 py-3 text-lg border-yellow-500 text-yellow-600">
+                  <AlertCircle className="h-6 w-6 mr-2" />
+                  Certificado requiere {courseConfig.minimumScoreForCertificate || 70}%
+                </Badge>
+              )}
             </motion.div>
+
+            {/* Certificate Status */}
+            {courseConfig?.certificateEnabled && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.7 }}
+                className="mb-8"
+              >
+                <Card className={`p-6 ${certificateEarned ? 'bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950 dark:to-pink-950 border-purple-200 dark:border-purple-800' : 'bg-muted/50'}`}>
+                  <div className="flex items-start gap-4">
+                    <Award className={`h-8 w-8 flex-shrink-0 ${certificateEarned ? 'text-purple-600' : 'text-muted-foreground'}`} />
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-lg mb-2">
+                        {certificateEarned ? '¡Certificado Obtenido!' : 'Certificado Disponible'}
+                      </h3>
+                      {certificateEarned ? (
+                        <p className="text-muted-foreground">
+                          Has cumplido con todos los requisitos para obtener el certificado de completación.
+                        </p>
+                      ) : courseConfig.certificateRequiresPassingScore ? (
+                        <p className="text-muted-foreground">
+                          Necesitas un score mínimo de {courseConfig.minimumScoreForCertificate || 70}% para obtener el certificado.
+                          {finalScore !== undefined && (
+                            <span className="block mt-1">
+                              Tu score actual: <strong>{finalScore}%</strong>
+                            </span>
+                          )}
+                        </p>
+                      ) : (
+                        <p className="text-muted-foreground">
+                          El certificado estará disponible una vez que completes todos los requisitos del curso.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </Card>
+              </motion.div>
+            )}
+
+            {/* Quizzes to Retake */}
+            {courseConfig?.allowRetakes && quizzesToRetake.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.8 }}
+                className="mb-8"
+              >
+                <Card className="p-6 bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
+                  <div className="flex items-start gap-4">
+                    <Info className="h-8 w-8 flex-shrink-0 text-blue-600" />
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-lg mb-2">Puedes mejorar tu calificación</h3>
+                      <p className="text-muted-foreground mb-4">
+                        Tienes {quizzesToRetake.length} quiz{quizzesToRetake.length > 1 ? 'zes' : ''} que puedes reintentar para mejorar tu score final:
+                      </p>
+                      <div className="space-y-2 mb-4">
+                        {quizzesToRetake.map((quiz) => (
+                          <div key={quiz.id} className="flex items-center justify-between p-3 bg-background rounded-lg">
+                            <span className="font-medium">{quiz.title}</span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm text-muted-foreground">
+                                Score: {quiz.score}% / Requerido: {quiz.passingScore}%
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      {onRetakeQuizzes && (
+                        <Button
+                          variant="outline"
+                          onClick={onRetakeQuizzes}
+                          className="gap-2"
+                        >
+                          <RotateCcw className="h-4 w-4" />
+                          Reintentar Quizzes
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </Card>
+              </motion.div>
+            )}
 
             {/* Quote */}
             <motion.div

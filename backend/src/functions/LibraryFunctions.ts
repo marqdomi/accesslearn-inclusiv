@@ -4,6 +4,8 @@
 
 import { getContainer } from '../services/cosmosdb.service';
 import { UserProgress, CourseAttempt } from '../models/User';
+import { getCourseById } from './CourseFunctions';
+import { Course } from '../models/Course';
 
 /**
  * Obtener biblioteca del usuario (todos sus cursos)
@@ -214,8 +216,15 @@ export async function completeCourseAttempt(
       total: number;
     };
   };
+  certificateEarned?: boolean;
 }> {
   const container = getContainer('user-progress');
+
+  // Get course configuration
+  const course = await getCourseById(courseId, tenantId);
+  if (!course) {
+    throw new Error('Curso no encontrado');
+  }
 
   const query = {
     query: 'SELECT * FROM c WHERE c.userId = @userId AND c.tenantId = @tenantId AND c.courseId = @courseId',
@@ -242,6 +251,28 @@ export async function completeCourseAttempt(
     throw new Error('No se encontró el intento actual');
   }
 
+  // Validate completion based on course configuration
+  const completionMode = course.completionMode || 'modules-and-quizzes';
+  
+  // Validate minimum score for completion
+  if (course.minimumScoreForCompletion && finalScore < course.minimumScoreForCompletion) {
+    throw new Error(`Score mínimo requerido: ${course.minimumScoreForCompletion}%. Tu score actual: ${finalScore}%`);
+  }
+
+  // Validate quiz requirements
+  if (completionMode === 'modules-and-quizzes' && course.requireAllQuizzesPassed) {
+    const defaultPassingScore = 70;
+    const allPassed = quizScores.every(q => {
+      // Find quiz passing score from course structure (would need to be passed or looked up)
+      // For now, use default
+      return q.score >= (course.minimumScoreForCompletion || defaultPassingScore);
+    });
+    
+    if (!allPassed) {
+      throw new Error('Debes pasar todos los quizzes requeridos para completar el curso');
+    }
+  }
+
   // Calcular XP diferencial (solo otorga XP por mejora, no por re-intentos al 100%)
   const bestPreviousScore = progressData.bestScore || 0;
   const xpCalculation = calculateDifferentialXP(finalScore, bestPreviousScore, 500); // 500 XP base por curso
@@ -265,8 +296,20 @@ export async function completeCourseAttempt(
   // Marcar como completado cuando el intento termine
   progressData.status = 'completed';
 
-  // Si llegó a 100%, marcar certificado como ganado
-  if (finalScore >= 100 && !progressData.certificateEarned) {
+  // Determine if certificate should be issued based on course configuration
+  let shouldIssueCertificate = false;
+  if (course.certificateEnabled) {
+    if (course.certificateRequiresPassingScore) {
+      const minScore = course.minimumScoreForCertificate || 70;
+      shouldIssueCertificate = finalScore >= minScore;
+    } else {
+      // Certificate available upon completion
+      shouldIssueCertificate = true;
+    }
+  }
+
+  // Issue certificate if conditions are met
+  if (shouldIssueCertificate && !progressData.certificateEarned) {
     progressData.certificateEarned = true;
     progressData.certificateId = `cert-${userId}-${courseId}-${Date.now()}`;
   }
@@ -305,5 +348,6 @@ export async function completeCourseAttempt(
   return {
     progress: progressData,
     xpAwarded: xpCalculation,
+    certificateEarned: shouldIssueCertificate && progressData.certificateEarned,
   };
 }
