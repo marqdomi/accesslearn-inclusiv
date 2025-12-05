@@ -75,6 +75,9 @@ export function QuizLesson({
   useEffect(() => {
     // NO iniciar timer para scenarios (son sin tiempo)
     if (allQuestionsAreScenarios) return
+    
+    // Detener timer si el quiz ya terminó
+    if (showResults) return
 
     // Iniciar timer cuando comienza el quiz
     const interval = setInterval(() => {
@@ -96,7 +99,7 @@ export function QuizLesson({
     }, 1000)
 
     return () => clearInterval(interval)
-  }, [allQuestionsAreScenarios, timeLimit, isAnswered, showResults])
+  }, [allQuestionsAreScenarios, timeLimit, showResults])
 
   // Calcular tiempo restante si hay límite
   const timeRemaining = timeLimit > 0 ? Math.max(0, timeLimit - timeElapsed) : null
