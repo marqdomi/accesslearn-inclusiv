@@ -64,32 +64,37 @@ export function RichTextEditor({
         const tagName = element.tagName.toLowerCase()
         const children = Array.from(element.childNodes).map(extractText).join('')
         
+        // Trim children content for inline formatting elements to avoid broken markdown
+        const trimmedChildren = children.trim()
+        
         switch (tagName) {
           case 'strong':
           case 'b':
-            return `**${children}**`
+            // Use trimmed content to ensure valid markdown: **text** not **text **
+            return trimmedChildren ? `**${trimmedChildren}**` : ''
           case 'em':
           case 'i':
-            return `*${children}*`
+            // Use trimmed content to ensure valid markdown: *text* not *text *
+            return trimmedChildren ? `*${trimmedChildren}*` : ''
           case 'h2':
-            return `\n## ${children}\n`
+            return `\n## ${trimmedChildren}\n`
           case 'h3':
-            return `\n### ${children}\n`
+            return `\n### ${trimmedChildren}\n`
           case 'ul':
             return `\n${children}\n`
           case 'ol':
             return `\n${children}\n`
           case 'li':
-            return `- ${children}\n`
+            return `- ${trimmedChildren}\n`
           case 'blockquote':
-            return `\n> ${children}\n`
+            return `\n> ${trimmedChildren}\n`
           case 'code':
-            return `\`${children}\``
+            return `\`${trimmedChildren}\``
           case 'pre':
-            return `\n\`\`\`\n${children}\n\`\`\`\n`
+            return `\n\`\`\`\n${trimmedChildren}\n\`\`\`\n`
           case 'a':
             const href = element.getAttribute('href') || ''
-            return `[${children}](${href})`
+            return `[${trimmedChildren}](${href})`
           case 'p':
             return `${children}\n`
           case 'br':

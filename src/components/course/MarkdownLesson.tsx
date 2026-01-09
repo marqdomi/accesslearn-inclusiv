@@ -13,65 +13,123 @@ interface MarkdownLessonProps {
 export function MarkdownLesson({ content }: MarkdownLessonProps) {
   const [processedContent, setProcessedContent] = useState(content)
   const [imageUrlMap, setImageUrlMap] = useState<Map<string, string>>(new Map())
+  const [isProcessing, setIsProcessing] = useState(false)
 
   // Process blob references and convert to URLs
   useEffect(() => {
     const processBlobReferences = async () => {
-      // Find all BLOB: references in markdown
-      const blobRegex = /!\[([^\]]*)\]\(BLOB:([^)]+)\)/g
-      const matches = Array.from(content.matchAll(blobRegex))
+      setIsProcessing(true)
       
-      if (matches.length === 0) {
-        setProcessedContent(content)
-        return
-      }
+      try {
+        // Find all BLOB: references in markdown
+        const blobRegex = /!\[([^\]]*)\]\(BLOB:([^)]+)\)/g
+        const matches = Array.from(content.matchAll(blobRegex))
+        
+        if (matches.length === 0) {
+          setProcessedContent(content)
+          setIsProcessing(false)
+          return
+        }
 
-      const urlMap = new Map<string, string>()
-      
-      // Process each blob reference
-      for (const match of matches) {
-        const [fullMatch, altText, blobPath] = match
-        const blobKey = `BLOB:${blobPath}`
+        const urlMap = new Map<string, string>()
         
-        // Check if we already have this URL cached
-        if (imageUrlMap.has(blobKey)) {
-          urlMap.set(blobKey, imageUrlMap.get(blobKey)!)
-          continue
-        }
-        
-        try {
-          // Parse container/blobName format
-          const [containerName, ...blobNameParts] = blobPath.split('/')
-          const blobName = blobNameParts.join('/')
+        // Process each blob reference
+        for (const match of matches) {
+          const [fullMatch, altText, blobPath] = match
+          const blobKey = `BLOB:${blobPath}`
           
-          // Get media URL with SAS token
-          const { url } = await ApiService.getMediaUrl(containerName, blobName)
-          urlMap.set(blobKey, url)
-        } catch (error) {
-          console.error('Error getting image URL:', error)
-          // Keep the original blob reference as fallback
-          urlMap.set(blobKey, blobPath)
+          // Check if we already have this URL cached
+          if (imageUrlMap.has(blobKey)) {
+            urlMap.set(blobKey, imageUrlMap.get(blobKey)!)
+            continue
+          }
+          
+          try {
+            // Parse container/blobName format - expects format like "course-media/tenant-id/path/file.png"
+            const pathParts = blobPath.split('/')
+            if (pathParts.length < 2) {
+              console.warn(`[MarkdownLesson] Invalid blob path format: ${blobPath}`)
+              // Skip this blob reference - will be removed from content
+              continue
+            }
+            
+            const [containerName, ...blobNameParts] = pathParts
+            const blobName = blobNameParts.join('/')
+            
+            // Validate container and blob name
+            if (!containerName || !blobName) {
+              console.warn(`[MarkdownLesson] Missing container or blob name: container=${containerName}, blob=${blobName}`)
+              continue
+            }
+            
+            // Get media URL with SAS token
+            const { url } = await ApiService.getMediaUrl(containerName, blobName)
+            urlMap.set(blobKey, url)
+          } catch (error: any) {
+            console.error(`[MarkdownLesson] Error getting image URL for ${blobPath}:`, error?.message || error)
+            // Remove the broken image reference from content instead of showing broken image
+            // We'll handle this below when replacing
+          }
         }
-      }
-      
-      // Replace BLOB references with actual URLs
-      let processed = content
-      urlMap.forEach((url, blobKey) => {
-        const blobPath = blobKey.replace('BLOB:', '')
-        // Replace BLOB:container/blobName with actual URL
+        
+        // Replace BLOB references with actual URLs or remove broken references
+        let processed = content
+        
+        // First, replace successful blob references
+        urlMap.forEach((url, blobKey) => {
+          const blobPath = blobKey.replace('BLOB:', '')
+          processed = processed.replace(
+            new RegExp(`!\\[([^\\]]*)\\]\\(BLOB:${blobPath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\)`, 'g'),
+            `![$1](${url})`
+          )
+        })
+        
+        // Then, remove any remaining broken BLOB references (ones that failed to load)
+        // Replace with just the alt text in italics
         processed = processed.replace(
-          new RegExp(`!\\[([^\\]]*)\\]\\(BLOB:${blobPath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\)`, 'g'),
-          `![$1](${url})`
+          /!\[([^\]]*)\]\(BLOB:[^)]+\)/g,
+          (_match, altText) => altText ? `*${altText}*` : ''
         )
-      })
-      
-      setProcessedContent(processed)
-      setImageUrlMap(urlMap)
+        
+        setProcessedContent(processed)
+        setImageUrlMap(urlMap)
+      } catch (error) {
+        console.error('[MarkdownLesson] Error processing blob references:', error)
+        // Fallback: show content without blob processing
+        setProcessedContent(content.replace(/!\[([^\]]*)\]\(BLOB:[^)]+\)/g, (_match, altText) => altText ? `*${altText}*` : ''))
+      } finally {
+        setIsProcessing(false)
+      }
     }
     
     processBlobReferences()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [content])
+
+  // Pre-process markdown to fix common formatting issues
+  const preprocessMarkdown = (md: string): string => {
+    let processed = md
+    
+    // Fix bold markers with trailing spaces before closing: **text ** -> **text**
+    processed = processed.replace(/\*\*([^*]+?)\s+\*\*/g, '**$1**')
+    
+    // Fix italic markers with trailing spaces before closing: *text * -> *text*
+    processed = processed.replace(/(?<!\*)\*([^*]+?)\s+\*(?!\*)/g, '*$1*')
+    
+    // Fix bold markers with leading spaces after opening: ** text** -> **text**
+    processed = processed.replace(/\*\*\s+([^*]+?)\*\*/g, '**$1**')
+    
+    // Fix italic markers with leading spaces after opening: * text* -> *text*
+    processed = processed.replace(/(?<!\*)\*\s+([^*]+?)\*(?!\*)/g, '*$1*')
+    
+    // Clean up multiple consecutive spaces
+    processed = processed.replace(/  +/g, ' ')
+    
+    return processed
+  }
+
+  const finalContent = preprocessMarkdown(processedContent)
+
   return (
     <Card className="p-8">
       <div className="prose prose-slate dark:prose-invert max-w-none">
@@ -207,7 +265,7 @@ export function MarkdownLesson({ content }: MarkdownLessonProps) {
             ),
           }}
         >
-          {processedContent}
+          {finalContent}
         </ReactMarkdown>
       </div>
     </Card>
