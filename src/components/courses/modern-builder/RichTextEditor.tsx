@@ -2,6 +2,7 @@ import { useEditor, EditorContent, Editor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Link from '@tiptap/extension-link'
 import Placeholder from '@tiptap/extension-placeholder'
+import TextAlign from '@tiptap/extension-text-align'
 import { Button } from '@/components/ui/button'
 import { 
   TextB, 
@@ -11,7 +12,11 @@ import {
   Link as LinkIcon,
   Quotes,
   Code,
-  TextT
+  TextT,
+  TextAlignLeft,
+  TextAlignCenter,
+  TextAlignRight,
+  TextAlignJustify
 } from '@phosphor-icons/react'
 import { cn } from '@/lib/utils'
 import { useCallback, useEffect } from 'react'
@@ -22,117 +27,6 @@ interface RichTextEditorProps {
   placeholder?: string
   maxLength?: number
   className?: string
-}
-
-// Convert TipTap HTML to Markdown for storage
-const htmlToMarkdown = (html: string): string => {
-  if (!html || html === '<p></p>') return ''
-  
-  const temp = document.createElement('div')
-  temp.innerHTML = html
-
-  const extractText = (node: Node): string => {
-    if (node.nodeType === Node.TEXT_NODE) {
-      return node.textContent || ''
-    }
-    if (node.nodeType === Node.ELEMENT_NODE) {
-      const element = node as Element
-      const tagName = element.tagName.toLowerCase()
-      const children = Array.from(element.childNodes).map(extractText).join('')
-      const trimmedChildren = children.trim()
-
-      switch (tagName) {
-        case 'strong':
-        case 'b':
-          return trimmedChildren ? `**${trimmedChildren}**` : ''
-        case 'em':
-        case 'i':
-          return trimmedChildren ? `*${trimmedChildren}*` : ''
-        case 'h2':
-          return `\n## ${trimmedChildren}\n`
-        case 'h3':
-          return `\n### ${trimmedChildren}\n`
-        case 'ul':
-          return `\n${children}`
-        case 'ol':
-          return `\n${children}`
-        case 'li':
-          return `- ${trimmedChildren}\n`
-        case 'blockquote':
-          return trimmedChildren.split('\n').map((line: string) => `> ${line}`).join('\n') + '\n'
-        case 'code':
-          return `\`${trimmedChildren}\``
-        case 'pre':
-          const codeEl = element.querySelector('code')
-          const codeContent = codeEl ? codeEl.textContent : trimmedChildren
-          return `\n\`\`\`\n${codeContent}\n\`\`\`\n`
-        case 'a':
-          const href = element.getAttribute('href') || ''
-          return `[${trimmedChildren}](${href})`
-        case 'p':
-          return children ? `${children}\n\n` : ''
-        case 'br':
-          return '\n'
-        case 'hr':
-          return '\n---\n'
-        default:
-          return children
-      }
-    }
-    return ''
-  }
-
-  return extractText(temp).trim().replace(/\n{3,}/g, '\n\n')
-}
-
-// Convert Markdown to HTML for TipTap display
-const markdownToHtml = (markdown: string): string => {
-  if (!markdown) return '<p></p>'
-  
-  let html = markdown
-    // Code blocks first
-    .replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>')
-    // Headers (must handle full line)
-    .replace(/^### (.*)$/gim, '<h3>$1</h3>')
-    .replace(/^## (.*)$/gim, '<h2>$1</h2>')
-    // Bold (must be before italic) - handle edge cases
-    .replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>')
-    // Italic
-    .replace(/(?<!\*)\*([^*\n]+)\*(?!\*)/g, '<em>$1</em>')
-    // Inline code
-    .replace(/`([^`\n]+)`/g, '<code>$1</code>')
-    // Links
-    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>')
-    // Blockquotes (handle multi-line)
-    .replace(/^> (.*)$/gim, '<blockquote><p>$1</p></blockquote>')
-    // Horizontal rules
-    .replace(/^---$/gim, '<hr>')
-    // Bullet lists - handle each item
-    .replace(/^- (.*)$/gim, '<li>$1</li>')
-    // Wrap consecutive list items in <ul>
-    .replace(/(<li>[\s\S]*?<\/li>)(?=\s*(?:<li>|$))/g, (match) => match)
-  
-  // Wrap list items that aren't already in ul/ol
-  html = html.replace(/(?<!<[uo]l>)(<li>[\s\S]*?<\/li>)+/g, (match) => `<ul>${match}</ul>`)
-  
-  // Convert double newlines to paragraphs
-  const lines = html.split(/\n\n+/)
-  html = lines.map(line => {
-    const trimmed = line.trim()
-    // Don't wrap if already a block element
-    if (!trimmed || 
-        trimmed.startsWith('<h') || 
-        trimmed.startsWith('<ul') || 
-        trimmed.startsWith('<ol') || 
-        trimmed.startsWith('<blockquote') || 
-        trimmed.startsWith('<pre') ||
-        trimmed.startsWith('<hr')) {
-      return trimmed
-    }
-    return `<p>${trimmed.replace(/\n/g, '<br>')}</p>`
-  }).filter(Boolean).join('')
-  
-  return html || '<p></p>'
 }
 
 // Toolbar button component
@@ -169,16 +63,13 @@ function EditorToolbar({ editor }: { editor: Editor | null }) {
     const previousUrl = editor.getAttributes('link').href
     const url = window.prompt('URL del enlace:', previousUrl)
     
-    // cancelled
     if (url === null) return
     
-    // empty - remove link
     if (url === '') {
       editor.chain().focus().extendMarkRange('link').unsetLink().run()
       return
     }
     
-    // set link
     editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run()
   }, [editor])
 
@@ -186,6 +77,7 @@ function EditorToolbar({ editor }: { editor: Editor | null }) {
 
   return (
     <div className="flex flex-wrap gap-1 p-2 bg-muted/30 rounded-lg border border-b-0 rounded-b-none">
+      {/* Text formatting */}
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleBold().run()}
         isActive={editor.isActive('bold')}
@@ -204,10 +96,11 @@ function EditorToolbar({ editor }: { editor: Editor | null }) {
       
       <div className="w-px h-6 bg-border my-auto mx-1" />
       
+      {/* Headings */}
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
         isActive={editor.isActive('heading', { level: 2 })}
-        title="Título Principal"
+        title="Título Principal (H2)"
         className="w-auto px-2"
       >
         <TextT size={16} weight="bold" />
@@ -217,7 +110,7 @@ function EditorToolbar({ editor }: { editor: Editor | null }) {
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
         isActive={editor.isActive('heading', { level: 3 })}
-        title="Subtítulo"
+        title="Subtítulo (H3)"
         className="w-auto px-2"
       >
         <TextT size={16} weight="regular" />
@@ -226,6 +119,7 @@ function EditorToolbar({ editor }: { editor: Editor | null }) {
       
       <div className="w-px h-6 bg-border my-auto mx-1" />
       
+      {/* Lists */}
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleBulletList().run()}
         isActive={editor.isActive('bulletList')}
@@ -244,6 +138,7 @@ function EditorToolbar({ editor }: { editor: Editor | null }) {
       
       <div className="w-px h-6 bg-border my-auto mx-1" />
       
+      {/* Other elements */}
       <ToolbarButton
         onClick={setLink}
         isActive={editor.isActive('link')}
@@ -267,6 +162,41 @@ function EditorToolbar({ editor }: { editor: Editor | null }) {
       >
         <Code size={16} />
       </ToolbarButton>
+      
+      <div className="w-px h-6 bg-border my-auto mx-1" />
+      
+      {/* Text alignment */}
+      <ToolbarButton
+        onClick={() => editor.chain().focus().setTextAlign('left').run()}
+        isActive={editor.isActive({ textAlign: 'left' })}
+        title="Alinear izquierda"
+      >
+        <TextAlignLeft size={16} />
+      </ToolbarButton>
+      
+      <ToolbarButton
+        onClick={() => editor.chain().focus().setTextAlign('center').run()}
+        isActive={editor.isActive({ textAlign: 'center' })}
+        title="Centrar"
+      >
+        <TextAlignCenter size={16} />
+      </ToolbarButton>
+      
+      <ToolbarButton
+        onClick={() => editor.chain().focus().setTextAlign('right').run()}
+        isActive={editor.isActive({ textAlign: 'right' })}
+        title="Alinear derecha"
+      >
+        <TextAlignRight size={16} />
+      </ToolbarButton>
+      
+      <ToolbarButton
+        onClick={() => editor.chain().focus().setTextAlign('justify').run()}
+        isActive={editor.isActive({ textAlign: 'justify' })}
+        title="Justificar"
+      >
+        <TextAlignJustify size={16} />
+      </ToolbarButton>
     </div>
   )
 }
@@ -275,7 +205,7 @@ export function RichTextEditor({
   value, 
   onChange, 
   placeholder = 'Escribe tu contenido aquí...',
-  maxLength = 5000,
+  maxLength = 50000,
   className 
 }: RichTextEditorProps) {
   
@@ -284,11 +214,6 @@ export function RichTextEditor({
       StarterKit.configure({
         heading: {
           levels: [2, 3],
-        },
-        codeBlock: {
-          HTMLAttributes: {
-            class: 'bg-muted p-4 rounded overflow-x-auto my-2 font-mono text-sm',
-          },
         },
       }),
       Link.configure({
@@ -299,12 +224,15 @@ export function RichTextEditor({
           rel: 'noopener noreferrer',
         },
       }),
+      TextAlign.configure({
+        types: ['heading', 'paragraph'],
+        alignments: ['left', 'center', 'right', 'justify'],
+      }),
       Placeholder.configure({
         placeholder,
-        emptyEditorClass: 'before:content-[attr(data-placeholder)] before:text-muted-foreground before:pointer-events-none before:absolute before:top-0 before:left-0',
       }),
     ],
-    content: markdownToHtml(value || ''),
+    content: value || '',
     editorProps: {
       attributes: {
         class: cn(
@@ -326,58 +254,50 @@ export function RichTextEditor({
     },
     onUpdate: ({ editor }) => {
       const html = editor.getHTML()
-      const markdown = htmlToMarkdown(html)
-      
-      // Check length
-      if (markdown.length <= maxLength) {
-        onChange(markdown)
+      // Save HTML directly - no conversion needed
+      if (html.length <= maxLength) {
+        onChange(html)
       }
     },
   })
 
   // Update editor content when value changes externally
   useEffect(() => {
-    if (editor && value !== undefined) {
-      const currentMarkdown = htmlToMarkdown(editor.getHTML())
+    if (editor && value !== undefined && !editor.isFocused) {
+      const currentHTML = editor.getHTML()
       // Only update if actually different to avoid cursor jumps
-      if (currentMarkdown !== value && !editor.isFocused) {
-        const html = markdownToHtml(value)
-        editor.commands.setContent(html, false)
+      if (currentHTML !== value) {
+        editor.commands.setContent(value || '', { emitUpdate: false })
       }
     }
   }, [value, editor])
 
-  const currentLength = value?.length || 0
+  // Get text length for character count (strip HTML tags)
+  const getTextLength = (html: string) => {
+    const temp = document.createElement('div')
+    temp.innerHTML = html
+    return temp.textContent?.length || 0
+  }
+
+  const currentLength = getTextLength(value || '')
 
   return (
     <div className={cn("space-y-2", className)}>
-      {/* Toolbar */}
-      <div>
-        <EditorToolbar editor={editor} />
-        
-        {/* Editor */}
-        <div 
-          className={cn(
-            "rounded-lg border rounded-t-none bg-background",
-            "focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2"
-          )}
-          style={{ 
-            minHeight: '400px',
-            maxHeight: '600px',
-            overflowY: 'auto'
-          }}
-        >
-          <EditorContent 
-            editor={editor} 
-            className="relative"
-          />
-        </div>
+      <EditorToolbar editor={editor} />
+      
+      <div 
+        className={cn(
+          "rounded-lg border rounded-t-none bg-background",
+          "focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2",
+          "min-h-[400px] max-h-[600px] overflow-y-auto"
+        )}
+      >
+        <EditorContent editor={editor} className="relative" />
       </div>
 
-      {/* Character count */}
       <div className="flex justify-between items-center text-xs text-muted-foreground">
         <span>
-          {currentLength}/{maxLength} caracteres
+          {currentLength.toLocaleString()} caracteres
         </span>
         {currentLength > maxLength * 0.9 && (
           <span className="text-yellow-600">

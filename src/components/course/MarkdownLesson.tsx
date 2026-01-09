@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeRaw from 'rehype-raw'
@@ -10,10 +10,111 @@ interface MarkdownLessonProps {
   content: string
 }
 
+// Detect if content is HTML or Markdown
+const isHtmlContent = (content: string): boolean => {
+  if (!content) return false
+  const trimmed = content.trim()
+  // Check for common HTML patterns
+  return (
+    trimmed.startsWith('<') && trimmed.endsWith('>') ||
+    /<(p|div|h[1-6]|ul|ol|li|strong|em|a|blockquote|pre|code|br|hr|img)[^>]*>/i.test(trimmed)
+  )
+}
+
+// Convert HTML to Markdown for consistent rendering
+const htmlToMarkdownForViewer = (html: string): string => {
+  if (!html) return ''
+  
+  const temp = document.createElement('div')
+  temp.innerHTML = html
+
+  const extractContent = (node: Node): string => {
+    if (node.nodeType === Node.TEXT_NODE) {
+      return node.textContent || ''
+    }
+    if (node.nodeType === Node.ELEMENT_NODE) {
+      const element = node as Element
+      const tagName = element.tagName.toLowerCase()
+      const children = Array.from(element.childNodes).map(extractContent).join('')
+      const trimmedChildren = children.trim()
+
+      switch (tagName) {
+        case 'strong':
+        case 'b':
+          return trimmedChildren ? `**${trimmedChildren}**` : ''
+        case 'em':
+        case 'i':
+          return trimmedChildren ? `*${trimmedChildren}*` : ''
+        case 'h1':
+          return `\n# ${trimmedChildren}\n`
+        case 'h2':
+          return `\n## ${trimmedChildren}\n`
+        case 'h3':
+          return `\n### ${trimmedChildren}\n`
+        case 'h4':
+          return `\n#### ${trimmedChildren}\n`
+        case 'ul':
+          return `\n${children}`
+        case 'ol':
+          return `\n${children}`
+        case 'li':
+          return `- ${trimmedChildren}\n`
+        case 'blockquote':
+          return trimmedChildren.split('\n').map((line: string) => `> ${line.trim()}`).filter(Boolean).join('\n') + '\n'
+        case 'code':
+          if (element.parentElement?.tagName.toLowerCase() === 'pre') {
+            return trimmedChildren
+          }
+          return `\`${trimmedChildren}\``
+        case 'pre':
+          const codeEl = element.querySelector('code')
+          const codeContent = codeEl ? codeEl.textContent : trimmedChildren
+          return `\n\`\`\`\n${codeContent}\n\`\`\`\n`
+        case 'a':
+          const href = element.getAttribute('href') || ''
+          return `[${trimmedChildren}](${href})`
+        case 'img':
+          const src = element.getAttribute('src') || ''
+          const alt = element.getAttribute('alt') || ''
+          return `![${alt}](${src})`
+        case 'p':
+          return children ? `${children}\n\n` : ''
+        case 'br':
+          return '\n'
+        case 'hr':
+          return '\n---\n'
+        case 'div':
+          // Handle text-align styles
+          const style = element.getAttribute('style') || ''
+          if (style.includes('text-align')) {
+            // Keep alignment in HTML for proper rendering
+            return `<div style="${style}">${children}</div>\n\n`
+          }
+          return children ? `${children}\n\n` : ''
+        default:
+          return children
+      }
+    }
+    return ''
+  }
+
+  return extractContent(temp).trim().replace(/\n{3,}/g, '\n\n')
+}
+
 export function MarkdownLesson({ content }: MarkdownLessonProps) {
   const [processedContent, setProcessedContent] = useState(content)
   const [imageUrlMap, setImageUrlMap] = useState<Map<string, string>>(new Map())
   const [isProcessing, setIsProcessing] = useState(false)
+  
+  // Convert HTML to Markdown if needed
+  const normalizedContent = useMemo(() => {
+    if (!content) return ''
+    if (isHtmlContent(content)) {
+      console.log('[MarkdownLesson] Detected HTML content, converting to Markdown')
+      return htmlToMarkdownForViewer(content)
+    }
+    return content
+  }, [content])
 
   // Process blob references and convert to URLs
   useEffect(() => {
@@ -21,12 +122,15 @@ export function MarkdownLesson({ content }: MarkdownLessonProps) {
       setIsProcessing(true)
       
       try {
+        // Use normalizedContent instead of content directly
+        const sourceContent = normalizedContent
+        
         // Find all BLOB: references in markdown
         const blobRegex = /!\[([^\]]*)\]\(BLOB:([^)]+)\)/g
-        const matches = Array.from(content.matchAll(blobRegex))
+        const matches = Array.from(sourceContent.matchAll(blobRegex))
         
         if (matches.length === 0) {
-          setProcessedContent(content)
+          setProcessedContent(sourceContent)
           setIsProcessing(false)
           return
         }
@@ -73,7 +177,7 @@ export function MarkdownLesson({ content }: MarkdownLessonProps) {
         }
         
         // Replace BLOB references with actual URLs or remove broken references
-        let processed = content
+        let processed = sourceContent
         
         // First, replace successful blob references
         urlMap.forEach((url, blobKey) => {
@@ -96,7 +200,7 @@ export function MarkdownLesson({ content }: MarkdownLessonProps) {
       } catch (error) {
         console.error('[MarkdownLesson] Error processing blob references:', error)
         // Fallback: show content without blob processing
-        setProcessedContent(content.replace(/!\[([^\]]*)\]\(BLOB:[^)]+\)/g, (_match, altText) => altText ? `*${altText}*` : ''))
+        setProcessedContent(normalizedContent.replace(/!\[([^\]]*)\]\(BLOB:[^)]+\)/g, (_match, altText) => altText ? `*${altText}*` : ''))
       } finally {
         setIsProcessing(false)
       }
@@ -104,7 +208,7 @@ export function MarkdownLesson({ content }: MarkdownLessonProps) {
     
     processBlobReferences()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [content])
+  }, [normalizedContent])
 
   // Pre-process markdown to fix common formatting issues
   const preprocessMarkdown = (md: string): string => {
@@ -156,7 +260,11 @@ export function MarkdownLesson({ content }: MarkdownLessonProps) {
                     'className',
                     'style',
                   ],
-                  div: ['class', 'className', 'data-video-url'],
+                  div: ['class', 'className', 'data-video-url', 'style'],
+                  p: [...(defaultSchema.attributes?.p || []), 'style'],
+                  h1: [...(defaultSchema.attributes?.h1 || []), 'style'],
+                  h2: [...(defaultSchema.attributes?.h2 || []), 'style'],
+                  h3: [...(defaultSchema.attributes?.h3 || []), 'style'],
                 },
               },
             ],
