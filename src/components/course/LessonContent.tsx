@@ -1,4 +1,4 @@
-import { MarkdownLesson } from './MarkdownLesson'
+import { HTMLContent } from './HTMLContent'
 import { VideoLesson } from './VideoLesson'
 import { QuizLesson } from '../quiz/QuizLesson'
 
@@ -9,6 +9,7 @@ interface LessonContentProps {
     type: 'markdown' | 'video' | 'quiz'
     content: {
       markdown?: string
+      html?: string // Support both markdown and html fields
       videoProvider?: 'youtube' | 'vimeo' | 'tiktok' | 'url'
       videoId?: string
       videoUrl?: string
@@ -28,7 +29,9 @@ interface LessonContentProps {
 export function LessonContent({ lesson, onQuizComplete }: LessonContentProps) {
   switch (lesson.type) {
     case 'markdown':
-      return <MarkdownLesson content={lesson.content.markdown || ''} />
+      // Use html field if available, fallback to markdown field
+      // Content is now stored as HTML directly from TipTap editor
+      return <HTMLContent content={lesson.content.html || lesson.content.markdown || ''} />
     
     case 'video':
       return (
