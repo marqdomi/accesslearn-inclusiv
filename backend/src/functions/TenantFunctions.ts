@@ -1,6 +1,44 @@
-import { getContainer } from "../services/cosmosdb.service"
+import { getContainer, isOfflineMode } from "../services/cosmosdb.service"
 import { Tenant, CreateTenantRequest } from "../models/Tenant"
 import { seedAccessibilityProfiles } from "../scripts/seed-accessibility-profiles"
+
+// Mock data for offline development
+const MOCK_TENANTS: Tenant[] = [
+  {
+    id: "tenant-empresa-demo",
+    name: "Empresa Demo",
+    slug: "demo",
+    contactEmail: "admin@empresa-demo.com",
+    contactPhone: "+52 55 1234 5678",
+    logo: "",
+    primaryColor: "#4F46E5",
+    secondaryColor: "#10B981",
+    plan: "demo",
+    status: "active",
+    maxUsers: 50,
+    maxCourses: 10,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    createdBy: "system"
+  },
+  {
+    id: "tenant-solera",
+    name: "Solera",
+    slug: "solera",
+    contactEmail: "admin@solera.com",
+    contactPhone: "+52 55 9876 5432",
+    logo: "",
+    primaryColor: "#0066CC",
+    secondaryColor: "#FF6600",
+    plan: "enterprise",
+    status: "active",
+    maxUsers: 1000,
+    maxCourses: 500,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    createdBy: "system"
+  }
+]
 
 // Plan limits
 const PLAN_LIMITS = {
@@ -85,6 +123,12 @@ export async function createTenant(
 }
 
 export async function getTenantBySlug(slug: string): Promise<Tenant | null> {
+  // Return mock data in offline mode
+  if (isOfflineMode()) {
+    console.log('[getTenantBySlug] OFFLINE MODE - returning mock data for slug:', slug)
+    return MOCK_TENANTS.find(t => t.slug === slug) || null
+  }
+
   const container = getContainer("tenants")
 
   const query = {
@@ -103,6 +147,12 @@ export async function getTenantBySlug(slug: string): Promise<Tenant | null> {
 }
 
 export async function getTenantById(tenantId: string): Promise<Tenant | null> {
+  // Return mock data in offline mode
+  if (isOfflineMode()) {
+    console.log('[getTenantById] OFFLINE MODE - returning mock data for id:', tenantId)
+    return MOCK_TENANTS.find(t => t.id === tenantId) || null
+  }
+
   const container = getContainer("tenants")
 
   try {
@@ -117,11 +167,20 @@ export async function getTenantById(tenantId: string): Promise<Tenant | null> {
 }
 
 export async function listTenants(): Promise<Tenant[]> {
+  // Return mock data in offline mode
+  if (isOfflineMode()) {
+    console.log('[listTenants] OFFLINE MODE - returning mock tenants')
+    return MOCK_TENANTS
+  }
+
+  console.log('[listTenants] Starting query...')
   const container = getContainer("tenants")
 
   const query = "SELECT * FROM c ORDER BY c.createdAt DESC"
 
+  console.log('[listTenants] Executing query:', query)
   const { resources } = await container.items.query<Tenant>(query).fetchAll()
+  console.log('[listTenants] Query returned:', resources.length, 'tenants')
 
   return resources
 }

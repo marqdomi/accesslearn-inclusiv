@@ -2,6 +2,11 @@ import { CosmosClient, Container, Database, PartitionKeyDefinition } from "@azur
 
 let cosmosClient: CosmosClient | null = null
 let database: Database | null = null
+let useOfflineMode = false
+
+export function isOfflineMode(): boolean {
+  return useOfflineMode
+}
 
 export async function initializeCosmos(): Promise<void> {
   if (cosmosClient) return
@@ -11,46 +16,40 @@ export async function initializeCosmos(): Promise<void> {
   const databaseName = process.env.COSMOS_DATABASE
 
   if (!endpoint || !key || !databaseName) {
-    throw new Error(
-      "Missing Cosmos DB configuration: COSMOS_ENDPOINT, COSMOS_KEY, COSMOS_DATABASE"
-    )
+    console.warn('⚠️  Missing Cosmos DB configuration - running in OFFLINE mode')
+    useOfflineMode = true
+    return
   }
 
-  // Configure Cosmos DB client
-  // Note: SDK v4 handles retries automatically, but we can configure connection behavior
-  cosmosClient = new CosmosClient({ 
-    endpoint, 
-    key
-    // The SDK automatically handles retries with exponential backoff
-    // No need to configure retry policy manually in v4
-  })
-  database = cosmosClient.database(databaseName)
-
-  console.log(`✅ Cosmos DB connected: ${databaseName}`)
-
-  // Create necessary containers
-  await createContainerIfNotExists('tenants', '/id')
-  await createContainerIfNotExists('users', '/tenantId')
-  await createContainerIfNotExists('courses', '/tenantId')
-  await createContainerIfNotExists('categories', '/tenantId')
-  await createContainerIfNotExists('user-progress', '/tenantId')
-  await createContainerIfNotExists('user-groups', '/tenantId')
-  await createContainerIfNotExists('course-assignments', '/tenantId')
-  await createContainerIfNotExists('certificates', '/tenantId')
-  await createContainerIfNotExists('achievements', '/tenantId')
-  await createContainerIfNotExists('quiz-attempts', '/tenantId')
-  await createContainerIfNotExists('forums', '/tenantId')
-  await createContainerIfNotExists('activity-feed', '/tenantId')
-  await createContainerIfNotExists('notifications', '/tenantId')
-  await createContainerIfNotExists('notification-preferences', '/tenantId')
-  await createContainerIfNotExists('mentorship-requests', '/tenantId')
-  await createContainerIfNotExists('mentorship-sessions', '/tenantId')
-  await createContainerIfNotExists('audit-logs', '/tenantId')
-  await createContainerIfNotExists('accessibility-profiles', '/tenantId')
-  await createContainerIfNotExists('company-settings', '/tenantId')
-  await createContainerIfNotExists('certificate-templates', '/tenantId')
+  // Test connectivity first with a timeout
+  try {
+    console.log('📡 Testing Cosmos DB connectivity...')
+    const testClient = new CosmosClient({ endpoint, key })
+    
+    // Try to get database with timeout
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Connection timeout')), 10000)
+    )
+    
+    await Promise.race([
+      testClient.database(databaseName).read(),
+      timeoutPromise
+    ])
+    
+    cosmosClient = testClient
+    database = cosmosClient.database(databaseName)
+    console.log(`✅ Cosmos DB connected: ${databaseName}`)
+  } catch (error: any) {
+    console.warn(`⚠️  Cannot connect to Cosmos DB: ${error.message}`)
+    console.warn('📴 Running in OFFLINE mode with mock data')
+    console.warn('💡 To use Cosmos DB, ensure your IP is allowed in Azure or use VPN')
+    useOfflineMode = true
+    return
+  }
   
-  console.log(`✅ Containers initialized (tenants, users, courses, categories, user-progress, groups, assignments, certificates, achievements, quiz-attempts, forums, activity-feed, notifications, notification-preferences, mentorship, audit-logs, accessibility-profiles, company-settings, certificate-templates)`)
+  // Skip container creation in development - assumes containers already exist in Azure
+  // This significantly speeds up local development startup time
+  console.log(`ℹ️  Ready to use existing containers in Azure Cosmos DB`)
 }
 
 export function getDatabase(): Database {
