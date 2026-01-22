@@ -4,14 +4,8 @@ import { Button } from '@/components/ui/button'
 import { motion } from 'framer-motion'
 import { useAccessibilityPreferences } from '@/hooks/use-accessibility-preferences'
 import { ApiService } from '@/services/api.service'
+import { getFileTypeIcon, formatFileSize, canPreviewFile } from '@/lib/file-utils'
 import { 
-  File as FileIcon, 
-  FilePdf, 
-  FileDoc, 
-  FileXls, 
-  FilePpt, 
-  FileZip, 
-  FileTxt,
   DownloadSimple,
   Eye,
   SpinnerGap
@@ -23,32 +17,6 @@ interface FileBlockProps {
   fileSize?: number
   fileType?: string
   description?: string
-}
-
-// Helper function to get the appropriate file icon based on file type
-const getFileTypeIcon = (fileType?: string) => {
-  if (!fileType) return FileIcon
-  if (fileType.includes('pdf')) return FilePdf
-  if (fileType.includes('word') || fileType.includes('doc')) return FileDoc
-  if (fileType.includes('excel') || fileType.includes('spreadsheet') || fileType.includes('xls')) return FileXls
-  if (fileType.includes('powerpoint') || fileType.includes('presentation') || fileType.includes('ppt')) return FilePpt
-  if (fileType.includes('zip') || fileType.includes('compressed')) return FileZip
-  if (fileType.includes('text') || fileType.includes('txt') || fileType.includes('csv')) return FileTxt
-  return FileIcon
-}
-
-// Helper function to format file size
-const formatFileSize = (bytes?: number) => {
-  if (!bytes) return ''
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-}
-
-// Check if file type can be previewed in browser
-const canPreview = (fileType?: string) => {
-  if (!fileType) return false
-  return fileType.includes('pdf')
 }
 
 export function FileBlock({ fileUrl, fileName, fileSize, fileType, description }: FileBlockProps) {
@@ -101,7 +69,7 @@ export function FileBlock({ fileUrl, fileName, fileSize, fileType, description }
   }
 
   const handlePreview = () => {
-    if (downloadUrl && canPreview(fileType)) {
+    if (downloadUrl && canPreviewFile(fileType)) {
       window.open(downloadUrl, '_blank')
     }
   }
@@ -116,7 +84,10 @@ export function FileBlock({ fileUrl, fileName, fileSize, fileType, description }
       >
         <div className="flex items-start gap-4">
           <div className="flex-shrink-0 p-3 bg-primary/10 rounded-lg">
-            <FileTypeIcon size={32} className="text-primary" />
+            {(() => {
+              const Icon = getFileTypeIcon(fileType)
+              return <Icon size={32} className="text-primary" />
+            })()}
           </div>
           
           <div className="flex-1 min-w-0">
@@ -172,7 +143,7 @@ export function FileBlock({ fileUrl, fileName, fileSize, fileType, description }
             Descargar
           </Button>
 
-          {canPreview(fileType) && (
+          {canPreviewFile(fileType) && (
             <Button
               variant="outline"
               onClick={handlePreview}

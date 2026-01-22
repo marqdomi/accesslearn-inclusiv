@@ -316,14 +316,26 @@ export function CourseViewerPage() {
             markdown += `${block.content}\n\n`
           } else if (block.type === 'file') {
             // Add file block as special component placeholder
-            const fileData = {
-              fileUrl: block.fileUrl || '',
-              fileName: block.fileName || 'Material',
-              fileSize: block.fileSize || 0,
-              fileType: block.fileType || '',
-              description: block.content || ''
+            // Sanitize file data to prevent XSS by encoding special characters
+            const sanitizeValue = (val: string | undefined): string => {
+              if (!val) return ''
+              return val
+                .replace(/&/g, '&amp;')
+                .replace(/'/g, '&#39;')
+                .replace(/"/g, '&quot;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
             }
-            markdown += `<div class="file-download-block" data-file='${JSON.stringify(fileData)}'></div>\n\n`
+            const fileData = {
+              fileUrl: sanitizeValue(block.fileUrl),
+              fileName: sanitizeValue(block.fileName) || 'Material',
+              fileSize: typeof block.fileSize === 'number' ? block.fileSize : 0,
+              fileType: sanitizeValue(block.fileType),
+              description: sanitizeValue(block.content)
+            }
+            // Use base64 encoding for the JSON to prevent injection via special characters
+            const encodedFileData = btoa(JSON.stringify(fileData))
+            markdown += `<div class="file-download-block" data-file-encoded="${encodedFileData}"></div>\n\n`
           }
         })
         

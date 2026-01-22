@@ -261,7 +261,7 @@ export function MarkdownLesson({ content }: MarkdownLessonProps) {
                     'className',
                     'style',
                   ],
-                  div: ['class', 'className', 'data-video-url', 'data-file', 'style'],
+                  div: ['class', 'className', 'data-video-url', 'data-file', 'data-file-encoded', 'style'],
                   p: [...(defaultSchema.attributes?.p || []), 'style'],
                   h1: [...(defaultSchema.attributes?.h1 || []), 'style'],
                   h2: [...(defaultSchema.attributes?.h2 || []), 'style'],
@@ -329,9 +329,20 @@ export function MarkdownLesson({ content }: MarkdownLessonProps) {
               // Handle file download blocks
               if (className === 'file-download-block' || (typeof className === 'string' && className.includes('file-download-block'))) {
                 try {
+                  // Support both legacy data-file and new encoded format
+                  const dataFileEncoded = (props as any)['data-file-encoded']
                   const dataFile = (props as any)['data-file']
-                  if (dataFile) {
-                    const fileData = JSON.parse(dataFile)
+                  
+                  let fileData = null
+                  if (dataFileEncoded) {
+                    // Decode base64 encoded data
+                    fileData = JSON.parse(atob(dataFileEncoded))
+                  } else if (dataFile) {
+                    // Legacy format (direct JSON)
+                    fileData = JSON.parse(dataFile)
+                  }
+                  
+                  if (fileData) {
                     return (
                       <div className="my-6">
                         <FileBlock 

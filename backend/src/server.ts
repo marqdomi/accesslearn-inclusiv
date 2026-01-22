@@ -3486,9 +3486,18 @@ app.post('/api/media/upload',
             return res.status(400).json({ error: 'courseId y lessonId requeridos para lesson-file' });
           }
           containerName = 'course-materials';
-          // Use original filename (sanitized) for better UX
-          const sanitizedFileName = file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_');
-          blobName = `${tenantId}/${courseId}/lessons/${lessonId}/files/${uniqueName}-${sanitizedFileName}`;
+          // Sanitize filename to prevent directory traversal and injection attacks
+          // 1. Get only the base filename (remove any path components)
+          const baseFilename = file.originalname.split(/[/\\]/).pop() || 'file';
+          // 2. Remove directory traversal patterns
+          const noTraversal = baseFilename.replace(/\.\./g, '');
+          // 3. Replace invalid characters (keep only alphanumeric, single dots for extension, underscores, hyphens)
+          const sanitizedFileName = noTraversal
+            .replace(/[^a-zA-Z0-9._-]/g, '_')
+            .replace(/\.{2,}/g, '.') // Replace multiple consecutive dots
+            .replace(/^[.-]+/, '') // Remove leading dots/dashes
+            .substring(0, 100); // Limit filename length
+          blobName = `${tenantId}/${courseId}/lessons/${lessonId}/files/${uniqueName}-${sanitizedFileName || 'file'}`;
           // Validar permisos: instructores, content-managers y admins
           if (!['instructor', 'content-manager', 'tenant-admin', 'super-admin'].includes(user.role)) {
             return res.status(403).json({ error: 'No tienes permisos para subir archivos de lecciones' });

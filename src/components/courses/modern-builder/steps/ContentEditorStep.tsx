@@ -1,4 +1,5 @@
 import { CourseStructure, LessonBlock, Lesson } from '@/lib/types'
+import { getFileTypeIcon, formatFileSize } from '@/lib/file-utils'
 import { useState, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -47,13 +48,6 @@ import {
   Eye,
   UploadSimple,
   File as FileIcon,
-  FilePdf,
-  FileDoc,
-  FileXls,
-  FilePpt,
-  FileZip,
-  FileTxt,
-  DownloadSimple,
 } from '@phosphor-icons/react'
 import ReactMarkdown from 'react-markdown'
 import { ApiService } from '@/services/api.service'
@@ -77,26 +71,6 @@ const BLOCK_TYPES = [
   { value: 'challenge', label: 'Desafío', icon: Lightning, description: 'Ejercicio interactivo' },
   { value: 'code', label: 'Código', icon: Code, description: 'Bloque de código' },
 ] as const
-
-// Helper function to get the appropriate file icon based on file type
-const getFileTypeIcon = (fileType?: string) => {
-  if (!fileType) return FileIcon
-  if (fileType.includes('pdf')) return FilePdf
-  if (fileType.includes('word') || fileType.includes('doc')) return FileDoc
-  if (fileType.includes('excel') || fileType.includes('spreadsheet') || fileType.includes('xls')) return FileXls
-  if (fileType.includes('powerpoint') || fileType.includes('presentation') || fileType.includes('ppt')) return FilePpt
-  if (fileType.includes('zip') || fileType.includes('compressed')) return FileZip
-  if (fileType.includes('text') || fileType.includes('txt') || fileType.includes('csv')) return FileTxt
-  return FileIcon
-}
-
-// Helper function to format file size
-const formatFileSize = (bytes?: number) => {
-  if (!bytes) return ''
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-}
 
 export function ContentEditorStep({ course, updateCourse, courseId }: ContentEditorStepProps) {
   const [selectedLessonPath, setSelectedLessonPath] = useState<string>('')
