@@ -3,6 +3,7 @@ import StarterKit from '@tiptap/starter-kit'
 import Link from '@tiptap/extension-link'
 import Placeholder from '@tiptap/extension-placeholder'
 import TextAlign from '@tiptap/extension-text-align'
+import Image from '@tiptap/extension-image'
 import { Button } from '@/components/ui/button'
 import { 
   TextB, 
@@ -16,10 +17,18 @@ import {
   TextAlignLeft,
   TextAlignCenter,
   TextAlignRight,
-  TextAlignJustify
+  TextAlignJustify,
+  Image as ImageIcon
 } from '@phosphor-icons/react'
 import { cn } from '@/lib/utils'
-import { useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useState, useRef } from 'react'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Separator } from '@/components/ui/separator'
+import { ApiService } from '@/services/api.service'
+import { toast } from 'sonner'
 
 interface RichTextEditorProps {
   value: string
@@ -56,7 +65,12 @@ function ToolbarButton({ onClick, isActive, disabled, title, children, className
 }
 
 // Editor toolbar component
-function EditorToolbar({ editor }: { editor: Editor | null }) {
+interface EditorToolbarProps {
+  editor: Editor | null
+  onImageClick?: () => void
+}
+
+function EditorToolbar({ editor, onImageClick }: EditorToolbarProps) {
   const setLink = useCallback(() => {
     if (!editor) return
     
@@ -197,6 +211,17 @@ function EditorToolbar({ editor }: { editor: Editor | null }) {
       >
         <TextAlignJustify size={16} />
       </ToolbarButton>
+      
+      <div className="w-px h-6 bg-border my-auto mx-1" />
+      
+      {/* Image Upload */}
+      <ToolbarButton
+        onClick={onImageClick || (() => {})}
+        isActive={editor.isActive('image')}
+        title="Insertar imagen"
+      >
+        <ImageIcon size={18} weight="bold" />
+      </ToolbarButton>
     </div>
   )
 }
@@ -208,6 +233,68 @@ export function RichTextEditor({
   maxLength = 50000,
   className 
 }: RichTextEditorProps) {
+  
+  // State for image dialog and upload
+  const [isImageDialogOpen, setIsImageDialogOpen] = useState(false)
+  const [imageUrl, setImageUrl] = useState('')
+  const [imageAlt, setImageAlt] = useState('')
+  const [isUploading, setIsUploading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  
+  // Function to upload image
+  const handleImageUpload = async (file: File, editorInstance?: Editor | null) => {
+    const currentEditor = editorInstance || editor
+    if (!currentEditor) return
+    
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Por favor selecciona un archivo de imagen válido')
+      return
+    }
+
+    // Validate size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('La imagen no debe exceder 5MB')
+      return
+    }
+
+    setIsUploading(true)
+
+    try {
+      // Upload to Azure Blob Storage using existing ApiService
+      const { url } = await ApiService.uploadFile(file, 'lesson-image', {
+        courseId: 'editor-image',
+      })
+
+      // Insert image in the editor
+      currentEditor.chain().focus().setImage({ 
+        src: url, 
+        alt: file.name 
+      }).run()
+      
+      toast.success('Imagen insertada exitosamente')
+    } catch (error: any) {
+      console.error('Error uploading image:', error)
+      toast.error(error.message || 'Error al subir la imagen')
+    } finally {
+      setIsUploading(false)
+    }
+  }
+
+  // Function to insert image from URL
+  const handleImageUrlInsert = () => {
+    if (!editor || !imageUrl) return
+    
+    editor.chain().focus().setImage({ 
+      src: imageUrl, 
+      alt: imageAlt || 'Imagen del curso' 
+    }).run()
+    
+    setImageUrl('')
+    setImageAlt('')
+    setIsImageDialogOpen(false)
+    toast.success('Imagen insertada exitosamente')
+  }
   
   const editor = useEditor({
     extensions: [
@@ -224,8 +311,15 @@ export function RichTextEditor({
           rel: 'noopener noreferrer',
         },
       }),
+      Image.configure({
+        inline: true,
+        allowBase64: true,
+        HTMLAttributes: {
+          class: 'max-w-full h-auto rounded-lg my-4',
+        },
+      }),
       TextAlign.configure({
-        types: ['heading', 'paragraph'],
+        types: ['heading', 'paragraph', 'image'],
         alignments: ['left', 'center', 'right', 'justify'],
       }),
       Placeholder.configure({
@@ -248,8 +342,38 @@ export function RichTextEditor({
           '[&_blockquote]:border-l-4 [&_blockquote]:border-primary [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:my-2',
           '[&_code]:bg-muted [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:font-mono [&_code]:text-sm',
           '[&_pre]:bg-muted [&_pre]:p-4 [&_pre]:rounded [&_pre]:overflow-x-auto [&_pre]:my-2',
-          '[&_a]:text-primary [&_a]:underline [&_a]:hover:text-primary/80'
+          '[&_a]:text-primary [&_a]:underline [&_a]:hover:text-primary/80',
+          '[&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-lg [&_img]:my-4'
         ),
+      },
+      // Handle pasting images (Ctrl+V)
+      handlePaste: (view, event) => {
+        const items = Array.from(event.clipboardData?.items || [])
+        const imageItem = items.find(item => item.type.indexOf('image') === 0)
+        
+        if (imageItem) {
+          event.preventDefault()
+          const file = imageItem.getAsFile()
+          if (file && editor) {
+            handleImageUpload(file, editor)
+          }
+          return true
+        }
+        return false
+      },
+      // Handle drag and drop images
+      handleDrop: (view, event, slice, moved) => {
+        if (!moved && event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files[0]) {
+          const file = event.dataTransfer.files[0]
+          if (file.type.indexOf('image') === 0) {
+            event.preventDefault()
+            if (editor) {
+              handleImageUpload(file, editor)
+            }
+            return true
+          }
+        }
+        return false
       },
     },
     onUpdate: ({ editor }) => {
@@ -283,7 +407,7 @@ export function RichTextEditor({
 
   return (
     <div className={cn("space-y-2", className)}>
-      <EditorToolbar editor={editor} />
+      <EditorToolbar editor={editor} onImageClick={() => setIsImageDialogOpen(true)} />
       
       <div 
         className={cn(
@@ -295,16 +419,128 @@ export function RichTextEditor({
         <EditorContent editor={editor} className="relative" />
       </div>
 
-      <div className="flex justify-between items-center text-xs text-muted-foreground">
+      <div className="flex items-center justify-between text-xs text-muted-foreground">
+        <span>
+          Puedes pegar o arrastrar imágenes directamente en el editor
+        </span>
         <span>
           {currentLength.toLocaleString()} caracteres
         </span>
-        {currentLength > maxLength * 0.9 && (
-          <span className="text-yellow-600">
-            Casi alcanzaste el límite
-          </span>
-        )}
       </div>
+
+      {currentLength > maxLength * 0.9 && (
+        <div className="text-xs text-yellow-600">
+          Casi alcanzaste el límite
+        </div>
+      )}
+      
+      {/* Image Dialog */}
+      <Dialog open={isImageDialogOpen} onOpenChange={setIsImageDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Insertar imagen</DialogTitle>
+            <DialogDescription>
+              Sube una imagen desde tu computadora o inserta una desde URL
+            </DialogDescription>
+          </DialogHeader>
+          
+          <Tabs defaultValue="upload" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="upload">Subir archivo</TabsTrigger>
+              <TabsTrigger value="url">URL de imagen</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="upload" className="space-y-4 mt-4">
+              <div className="space-y-2">
+                <Label>Seleccionar archivo</Label>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (file) {
+                      handleImageUpload(file)
+                      setIsImageDialogOpen(false)
+                      if (fileInputRef.current) {
+                        fileInputRef.current.value = ''
+                      }
+                    }
+                  }}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploading}
+                >
+                  {isUploading ? 'Subiendo...' : 'Seleccionar imagen'}
+                </Button>
+                <p className="text-xs text-muted-foreground">
+                  Formato: JPG, PNG, GIF, WebP. Máximo 5MB.
+                </p>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="url" className="space-y-4 mt-4">
+              <div className="space-y-2">
+                <Label htmlFor="image-url">URL de la imagen</Label>
+                <Input
+                  id="image-url"
+                  type="url"
+                  placeholder="https://ejemplo.com/imagen.jpg"
+                  value={imageUrl}
+                  onChange={(e) => setImageUrl(e.target.value)}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="image-alt">Texto alternativo (opcional)</Label>
+                <Input
+                  id="image-alt"
+                  type="text"
+                  placeholder="Descripción de la imagen para accesibilidad"
+                  value={imageAlt}
+                  onChange={(e) => setImageAlt(e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">
+                  El texto alternativo ayuda a usuarios con lectores de pantalla.
+                </p>
+              </div>
+              
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setIsImageDialogOpen(false)
+                    setImageUrl('')
+                    setImageAlt('')
+                  }}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  type="button"
+                  onClick={handleImageUrlInsert}
+                  disabled={!imageUrl}
+                >
+                  Insertar imagen
+                </Button>
+              </DialogFooter>
+            </TabsContent>
+          </Tabs>
+          
+          {isUploading && (
+            <div className="flex items-center justify-center p-4 border-t">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+              <span className="ml-2 text-sm text-muted-foreground">Subiendo imagen...</span>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
