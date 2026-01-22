@@ -5,6 +5,7 @@ import rehypeRaw from 'rehype-raw'
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize'
 import { Card } from '@/components/ui/card'
 import { ApiService } from '@/services/api.service'
+import { FileBlock } from '@/components/courses/lesson-blocks/FileBlock'
 
 interface MarkdownLessonProps {
   content: string
@@ -260,7 +261,7 @@ export function MarkdownLesson({ content }: MarkdownLessonProps) {
                     'className',
                     'style',
                   ],
-                  div: ['class', 'className', 'data-video-url', 'style'],
+                  div: ['class', 'className', 'data-video-url', 'data-file', 'data-file-encoded', 'style'],
                   p: [...(defaultSchema.attributes?.p || []), 'style'],
                   h1: [...(defaultSchema.attributes?.h1 || []), 'style'],
                   h2: [...(defaultSchema.attributes?.h2 || []), 'style'],
@@ -325,6 +326,40 @@ export function MarkdownLesson({ content }: MarkdownLessonProps) {
               />
             ),
             div: ({ node, className, children, ...props }: any) => {
+              // Handle file download blocks
+              if (className === 'file-download-block' || (typeof className === 'string' && className.includes('file-download-block'))) {
+                try {
+                  // Support both legacy data-file and new encoded format
+                  const dataFileEncoded = (props as any)['data-file-encoded']
+                  const dataFile = (props as any)['data-file']
+                  
+                  let fileData = null
+                  if (dataFileEncoded) {
+                    // Decode base64 encoded data
+                    fileData = JSON.parse(atob(dataFileEncoded))
+                  } else if (dataFile) {
+                    // Legacy format (direct JSON)
+                    fileData = JSON.parse(dataFile)
+                  }
+                  
+                  if (fileData) {
+                    return (
+                      <div className="my-6">
+                        <FileBlock 
+                          fileUrl={fileData.fileUrl}
+                          fileName={fileData.fileName}
+                          fileSize={fileData.fileSize}
+                          fileType={fileData.fileType}
+                          description={fileData.description}
+                        />
+                      </div>
+                    )
+                  }
+                } catch (error) {
+                  console.error('[MarkdownLesson] Error parsing file data:', error)
+                }
+                return null
+              }
               // Handle video embeds
               if (className === 'video-embed' || (typeof className === 'string' && className.includes('video-embed'))) {
                 return (

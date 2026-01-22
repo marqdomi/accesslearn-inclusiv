@@ -232,9 +232,9 @@ export function CourseViewerPage() {
         sortedBlocks.map(b => ({ type: b.type, order: b.order || 0 }))
       )
       
-      // Check if there are any content blocks (text, image, code, challenge, video)
+      // Check if there are any content blocks (text, image, code, challenge, video, file)
       const hasContentBlocks = sortedBlocks.some((b: any) => 
-        ['text', 'welcome', 'code', 'challenge', 'image', 'video'].includes(b.type)
+        ['text', 'welcome', 'code', 'challenge', 'image', 'video', 'file'].includes(b.type)
       )
       
       // If there are content blocks, combine them all into markdown
@@ -314,6 +314,28 @@ export function CourseViewerPage() {
             }
           } else if (block.type === 'text') {
             markdown += `${block.content}\n\n`
+          } else if (block.type === 'file') {
+            // Add file block as special component placeholder
+            // Sanitize file data to prevent XSS by encoding special characters
+            const sanitizeValue = (val: string | undefined): string => {
+              if (!val) return ''
+              return val
+                .replace(/&/g, '&amp;')
+                .replace(/'/g, '&#39;')
+                .replace(/"/g, '&quot;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+            }
+            const fileData = {
+              fileUrl: sanitizeValue(block.fileUrl),
+              fileName: sanitizeValue(block.fileName) || 'Material',
+              fileSize: typeof block.fileSize === 'number' ? block.fileSize : 0,
+              fileType: sanitizeValue(block.fileType),
+              description: sanitizeValue(block.content)
+            }
+            // Use base64 encoding for the JSON to prevent injection via special characters
+            const encodedFileData = btoa(JSON.stringify(fileData))
+            markdown += `<div class="file-download-block" data-file-encoded="${encodedFileData}"></div>\n\n`
           }
         })
         
