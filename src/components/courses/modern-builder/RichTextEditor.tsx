@@ -4,6 +4,8 @@ import Link from '@tiptap/extension-link'
 import Placeholder from '@tiptap/extension-placeholder'
 import TextAlign from '@tiptap/extension-text-align'
 import Image from '@tiptap/extension-image'
+import type { EditorView } from '@tiptap/pm/view'
+import type { Slice } from '@tiptap/pm/model'
 import { Button } from '@/components/ui/button'
 import { 
   TextB, 
@@ -263,7 +265,7 @@ export function RichTextEditor({
     try {
       // Upload to Azure Blob Storage using existing ApiService
       const { url } = await ApiService.uploadFile(file, 'lesson-image', {
-        courseId: 'editor-image',
+        courseId: 'editor-content',
       })
 
       // Insert image in the editor
@@ -273,9 +275,10 @@ export function RichTextEditor({
       }).run()
       
       toast.success('Imagen insertada exitosamente')
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error uploading image:', error)
-      toast.error(error.message || 'Error al subir la imagen')
+      const errorMessage = error instanceof Error ? error.message : 'Error al subir la imagen'
+      toast.error(errorMessage)
     } finally {
       setIsUploading(false)
     }
@@ -347,7 +350,7 @@ export function RichTextEditor({
         ),
       },
       // Handle pasting images (Ctrl+V)
-      handlePaste: (view, event) => {
+      handlePaste: (view: EditorView, event: ClipboardEvent) => {
         const items = Array.from(event.clipboardData?.items || [])
         const imageItem = items.find(item => item.type.indexOf('image') === 0)
         
@@ -362,7 +365,7 @@ export function RichTextEditor({
         return false
       },
       // Handle drag and drop images
-      handleDrop: (view, event, slice, moved) => {
+      handleDrop: (view: EditorView, event: DragEvent, slice: Slice, moved: boolean) => {
         if (!moved && event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files[0]) {
           const file = event.dataTransfer.files[0]
           if (file.type.indexOf('image') === 0) {
