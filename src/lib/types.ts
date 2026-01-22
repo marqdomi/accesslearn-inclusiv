@@ -260,7 +260,7 @@ export interface Quiz {
 
 export interface LessonBlock {
   id: string
-  type: 'welcome' | 'text' | 'image' | 'audio' | 'video' | 'challenge' | 'code'
+  type: 'welcome' | 'text' | 'image' | 'audio' | 'video' | 'challenge' | 'code' | 'file'
   content: string
   accessibility?: AccessibilityMetadata
   characterMessage?: string
@@ -269,6 +269,11 @@ export interface LessonBlock {
   videoUrl?: string
   videoType?: 'upload' | 'youtube' | 'vimeo' | 'wistia' | 'tiktok'
   imageFile?: string
+  // File attachment fields (for downloadable materials)
+  fileUrl?: string
+  fileName?: string
+  fileSize?: number
+  fileType?: string
 }
 
 export interface Lesson {

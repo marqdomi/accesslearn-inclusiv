@@ -232,9 +232,9 @@ export function CourseViewerPage() {
         sortedBlocks.map(b => ({ type: b.type, order: b.order || 0 }))
       )
       
-      // Check if there are any content blocks (text, image, code, challenge, video)
+      // Check if there are any content blocks (text, image, code, challenge, video, file)
       const hasContentBlocks = sortedBlocks.some((b: any) => 
-        ['text', 'welcome', 'code', 'challenge', 'image', 'video'].includes(b.type)
+        ['text', 'welcome', 'code', 'challenge', 'image', 'video', 'file'].includes(b.type)
       )
       
       // If there are content blocks, combine them all into markdown
@@ -314,6 +314,16 @@ export function CourseViewerPage() {
             }
           } else if (block.type === 'text') {
             markdown += `${block.content}\n\n`
+          } else if (block.type === 'file') {
+            // Add file block as special component placeholder
+            const fileData = {
+              fileUrl: block.fileUrl || '',
+              fileName: block.fileName || 'Material',
+              fileSize: block.fileSize || 0,
+              fileType: block.fileType || '',
+              description: block.content || ''
+            }
+            markdown += `<div class="file-download-block" data-file='${JSON.stringify(fileData)}'></div>\n\n`
           }
         })
         

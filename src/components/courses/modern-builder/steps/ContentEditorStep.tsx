@@ -46,6 +46,14 @@ import {
   Quotes,
   Eye,
   UploadSimple,
+  File as FileIcon,
+  FilePdf,
+  FileDoc,
+  FileXls,
+  FilePpt,
+  FileZip,
+  FileTxt,
+  DownloadSimple,
 } from '@phosphor-icons/react'
 import ReactMarkdown from 'react-markdown'
 import { ApiService } from '@/services/api.service'
@@ -65,17 +73,40 @@ const BLOCK_TYPES = [
   { value: 'image', label: 'Imagen', icon: ImageIcon, description: 'Imagen con descripción' },
   { value: 'audio', label: 'Audio', icon: MusicNote, description: 'Contenido de audio' },
   { value: 'video', label: 'Video', icon: VideoCamera, description: 'Video educativo' },
+  { value: 'file', label: 'Material', icon: FileIcon, description: 'PDF, Word, Excel, etc.' },
   { value: 'challenge', label: 'Desafío', icon: Lightning, description: 'Ejercicio interactivo' },
   { value: 'code', label: 'Código', icon: Code, description: 'Bloque de código' },
 ] as const
+
+// Helper function to get the appropriate file icon based on file type
+const getFileTypeIcon = (fileType?: string) => {
+  if (!fileType) return FileIcon
+  if (fileType.includes('pdf')) return FilePdf
+  if (fileType.includes('word') || fileType.includes('doc')) return FileDoc
+  if (fileType.includes('excel') || fileType.includes('spreadsheet') || fileType.includes('xls')) return FileXls
+  if (fileType.includes('powerpoint') || fileType.includes('presentation') || fileType.includes('ppt')) return FilePpt
+  if (fileType.includes('zip') || fileType.includes('compressed')) return FileZip
+  if (fileType.includes('text') || fileType.includes('txt') || fileType.includes('csv')) return FileTxt
+  return FileIcon
+}
+
+// Helper function to format file size
+const formatFileSize = (bytes?: number) => {
+  if (!bytes) return ''
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
 
 export function ContentEditorStep({ course, updateCourse, courseId }: ContentEditorStepProps) {
   const [selectedLessonPath, setSelectedLessonPath] = useState<string>('')
   const [isBlockDialogOpen, setIsBlockDialogOpen] = useState(false)
   const [editingBlock, setEditingBlock] = useState<{ moduleIndex: number; lessonIndex: number; blockIndex: number; data: LessonBlock } | null>(null)
   const [isUploadingImage, setIsUploadingImage] = useState(false)
+  const [isUploadingFile, setIsUploadingFile] = useState(false)
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null)
   const imageFileInputRef = useRef<HTMLInputElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   
   // Form state
   const [blockForm, setBlockForm] = useState({
@@ -86,6 +117,11 @@ export function ContentEditorStep({ course, updateCourse, courseId }: ContentEdi
     videoUrl: '',
     videoType: 'upload' as 'upload' | 'youtube' | 'vimeo' | 'wistia' | 'tiktok',
     imageFile: '',
+    // File attachment fields
+    fileUrl: '',
+    fileName: '',
+    fileSize: 0,
+    fileType: '',
   })
 
   // Parse selected lesson path (format: "moduleIndex-lessonIndex")
@@ -144,6 +180,10 @@ export function ContentEditorStep({ course, updateCourse, courseId }: ContentEdi
       videoUrl: '',
       videoType: 'upload',
       imageFile: '',
+      fileUrl: '',
+      fileName: '',
+      fileSize: 0,
+      fileType: '',
     })
     setImagePreviewUrl(null)
     setIsBlockDialogOpen(true)
@@ -161,6 +201,10 @@ export function ContentEditorStep({ course, updateCourse, courseId }: ContentEdi
       videoUrl: block.videoUrl || '',
       videoType: block.videoType || 'upload',
       imageFile: block.imageFile || '',
+      fileUrl: block.fileUrl || '',
+      fileName: block.fileName || '',
+      fileSize: block.fileSize || 0,
+      fileType: block.fileType || '',
     })
     
     // Load image preview if it's an image block with blobName
@@ -201,6 +245,11 @@ export function ContentEditorStep({ course, updateCourse, courseId }: ContentEdi
         toast.error('Por favor, sube una imagen o ingresa una URL de imagen válida')
         return
       }
+    } else if (blockForm.type === 'file') {
+      if (!blockForm.fileUrl || !blockForm.fileUrl.trim()) {
+        toast.error('Por favor, sube un archivo')
+        return
+      }
     } else {
       // For other block types (text, welcome, code, challenge), content is required
       if (!blockForm.content || !blockForm.content.trim()) {
@@ -212,13 +261,18 @@ export function ContentEditorStep({ course, updateCourse, courseId }: ContentEdi
     const newBlock: LessonBlock = {
       id: editingBlock ? editingBlock.data.id : `block-${Date.now()}`,
       type: blockForm.type,
-      content: blockForm.content || '', // Allow empty content for video/image blocks
+      content: blockForm.content || '', // Allow empty content for video/image/file blocks
       order: editingBlock ? editingBlock.data.order : selectedLesson.lesson.blocks.length,
       xpValue: blockForm.xpValue || 10,
       characterMessage: blockForm.characterMessage || undefined,
       videoUrl: blockForm.type === 'video' ? blockForm.videoUrl : undefined,
       videoType: blockForm.type === 'video' ? blockForm.videoType : undefined,
       imageFile: blockForm.type === 'image' ? blockForm.imageFile : undefined,
+      // File attachment fields
+      fileUrl: blockForm.type === 'file' ? blockForm.fileUrl : undefined,
+      fileName: blockForm.type === 'file' ? blockForm.fileName : undefined,
+      fileSize: blockForm.type === 'file' ? blockForm.fileSize : undefined,
+      fileType: blockForm.type === 'file' ? blockForm.fileType : undefined,
     }
 
     const updatedModules = [...course.modules]
@@ -245,6 +299,10 @@ export function ContentEditorStep({ course, updateCourse, courseId }: ContentEdi
       videoUrl: '',
       videoType: 'upload',
       imageFile: '',
+      fileUrl: '',
+      fileName: '',
+      fileSize: 0,
+      fileType: '',
     })
   }
 
@@ -381,7 +439,7 @@ export function ContentEditorStep({ course, updateCourse, courseId }: ContentEdi
           ) : (
             <div className="space-y-3">
               {selectedLesson.lesson.blocks.map((block, blockIndex) => {
-                const BlockIcon = getBlockIcon(block.type)
+                const BlockIcon = block.type === 'file' ? getFileTypeIcon(block.fileType) : getBlockIcon(block.type)
                 return (
                   <Card key={block.id}>
                     <CardContent className="pt-6">
@@ -393,7 +451,17 @@ export function ContentEditorStep({ course, updateCourse, courseId }: ContentEdi
                             <Badge variant="outline">{getBlockLabel(block.type)}</Badge>
                             {block.xpValue && <Badge variant="secondary">{block.xpValue} XP</Badge>}
                           </div>
-                          <p className="text-sm line-clamp-2">{block.content}</p>
+                          {block.type === 'file' ? (
+                            <div className="text-sm">
+                              <p className="font-medium">{block.fileName || 'Archivo'}</p>
+                              <p className="text-muted-foreground text-xs">
+                                {formatFileSize(block.fileSize)}
+                                {block.content && ` • ${block.content}`}
+                              </p>
+                            </div>
+                          ) : (
+                            <p className="text-sm line-clamp-2">{block.content}</p>
+                          )}
                           {block.characterMessage && (
                             <p className="text-xs text-muted-foreground mt-1 italic">
                               💬 {block.characterMessage}
@@ -721,6 +789,130 @@ export function ContentEditorStep({ course, updateCourse, courseId }: ContentEdi
               </div>
             )}
 
+            {/* File Upload (only for file blocks) */}
+            {blockForm.type === 'file' && (
+              <div className="space-y-4">
+                <Label>Material Descargable</Label>
+                <div className="space-y-3">
+                  {/* Upload Button */}
+                  <div className="border-2 border-dashed rounded-lg p-6 text-center bg-muted/30">
+                    <input
+                      ref={fileInputRef}
+                      id="file-upload"
+                      type="file"
+                      accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip"
+                      className="hidden"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0]
+                        if (!file) return
+
+                        // Validate file size (20MB max)
+                        if (file.size > 20 * 1024 * 1024) {
+                          toast.error('El archivo debe ser menor a 20MB')
+                          return
+                        }
+
+                        if (!courseId || !selectedLesson) {
+                          toast.error('Error: No se pudo determinar el curso o lección')
+                          return
+                        }
+
+                        setIsUploadingFile(true)
+                        try {
+                          const { url, blobName, containerName, size, contentType, originalName } = await ApiService.uploadFile(file, 'lesson-file', {
+                            courseId,
+                            lessonId: selectedLesson.lesson.id
+                          })
+
+                          // Store the blob reference for future retrieval
+                          const blobNameForStorage = `${containerName}/${blobName}`
+                          setBlockForm({ 
+                            ...blockForm, 
+                            fileUrl: blobNameForStorage,
+                            fileName: originalName || file.name,
+                            fileSize: size,
+                            fileType: contentType
+                          })
+                          toast.success('Archivo subido exitosamente')
+                        } catch (error: any) {
+                          console.error('Error uploading file:', error)
+                          toast.error(error.message || 'Error al subir el archivo')
+                        } finally {
+                          setIsUploadingFile(false)
+                        }
+                      }}
+                      disabled={isUploadingFile}
+                    />
+                    <FileIcon size={40} className="mx-auto text-muted-foreground mb-3" />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isUploadingFile}
+                      className="mb-2"
+                    >
+                      <UploadSimple size={20} className="mr-2" />
+                      {isUploadingFile ? 'Subiendo...' : 'Subir Material'}
+                    </Button>
+                    <p className="text-xs text-muted-foreground">
+                      PDF, Word, Excel, PowerPoint, TXT, CSV, ZIP • Máx 20MB
+                    </p>
+                  </div>
+
+                  {/* File Preview */}
+                  {blockForm.fileUrl && (
+                    <div className="border rounded-lg p-4 bg-background">
+                      <div className="flex items-center gap-3">
+                        {(() => {
+                          const FileTypeIcon = getFileTypeIcon(blockForm.fileType)
+                          return <FileTypeIcon size={32} className="text-primary flex-shrink-0" />
+                        })()}
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium truncate">{blockForm.fileName || 'Archivo'}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {formatFileSize(blockForm.fileSize)}
+                            {blockForm.fileType && ` • ${blockForm.fileType.split('/').pop()?.toUpperCase()}`}
+                          </p>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setBlockForm({ ...blockForm, fileUrl: '', fileName: '', fileSize: 0, fileType: '' })}
+                          className="text-destructive"
+                        >
+                          <Trash size={16} />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Description input for file */}
+                  <div className="space-y-2">
+                    <Label htmlFor="file-description">Descripción del archivo (opcional)</Label>
+                    <Input
+                      id="file-description"
+                      placeholder="ej. Guía de ejercicios complementarios"
+                      value={blockForm.content}
+                      onChange={(e) => setBlockForm({ ...blockForm, content: e.target.value })}
+                      maxLength={200}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Describe el contenido del archivo para los estudiantes
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-2 p-3 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <Info className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                  <div className="text-xs text-blue-900 dark:text-blue-100">
+                    <strong>Material de Apoyo:</strong> Los estudiantes podrán descargar este archivo desde la lección. 
+                    Los PDF se pueden previsualizar directamente en el navegador.
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* XP Value */}
             <div className="space-y-2">
               <Label htmlFor="block-xp">Puntos XP *</Label>
@@ -764,6 +956,8 @@ export function ContentEditorStep({ course, updateCourse, courseId }: ContentEdi
                   ? !blockForm.videoUrl || !blockForm.videoUrl.trim()
                   : blockForm.type === 'image'
                   ? !blockForm.imageFile || !blockForm.imageFile.trim()
+                  : blockForm.type === 'file'
+                  ? !blockForm.fileUrl || !blockForm.fileUrl.trim()
                   : !blockForm.content || !blockForm.content.trim()
               }
             >

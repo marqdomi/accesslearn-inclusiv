@@ -3376,7 +3376,7 @@ app.put('/api/notifications/preferences', requireAuth, async (req, res) => {
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB máximo
+    fileSize: 20 * 1024 * 1024, // 20MB máximo (increased for documents)
   },
   fileFilter: (req, file, cb) => {
     // Validar tipos de archivo permitidos
@@ -3390,13 +3390,24 @@ const upload = multer({
       'video/webm',
       'application/pdf',
       'audio/mpeg',
-      'audio/wav'
+      'audio/wav',
+      // Document formats for lesson files
+      'application/msword', // .doc
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+      'application/vnd.ms-excel', // .xls
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+      'application/vnd.ms-powerpoint', // .ppt
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation', // .pptx
+      'text/plain', // .txt
+      'text/csv', // .csv
+      'application/zip', // .zip
+      'application/x-zip-compressed', // .zip (alternative)
     ];
     
     if (allowedTypes.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error(`Tipo de archivo no permitido: ${file.mimetype}. Tipos permitidos: ${allowedTypes.join(', ')}`));
+      cb(new Error(`Tipo de archivo no permitido: ${file.mimetype}. Tipos permitidos: PDF, Word, Excel, PowerPoint, imágenes, videos, audio, TXT, CSV, ZIP`));
     }
   }
 });
@@ -3414,7 +3425,7 @@ app.post('/api/media/upload',
       }
       
       const { tenantId } = user;
-      const { type, courseId, lessonId } = req.body; // type: 'logo' | 'avatar' | 'course-cover' | 'lesson-image'
+      const { type, courseId, lessonId } = req.body; // type: 'logo' | 'avatar' | 'course-cover' | 'lesson-image' | 'lesson-file'
       const file = req.file;
 
       console.log(`[API] Media upload request - type: ${type}, tenantId: ${tenantId}, userId: ${user.id}`);
@@ -3424,7 +3435,7 @@ app.post('/api/media/upload',
       }
 
       if (!type) {
-        return res.status(400).json({ error: 'Tipo de upload requerido (logo, avatar, course-cover, lesson-image)' });
+        return res.status(400).json({ error: 'Tipo de upload requerido (logo, avatar, course-cover, lesson-image, lesson-file)' });
       }
 
       // Generar nombre único para archivos de lecciones
@@ -3470,8 +3481,21 @@ app.post('/api/media/upload',
             return res.status(403).json({ error: 'No tienes permisos para subir imágenes de lecciones' });
           }
           break;
+        case 'lesson-file':
+          if (!courseId || !lessonId) {
+            return res.status(400).json({ error: 'courseId y lessonId requeridos para lesson-file' });
+          }
+          containerName = 'course-materials';
+          // Use original filename (sanitized) for better UX
+          const sanitizedFileName = file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_');
+          blobName = `${tenantId}/${courseId}/lessons/${lessonId}/files/${uniqueName}-${sanitizedFileName}`;
+          // Validar permisos: instructores, content-managers y admins
+          if (!['instructor', 'content-manager', 'tenant-admin', 'super-admin'].includes(user.role)) {
+            return res.status(403).json({ error: 'No tienes permisos para subir archivos de lecciones' });
+          }
+          break;
         default:
-          return res.status(400).json({ error: `Tipo de upload inválido: ${type}. Tipos válidos: logo, avatar, course-cover, lesson-image` });
+          return res.status(400).json({ error: `Tipo de upload inválido: ${type}. Tipos válidos: logo, avatar, course-cover, lesson-image, lesson-file` });
       }
 
       // Upload a Blob Storage
@@ -3497,7 +3521,8 @@ app.post('/api/media/upload',
         blobName,
         containerName,
         size: file.size,
-        contentType: file.mimetype
+        contentType: file.mimetype,
+        originalName: file.originalname // Include original filename for display
       });
     } catch (error: any) {
       console.error('[API] Error uploading file:', error);

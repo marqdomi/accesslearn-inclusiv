@@ -1747,13 +1747,13 @@ class ApiServiceClass {
   /**
    * Upload file to Azure Blob Storage
    * @param file File to upload
-   * @param type Type of upload: 'logo' | 'avatar' | 'course-cover' | 'lesson-image'
+   * @param type Type of upload: 'logo' | 'avatar' | 'course-cover' | 'lesson-image' | 'lesson-file'
    * @param options Optional: courseId, lessonId
    * @returns Upload response with URL and metadata
    */
   async uploadFile(
     file: File,
-    type: 'logo' | 'avatar' | 'course-cover' | 'lesson-image',
+    type: 'logo' | 'avatar' | 'course-cover' | 'lesson-image' | 'lesson-file',
     options?: {
       courseId?: string
       lessonId?: string
@@ -1765,6 +1765,7 @@ class ApiServiceClass {
     containerName: string
     size: number
     contentType: string
+    originalName?: string
   }> {
     const formData = new FormData()
     formData.append('file', file)
