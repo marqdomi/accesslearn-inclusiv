@@ -1,4 +1,4 @@
-import { HTMLContent } from './HTMLContent'
+import { MarkdownLesson } from './MarkdownLesson'
 import { VideoLesson } from './VideoLesson'
 import { QuizLesson } from '../quiz/QuizLesson'
 
@@ -29,9 +29,9 @@ interface LessonContentProps {
 export function LessonContent({ lesson, onQuizComplete }: LessonContentProps) {
   switch (lesson.type) {
     case 'markdown':
-      // Use html field if available, fallback to markdown field
-      // Content is now stored as HTML directly from TipTap editor
-      return <HTMLContent content={lesson.content.html || lesson.content.markdown || ''} />
+      // Use MarkdownLesson to properly render markdown with embedded HTML blocks
+      // (file-download-block, video embeds, images with SAS tokens, etc.)
+      return <MarkdownLesson content={lesson.content.html || lesson.content.markdown || ''} />
     
     case 'video':
       return (
