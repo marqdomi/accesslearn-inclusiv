@@ -3376,21 +3376,27 @@ app.put('/api/notifications/preferences', requireAuth, async (req, res) => {
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: 20 * 1024 * 1024, // 20MB máximo (increased for documents)
+    fileSize: 50 * 1024 * 1024, // 50MB máximo para soportar videos y documentos más grandes
   },
   fileFilter: (req, file, cb) => {
     // Validar tipos de archivo permitidos
     const allowedTypes = [
+      // Imágenes
       'image/jpeg',
       'image/png',
       'image/gif',
       'image/webp',
       'image/svg+xml',
+      // Videos
       'video/mp4',
       'video/webm',
-      'application/pdf',
+      'video/quicktime', // .mov
+      // Audio
       'audio/mpeg',
       'audio/wav',
+      'audio/ogg',
+      // Documentos
+      'application/pdf',
       // Document formats for lesson files
       'application/msword', // .doc
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
@@ -3398,8 +3404,11 @@ const upload = multer({
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
       'application/vnd.ms-powerpoint', // .ppt
       'application/vnd.openxmlformats-officedocument.presentationml.presentation', // .pptx
+      // Archivos de texto
       'text/plain', // .txt
       'text/csv', // .csv
+      'application/json',
+      // Archivos comprimidos
       'application/zip', // .zip
       'application/x-zip-compressed', // .zip (alternative)
     ];
@@ -3407,7 +3416,7 @@ const upload = multer({
     if (allowedTypes.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error(`Tipo de archivo no permitido: ${file.mimetype}. Tipos permitidos: PDF, Word, Excel, PowerPoint, imágenes, videos, audio, TXT, CSV, ZIP`));
+      cb(new Error(`Tipo de archivo no permitido: ${file.mimetype}. Tipos permitidos: imágenes, videos, audio, PDF, documentos Office, texto y zip`));
     }
   }
 });
@@ -3503,8 +3512,24 @@ app.post('/api/media/upload',
             return res.status(403).json({ error: 'No tienes permisos para subir archivos de lecciones' });
           }
           break;
+        case 'editor-image':
+          // Imágenes insertadas directamente desde el editor de texto rico
+          if (!courseId) {
+            return res.status(400).json({ error: 'courseId requerido para editor-image' });
+          }
+          containerName = 'course-media';
+          // lessonId es opcional para editor-image - puede usarse en descripción del curso
+          const editorPath = lessonId 
+            ? `${tenantId}/${courseId}/lessons/${lessonId}/editor/${uniqueName}`
+            : `${tenantId}/${courseId}/editor/${uniqueName}`;
+          blobName = editorPath;
+          // Validar permisos: instructores, content-managers y admins
+          if (!['instructor', 'content-manager', 'tenant-admin', 'super-admin'].includes(user.role)) {
+            return res.status(403).json({ error: 'No tienes permisos para subir imágenes' });
+          }
+          break;
         default:
-          return res.status(400).json({ error: `Tipo de upload inválido: ${type}. Tipos válidos: logo, avatar, course-cover, lesson-image, lesson-file` });
+          return res.status(400).json({ error: `Tipo de upload inválido: ${type}. Tipos válidos: logo, avatar, course-cover, lesson-image, lesson-file, editor-image` });
       }
 
       // Upload a Blob Storage
