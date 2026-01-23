@@ -1,6 +1,7 @@
-import { MarkdownLesson } from './MarkdownLesson'
+import { HTMLContent } from './HTMLContent'
 import { VideoLesson } from './VideoLesson'
 import { QuizLesson } from '../quiz/QuizLesson'
+import { BlockRenderer, ContentBlock } from './BlockRenderer'
 
 interface LessonContentProps {
   lesson: {
@@ -10,6 +11,7 @@ interface LessonContentProps {
     content: {
       markdown?: string
       html?: string // Support both markdown and html fields
+      blocks?: ContentBlock[] // Direct blocks from CourseStructure
       videoProvider?: 'youtube' | 'vimeo' | 'tiktok' | 'url'
       videoId?: string
       videoUrl?: string
@@ -29,9 +31,12 @@ interface LessonContentProps {
 export function LessonContent({ lesson, onQuizComplete }: LessonContentProps) {
   switch (lesson.type) {
     case 'markdown':
-      // Use MarkdownLesson to properly render markdown with embedded HTML blocks
-      // (file-download-block, video embeds, images with SAS tokens, etc.)
-      return <MarkdownLesson content={lesson.content.html || lesson.content.markdown || ''} />
+      // If we have blocks, render them directly (preferred approach)
+      if (lesson.content.blocks && lesson.content.blocks.length > 0) {
+        return <BlockRenderer blocks={lesson.content.blocks} />
+      }
+      // Otherwise, render HTML content (from TipTap editor or legacy content)
+      return <HTMLContent content={lesson.content.html || lesson.content.markdown || ''} />
     
     case 'video':
       return (

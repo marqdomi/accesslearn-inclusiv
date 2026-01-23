@@ -24,6 +24,7 @@ import { ArrowLeft, CheckCircle, ChevronLeft, ChevronRight, Trophy, PanelRightCl
 import { motion, AnimatePresence } from 'framer-motion'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { useIsMobile } from '@/hooks/use-mobile'
+import { ContentBlock } from '@/components/course/BlockRenderer'
 
 interface Lesson {
   id: string
@@ -35,9 +36,28 @@ interface Lesson {
   xpReward: number
   content: {
     markdown?: string
-    videoProvider?: 'youtube' | 'vimeo' | 'url'
+    html?: string
+    blocks?: ContentBlock[]
+    videoProvider?: 'youtube' | 'vimeo' | 'tiktok' | 'url'
     videoId?: string
     videoUrl?: string
+    quiz?: {
+      description?: string
+      questions: any[]
+      maxLives?: number
+      showTimer?: boolean
+      timeLimit?: number
+      passingScore?: number
+      examModeType?: string
+      examDuration?: number
+      examMinPassingScore?: number
+      examQuestionCount?: number
+      questionBank?: any[]
+      useRandomSelection?: boolean
+    }
+  }
+  quiz?: {
+    passingScore?: number
   }
 }
 
@@ -57,6 +77,18 @@ interface Course {
   difficulty: string
   estimatedHours: number
   modules: Module[]
+  // Completion settings
+  completionMode?: string
+  quizRequirement?: string
+  requireAllQuizzesPassed?: boolean
+  minimumScoreForCompletion?: number
+  // Certificate settings
+  certificateEnabled?: boolean
+  certificateRequiresPassingScore?: boolean
+  minimumScoreForCertificate?: number
+  // Retake settings
+  allowRetakes?: boolean
+  maxRetakesPerQuiz?: number
 }
 
 export function CourseViewerPage() {
@@ -237,110 +269,9 @@ export function CourseViewerPage() {
         ['text', 'welcome', 'code', 'challenge', 'image', 'video', 'file'].includes(b.type)
       )
       
-      // If there are content blocks, combine them all into markdown
+      // If there are content blocks, pass them directly to the BlockRenderer
+      // This is cleaner than converting to markdown/HTML and parsing back
       if (hasContentBlocks) {
-        let markdown = ''
-        
-        sortedBlocks.forEach((block: any) => {
-          if (block.type === 'video' && block.videoUrl) {
-            // Embed video in markdown
-            let embedUrl = ''
-            let videoProvider = 'youtube'
-            
-            if (block.videoUrl.includes('youtube.com') || block.videoUrl.includes('youtu.be')) {
-              videoProvider = 'youtube'
-              const match = block.videoUrl.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/)
-              const videoId = match ? match[1] : undefined
-              if (videoId) {
-                embedUrl = `https://www.youtube.com/embed/${videoId}`
-              }
-            } else if (block.videoUrl.includes('tiktok.com')) {
-              videoProvider = 'tiktok'
-              embedUrl = block.videoUrl
-            } else if (block.videoUrl.includes('vimeo.com')) {
-              videoProvider = 'vimeo'
-              const match = block.videoUrl.match(/vimeo\.com\/(\d+)/)
-              const videoId = match ? match[1] : undefined
-              if (videoId) {
-                embedUrl = `https://player.vimeo.com/video/${videoId}`
-              }
-            } else if (block.videoUrl.includes('wistia.com') || block.videoUrl.includes('wistia.net')) {
-              videoProvider = 'wistia'
-              let wistiaId = ''
-              if (block.videoUrl.includes('wistia.com/medias/')) {
-                wistiaId = block.videoUrl.split('medias/')[1]?.split('?')[0] || ''
-              } else if (block.videoUrl.includes('wistia.net/embed/iframe/')) {
-                wistiaId = block.videoUrl.split('embed/iframe/')[1]?.split('?')[0] || ''
-              }
-              if (wistiaId) {
-                embedUrl = `https://fast.wistia.net/embed/iframe/${wistiaId}`
-              }
-            } else {
-              embedUrl = block.videoUrl
-            }
-            
-            if (embedUrl) {
-              if (videoProvider === 'tiktok') {
-                // TikTok uses blockquote embed
-                markdown += `<div class="tiktok-video-embed" data-video-url="${embedUrl}"></div>\n\n`
-              } else {
-                // Use iframe for other video providers
-                markdown += `<div class="video-embed"><iframe src="${embedUrl}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>\n\n`
-              }
-            }
-          } else if (block.type === 'welcome') {
-            markdown += `# ${lesson.title}\n\n${block.content}\n\n`
-          } else if (block.type === 'code') {
-            markdown += `\`\`\`\n${block.content}\n\`\`\`\n\n`
-          } else if (block.type === 'challenge') {
-            markdown += `## 🎯 Desafío\n\n${block.content}\n\n`
-          } else if (block.type === 'image') {
-            // Add image placeholder - will be processed when rendering
-            const altText = block.accessibility?.altText || block.content || 'Imagen'
-            const imageFile = block.imageFile || ''
-            
-            if (imageFile) {
-              if (imageFile.startsWith('http') || imageFile.startsWith('data:')) {
-                markdown += `![${altText}](${imageFile})\n\n`
-              } else {
-                markdown += `![${altText}](BLOB:${imageFile})\n\n`
-              }
-            } else {
-              markdown += `*${altText}*\n\n`
-            }
-            
-            if (block.content && block.content !== altText) {
-              markdown += `${block.content}\n\n`
-            }
-          } else if (block.type === 'text') {
-            markdown += `${block.content}\n\n`
-          } else if (block.type === 'file') {
-            // Add file block as special component placeholder
-            // Sanitize file data to prevent XSS by encoding special characters
-            const sanitizeValue = (val: string | undefined): string => {
-              if (!val) return ''
-              return val
-                .replace(/&/g, '&amp;')
-                .replace(/'/g, '&#39;')
-                .replace(/"/g, '&quot;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-            }
-            const fileData = {
-              fileUrl: sanitizeValue(block.fileUrl),
-              fileName: sanitizeValue(block.fileName) || 'Material',
-              fileSize: typeof block.fileSize === 'number' ? block.fileSize : 0,
-              fileType: sanitizeValue(block.fileType),
-              description: sanitizeValue(block.content)
-            }
-            // Use base64 encoding for the JSON to prevent injection via special characters
-            const encodedFileData = btoa(JSON.stringify(fileData))
-            markdown += `<div class="file-download-block" data-file-encoded="${encodedFileData}"></div>\n\n`
-          }
-        })
-        
-        console.log(`[transformLesson] Generated markdown for "${lesson.title}":`, markdown.substring(0, 200) + '...')
-        
         return {
           id: lesson.id,
           title: lesson.title,
@@ -350,7 +281,24 @@ export function CourseViewerPage() {
           isRequired: true,
           xpReward: lesson.totalXP || 0,
           content: {
-            markdown: markdown.trim()
+            // Pass blocks directly - BlockRenderer will handle rendering each type
+            blocks: sortedBlocks.map((block: any) => ({
+              id: block.id,
+              type: block.type,
+              order: block.order || 0,
+              content: block.content,
+              // File properties
+              fileUrl: block.fileUrl,
+              fileName: block.fileName,
+              fileSize: block.fileSize,
+              fileType: block.fileType,
+              // Image properties
+              imageFile: block.imageFile,
+              imageAlt: block.accessibility?.altText,
+              // Video properties
+              videoUrl: block.videoUrl,
+              videoProvider: block.videoProvider
+            }))
           }
         }
       }
