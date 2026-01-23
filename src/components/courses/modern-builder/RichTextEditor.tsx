@@ -38,6 +38,8 @@ interface RichTextEditorProps {
   placeholder?: string
   maxLength?: number
   className?: string
+  courseId?: string
+  lessonId?: string
 }
 
 // Toolbar button component
@@ -233,7 +235,9 @@ export function RichTextEditor({
   onChange, 
   placeholder = 'Escribe tu contenido aquí...',
   maxLength = 50000,
-  className 
+  className,
+  courseId,
+  lessonId
 }: RichTextEditorProps) {
   
   // State for image dialog and upload
@@ -264,8 +268,10 @@ export function RichTextEditor({
 
     try {
       // Upload to Azure Blob Storage using existing ApiService
-      const { url } = await ApiService.uploadFile(file, 'lesson-image', {
-        courseId: 'editor-content',
+      // Use editor-image type for images inserted in rich text editor
+      const { url } = await ApiService.uploadFile(file, 'editor-image', {
+        courseId: courseId || 'temp-course',
+        lessonId: lessonId,
       })
 
       // Insert image in the editor
@@ -410,7 +416,10 @@ export function RichTextEditor({
 
   return (
     <div className={cn("space-y-2", className)}>
-      <EditorToolbar editor={editor} onImageClick={() => setIsImageDialogOpen(true)} />
+      {/* Sticky toolbar */}
+      <div className="sticky top-0 z-10 bg-background">
+        <EditorToolbar editor={editor} onImageClick={() => setIsImageDialogOpen(true)} />
+      </div>
       
       <div 
         className={cn(

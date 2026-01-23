@@ -516,6 +516,8 @@ export function ContentEditorStep({ course, updateCourse, courseId }: ContentEdi
                 <RichTextEditor
                   value={blockForm.content}
                   onChange={(value) => setBlockForm({ ...blockForm, content: value })}
+                  courseId={courseId || course.id}
+                  lessonId={selectedLesson?.lesson.id}
                   placeholder={
                     blockForm.type === 'welcome' 
                       ? 'Escribe un mensaje de bienvenida...' 
