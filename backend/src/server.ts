@@ -3565,18 +3565,27 @@ app.post('/api/media/upload',
   }
 );
 
-// GET /api/media/url/:container/:blobName - Obtener URL con SAS token
-app.get('/api/media/url/:container/:blobName', 
+// GET /api/media/url/:container/* - Obtener URL con SAS token
+// Using wildcard (*) to capture blobName with slashes (e.g., tenant-id/course-id/cover.jpg)
+app.get('/api/media/url/:container/*', 
   authenticateToken,
   requireAuth, 
   async (req, res) => {
   try {
     const user = (req as any).user;
     const { tenantId } = user;
-    const { container, blobName: encodedBlobName } = req.params;
+    const { container } = req.params;
     
-    // Decodificar blobName (viene codificado desde el frontend)
-    const blobName = decodeURIComponent(encodedBlobName);
+    // Get blobName from the wildcard parameter (everything after /api/media/url/:container/)
+    // Express stores this in params[0] or we can get it from the URL
+    const blobNameEncoded = req.params[0] || '';
+    
+    // Decodificar blobName (puede venir codificado desde el frontend)
+    const blobName = decodeURIComponent(blobNameEncoded);
+    
+    if (!blobName) {
+      return res.status(400).json({ error: 'blobName es requerido' });
+    }
     
     console.log(`[API] Getting media URL for container: ${container}, blobName: ${blobName}, tenantId: ${tenantId}`);
     
@@ -3606,18 +3615,26 @@ app.get('/api/media/url/:container/:blobName',
   }
 });
 
-// DELETE /api/media/:container/:blobName - Eliminar archivo
-app.delete('/api/media/:container/:blobName', 
+// DELETE /api/media/:container/* - Eliminar archivo
+// Using wildcard (*) to capture blobName with slashes
+app.delete('/api/media/:container/*', 
   authenticateToken,
   requireAuth, 
   async (req, res) => {
   try {
     const user = (req as any).user;
     const { tenantId } = user;
-    const { container, blobName: encodedBlobName } = req.params;
+    const { container } = req.params;
     
-    // Decodificar blobName (viene codificado desde el frontend)
-    const blobName = decodeURIComponent(encodedBlobName);
+    // Get blobName from the wildcard parameter
+    const blobNameEncoded = req.params[0] || '';
+    
+    // Decodificar blobName (puede venir codificado desde el frontend)
+    const blobName = decodeURIComponent(blobNameEncoded);
+    
+    if (!blobName) {
+      return res.status(400).json({ error: 'blobName es requerido' });
+    }
     
     // Validar que el archivo pertenezca al tenant del usuario
     // El blobName puede venir en formato "tenant-id/path" o solo "path" si ya incluye tenantId
