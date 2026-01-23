@@ -17,6 +17,7 @@ const MOCK_TENANTS: Tenant[] = [
     status: "active",
     maxUsers: 50,
     maxCourses: 10,
+    subscriptionStartDate: new Date().toISOString(),
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     createdBy: "system"
@@ -34,6 +35,7 @@ const MOCK_TENANTS: Tenant[] = [
     status: "active",
     maxUsers: 1000,
     maxCourses: 500,
+    subscriptionStartDate: new Date().toISOString(),
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     createdBy: "system"
