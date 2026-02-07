@@ -21,6 +21,9 @@ interface BackendCourse {
   updatedAt: string
   status: 'draft' | 'pending-review' | 'published' | 'archived'
   publishedAt?: string
+  // Campos que el frontend almacena y deben persistir
+  difficulty?: string
+  enrollmentMode?: string
   // Configuración flexible de completación y certificación
   certificateEnabled?: boolean
   completionMode?: 'modules-only' | 'modules-and-quizzes' | 'exam-mode' | 'study-guide'
@@ -53,13 +56,13 @@ export function adaptBackendCourseToFrontend(backendCourse: BackendCourse): Cour
     estimatedHours: backendCourse.estimatedTime ? Math.round(backendCourse.estimatedTime / 60) : 0,
     totalXP: modules.reduce((sum, m) => {
       return sum + (m.lessons || []).reduce((lessonSum: number, l: any) => {
-        return lessonSum + (l.xpReward || 0)
+        return lessonSum + (l.totalXP || l.xpReward || 0)
       }, 0)
     }, 0),
     published: backendCourse.status === 'published',
     publishedAt: backendCourse.publishedAt ? new Date(backendCourse.publishedAt).getTime() : undefined,
-    enrollmentMode: 'open', // Default
-    difficulty: 'Novice', // Default, could be mapped from backend if available
+    enrollmentMode: (backendCourse.enrollmentMode as any) || 'open',
+    difficulty: (backendCourse.difficulty as any) || 'Novice',
     createdAt: new Date(backendCourse.createdAt).getTime(),
     updatedAt: new Date(backendCourse.updatedAt).getTime(),
     createdBy: backendCourse.createdBy,
@@ -92,6 +95,9 @@ export function adaptFrontendCourseToBackend(
     modules: frontendCourse.modules || [],
     coverImage: frontendCourse.coverImage,
     status: (frontendCourse as any).status || (frontendCourse.published ? 'published' : 'draft'),
+    // Campos de configuración del curso
+    difficulty: frontendCourse.difficulty,
+    enrollmentMode: frontendCourse.enrollmentMode,
     // Configuración flexible de completación y certificación
     certificateEnabled: frontendCourse.certificateEnabled,
     completionMode: frontendCourse.completionMode,

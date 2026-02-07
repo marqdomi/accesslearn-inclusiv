@@ -9,7 +9,6 @@
  */
 
 export * from './base-service'
-export * from './course-service'
 export * from './user-progress-service'
 export * from './team-service'
 export * from './user-service'
@@ -17,7 +16,6 @@ export * from './social-service'
 export * from './gamification-service'
 
 // Re-export service instances for convenient access
-export { CourseService } from './course-service'
 export { UserProgressService } from './user-progress-service'
 export { TeamService, GroupService } from './team-service'
 export { UserProfileService, UserStatsService, XPEventService, DEFAULT_USER_STATS, XP_PER_LEVEL } from './user-service'

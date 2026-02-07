@@ -6,7 +6,6 @@
 
 import { UserScopedService, DataValidator } from './base-service'
 import { UserProgress } from '@/lib/types'
-import { CourseService } from './course-service'
 
 interface UserProgressRecord extends UserProgress {
   id: string
@@ -53,12 +52,6 @@ class UserProgressServiceClass extends UserScopedService<UserProgressRecord> {
    */
   async upsertProgress(userId: string, progress: UserProgress): Promise<UserProgressRecord> {
     try {
-      // Validate that the course exists
-      const courseExists = await CourseService.exists(progress.courseId)
-      if (!courseExists) {
-        throw new Error(`Course ${progress.courseId} does not exist`)
-      }
-
       // Check if progress already exists
       const existing = await this.getUserCourseProgress(userId, progress.courseId)
       const id = `${userId}-${progress.courseId}`

@@ -23,7 +23,7 @@ import {
   Image as ImageIcon
 } from '@phosphor-icons/react'
 import { cn } from '@/lib/utils'
-import { useCallback, useEffect, useState, useRef } from 'react'
+import { useCallback, useEffect, useState, useRef, useMemo } from 'react'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Input } from '@/components/ui/input'
@@ -247,6 +247,26 @@ export function RichTextEditor({
   const [isUploading, setIsUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   
+  // Debounce timer for onChange to avoid re-rendering the entire wizard on every keystroke
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const debouncedOnChange = useCallback((html: string) => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current)
+    }
+    debounceTimerRef.current = setTimeout(() => {
+      onChange(html)
+    }, 300)
+  }, [onChange])
+  
+  // Cleanup debounce timer on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current)
+      }
+    }
+  }, [])
+  
   // Function to upload image
   const handleImageUpload = async (file: File, editorInstance?: Editor | null) => {
     const currentEditor = editorInstance || editor
@@ -387,9 +407,9 @@ export function RichTextEditor({
     },
     onUpdate: ({ editor }) => {
       const html = editor.getHTML()
-      // Save HTML directly - no conversion needed
+      // Debounced save to avoid re-rendering entire wizard on every keystroke
       if (html.length <= maxLength) {
-        onChange(html)
+        debouncedOnChange(html)
       }
     },
   })
@@ -405,14 +425,13 @@ export function RichTextEditor({
     }
   }, [value, editor])
 
-  // Get text length for character count (strip HTML tags)
-  const getTextLength = (html: string) => {
-    const temp = document.createElement('div')
-    temp.innerHTML = html
-    return temp.textContent?.length || 0
-  }
-
-  const currentLength = getTextLength(value || '')
+  // Get text length using TipTap's getText() - more efficient than creating DOM elements
+  const currentLength = useMemo(() => {
+    if (editor) {
+      return editor.getText().length
+    }
+    return 0
+  }, [editor, value])
 
   return (
     <div className={cn("space-y-2", className)}>

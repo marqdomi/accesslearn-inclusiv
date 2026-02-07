@@ -1295,9 +1295,11 @@ app.get('/api/courses/tenant/:tenantId', requireAuth, async (req, res) => {
 });
 
 // GET /api/courses/:courseId - Get course by ID
-app.get('/api/courses/:courseId', async (req, res) => {
+// Auth optional: published courses are public, drafts require authentication
+app.get('/api/courses/:courseId', authenticateToken, async (req, res) => {
   try {
     const { courseId } = req.params;
+    const user = (req as any).user; // May be null if no token provided
     const container = getContainer('courses');
     
     // Query for the course by ID (cross-partition query)
@@ -1312,7 +1314,28 @@ app.get('/api/courses/:courseId', async (req, res) => {
       return res.status(404).json({ error: 'Course not found' });
     }
     
-    res.json(resources[0]);
+    const course = resources[0];
+    
+    // Published courses are publicly accessible
+    if (course.status === 'published') {
+      return res.json(course);
+    }
+    
+    // Non-published courses require authentication
+    if (!user) {
+      return res.status(401).json({ error: 'Authentication required to access unpublished courses' });
+    }
+    
+    // Non-published courses: only creator, reviewers, and admins can access
+    const isCreator = course.createdBy === user.userId;
+    const isAdmin = ['super-admin', 'tenant-admin', 'content-manager'].includes(user.role);
+    const isSameTenant = course.tenantId === user.tenantId;
+    
+    if (!isSameTenant || (!isCreator && !isAdmin)) {
+      return res.status(403).json({ error: 'You do not have permission to access this course' });
+    }
+    
+    res.json(course);
   } catch (error: any) {
     console.error('[API] Error getting course by ID:', error);
     res.status(500).json({ error: error.message });

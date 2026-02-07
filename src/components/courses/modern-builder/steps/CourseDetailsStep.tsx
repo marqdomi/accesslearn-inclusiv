@@ -9,6 +9,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Info, Plus, X, UploadSimple, Image as ImageIcon } from '@phosphor-icons/react'
 import { useCustomCategories } from '@/hooks/use-custom-categories'
+import { useSasUrl } from '@/hooks/useSasUrl'
 import { toast } from 'sonner'
 import { ApiService } from '@/services/api.service'
 
@@ -33,18 +34,20 @@ export function CourseDetailsStep({ course, updateCourse, courseId }: CourseDeta
   const [isUploadingCover, setIsUploadingCover] = useState(false)
   const [coverImagePreview, setCoverImagePreview] = useState<string | null>(null)
   const coverImageInputRef = useRef<HTMLInputElement>(null)
+  
+  // Auto-refresh SAS URL for cover image
+  const { url: sasUrl } = useSasUrl(course.coverImage)
 
-  // Load cover image preview when course changes
+  // Load cover image preview when course changes or SAS URL refreshes
   useEffect(() => {
-    const loadCoverImagePreview = async () => {
-      if (course.coverImage) {
-        // Si ya es una URL (con SAS token o externa), usarla directamente
-        if (course.coverImage.startsWith('http') || course.coverImage.startsWith('data:')) {
-          setCoverImagePreview(course.coverImage)
-        } else if (course.coverImage.includes('/')) {
-          // Es un blobName (formato: container/blobName), generar URL con SAS
+    if (sasUrl) {
+      setCoverImagePreview(sasUrl)
+    } else if (course.coverImage) {
+      // Fallback: if it's a blob path, try to generate URL
+      if (!course.coverImage.startsWith('http') && !course.coverImage.startsWith('data:') && course.coverImage.includes('/')) {
+        const loadPreview = async () => {
           try {
-            const [containerName, ...blobNameParts] = course.coverImage.split('/')
+            const [containerName, ...blobNameParts] = course.coverImage!.split('/')
             const blobName = blobNameParts.join('/')
             const { url } = await ApiService.getMediaUrl(containerName, blobName)
             setCoverImagePreview(url)
@@ -52,16 +55,15 @@ export function CourseDetailsStep({ course, updateCourse, courseId }: CourseDeta
             console.error('Error generating cover image preview URL:', error)
             setCoverImagePreview(null)
           }
-        } else {
-          setCoverImagePreview(course.coverImage)
         }
+        loadPreview()
       } else {
-        setCoverImagePreview(null)
+        setCoverImagePreview(course.coverImage)
       }
+    } else {
+      setCoverImagePreview(null)
     }
-
-    loadCoverImagePreview()
-  }, [course.coverImage])
+  }, [course.coverImage, sasUrl])
 
   const handleCoverImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
