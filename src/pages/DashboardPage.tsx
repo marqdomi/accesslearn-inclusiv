@@ -16,7 +16,6 @@ import {
   PlayCircle,
 } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { AppNavbar } from '@/components/layout/AppNavbar'
 import { DynamicLearningCard } from '@/components/dashboard/DynamicLearningCard'
 import { StatsCard } from '@/components/dashboard/StatsCard'
 import { QuickActions } from '@/components/dashboard/QuickActions'
@@ -318,9 +317,6 @@ export function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background">
-      <AppNavbar userXP={stats.totalXP} />
-
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
         {/* Welcome Section - More Compact */}
         <div className="mb-6 md:mb-8">
@@ -442,6 +438,5 @@ export function DashboardPage() {
           </TabsContent>
         </Tabs>
       </main>
-    </div>
   )
 }

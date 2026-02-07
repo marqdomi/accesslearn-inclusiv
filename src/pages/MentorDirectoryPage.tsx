@@ -12,7 +12,6 @@ import {
   Users,
   MessageSquare,
   Filter,
-  ArrowLeft,
   ClipboardList
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
@@ -132,19 +131,6 @@ export function MentorDirectoryPage() {
 
   return (
     <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 space-y-4 sm:space-y-8">
-      {/* Header */}
-      <div className="mb-4 sm:mb-6">
-        <Button
-          variant="ghost"
-          onClick={() => navigate('/dashboard')}
-          className="gap-2 mb-3 sm:mb-4 touch-target"
-        >
-          <ArrowLeft size={18} />
-          <span className="hidden sm:inline">Volver al Dashboard</span>
-          <span className="sm:hidden">Volver</span>
-        </Button>
-      </div>
-
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-6 mb-4 sm:mb-6">
         <div className="space-y-1 sm:space-y-2 flex-1 min-w-0">
           <h1 className="text-2xl sm:text-3xl font-bold">Directorio de Mentores</h1>

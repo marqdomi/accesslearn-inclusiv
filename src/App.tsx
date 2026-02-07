@@ -7,6 +7,7 @@ import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import { ImpersonationProvider } from '@/contexts/ImpersonationContext'
 import { TenantResolver } from '@/components/auth/TenantResolver'
 import { ImpersonationBanner } from '@/components/platform-admin/ImpersonationBanner'
+import { AppShell } from '@/components/layout/AppShell'
 import { TenantLoginPage } from '@/components/auth/TenantLoginPage'
 import { AcceptInvitationPage } from '@/pages/AcceptInvitationPage'
 import { RegisterPage } from '@/pages/RegisterPage'
@@ -129,14 +130,8 @@ function AppRoutes() {
         path="/register"
         element={<RegisterPage />}
       />
-      <Route
-        path="/dashboard"
-        element={
-          <ProtectedRoute>
-            <DashboardPage />
-          </ProtectedRoute>
-        }
-      />
+
+      {/* CourseViewer: full-screen, outside AppShell */}
       <Route
         path="/courses/:courseId"
         element={
@@ -145,166 +140,37 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+
+      {/* All tenant pages inside AppShell */}
       <Route
-        path="/mentors"
         element={
           <ProtectedRoute>
-            <MentorDirectoryPage />
+            <AppShell />
           </ProtectedRoute>
         }
-      />
-      <Route
-        path="/mentor/dashboard"
-        element={
-          <ProtectedRoute>
-            <MentorDashboardPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/my-mentorships"
-        element={
-          <ProtectedRoute>
-            <MenteeMentorshipsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/library"
-        element={
-          <ProtectedRoute>
-            <LibraryPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/catalog"
-        element={
-          <ProtectedRoute>
-            <CourseCatalogPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/demo/course-approval"
-        element={
-          <ProtectedRoute>
-            <CourseApprovalDemo />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/content-manager"
-        element={
-          <ProtectedRoute>
-            <ContentManagerDashboardPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/my-courses"
-        element={
-          <ProtectedRoute>
-            <CourseManagementPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/users"
-        element={
-          <ProtectedRoute>
-            <AdminUsersPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/analytics"
-        element={
-          <ProtectedRoute>
-            <AdminAnalyticsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/notifications"
-        element={
-          <ProtectedRoute>
-            <NotificationsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/settings"
-        element={
-          <ProtectedRoute>
-            <AdminSettingsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/settings/branding"
-        element={
-          <ProtectedRoute>
-            <BrandingSettingsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/settings/notifications"
-        element={
-          <ProtectedRoute>
-            <NotificationSettingsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/settings/security"
-        element={
-          <ProtectedRoute>
-            <SecuritySettingsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/settings/data"
-        element={
-          <ProtectedRoute>
-            <DataSettingsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/settings/categories"
-        element={
-          <ProtectedRoute>
-            <CategoryManagementPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/settings/accessibility"
-        element={
-          <ProtectedRoute>
-            <AccessibilitySettingsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/settings/certificates"
-        element={
-          <ProtectedRoute>
-            <CertificateSettingsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/profile"
-        element={
-          <ProtectedRoute>
-            <ProfilePage />
-          </ProtectedRoute>
-        }
-      />
+      >
+        <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/mentors" element={<MentorDirectoryPage />} />
+        <Route path="/mentor/dashboard" element={<MentorDashboardPage />} />
+        <Route path="/my-mentorships" element={<MenteeMentorshipsPage />} />
+        <Route path="/library" element={<LibraryPage />} />
+        <Route path="/catalog" element={<CourseCatalogPage />} />
+        <Route path="/demo/course-approval" element={<CourseApprovalDemo />} />
+        <Route path="/content-manager" element={<ContentManagerDashboardPage />} />
+        <Route path="/my-courses" element={<CourseManagementPage />} />
+        <Route path="/admin/users" element={<AdminUsersPage />} />
+        <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />
+        <Route path="/notifications" element={<NotificationsPage />} />
+        <Route path="/admin/settings" element={<AdminSettingsPage />} />
+        <Route path="/admin/settings/branding" element={<BrandingSettingsPage />} />
+        <Route path="/admin/settings/notifications" element={<NotificationSettingsPage />} />
+        <Route path="/admin/settings/security" element={<SecuritySettingsPage />} />
+        <Route path="/admin/settings/data" element={<DataSettingsPage />} />
+        <Route path="/admin/settings/categories" element={<CategoryManagementPage />} />
+        <Route path="/admin/settings/accessibility" element={<AccessibilitySettingsPage />} />
+        <Route path="/admin/settings/certificates" element={<CertificateSettingsPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
+      </Route>
       
       {/* Platform Admin Routes (Super Admin Only) */}
       <Route

@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
-  ArrowLeft,
   Calendar,
   Clock,
   User,
@@ -126,19 +125,6 @@ export function MenteeMentorshipsPage() {
 
   return (
     <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 space-y-4 sm:space-y-8">
-      {/* Header */}
-      <div className="mb-4 sm:mb-6">
-        <Button
-          variant="ghost"
-          onClick={() => navigate('/mentors')}
-          className="gap-2 mb-3 sm:mb-4 touch-target"
-        >
-          <ArrowLeft size={18} />
-          <span className="hidden sm:inline">Volver al Directorio</span>
-          <span className="sm:hidden">Volver</span>
-        </Button>
-      </div>
-
       <div className="space-y-1 sm:space-y-2 mb-4 sm:mb-6">
         <h1 className="text-2xl sm:text-3xl font-bold">Mis Mentorías</h1>
         <p className="text-sm sm:text-base text-muted-foreground">

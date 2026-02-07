@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { motion } from 'framer-motion'
 import {
-  ArrowLeft,
   Palette,
   Bell,
   Shield,
@@ -119,16 +118,6 @@ export function AdminSettingsPage() {
           transition={{ duration: 0.2 }}
           className="mb-4 sm:mb-8"
         >
-          <Button
-            variant="ghost"
-            onClick={() => navigate('/dashboard')}
-            className="mb-3 sm:mb-6 gap-2 touch-target"
-          >
-            <ArrowLeft size={18} className="sm:w-5 sm:h-5" />
-            <span className="hidden sm:inline">Volver al Dashboard</span>
-            <span className="sm:hidden">Volver</span>
-          </Button>
-
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight mb-1 sm:mb-2">Configuración</h1>
             <p className="text-sm sm:text-base text-muted-foreground">

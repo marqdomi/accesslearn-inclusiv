@@ -2,7 +2,6 @@ import { CourseManagement } from '@/components/admin/CourseManagement'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { AlertCircle } from 'lucide-react'
 
@@ -30,7 +29,6 @@ export function CourseManagementPage() {
           className="mt-4"
           onClick={() => navigate('/dashboard')}
         >
-          <ArrowLeft className="mr-2 h-4 w-4" />
           Volver al Dashboard
         </Button>
       </div>
@@ -39,17 +37,6 @@ export function CourseManagementPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="mb-6">
-        <Button
-          variant="ghost"
-          onClick={() => navigate('/dashboard')}
-          className="gap-2"
-        >
-          <ArrowLeft size={18} />
-          Volver al Dashboard
-        </Button>
-      </div>
-
       <CourseManagement onBack={() => navigate('/dashboard')} />
     </div>
   )

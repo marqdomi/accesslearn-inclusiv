@@ -17,7 +17,6 @@ import {
   User, 
   Lock, 
   Camera, 
-  ArrowLeft, 
   CheckCircle, 
   WarningCircle,
   X,
@@ -247,15 +246,6 @@ export function ProfilePage() {
       <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 max-w-4xl">
         {/* Header */}
         <div className="mb-4 sm:mb-6">
-          <Button
-            variant="ghost"
-            onClick={() => navigate('/dashboard')}
-            className="mb-3 sm:mb-4 touch-target"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            <span className="hidden sm:inline">Volver al Dashboard</span>
-            <span className="sm:hidden">Volver</span>
-          </Button>
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Mi Perfil</h1>
           <p className="text-sm sm:text-base text-muted-foreground mt-2">
             Administra tu información personal y configuración de cuenta

@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
-import { Bell, Check, X, At, Trophy, ChatCircle, GraduationCap, ArrowLeft } from '@phosphor-icons/react'
+import { Bell, Check, X, At, Trophy, ChatCircle, GraduationCap } from '@phosphor-icons/react'
 import { formatDistanceToNow } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { useTranslation } from 'react-i18next'
@@ -69,16 +69,7 @@ export function NotificationsPage() {
     <div className="container mx-auto py-6 px-4 max-w-4xl">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate(-1)}
-            className="shrink-0"
-          >
-            <ArrowLeft size={20} />
-          </Button>
-          <div>
+        <div>
             <h1 className="text-3xl font-bold text-foreground">Notificaciones</h1>
             <p className="text-sm text-muted-foreground mt-1">
               {unreadCount > 0
@@ -88,7 +79,6 @@ export function NotificationsPage() {
                 : 'Estás al día'}
             </p>
           </div>
-        </div>
         {unreadCount > 0 && (
           <Button
             variant="outline"

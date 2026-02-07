@@ -18,7 +18,6 @@ import {
   CheckCircle,
   XCircle,
   MessageSquare,
-  ArrowLeft,
   AlertCircle,
   CalendarClock
 } from 'lucide-react'
@@ -206,17 +205,6 @@ export function MentorDashboardPage() {
       {/* Header with Navigation */}
       <div className="flex items-center justify-between">
         <div>
-          <div className="flex items-center gap-3 mb-2">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => navigate('/dashboard')}
-              className="gap-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Volver al Dashboard
-            </Button>
-          </div>
           <h1 className="text-3xl font-bold mb-2">Dashboard de Mentor 🎓</h1>
           <p className="text-muted-foreground">
             Gestiona tus mentorados y sesiones programadas

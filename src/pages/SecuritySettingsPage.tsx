@@ -5,7 +5,7 @@ import { useTenant } from '@/contexts/TenantContext'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, Shield, Users, Lock, Eye } from 'lucide-react'
+import { Shield, Users, Lock, Eye } from 'lucide-react'
 import { toast } from 'sonner'
 import { ApiService } from '@/services/api.service'
 
@@ -98,16 +98,6 @@ export function SecuritySettingsPage() {
       <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 max-w-6xl">
         {/* Header */}
         <div className="mb-4 sm:mb-8">
-          <Button
-            variant="ghost"
-            onClick={() => navigate('/admin/settings')}
-            className="mb-3 sm:mb-4 gap-2 touch-target"
-          >
-            <ArrowLeft size={18} className="sm:w-5 sm:h-5" />
-            <span className="hidden sm:inline">Volver a Configuración</span>
-            <span className="sm:hidden">Volver</span>
-          </Button>
-
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight mb-1 sm:mb-2">Configuración de Seguridad</h1>
             <p className="text-sm sm:text-base text-muted-foreground">
