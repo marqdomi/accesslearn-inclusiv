@@ -269,6 +269,8 @@ export interface LessonBlock {
   videoUrl?: string
   videoType?: 'upload' | 'youtube' | 'vimeo' | 'wistia' | 'tiktok'
   imageFile?: string
+  // Audio fields
+  audioFile?: string
   // File attachment fields (for downloadable materials)
   fileUrl?: string
   fileName?: string

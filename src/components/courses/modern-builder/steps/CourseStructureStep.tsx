@@ -1,5 +1,5 @@
 import { CourseStructure, Module, Lesson } from '@/lib/types'
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -24,6 +24,162 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core'
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
+
+// ---------- Sortable sub-components ----------
+
+interface SortableLessonRowProps {
+  lesson: Lesson
+  moduleIndex: number
+  lessonIndex: number
+  onEdit: (moduleIndex: number, lessonIndex: number) => void
+  onDelete: (moduleIndex: number, lessonIndex: number) => void
+}
+
+function SortableLessonRow({ lesson, moduleIndex, lessonIndex, onEdit, onDelete }: SortableLessonRowProps) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: lesson.id })
+  const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 }
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="flex items-center gap-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors"
+    >
+      <DotsSixVertical
+        className="text-muted-foreground cursor-grab active:cursor-grabbing"
+        size={16}
+        {...attributes}
+        {...listeners}
+      />
+      <Book size={16} className="text-muted-foreground" />
+      <div className="flex-1">
+        <p className="font-medium">{lesson.title}</p>
+        <p className="text-xs text-muted-foreground">{lesson.estimatedMinutes || 0} min</p>
+      </div>
+      <div className="flex gap-1">
+        <Button variant="ghost" size="sm" onClick={() => onEdit(moduleIndex, lessonIndex)}>
+          <PencilSimple size={14} />
+        </Button>
+        <Button variant="ghost" size="sm" className="text-destructive" onClick={() => onDelete(moduleIndex, lessonIndex)}>
+          <Trash size={14} />
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+interface SortableModuleCardProps {
+  module: Module
+  moduleIndex: number
+  sensors: ReturnType<typeof useSensors>
+  onEdit: (index: number) => void
+  onDelete: (index: number) => void
+  onAddLesson: (moduleIndex: number) => void
+  onEditLesson: (moduleIndex: number, lessonIndex: number) => void
+  onDeleteLesson: (moduleIndex: number, lessonIndex: number) => void
+  onLessonDragEnd: (event: DragEndEvent) => void
+}
+
+function SortableModuleCard({
+  module,
+  moduleIndex,
+  sensors,
+  onEdit,
+  onDelete,
+  onAddLesson,
+  onEditLesson,
+  onDeleteLesson,
+  onLessonDragEnd,
+}: SortableModuleCardProps) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: module.id })
+  const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 }
+
+  return (
+    <Card ref={setNodeRef} style={style}>
+      <CardHeader className="pb-3">
+        <div className="flex items-start justify-between">
+          <div className="flex items-start gap-3 flex-1">
+            <DotsSixVertical
+              className="text-muted-foreground mt-1 cursor-grab active:cursor-grabbing"
+              size={20}
+              {...attributes}
+              {...listeners}
+            />
+            <div className="flex-1">
+              <CardTitle className="flex items-center gap-2">
+                <Tree size={20} />
+                {module.title}
+                {module.badge && <Badge variant="outline">{module.badge}</Badge>}
+              </CardTitle>
+              <p className="text-sm text-muted-foreground mt-1">{module.description}</p>
+              <p className="text-xs text-muted-foreground mt-2">{module.lessons.length} lecciones</p>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="ghost" size="sm" onClick={() => onEdit(moduleIndex)}>
+              <PencilSimple size={16} />
+            </Button>
+            <Button variant="ghost" size="sm" className="text-destructive" onClick={() => onDelete(moduleIndex)}>
+              <Trash size={16} />
+            </Button>
+          </div>
+        </div>
+      </CardHeader>
+
+      <CardContent>
+        {module.lessons.length === 0 ? (
+          <div className="text-center py-6 border-2 border-dashed rounded-lg">
+            <p className="text-sm text-muted-foreground mb-3">Este módulo aún no tiene lecciones</p>
+            <Button variant="outline" size="sm" onClick={() => onAddLesson(moduleIndex)}>
+              <Plus className="mr-2" size={16} />
+              Agregar Primera Lección
+            </Button>
+          </div>
+        ) : (
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onLessonDragEnd}>
+            <SortableContext items={module.lessons.map(l => l.id)} strategy={verticalListSortingStrategy}>
+              <div className="space-y-2">
+                {module.lessons.map((lesson, lessonIndex) => (
+                  <SortableLessonRow
+                    key={lesson.id}
+                    lesson={lesson}
+                    moduleIndex={moduleIndex}
+                    lessonIndex={lessonIndex}
+                    onEdit={onEditLesson}
+                    onDelete={onDeleteLesson}
+                  />
+                ))}
+                <Button variant="outline" size="sm" className="w-full mt-2" onClick={() => onAddLesson(moduleIndex)}>
+                  <Plus className="mr-2" size={16} />
+                  Agregar Lección
+                </Button>
+              </div>
+            </SortableContext>
+          </DndContext>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
+
+// ---------- Main component ----------
 
 interface CourseStructureStepProps {
   course: CourseStructure
@@ -40,6 +196,39 @@ export function CourseStructureStep({ course, updateCourse }: CourseStructureSte
   // Form states
   const [moduleForm, setModuleForm] = useState({ title: '', description: '', badge: '' })
   const [lessonForm, setLessonForm] = useState({ title: '', description: '', estimatedMinutes: 15 })
+
+  // DnD sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  )
+
+  // Module reorder
+  const handleModuleDragEnd = useCallback((event: DragEndEvent) => {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+    const oldIndex = course.modules.findIndex((m) => m.id === active.id)
+    const newIndex = course.modules.findIndex((m) => m.id === over.id)
+    if (oldIndex === -1 || newIndex === -1) return
+    const reordered = arrayMove([...course.modules], oldIndex, newIndex).map((m, i) => ({ ...m, order: i }))
+    updateCourse({ modules: reordered })
+  }, [course.modules, updateCourse])
+
+  // Lesson reorder within a module
+  const handleLessonDragEnd = useCallback((moduleIndex: number) => (event: DragEndEvent) => {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+    const lessons = course.modules[moduleIndex].lessons
+    const oldIndex = lessons.findIndex((l) => l.id === active.id)
+    const newIndex = lessons.findIndex((l) => l.id === over.id)
+    if (oldIndex === -1 || newIndex === -1) return
+    const updatedModules = [...course.modules]
+    updatedModules[moduleIndex] = {
+      ...updatedModules[moduleIndex],
+      lessons: arrayMove([...lessons], oldIndex, newIndex),
+    }
+    updateCourse({ modules: updatedModules })
+  }, [course.modules, updateCourse])
 
   // Add new module
   const handleAddModule = () => {
@@ -169,7 +358,7 @@ export function CourseStructureStep({ course, updateCourse }: CourseStructureSte
       <div>
         <h2 className="text-2xl font-bold mb-2">Estructura del Curso</h2>
         <p className="text-muted-foreground">
-          Organiza tu curso en módulos y lecciones. Arrastra para reordenar (próximamente).
+          Organiza tu curso en módulos y lecciones. Arrastra para reordenar.
         </p>
       </div>
 
@@ -216,114 +405,26 @@ export function CourseStructureStep({ course, updateCourse }: CourseStructureSte
           </AlertDescription>
         </Alert>
       ) : (
-        <div className="space-y-4">
-          {course.modules.map((module, moduleIndex) => (
-            <Card key={module.id}>
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start gap-3 flex-1">
-                    <DotsSixVertical className="text-muted-foreground mt-1 cursor-move" size={20} />
-                    <div className="flex-1">
-                      <CardTitle className="flex items-center gap-2">
-                        <Tree size={20} />
-                        {module.title}
-                        {module.badge && (
-                          <Badge variant="outline">{module.badge}</Badge>
-                        )}
-                      </CardTitle>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {module.description}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-2">
-                        {module.lessons.length} lecciones
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleEditModule(moduleIndex)}
-                    >
-                      <PencilSimple size={16} />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-destructive"
-                      onClick={() => handleDeleteModule(moduleIndex)}
-                    >
-                      <Trash size={16} />
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-
-              <CardContent>
-                {/* Lessons */}
-                {module.lessons.length === 0 ? (
-                  <div className="text-center py-6 border-2 border-dashed rounded-lg">
-                    <p className="text-sm text-muted-foreground mb-3">
-                      Este módulo aún no tiene lecciones
-                    </p>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleAddLesson(moduleIndex)}
-                    >
-                      <Plus className="mr-2" size={16} />
-                      Agregar Primera Lección
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    {module.lessons.map((lesson, lessonIndex) => (
-                      <div
-                        key={lesson.id}
-                        className="flex items-center gap-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors"
-                      >
-                        <DotsSixVertical className="text-muted-foreground cursor-move" size={16} />
-                        <Book size={16} className="text-muted-foreground" />
-                        <div className="flex-1">
-                          <p className="font-medium">{lesson.title}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {lesson.estimatedMinutes || 0} min
-                          </p>
-                        </div>
-                        <div className="flex gap-1">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEditLesson(moduleIndex, lessonIndex)}
-                          >
-                            <PencilSimple size={14} />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-destructive"
-                            onClick={() => handleDeleteLesson(moduleIndex, lessonIndex)}
-                          >
-                            <Trash size={14} />
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full mt-2"
-                      onClick={() => handleAddLesson(moduleIndex)}
-                    >
-                      <Plus className="mr-2" size={16} />
-                      Agregar Lección
-                    </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleModuleDragEnd}>
+          <SortableContext items={course.modules.map(m => m.id)} strategy={verticalListSortingStrategy}>
+            <div className="space-y-4">
+              {course.modules.map((module, moduleIndex) => (
+                <SortableModuleCard
+                  key={module.id}
+                  module={module}
+                  moduleIndex={moduleIndex}
+                  sensors={sensors}
+                  onEdit={handleEditModule}
+                  onDelete={handleDeleteModule}
+                  onAddLesson={handleAddLesson}
+                  onEditLesson={handleEditLesson}
+                  onDeleteLesson={handleDeleteLesson}
+                  onLessonDragEnd={handleLessonDragEnd(moduleIndex)}
+                />
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
       )}
 
       {/* Module Dialog */}

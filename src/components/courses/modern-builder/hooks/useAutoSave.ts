@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 
 interface UseAutoSaveOptions<T> {
   key: string
   data: T
   onSave: (data: T) => Promise<void>
-  interval?: number // milliseconds, default 30000 (30 seconds)
+  interval?: number // localStorage interval in ms, default 30000 (30s)
+  backendInterval?: number // backend auto-save interval in ms, default 60000 (60s)
   enabled?: boolean // Allow disabling auto-save
 }
 
@@ -13,6 +14,7 @@ export function useAutoSave<T>({
   data, 
   onSave, 
   interval = 30000,
+  backendInterval = 60000,
   enabled = true 
 }: UseAutoSaveOptions<T>) {
   const [lastSaved, setLastSaved] = useState<number | null>(null)
@@ -21,6 +23,15 @@ export function useAutoSave<T>({
   const [isDirty, setIsDirty] = useState(false)
   const initialDataRef = useRef<string>(JSON.stringify(data))
   const timerRef = useRef<NodeJS.Timeout | null>(null)
+  const backendTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const dataRef = useRef<T>(data)
+  const isSavingRef = useRef(false)
+  const isDirtyRef = useRef(false)
+
+  // Keep refs in sync
+  useEffect(() => { dataRef.current = data }, [data])
+  useEffect(() => { isSavingRef.current = isSaving }, [isSaving])
+  useEffect(() => { isDirtyRef.current = isDirty }, [isDirty])
   
   // Detect changes
   useEffect(() => {
@@ -57,6 +68,37 @@ export function useAutoSave<T>({
       }
     }
   }, [data, isDirty, interval, key, enabled])
+
+  // Periodic auto-save to backend
+  const doBackendAutoSave = useCallback(async () => {
+    if (!isDirtyRef.current || isSavingRef.current) return
+    isSavingRef.current = true
+    setIsSaving(true)
+    try {
+      await onSave(dataRef.current)
+      const now = Date.now()
+      setLastSaved(now)
+      setLastSavedBackend(now)
+      setIsDirty(false)
+      isDirtyRef.current = false
+      initialDataRef.current = JSON.stringify(dataRef.current)
+      localStorage.setItem(key, JSON.stringify(dataRef.current))
+      console.log('[AutoSave] Auto-saved to backend at', new Date().toLocaleTimeString())
+    } catch (error) {
+      console.error('[AutoSave] Backend auto-save failed:', error)
+    } finally {
+      isSavingRef.current = false
+      setIsSaving(false)
+    }
+  }, [onSave, key])
+
+  useEffect(() => {
+    if (!enabled) return
+    backendTimerRef.current = setInterval(doBackendAutoSave, backendInterval)
+    return () => {
+      if (backendTimerRef.current) clearInterval(backendTimerRef.current)
+    }
+  }, [enabled, backendInterval, doBackendAutoSave])
   
   // Manual save to backend
   const saveToBackend = async () => {

@@ -1,6 +1,6 @@
 import { CourseStructure, LessonBlock, Lesson } from '@/lib/types'
 import { getFileTypeIcon, formatFileSize } from '@/lib/file-utils'
-import { useState, useRef } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -54,6 +54,95 @@ import { ApiService } from '@/services/api.service'
 import { toast } from 'sonner'
 import { RichTextEditor } from '../RichTextEditor'
 import { VideoPreview } from '../VideoPreview'
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core'
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
+
+// ---------- Sortable block card ----------
+
+interface SortableBlockCardProps {
+  block: LessonBlock
+  blockIndex: number
+  BlockIcon: React.ComponentType<any>
+  onEdit: () => void
+  onDelete: () => void
+}
+
+function SortableBlockCard({ block, blockIndex, BlockIcon, onEdit, onDelete }: SortableBlockCardProps) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: block.id })
+  const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 }
+
+  return (
+    <Card ref={setNodeRef} style={style}>
+      <CardContent className="pt-6">
+        <div className="flex items-start gap-3">
+          <DotsSixVertical
+            className="text-muted-foreground mt-1 cursor-grab active:cursor-grabbing"
+            size={20}
+            {...attributes}
+            {...listeners}
+          />
+          <BlockIcon size={20} className="text-primary mt-1" />
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-1">
+              <Badge variant="outline">{getBlockLabel(block.type)}</Badge>
+              {block.xpValue && <Badge variant="secondary">{block.xpValue} XP</Badge>}
+            </div>
+            {block.type === 'file' ? (
+              <div className="text-sm">
+                <p className="font-medium">{block.fileName || 'Archivo'}</p>
+                <p className="text-muted-foreground text-xs">
+                  {formatFileSize(block.fileSize)}
+                  {block.content && ` • ${block.content}`}
+                </p>
+              </div>
+            ) : (
+              <p className="text-sm line-clamp-2">{block.content}</p>
+            )}
+            {block.characterMessage && (
+              <p className="text-xs text-muted-foreground mt-1 italic">
+                💬 {block.characterMessage}
+              </p>
+            )}
+          </div>
+          <div className="flex gap-1">
+            <Button variant="ghost" size="sm" onClick={onEdit}>
+              <PencilSimple size={16} />
+            </Button>
+            <Button variant="ghost" size="sm" className="text-destructive" onClick={onDelete}>
+              <Trash size={16} />
+            </Button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+// Helper functions used by SortableBlockCard
+function getBlockLabel(type: string): string {
+  const labels: Record<string, string> = {
+    welcome: 'Bienvenida', text: 'Texto', image: 'Imagen', audio: 'Audio',
+    video: 'Video', file: 'Material', challenge: 'Desafío', code: 'Código',
+  }
+  return labels[type] || type
+}
+
+// ---------- Main component ----------
 
 interface ContentEditorStepProps {
   course: CourseStructure
@@ -78,9 +167,12 @@ export function ContentEditorStep({ course, updateCourse, courseId }: ContentEdi
   const [editingBlock, setEditingBlock] = useState<{ moduleIndex: number; lessonIndex: number; blockIndex: number; data: LessonBlock } | null>(null)
   const [isUploadingImage, setIsUploadingImage] = useState(false)
   const [isUploadingFile, setIsUploadingFile] = useState(false)
+  const [isUploadingAudio, setIsUploadingAudio] = useState(false)
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null)
+  const [audioPreviewUrl, setAudioPreviewUrl] = useState<string | null>(null)
   const imageFileInputRef = useRef<HTMLInputElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const audioFileInputRef = useRef<HTMLInputElement>(null)
   
   // Form state
   const [blockForm, setBlockForm] = useState({
@@ -91,6 +183,8 @@ export function ContentEditorStep({ course, updateCourse, courseId }: ContentEdi
     videoUrl: '',
     videoType: 'upload' as 'upload' | 'youtube' | 'vimeo' | 'wistia' | 'tiktok',
     imageFile: '',
+    // Audio fields
+    audioFile: '',
     // File attachment fields
     fileUrl: '',
     fileName: '',
@@ -108,6 +202,26 @@ export function ContentEditorStep({ course, updateCourse, courseId }: ContentEdi
   }
 
   const selectedLesson = getSelectedLesson()
+
+  // DnD sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  )
+
+  // Block reorder
+  const handleBlockDragEnd = useCallback((event: DragEndEvent) => {
+    const { active, over } = event
+    if (!over || active.id === over.id || !selectedLesson) return
+    const blocks = selectedLesson.lesson.blocks
+    const oldIndex = blocks.findIndex((b) => b.id === active.id)
+    const newIndex = blocks.findIndex((b) => b.id === over.id)
+    if (oldIndex === -1 || newIndex === -1) return
+    const updatedModules = [...course.modules]
+    updatedModules[selectedLesson.moduleIndex].lessons[selectedLesson.lessonIndex].blocks =
+      arrayMove([...blocks], oldIndex, newIndex).map((b, i) => ({ ...b, order: i }))
+    updateCourse({ modules: updatedModules })
+  }, [course.modules, selectedLesson, updateCourse])
 
   // Markdown toolbar helpers
   const insertMarkdown = (before: string, after: string = '') => {
@@ -154,12 +268,14 @@ export function ContentEditorStep({ course, updateCourse, courseId }: ContentEdi
       videoUrl: '',
       videoType: 'upload',
       imageFile: '',
+      audioFile: '',
       fileUrl: '',
       fileName: '',
       fileSize: 0,
       fileType: '',
     })
     setImagePreviewUrl(null)
+    setAudioPreviewUrl(null)
     setIsBlockDialogOpen(true)
   }
 
@@ -175,6 +291,7 @@ export function ContentEditorStep({ course, updateCourse, courseId }: ContentEdi
       videoUrl: block.videoUrl || '',
       videoType: block.videoType || 'upload',
       imageFile: block.imageFile || '',
+      audioFile: block.audioFile || '',
       fileUrl: block.fileUrl || '',
       fileName: block.fileName || '',
       fileSize: block.fileSize || 0,
@@ -200,6 +317,25 @@ export function ContentEditorStep({ course, updateCourse, courseId }: ContentEdi
     } else {
       setImagePreviewUrl(null)
     }
+
+    // Load audio preview if it's an audio block with blobName
+    if (block.type === 'audio' && block.audioFile) {
+      if (block.audioFile.startsWith('http')) {
+        setAudioPreviewUrl(block.audioFile)
+      } else {
+        try {
+          const [containerName, ...blobNameParts] = block.audioFile.split('/')
+          const blobName = blobNameParts.join('/')
+          const { url } = await ApiService.getMediaUrl(containerName, blobName)
+          setAudioPreviewUrl(url)
+        } catch (error) {
+          console.error('Error loading audio preview:', error)
+          setAudioPreviewUrl(null)
+        }
+      }
+    } else {
+      setAudioPreviewUrl(null)
+    }
     
     setIsBlockDialogOpen(true)
   }
@@ -217,6 +353,11 @@ export function ContentEditorStep({ course, updateCourse, courseId }: ContentEdi
     } else if (blockForm.type === 'image') {
       if (!blockForm.imageFile || !blockForm.imageFile.trim()) {
         toast.error('Por favor, sube una imagen o ingresa una URL de imagen válida')
+        return
+      }
+    } else if (blockForm.type === 'audio') {
+      if (!blockForm.audioFile || !blockForm.audioFile.trim()) {
+        toast.error('Por favor, sube un archivo de audio o ingresa una URL')
         return
       }
     } else if (blockForm.type === 'file') {
@@ -242,6 +383,7 @@ export function ContentEditorStep({ course, updateCourse, courseId }: ContentEdi
       videoUrl: blockForm.type === 'video' ? blockForm.videoUrl : undefined,
       videoType: blockForm.type === 'video' ? blockForm.videoType : undefined,
       imageFile: blockForm.type === 'image' ? blockForm.imageFile : undefined,
+      audioFile: blockForm.type === 'audio' ? blockForm.audioFile : undefined,
       // File attachment fields
       fileUrl: blockForm.type === 'file' ? blockForm.fileUrl : undefined,
       fileName: blockForm.type === 'file' ? blockForm.fileName : undefined,
@@ -273,6 +415,7 @@ export function ContentEditorStep({ course, updateCourse, courseId }: ContentEdi
       videoUrl: '',
       videoType: 'upload',
       imageFile: '',
+      audioFile: '',
       fileUrl: '',
       fileName: '',
       fileSize: 0,
@@ -299,12 +442,6 @@ export function ContentEditorStep({ course, updateCourse, courseId }: ContentEdi
   const getBlockIcon = (type: LessonBlock['type']) => {
     const blockType = BLOCK_TYPES.find(bt => bt.value === type)
     return blockType ? blockType.icon : TextT
-  }
-
-  // Get block label
-  const getBlockLabel = (type: LessonBlock['type']) => {
-    const blockType = BLOCK_TYPES.find(bt => bt.value === type)
-    return blockType ? blockType.label : 'Texto'
   }
 
   // Calculate total blocks
@@ -411,60 +548,25 @@ export function ContentEditorStep({ course, updateCourse, courseId }: ContentEdi
               </AlertDescription>
             </Alert>
           ) : (
-            <div className="space-y-3">
-              {selectedLesson.lesson.blocks.map((block, blockIndex) => {
-                const BlockIcon = block.type === 'file' ? getFileTypeIcon(block.fileType) : getBlockIcon(block.type)
-                return (
-                  <Card key={block.id}>
-                    <CardContent className="pt-6">
-                      <div className="flex items-start gap-3">
-                        <DotsSixVertical className="text-muted-foreground mt-1 cursor-move" size={20} />
-                        <BlockIcon size={20} className="text-primary mt-1" />
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <Badge variant="outline">{getBlockLabel(block.type)}</Badge>
-                            {block.xpValue && <Badge variant="secondary">{block.xpValue} XP</Badge>}
-                          </div>
-                          {block.type === 'file' ? (
-                            <div className="text-sm">
-                              <p className="font-medium">{block.fileName || 'Archivo'}</p>
-                              <p className="text-muted-foreground text-xs">
-                                {formatFileSize(block.fileSize)}
-                                {block.content && ` • ${block.content}`}
-                              </p>
-                            </div>
-                          ) : (
-                            <p className="text-sm line-clamp-2">{block.content}</p>
-                          )}
-                          {block.characterMessage && (
-                            <p className="text-xs text-muted-foreground mt-1 italic">
-                              💬 {block.characterMessage}
-                            </p>
-                          )}
-                        </div>
-                        <div className="flex gap-1">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEditBlock(selectedLesson.moduleIndex, selectedLesson.lessonIndex, blockIndex)}
-                          >
-                            <PencilSimple size={16} />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-destructive"
-                            onClick={() => handleDeleteBlock(selectedLesson.moduleIndex, selectedLesson.lessonIndex, blockIndex)}
-                          >
-                            <Trash size={16} />
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )
-              })}
-            </div>
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleBlockDragEnd}>
+              <SortableContext items={selectedLesson.lesson.blocks.map(b => b.id)} strategy={verticalListSortingStrategy}>
+                <div className="space-y-3">
+                  {selectedLesson.lesson.blocks.map((block, blockIndex) => {
+                    const BlockIcon = block.type === 'file' ? getFileTypeIcon(block.fileType) : getBlockIcon(block.type)
+                    return (
+                      <SortableBlockCard
+                        key={block.id}
+                        block={block}
+                        blockIndex={blockIndex}
+                        BlockIcon={BlockIcon}
+                        onEdit={() => handleEditBlock(selectedLesson.moduleIndex, selectedLesson.lessonIndex, blockIndex)}
+                        onDelete={() => handleDeleteBlock(selectedLesson.moduleIndex, selectedLesson.lessonIndex, blockIndex)}
+                      />
+                    )
+                  })}
+                </div>
+              </SortableContext>
+            </DndContext>
           )}
         </>
       )}
@@ -765,6 +867,131 @@ export function ContentEditorStep({ course, updateCourse, courseId }: ContentEdi
               </div>
             )}
 
+            {/* Audio Upload (only for audio blocks) */}
+            {blockForm.type === 'audio' && (
+              <div className="space-y-4">
+                <Label>Audio</Label>
+                <div className="space-y-3">
+                  {/* Upload Button */}
+                  <div className="border-2 border-dashed rounded-lg p-6 text-center bg-muted/30">
+                    <input
+                      ref={audioFileInputRef}
+                      id="audio-file-upload"
+                      type="file"
+                      accept="audio/*"
+                      className="hidden"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0]
+                        if (!file) return
+
+                        if (!file.type.startsWith('audio/')) {
+                          toast.error('Por favor, sube un archivo de audio (MP3, WAV, OGG, AAC)')
+                          return
+                        }
+
+                        if (file.size > 50 * 1024 * 1024) {
+                          toast.error('El audio debe ser menor a 50MB')
+                          return
+                        }
+
+                        if (!courseId || !selectedLesson) {
+                          toast.error('Error: No se pudo determinar el curso o lección')
+                          return
+                        }
+
+                        setIsUploadingAudio(true)
+                        try {
+                          const { url, blobName, containerName } = await ApiService.uploadFile(file, 'lesson-file', {
+                            courseId,
+                            lessonId: selectedLesson.lesson.id
+                          })
+
+                          const blobNameForStorage = `${containerName}/${blobName}`
+                          setBlockForm({ ...blockForm, audioFile: blobNameForStorage, content: file.name })
+                          setAudioPreviewUrl(url)
+                          toast.success('Audio subido exitosamente')
+                        } catch (error: any) {
+                          console.error('Error uploading audio:', error)
+                          toast.error(error.message || 'Error al subir el audio')
+                        } finally {
+                          setIsUploadingAudio(false)
+                        }
+                      }}
+                      disabled={isUploadingAudio}
+                    />
+                    <MusicNote size={40} className="mx-auto text-muted-foreground mb-3" />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => audioFileInputRef.current?.click()}
+                      disabled={isUploadingAudio}
+                      className="mb-2"
+                    >
+                      <UploadSimple size={20} className="mr-2" />
+                      {isUploadingAudio ? 'Subiendo...' : 'Subir Audio'}
+                    </Button>
+                    <p className="text-xs text-muted-foreground">
+                      MP3, WAV, OGG, AAC • Máx 50MB
+                    </p>
+                  </div>
+
+                  {/* Audio Preview */}
+                  {blockForm.audioFile && (
+                    <div className="border rounded-lg p-4 bg-background space-y-3">
+                      <div className="flex items-center gap-3">
+                        <MusicNote size={24} className="text-primary flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium truncate">{blockForm.content || 'Audio'}</p>
+                          <p className="text-xs text-muted-foreground">{blockForm.audioFile}</p>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setBlockForm({ ...blockForm, audioFile: '', content: '' })
+                            setAudioPreviewUrl(null)
+                          }}
+                          className="text-destructive"
+                        >
+                          <Trash size={16} />
+                        </Button>
+                      </div>
+                      {audioPreviewUrl && (
+                        <audio controls className="w-full" src={audioPreviewUrl}>
+                          Tu navegador no soporta el elemento de audio.
+                        </audio>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Or paste external URL */}
+                  {!blockForm.audioFile && (
+                    <div className="space-y-2">
+                      <Label htmlFor="audio-url">O pega una URL de audio externa</Label>
+                      <Input
+                        id="audio-url"
+                        placeholder="https://ejemplo.com/audio.mp3"
+                        value={blockForm.audioFile}
+                        onChange={(e) => {
+                          setBlockForm({ ...blockForm, audioFile: e.target.value })
+                          setAudioPreviewUrl(e.target.value)
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex items-start gap-2 p-3 bg-purple-50 dark:bg-purple-950 rounded-lg border border-purple-200 dark:border-purple-800">
+                  <Info className="h-4 w-4 text-purple-600 dark:text-purple-400 mt-0.5 flex-shrink-0" />
+                  <div className="text-xs text-purple-900 dark:text-purple-100">
+                    <strong>Audio Educativo:</strong> Los estudiantes podrán reproducir el audio directamente en la lección. 
+                    Ideal para podcasts, explicaciones narradas o ejercicios de escucha.
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* File Upload (only for file blocks) */}
             {blockForm.type === 'file' && (
               <div className="space-y-4">
@@ -932,6 +1159,8 @@ export function ContentEditorStep({ course, updateCourse, courseId }: ContentEdi
                   ? !blockForm.videoUrl || !blockForm.videoUrl.trim()
                   : blockForm.type === 'image'
                   ? !blockForm.imageFile || !blockForm.imageFile.trim()
+                  : blockForm.type === 'audio'
+                  ? !blockForm.audioFile || !blockForm.audioFile.trim()
                   : blockForm.type === 'file'
                   ? !blockForm.fileUrl || !blockForm.fileUrl.trim()
                   : !blockForm.content || !blockForm.content.trim()

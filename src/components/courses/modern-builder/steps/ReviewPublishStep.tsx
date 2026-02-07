@@ -43,6 +43,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Separator } from '@/components/ui/separator'
+import { CoursePreviewRenderer } from '../shared/CoursePreviewRenderer'
 
 interface ReviewPublishStepProps {
   course: CourseStructure
@@ -605,70 +606,8 @@ export function ReviewPublishStep({ course, updateCourse, onSaveDraft, onSubmitF
           </DialogHeader>
 
           <ScrollArea className="h-[calc(95vh-120px)] sm:h-[calc(95vh-140px)] px-4 sm:px-6">
-            <div className="space-y-4 sm:space-y-6 pb-4">
-              {/* Course Header */}
-              <div className="bg-muted/30 rounded-lg p-4 sm:p-6">
-                <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-2 sm:mb-3 break-words">{course.title}</h3>
-                <p className="text-sm sm:text-base text-muted-foreground leading-relaxed break-words">{course.description}</p>
-                <div className="flex gap-2 mt-3 sm:mt-4 flex-wrap">
-                  <Badge variant="outline" className="text-xs sm:text-sm">{course.category}</Badge>
-                  <Badge variant="outline" className="text-xs sm:text-sm">Dificultad: {course.difficulty}</Badge>
-                  <Badge variant="outline" className="text-xs sm:text-sm">{course.estimatedHours || 0} horas</Badge>
-                  <Badge variant="secondary" className="text-xs sm:text-sm">{totalXP} XP Total</Badge>
-                </div>
-              </div>
-
-              {/* Modules and Lessons */}
-              <div className="space-y-3 sm:space-y-4">
-                <h4 className="font-semibold text-base sm:text-lg lg:text-xl">Contenido del Curso</h4>
-                {course.modules.map((module, moduleIndex) => (
-                  <Card key={module.id} className="overflow-hidden">
-                    <CardHeader className="p-4 sm:p-6">
-                      <CardTitle className="flex items-center gap-2 text-sm sm:text-base lg:text-lg flex-wrap">
-                        <Tree size={16} className="sm:w-[18px] sm:h-[18px] flex-shrink-0" />
-                        <span className="break-words">Módulo {moduleIndex + 1}: {module.title}</span>
-                        {module.badge && <Badge variant="outline" className="text-xs">{module.badge}</Badge>}
-                      </CardTitle>
-                      <p className="text-xs sm:text-sm text-muted-foreground mt-2 break-words">{module.description}</p>
-                    </CardHeader>
-                    <CardContent className="p-4 sm:p-6 pt-0">
-                      <div className="space-y-2 sm:space-y-3">
-                        {module.lessons.map((lesson, lessonIndex) => (
-                          <div key={lesson.id} className="flex items-start gap-2 sm:gap-3 p-2 sm:p-3 border rounded-lg hover:bg-muted/50 transition-colors">
-                            <Book size={14} className="sm:w-4 sm:h-4 text-muted-foreground mt-1 flex-shrink-0" />
-                            <div className="flex-1 min-w-0">
-                              <p className="font-medium text-xs sm:text-sm lg:text-base break-words">
-                                {lessonIndex + 1}. {lesson.title}
-                              </p>
-                              <p className="text-xs sm:text-sm text-muted-foreground mt-1 break-words">{lesson.description}</p>
-                              <div className="flex gap-2 mt-2 flex-wrap">
-                                {lesson.blocks.length > 0 && (
-                                  <Badge variant="outline" className="text-xs">
-                                    <Article size={10} className="sm:w-3 sm:h-3 mr-1" />
-                                    {lesson.blocks.length} bloques
-                                  </Badge>
-                                )}
-                                {lesson.quiz && (
-                                  <Badge variant="outline" className="text-xs">
-                                    <Question size={10} className="sm:w-3 sm:h-3 mr-1" />
-                                    Quiz ({lesson.quiz.questions.length} preguntas)
-                                  </Badge>
-                                )}
-                                <Badge variant="secondary" className="text-xs">
-                                  {lesson.totalXP + (lesson.quiz?.totalXP || 0)} XP
-                                </Badge>
-                                <Badge variant="outline" className="text-xs">
-                                  {lesson.estimatedMinutes} min
-                                </Badge>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+            <div className="pb-4">
+              <CoursePreviewRenderer course={course} />
             </div>
           </ScrollArea>
         </DialogContent>
