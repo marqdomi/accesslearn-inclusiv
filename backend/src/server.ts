@@ -31,6 +31,7 @@ import {
   listTenants,
   createTenant,
   updateTenant,
+  updateTenantStatus,
 } from './functions/TenantFunctions';
 import {
   createUser,
@@ -4126,7 +4127,7 @@ app.put('/api/platform/tenants/:tenantId', requireAuth, requireSuperAdmin, async
     trackEvent('TenantUpdated', {
       tenantId,
       updatedBy: user.id,
-      changes: Object.keys(req.body)
+      changes: Object.keys(req.body).join(', ')
     });
     
     res.json(updatedTenant);
@@ -4148,12 +4149,7 @@ app.put('/api/platform/tenants/:tenantId/status', requireAuth, requireSuperAdmin
       return res.status(400).json({ error: 'Invalid status. Must be: active, suspended, or canceled' });
     }
     
-    const updatedTenant = await updateTenant(tenantId, { 
-      status,
-      statusChangedAt: new Date().toISOString(),
-      statusChangedBy: user.id,
-      statusChangeReason: reason
-    });
+    const updatedTenant = await updateTenantStatus(tenantId, status);
     
     // Log audit event
     trackEvent('TenantStatusChanged', {
