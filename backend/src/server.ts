@@ -195,6 +195,7 @@ import {
   getAuditStats,
 } from './functions/AuditFunctions';
 import { attachAuditMetadata, auditCreate, auditRoleChange } from './middleware/audit';
+import { platformAdminService } from './services/platform-admin.service';
 
 dotenv.config();
 
@@ -482,6 +483,251 @@ app.put('/api/tenants/:id', authenticateToken, requireAuth, requirePermission('t
   } catch (error: any) {
     console.error('[API] Error updating tenant:', error);
     res.status(400).json({ error: error.message });
+  }
+});
+
+// ============================================
+// PLATFORM ADMIN ENDPOINTS (Super Admin Only)
+// ============================================
+
+// Middleware to require super-admin role
+const requireSuperAdmin = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  const user = (req as any).user;
+  if (!user || user.role !== 'super-admin') {
+    return res.status(403).json({ 
+      error: 'Access denied',
+      message: 'This endpoint requires super-admin privileges'
+    });
+  }
+  next();
+};
+
+// GET /api/platform-admin/stats - Get platform-wide statistics
+app.get('/api/platform-admin/stats', authenticateToken, requireSuperAdmin, async (req, res) => {
+  try {
+    const stats = await platformAdminService.getPlatformStats();
+    res.json(stats);
+  } catch (error: any) {
+    console.error('[Platform Admin] Error getting stats:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/platform-admin/tenants - Get all tenants with enriched data
+app.get('/api/platform-admin/tenants', authenticateToken, requireSuperAdmin, async (req, res) => {
+  try {
+    const tenants = await platformAdminService.getAllTenants();
+    res.json(tenants);
+  } catch (error: any) {
+    console.error('[Platform Admin] Error getting tenants:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/platform-admin/tenants/:id - Get tenant details
+app.get('/api/platform-admin/tenants/:id', authenticateToken, requireSuperAdmin, async (req, res) => {
+  try {
+    const tenant = await platformAdminService.getTenantById(req.params.id);
+    if (!tenant) {
+      return res.status(404).json({ error: 'Tenant not found' });
+    }
+    res.json(tenant);
+  } catch (error: any) {
+    console.error('[Platform Admin] Error getting tenant:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/platform-admin/tenants - Create new tenant
+app.post('/api/platform-admin/tenants', authenticateToken, requireSuperAdmin, async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const tenant = await platformAdminService.createTenant({
+      ...req.body,
+      createdBy: user.email
+    });
+    res.status(201).json(tenant);
+  } catch (error: any) {
+    console.error('[Platform Admin] Error creating tenant:', error);
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// PUT /api/platform-admin/tenants/:id - Update tenant
+app.put('/api/platform-admin/tenants/:id', authenticateToken, requireSuperAdmin, async (req, res) => {
+  try {
+    const tenant = await platformAdminService.updateTenant(req.params.id, req.body);
+    if (!tenant) {
+      return res.status(404).json({ error: 'Tenant not found' });
+    }
+    res.json(tenant);
+  } catch (error: any) {
+    console.error('[Platform Admin] Error updating tenant:', error);
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// POST /api/platform-admin/tenants/:id/suspend - Suspend tenant
+app.post('/api/platform-admin/tenants/:id/suspend', authenticateToken, requireSuperAdmin, async (req, res) => {
+  try {
+    const success = await platformAdminService.suspendTenant(req.params.id);
+    if (!success) {
+      return res.status(404).json({ error: 'Tenant not found' });
+    }
+    res.json({ message: 'Tenant suspended successfully' });
+  } catch (error: any) {
+    console.error('[Platform Admin] Error suspending tenant:', error);
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// POST /api/platform-admin/tenants/:id/activate - Activate tenant
+app.post('/api/platform-admin/tenants/:id/activate', authenticateToken, requireSuperAdmin, async (req, res) => {
+  try {
+    const success = await platformAdminService.activateTenant(req.params.id);
+    if (!success) {
+      return res.status(404).json({ error: 'Tenant not found' });
+    }
+    res.json({ message: 'Tenant activated successfully' });
+  } catch (error: any) {
+    console.error('[Platform Admin] Error activating tenant:', error);
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// GET /api/platform-admin/users - Get all users across tenants
+app.get('/api/platform-admin/users', authenticateToken, requireSuperAdmin, async (req, res) => {
+  try {
+    const { tenantId } = req.query;
+    const users = await platformAdminService.getAllUsers(tenantId as string);
+    res.json(users);
+  } catch (error: any) {
+    console.error('[Platform Admin] Error getting users:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/platform-admin/subscriptions - Get all subscriptions
+app.get('/api/platform-admin/subscriptions', authenticateToken, requireSuperAdmin, async (req, res) => {
+  try {
+    const subscriptions = await platformAdminService.getSubscriptions();
+    res.json(subscriptions);
+  } catch (error: any) {
+    console.error('[Platform Admin] Error getting subscriptions:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/platform-admin/subscriptions/:tenantId - Get subscription for tenant
+app.get('/api/platform-admin/subscriptions/:tenantId', authenticateToken, requireSuperAdmin, async (req, res) => {
+  try {
+    const subscription = await platformAdminService.getSubscriptionByTenant(req.params.tenantId);
+    if (!subscription) {
+      return res.status(404).json({ error: 'Subscription not found' });
+    }
+    res.json(subscription);
+  } catch (error: any) {
+    console.error('[Platform Admin] Error getting subscription:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/platform-admin/invoices - Get all invoices
+app.get('/api/platform-admin/invoices', authenticateToken, requireSuperAdmin, async (req, res) => {
+  try {
+    const { tenantId } = req.query;
+    const invoices = await platformAdminService.getInvoices(tenantId as string);
+    res.json(invoices);
+  } catch (error: any) {
+    console.error('[Platform Admin] Error getting invoices:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/platform-admin/alerts - Get platform alerts
+app.get('/api/platform-admin/alerts', authenticateToken, requireSuperAdmin, async (req, res) => {
+  try {
+    const { includeRead } = req.query;
+    const alerts = await platformAdminService.getAlerts(includeRead === 'true');
+    res.json(alerts);
+  } catch (error: any) {
+    console.error('[Platform Admin] Error getting alerts:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/platform-admin/alerts - Create alert
+app.post('/api/platform-admin/alerts', authenticateToken, requireSuperAdmin, async (req, res) => {
+  try {
+    const alert = await platformAdminService.createAlert(req.body);
+    res.status(201).json(alert);
+  } catch (error: any) {
+    console.error('[Platform Admin] Error creating alert:', error);
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// PUT /api/platform-admin/alerts/:id/read - Mark alert as read
+app.put('/api/platform-admin/alerts/:id/read', authenticateToken, requireSuperAdmin, async (req, res) => {
+  try {
+    const { category } = req.body;
+    const success = await platformAdminService.markAlertAsRead(req.params.id, category);
+    if (!success) {
+      return res.status(404).json({ error: 'Alert not found' });
+    }
+    res.json({ message: 'Alert marked as read' });
+  } catch (error: any) {
+    console.error('[Platform Admin] Error marking alert as read:', error);
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// DELETE /api/platform-admin/alerts/:id - Delete alert
+app.delete('/api/platform-admin/alerts/:id', authenticateToken, requireSuperAdmin, async (req, res) => {
+  try {
+    const { category } = req.query;
+    const success = await platformAdminService.deleteAlert(req.params.id, category as string);
+    if (!success) {
+      return res.status(404).json({ error: 'Alert not found' });
+    }
+    res.json({ message: 'Alert deleted' });
+  } catch (error: any) {
+    console.error('[Platform Admin] Error deleting alert:', error);
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// GET /api/platform-admin/settings - Get platform settings
+app.get('/api/platform-admin/settings', authenticateToken, requireSuperAdmin, async (req, res) => {
+  try {
+    const settings = await platformAdminService.getPlatformSettings();
+    res.json(settings);
+  } catch (error: any) {
+    console.error('[Platform Admin] Error getting settings:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// PUT /api/platform-admin/settings - Update platform settings
+app.put('/api/platform-admin/settings', authenticateToken, requireSuperAdmin, async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const settings = await platformAdminService.updatePlatformSettings(req.body, user.email);
+    res.json(settings);
+  } catch (error: any) {
+    console.error('[Platform Admin] Error updating settings:', error);
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// GET /api/platform-admin/health - Get platform health metrics
+app.get('/api/platform-admin/health', authenticateToken, requireSuperAdmin, async (req, res) => {
+  try {
+    const metrics = await platformAdminService.getHealthMetrics();
+    res.json(metrics);
+  } catch (error: any) {
+    console.error('[Platform Admin] Error getting health metrics:', error);
+    res.status(500).json({ error: error.message });
   }
 });
 
@@ -3494,7 +3740,7 @@ app.post('/api/media/upload',
           if (!courseId || !lessonId) {
             return res.status(400).json({ error: 'courseId y lessonId requeridos para lesson-file' });
           }
-          containerName = 'course-materials';
+          containerName = 'course-files';
           // Sanitize filename to prevent directory traversal and injection attacks
           // 1. Get only the base filename (remove any path components)
           const baseFilename = file.originalname.split(/[/\\]/).pop() || 'file';
@@ -3565,20 +3811,20 @@ app.post('/api/media/upload',
   }
 );
 
-// GET /api/media/url/:container/* - Obtener URL con SAS token
-// Using wildcard (*) to capture blobName with slashes (e.g., tenant-id/course-id/cover.jpg)
-app.get('/api/media/url/:container/*', 
+// GET /api/media/url/:container/*blobPath - Obtener URL con SAS token
+// Using wildcard (*blobPath) to capture path segments across multiple levels
+app.get('/api/media/url/:container/*blobPath', 
   authenticateToken,
   requireAuth, 
   async (req, res) => {
   try {
     const user = (req as any).user;
     const { tenantId } = user;
-    const { container } = req.params;
+    const { container, blobPath } = req.params;
     
-    // Get blobName from the wildcard parameter (everything after /api/media/url/:container/)
-    // Express stores this in params[0] or we can get it from the URL
-    const blobNameEncoded = req.params[0] || '';
+    // Get blobName from the wildcard parameter - blobPath is an array in path-to-regexp v8
+    const blobPathArray = Array.isArray(blobPath) ? blobPath : [blobPath];
+    const blobNameEncoded = blobPathArray.join('/') || '';
     
     // Decodificar blobName (puede venir codificado desde el frontend)
     const blobName = decodeURIComponent(blobNameEncoded);
@@ -3615,19 +3861,20 @@ app.get('/api/media/url/:container/*',
   }
 });
 
-// DELETE /api/media/:container/* - Eliminar archivo
-// Using wildcard (*) to capture blobName with slashes
-app.delete('/api/media/:container/*', 
+// DELETE /api/media/:container/*blobPath - Eliminar archivo
+// Using wildcard (*blobPath) to capture path segments across multiple levels
+app.delete('/api/media/:container/*blobPath', 
   authenticateToken,
   requireAuth, 
   async (req, res) => {
   try {
     const user = (req as any).user;
     const { tenantId } = user;
-    const { container } = req.params;
+    const { container, blobPath } = req.params;
     
-    // Get blobName from the wildcard parameter
-    const blobNameEncoded = req.params[0] || '';
+    // Get blobName from the wildcard parameter - blobPath is an array in path-to-regexp v8
+    const blobPathArray = Array.isArray(blobPath) ? blobPath : [blobPath];
+    const blobNameEncoded = blobPathArray.join('/') || '';
     
     // Decodificar blobName (puede venir codificado desde el frontend)
     const blobName = decodeURIComponent(blobNameEncoded);
@@ -3667,6 +3914,382 @@ app.delete('/api/media/:container/*',
     } else {
       res.status(500).json({ error: error.message || 'Error al eliminar el archivo' });
     }
+  }
+});
+
+// ============================================
+// LEGACY PLATFORM API ENDPOINTS (Deprecated - use /api/platform-admin/* instead)
+// ============================================
+
+// GET /api/platform/stats - Get platform-wide statistics
+app.get('/api/platform/stats', requireAuth, requireSuperAdmin, async (req, res) => {
+  try {
+    // Get all tenants
+    const tenantsContainer = getContainer('tenants');
+    const { resources: tenants } = await tenantsContainer.items
+      .query('SELECT * FROM c WHERE c.type = "tenant" OR NOT IS_DEFINED(c.type)')
+      .fetchAll();
+    
+    // Get all users count
+    const usersContainer = getContainer('users');
+    const { resources: userCounts } = await usersContainer.items
+      .query('SELECT VALUE COUNT(1) FROM c WHERE c.type = "user" OR NOT IS_DEFINED(c.type)')
+      .fetchAll();
+    
+    // Calculate MRR based on plan pricing
+    const planPricing: Record<string, number> = {
+      'demo': 0,
+      'profesional': 199,
+      'enterprise': 499
+    };
+    
+    const mrr = tenants.reduce((sum, tenant) => {
+      if (tenant.status === 'active') {
+        return sum + (planPricing[tenant.plan] || 0);
+      }
+      return sum;
+    }, 0);
+    
+    // Tenant counts by status
+    const tenantsByStatus = tenants.reduce((acc, tenant) => {
+      const status = tenant.status || 'unknown';
+      acc[status] = (acc[status] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    
+    // Tenant counts by plan
+    const tenantsByPlan = tenants.reduce((acc, tenant) => {
+      const plan = tenant.plan || 'unknown';
+      acc[plan] = (acc[plan] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    res.json({
+      totalTenants: tenants.length,
+      activeTenants: tenantsByStatus['active'] || 0,
+      totalUsers: userCounts[0] || 0,
+      mrr,
+      tenantsByStatus,
+      tenantsByPlan,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error: any) {
+    console.error('[API] Error getting platform stats:', error);
+    trackException(error, { endpoint: '/api/platform/stats' });
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/platform/tenants - List all tenants with stats (for super-admin)
+app.get('/api/platform/tenants', requireAuth, requireSuperAdmin, async (req, res) => {
+  try {
+    const tenantsContainer = getContainer('tenants');
+    const usersContainer = getContainer('users');
+    const coursesContainer = getContainer('courses');
+    
+    // Get all tenants
+    const { resources: tenants } = await tenantsContainer.items
+      .query('SELECT * FROM c WHERE c.type = "tenant" OR NOT IS_DEFINED(c.type) ORDER BY c.createdAt DESC')
+      .fetchAll();
+    
+    // Enrich tenants with user and course counts
+    const tenantsWithStats = await Promise.all(
+      tenants.map(async (tenant) => {
+        // Get user count for this tenant
+        const { resources: userCounts } = await usersContainer.items
+          .query({
+            query: 'SELECT VALUE COUNT(1) FROM c WHERE c.tenantId = @tenantId',
+            parameters: [{ name: '@tenantId', value: tenant.id }]
+          })
+          .fetchAll();
+        
+        // Get course count for this tenant
+        const { resources: courseCounts } = await coursesContainer.items
+          .query({
+            query: 'SELECT VALUE COUNT(1) FROM c WHERE c.tenantId = @tenantId',
+            parameters: [{ name: '@tenantId', value: tenant.id }]
+          })
+          .fetchAll();
+        
+        const planPricing: Record<string, number> = {
+          'demo': 0,
+          'profesional': 199,
+          'enterprise': 499
+        };
+        
+        return {
+          ...tenant,
+          userCount: userCounts[0] || 0,
+          courseCount: courseCounts[0] || 0,
+          mrr: tenant.status === 'active' ? (planPricing[tenant.plan] || 0) : 0
+        };
+      })
+    );
+    
+    res.json(tenantsWithStats);
+  } catch (error: any) {
+    console.error('[API] Error listing platform tenants:', error);
+    trackException(error, { endpoint: '/api/platform/tenants' });
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/platform/tenants/:tenantId - Get detailed tenant info (for super-admin)
+app.get('/api/platform/tenants/:tenantId', requireAuth, requireSuperAdmin, async (req, res) => {
+  try {
+    const { tenantId } = req.params;
+    
+    // Get tenant
+    const tenant = await getTenantById(tenantId);
+    if (!tenant) {
+      return res.status(404).json({ error: 'Tenant not found' });
+    }
+    
+    const usersContainer = getContainer('users');
+    const coursesContainer = getContainer('courses');
+    
+    // Get users for this tenant
+    const { resources: users } = await usersContainer.items
+      .query({
+        query: 'SELECT c.id, c.firstName, c.lastName, c.email, c.role, c.status, c.lastLoginAt, c.createdAt FROM c WHERE c.tenantId = @tenantId',
+        parameters: [{ name: '@tenantId', value: tenantId }]
+      })
+      .fetchAll();
+    
+    // Get courses for this tenant
+    const { resources: courses } = await coursesContainer.items
+      .query({
+        query: 'SELECT c.id, c.title, c.published, c.status, c.createdAt FROM c WHERE c.tenantId = @tenantId',
+        parameters: [{ name: '@tenantId', value: tenantId }]
+      })
+      .fetchAll();
+    
+    // Calculate stats
+    const activeUsers = users.filter(u => u.status !== 'inactive').length;
+    const publishedCourses = courses.filter(c => c.published || c.status === 'published').length;
+    
+    res.json({
+      ...tenant,
+      stats: {
+        userCount: users.length,
+        activeUsers,
+        courseCount: courses.length,
+        publishedCourses
+      },
+      users: users.slice(0, 50), // Return first 50 users
+      courses: courses.slice(0, 50) // Return first 50 courses
+    });
+  } catch (error: any) {
+    console.error('[API] Error getting platform tenant detail:', error);
+    trackException(error, { endpoint: `/api/platform/tenants/${req.params.tenantId}` });
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/platform/tenants - Create new tenant (super-admin only)
+app.post('/api/platform/tenants', requireAuth, requireSuperAdmin, async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const tenantData = {
+      ...req.body,
+      createdBy: user.id,
+      status: req.body.status || 'active'
+    };
+    
+    const tenant = await createTenant(tenantData);
+    
+    // Log audit event
+    trackEvent('TenantCreated', {
+      tenantId: tenant.id,
+      tenantName: tenant.name,
+      plan: tenant.plan,
+      createdBy: user.id
+    });
+    
+    res.status(201).json(tenant);
+  } catch (error: any) {
+    console.error('[API] Error creating tenant:', error);
+    trackException(error, { endpoint: '/api/platform/tenants' });
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// PUT /api/platform/tenants/:tenantId - Update tenant (super-admin only)
+app.put('/api/platform/tenants/:tenantId', requireAuth, requireSuperAdmin, async (req, res) => {
+  try {
+    const { tenantId } = req.params;
+    const user = (req as any).user;
+    
+    const updatedTenant = await updateTenant(tenantId, req.body);
+    
+    // Log audit event
+    trackEvent('TenantUpdated', {
+      tenantId,
+      updatedBy: user.id,
+      changes: Object.keys(req.body)
+    });
+    
+    res.json(updatedTenant);
+  } catch (error: any) {
+    console.error('[API] Error updating platform tenant:', error);
+    trackException(error, { endpoint: `/api/platform/tenants/${req.params.tenantId}` });
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// PUT /api/platform/tenants/:tenantId/status - Update tenant status (suspend/activate/cancel)
+app.put('/api/platform/tenants/:tenantId/status', requireAuth, requireSuperAdmin, async (req, res) => {
+  try {
+    const { tenantId } = req.params;
+    const { status, reason } = req.body;
+    const user = (req as any).user;
+    
+    if (!['active', 'suspended', 'canceled'].includes(status)) {
+      return res.status(400).json({ error: 'Invalid status. Must be: active, suspended, or canceled' });
+    }
+    
+    const updatedTenant = await updateTenant(tenantId, { 
+      status,
+      statusChangedAt: new Date().toISOString(),
+      statusChangedBy: user.id,
+      statusChangeReason: reason
+    });
+    
+    // Log audit event
+    trackEvent('TenantStatusChanged', {
+      tenantId,
+      newStatus: status,
+      reason,
+      changedBy: user.id
+    });
+    
+    res.json(updatedTenant);
+  } catch (error: any) {
+    console.error('[API] Error updating tenant status:', error);
+    trackException(error, { endpoint: `/api/platform/tenants/${req.params.tenantId}/status` });
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// DELETE /api/platform/tenants/:tenantId - Delete tenant (super-admin only)
+app.delete('/api/platform/tenants/:tenantId', requireAuth, requireSuperAdmin, async (req, res) => {
+  try {
+    const { tenantId } = req.params;
+    const user = (req as any).user;
+    const { confirmDelete } = req.body;
+    
+    if (confirmDelete !== tenantId) {
+      return res.status(400).json({ 
+        error: 'Confirmation required',
+        message: 'To delete a tenant, send { confirmDelete: "<tenantId>" } in the request body'
+      });
+    }
+    
+    // Soft delete by marking as deleted
+    const tenantsContainer = getContainer('tenants');
+    await tenantsContainer.item(tenantId, tenantId).patch([
+      { op: 'set', path: '/status', value: 'deleted' },
+      { op: 'set', path: '/deletedAt', value: new Date().toISOString() },
+      { op: 'set', path: '/deletedBy', value: user.id }
+    ]);
+    
+    // Log audit event
+    trackEvent('TenantDeleted', {
+      tenantId,
+      deletedBy: user.id
+    });
+    
+    res.json({ success: true, message: 'Tenant deleted successfully' });
+  } catch (error: any) {
+    console.error('[API] Error deleting tenant:', error);
+    trackException(error, { endpoint: `/api/platform/tenants/${req.params.tenantId}` });
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/platform/users - List all users across all tenants (super-admin only)
+app.get('/api/platform/users', requireAuth, requireSuperAdmin, async (req, res) => {
+  try {
+    const { tenantId, role, search, limit = 50, offset = 0 } = req.query;
+    
+    let query = 'SELECT * FROM c WHERE (c.type = "user" OR NOT IS_DEFINED(c.type))';
+    const parameters: any[] = [];
+    
+    if (tenantId) {
+      query += ' AND c.tenantId = @tenantId';
+      parameters.push({ name: '@tenantId', value: tenantId });
+    }
+    
+    if (role) {
+      query += ' AND c.role = @role';
+      parameters.push({ name: '@role', value: role });
+    }
+    
+    if (search) {
+      query += ' AND (CONTAINS(LOWER(c.email), LOWER(@search)) OR CONTAINS(LOWER(c.firstName), LOWER(@search)) OR CONTAINS(LOWER(c.lastName), LOWER(@search)))';
+      parameters.push({ name: '@search', value: search });
+    }
+    
+    query += ' ORDER BY c.createdAt DESC';
+    query += ` OFFSET ${Number(offset)} LIMIT ${Number(limit)}`;
+    
+    const usersContainer = getContainer('users');
+    const { resources: users } = await usersContainer.items
+      .query({ query, parameters })
+      .fetchAll();
+    
+    // Remove sensitive data
+    const sanitizedUsers = users.map(user => ({
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      role: user.role,
+      tenantId: user.tenantId,
+      status: user.status,
+      createdAt: user.createdAt,
+      lastLoginAt: user.lastLoginAt
+    }));
+    
+    res.json(sanitizedUsers);
+  } catch (error: any) {
+    console.error('[API] Error listing platform users:', error);
+    trackException(error, { endpoint: '/api/platform/users' });
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/platform/audit-log - Get platform-wide audit log
+app.get('/api/platform/audit-log', requireAuth, requireSuperAdmin, async (req, res) => {
+  try {
+    const { tenantId, action, limit = 50, offset = 0 } = req.query;
+    
+    let query = 'SELECT * FROM c WHERE c.type = "audit-log"';
+    const parameters: any[] = [];
+    
+    if (tenantId) {
+      query += ' AND c.tenantId = @tenantId';
+      parameters.push({ name: '@tenantId', value: tenantId });
+    }
+    
+    if (action) {
+      query += ' AND c.action = @action';
+      parameters.push({ name: '@action', value: action });
+    }
+    
+    query += ' ORDER BY c.timestamp DESC';
+    query += ` OFFSET ${Number(offset)} LIMIT ${Number(limit)}`;
+    
+    const auditContainer = getContainer('audit-logs');
+    const { resources: logs } = await auditContainer.items
+      .query({ query, parameters })
+      .fetchAll();
+    
+    res.json(logs);
+  } catch (error: any) {
+    console.error('[API] Error getting platform audit log:', error);
+    trackException(error, { endpoint: '/api/platform/audit-log' });
+    res.status(500).json({ error: error.message });
   }
 });
 
