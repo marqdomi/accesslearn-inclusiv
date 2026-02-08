@@ -204,6 +204,8 @@ import {
   summarizeCourse,
   chatAssistant,
   getInsights,
+  generateContent,
+  extractFromDocument,
 } from './functions/AIFunctions';
 
 dotenv.config();
@@ -761,6 +763,29 @@ app.post('/api/ai/generate-quiz', requireAuth, generateQuiz);
 app.get('/api/ai/course-summary/:courseId', requireAuth, summarizeCourse);
 app.post('/api/ai/chat', requireAuth, chatAssistant);
 app.post('/api/ai/analytics-insights', requireAuth, requireRole('tenant-admin', 'super-admin'), getInsights);
+app.post('/api/ai/generate-content', requireAuth, generateContent);
+
+// AI document extraction (with file upload)
+const aiDocUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+  fileFilter: (_req, file, cb) => {
+    const allowed = [
+      'application/pdf',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/msword',
+      'text/plain',
+      'text/markdown',
+      'text/html',
+    ];
+    if (allowed.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error(`Tipo de archivo no soportado: ${file.mimetype}`));
+    }
+  },
+});
+app.post('/api/ai/extract-document', requireAuth, aiDocUpload.single('document'), extractFromDocument);
 
 // ============================================
 // USER ENDPOINTS

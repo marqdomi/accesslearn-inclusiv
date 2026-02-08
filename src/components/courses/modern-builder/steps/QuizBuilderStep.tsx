@@ -14,7 +14,9 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
-import { Plus, PencilSimple, Trash, Info } from '@phosphor-icons/react'
+import { Plus, PencilSimple, Trash, Info, Sparkle } from '@phosphor-icons/react'
+import { ApiService } from '@/services/api.service'
+import { toast } from 'sonner'
 
 import { QuizMetadataDialog, type QuizFormState } from '../quiz/QuizMetadataDialog'
 import { QuestionDialog, type QuestionFormState } from '../quiz/QuestionDialog'
@@ -30,6 +32,7 @@ export function QuizBuilderStep({ course, updateCourse }: QuizBuilderStepProps) 
   const [isQuizMetadataOpen, setIsQuizMetadataOpen] = useState(false)
   const [isQuestionDialogOpen, setIsQuestionDialogOpen] = useState(false)
   const [editingQuestion, setEditingQuestion] = useState<{ questionIndex: number; data: QuizQuestion } | null>(null)
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false)
 
   // ── Form states ────────────────────────────────────────
   const [quizForm, setQuizForm] = useState<QuizFormState>({
@@ -344,6 +347,60 @@ export function QuizBuilderStep({ course, updateCourse }: QuizBuilderStepProps) 
     updateCourse({ modules: updatedModules })
   }
 
+  // ── AI Quiz Generation ─────────────────────────────────
+  const handleGenerateAIQuestions = async () => {
+    if (!selectedLesson || !course.id) return
+    setIsGeneratingAI(true)
+    try {
+      const data = await ApiService.generateAIQuiz(course.id, {
+        questionCount: 5,
+        difficulty: 'medium',
+        moduleIndex: selectedLesson.moduleIndex,
+      })
+      if (!data.questions || data.questions.length === 0) {
+        toast.error('No se pudieron generar preguntas. Agrega más contenido a la lección.')
+        return
+      }
+
+      // Ensure quiz exists
+      const updatedModules = [...course.modules]
+      const lesson = updatedModules[selectedLesson.moduleIndex].lessons[selectedLesson.lessonIndex]
+      if (!lesson.quiz) {
+        lesson.quiz = {
+          id: `quiz-${Date.now()}`,
+          title: `Quiz: ${lesson.title}`,
+          description: 'Quiz generado con IA',
+          questions: [],
+          passingScore: 70,
+          maxAttempts: 3,
+          totalXP: 0,
+          showTimer: false,
+        }
+      }
+
+      // Convert AI-generated questions to QuizQuestion format
+      const newQuestions: QuizQuestion[] = data.questions.map((q, i) => ({
+        id: `ai-q-${Date.now()}-${i}`,
+        type: q.options.length === 2 ? 'true-false' as const : 'multiple-choice' as const,
+        question: q.question,
+        options: q.options,
+        correctAnswer: q.correctAnswer,
+        correctFeedback: q.explanation || '¡Correcto!',
+        incorrectFeedback: 'Incorrecto. Revisa el contenido de la lección.',
+        xpValue: 10,
+      }))
+
+      lesson.quiz.questions.push(...newQuestions)
+      lesson.quiz.totalXP = lesson.quiz.questions.reduce((acc, q) => acc + q.xpValue, 0)
+      updateCourse({ modules: updatedModules })
+      toast.success(`${newQuestions.length} preguntas generadas con IA y agregadas al quiz`)
+    } catch (err: any) {
+      toast.error(err.message || 'Error al generar preguntas con IA')
+    } finally {
+      setIsGeneratingAI(false)
+    }
+  }
+
   // ── Stats ──────────────────────────────────────────────
   const totalQuizzes = course.modules.reduce((acc, m) => acc + m.lessons.filter((l) => l.quiz).length, 0)
 
@@ -485,11 +542,33 @@ export function QuizBuilderStep({ course, updateCourse }: QuizBuilderStepProps) 
             </CardHeader>
           </Card>
 
-          {/* Add Question Button */}
-          <Button onClick={handleAddQuestion} size="lg" className="w-full">
-            <Plus className="mr-2" size={20} />
-            Agregar Pregunta
-          </Button>
+          {/* Add Question Buttons */}
+          <div className="flex gap-3">
+            <Button onClick={handleAddQuestion} size="lg" className="flex-1">
+              <Plus className="mr-2" size={20} />
+              Agregar Pregunta
+            </Button>
+            <Button
+              onClick={handleGenerateAIQuestions}
+              size="lg"
+              variant="outline"
+              className="gap-2 border-purple-200 hover:bg-purple-50 dark:border-purple-800 dark:hover:bg-purple-950/30"
+              disabled={isGeneratingAI || !course.id}
+              title={!course.id ? 'Guarda el curso primero para usar IA' : 'Generar preguntas con IA'}
+            >
+              {isGeneratingAI ? (
+                <>
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-purple-500 border-t-transparent" />
+                  Generando...
+                </>
+              ) : (
+                <>
+                  <Sparkle size={20} weight="fill" className="text-purple-500" />
+                  Generar con IA
+                </>
+              )}
+            </Button>
+          </div>
 
           {/* Questions List */}
           {currentQuiz.questions.length === 0 ? (

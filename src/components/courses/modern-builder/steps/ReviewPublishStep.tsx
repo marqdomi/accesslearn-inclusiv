@@ -5,6 +5,7 @@ import { motion } from 'framer-motion'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { StatusBadge } from '@/components/courses'
+import { AICourseSummary } from '@/components/ai'
 import { 
   FloppyDisk, 
   PaperPlaneTilt, 
@@ -201,7 +202,12 @@ export function ReviewPublishStep({ course, updateCourse, onSaveDraft, onSubmitF
       {/* Course Summary */}
       <Card>
         <CardHeader>
-          <CardTitle>Resumen del Curso</CardTitle>
+          <CardTitle className="flex items-center justify-between">
+            <span>Resumen del Curso</span>
+            {course.id && !course.id.startsWith('course-') && (
+              <AICourseSummary courseId={course.id} courseTitle={course.title || 'Curso'} />
+            )}
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-4">

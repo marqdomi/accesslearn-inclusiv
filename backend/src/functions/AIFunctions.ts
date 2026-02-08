@@ -11,6 +11,8 @@ import {
   generateCourseSummary,
   chatWithAssistant,
   generateAnalyticsInsights,
+  generateLessonContent,
+  extractContentFromDocument,
   isGeminiConfigured,
   testGeminiConnection,
   type ChatMessage,
@@ -375,5 +377,135 @@ export async function getInsights(req: Request, res: Response) {
   } catch (error: any) {
     console.error('[AI] Insights error:', error);
     return res.status(500).json({ error: 'Failed to generate insights' });
+  }
+}
+
+// ─── Lesson Content Generation ───────────────────────────────
+
+export async function generateContent(req: Request, res: Response) {
+  try {
+    if (!isGeminiConfigured()) {
+      return res.status(503).json({ error: 'AI service not configured' });
+    }
+
+    const { topic, courseTitle, lessonTitle, context, blockCount = 4 } = req.body;
+    if (!topic || !courseTitle) {
+      return res.status(400).json({ error: 'topic and courseTitle are required' });
+    }
+
+    const content = await generateLessonContent(
+      topic,
+      courseTitle,
+      lessonTitle || 'Lección',
+      context || '',
+      Math.min(blockCount, 8),
+    );
+
+    if (!content) {
+      return res.status(500).json({ error: 'No se pudo generar el contenido' });
+    }
+
+    return res.json({ content });
+  } catch (error: any) {
+    console.error('[AI] Content generation error:', error);
+    return res.status(500).json({ error: 'Failed to generate content' });
+  }
+}
+
+// ─── Document Upload & Extraction ────────────────────────────
+
+export async function extractFromDocument(req: Request, res: Response) {
+  try {
+    if (!isGeminiConfigured()) {
+      return res.status(503).json({ error: 'AI service not configured' });
+    }
+
+    const file = (req as any).file;
+    const { courseTitle, generateQuestions, generateStructure, blockCount } = req.body;
+
+    if (!file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+    if (!courseTitle) {
+      return res.status(400).json({ error: 'courseTitle is required' });
+    }
+
+    // Extract text from the uploaded file
+    let documentText = '';
+    const mimeType = file.mimetype;
+    const buffer = file.buffer as Buffer;
+
+    if (mimeType === 'text/plain' || mimeType === 'text/markdown') {
+      documentText = buffer.toString('utf-8');
+    } else if (mimeType === 'text/html') {
+      // Strip HTML tags for plain text
+      documentText = buffer.toString('utf-8').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+    } else if (mimeType === 'application/pdf') {
+      // Dynamic import pdf-parse for PDF extraction
+      try {
+        const pdfParse = require('pdf-parse');
+        const pdfData = await pdfParse(buffer);
+        documentText = pdfData.text;
+      } catch (pdfError) {
+        console.error('[AI] PDF parsing error:', pdfError);
+        return res.status(400).json({ 
+          error: 'Error al procesar PDF. Asegúrate de que el archivo no esté protegido.',
+          details: 'pdf-parse library may not be installed. Run: npm install pdf-parse' 
+        });
+      }
+    } else if (
+      mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+      mimeType === 'application/msword'
+    ) {
+      // Dynamic import mammoth for Word document extraction  
+      try {
+        const mammoth = require('mammoth');
+        const result = await mammoth.extractRawText({ buffer });
+        documentText = result.value;
+      } catch (docError) {
+        console.error('[AI] DOCX parsing error:', docError);
+        return res.status(400).json({ 
+          error: 'Error al procesar documento Word.',
+          details: 'mammoth library may not be installed. Run: npm install mammoth'
+        });
+      }
+    } else {
+      return res.status(400).json({ 
+        error: `Tipo de archivo no soportado: ${mimeType}. Formatos válidos: PDF, DOCX, TXT, MD, HTML` 
+      });
+    }
+
+    if (!documentText || documentText.trim().length < 50) {
+      return res.status(400).json({ error: 'El documento no contiene suficiente texto para procesar' });
+    }
+
+    console.log(`[AI] Extracting content from document: ${file.originalname} (${documentText.length} chars)`);
+
+    const extracted = await extractContentFromDocument(
+      documentText,
+      courseTitle,
+      {
+        generateQuestions: generateQuestions !== 'false',
+        generateStructure: generateStructure !== 'false',
+        blockCount: blockCount ? parseInt(blockCount) : 6,
+      },
+    );
+
+    if (!extracted) {
+      return res.status(500).json({ error: 'No se pudo extraer contenido del documento' });
+    }
+
+    return res.json({ 
+      extracted,
+      documentInfo: {
+        fileName: file.originalname,
+        fileSize: file.size,
+        mimeType: file.mimetype,
+        textLength: documentText.length,
+      }
+    });
+  } catch (error: any) {
+    console.error('[AI] Document extraction error:', error);
+    return res.status(500).json({ error: 'Failed to extract content from document' });
   }
 }

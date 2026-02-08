@@ -172,6 +172,17 @@ export function ContentEditorStep({ course, updateCourse, courseId }: ContentEdi
   const imageFileInputRef = useRef<HTMLInputElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const audioFileInputRef = useRef<HTMLInputElement>(null)
+
+  // AI Content state
+  const [isAIDialogOpen, setIsAIDialogOpen] = useState(false)
+  const [aiTab, setAITab] = useState<'generate' | 'document'>('generate')
+  const [aiTopic, setAITopic] = useState('')
+  const [aiBlockCount, setAIBlockCount] = useState('4')
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false)
+  const [aiResult, setAIResult] = useState<{ blocks: Array<{ type: string; content: string; characterMessage?: string }>; suggestedTitle?: string } | null>(null)
+  const [docResult, setDocResult] = useState<any>(null)
+  const [isUploadingDoc, setIsUploadingDoc] = useState(false)
+  const docFileInputRef = useRef<HTMLInputElement>(null)
   
   // Form state
   const [blockForm, setBlockForm] = useState({
@@ -448,6 +459,73 @@ export function ContentEditorStep({ course, updateCourse, courseId }: ContentEdi
     acc + m.lessons.reduce((acc2, l) => acc2 + l.blocks.length, 0), 0
   )
 
+  // ── AI Content Generation ──────────────────────────────
+  const handleOpenAIDialog = () => {
+    setAIResult(null)
+    setDocResult(null)
+    setAITopic('')
+    setAITab('generate')
+    setIsAIDialogOpen(true)
+  }
+
+  const handleGenerateAIContent = async () => {
+    if (!aiTopic.trim() || !selectedLesson) return
+    setIsGeneratingAI(true)
+    setAIResult(null)
+    try {
+      const data = await ApiService.generateAIContent({
+        topic: aiTopic,
+        courseTitle: course.title || 'Curso',
+        lessonTitle: selectedLesson.lesson.title,
+        blockCount: parseInt(aiBlockCount),
+      })
+      setAIResult(data.content)
+    } catch (err: any) {
+      toast.error(err.message || 'Error al generar contenido con IA')
+    } finally {
+      setIsGeneratingAI(false)
+    }
+  }
+
+  const handleDocumentUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setIsUploadingDoc(true)
+    setDocResult(null)
+    try {
+      const data = await ApiService.extractAIFromDocument(file, course.title || 'Curso', {
+        generateQuestions: true,
+        generateStructure: true,
+        blockCount: 6,
+      })
+      setDocResult(data)
+      toast.success(`Documento "${file.name}" procesado exitosamente`)
+    } catch (err: any) {
+      toast.error(err.message || 'Error al procesar documento')
+    } finally {
+      setIsUploadingDoc(false)
+      if (docFileInputRef.current) docFileInputRef.current.value = ''
+    }
+  }
+
+  const handleInsertAIBlocks = (blocks: Array<{ type: string; content: string; characterMessage?: string }>) => {
+    if (!selectedLesson || blocks.length === 0) return
+    const updatedModules = [...course.modules]
+    const lesson = updatedModules[selectedLesson.moduleIndex].lessons[selectedLesson.lessonIndex]
+    const newBlocks: LessonBlock[] = blocks.map((b, i) => ({
+      id: `ai-block-${Date.now()}-${i}`,
+      type: (b.type === 'challenge' ? 'challenge' : 'text') as LessonBlock['type'],
+      content: b.content,
+      characterMessage: b.characterMessage || '',
+      xpValue: b.type === 'challenge' ? 20 : 10,
+    }))
+    lesson.blocks.push(...newBlocks)
+    lesson.totalXP = lesson.blocks.reduce((acc, block) => acc + (block.xpValue || 0), 0)
+    updateCourse({ modules: updatedModules })
+    setIsAIDialogOpen(false)
+    toast.success(`${newBlocks.length} bloques de contenido agregados a la lección`)
+  }
+
   // Auto-select first lesson on mount or when modules change
   const allLessons = course.modules.flatMap((m, mi) =>
     m.lessons.map((l, li) => ({ path: `${mi}-${li}`, lesson: l, moduleIndex: mi, lessonIndex: li, moduleTitle: m.title }))
@@ -570,10 +648,21 @@ export function ContentEditorStep({ course, updateCourse, courseId }: ContentEdi
                     <p className="text-sm text-muted-foreground truncate">{selectedLesson.lesson.description}</p>
                   )}
                 </div>
-                <Button onClick={handleAddBlock} size="default" className="shrink-0">
-                  <Plus className="mr-1.5" size={18} />
-                  Agregar Bloque
-                </Button>
+                <div className="flex gap-2 shrink-0">
+                  <Button onClick={handleAddBlock} size="default">
+                    <Plus className="mr-1.5" size={18} />
+                    Agregar Bloque
+                  </Button>
+                  <Button
+                    onClick={handleOpenAIDialog}
+                    size="default"
+                    variant="outline"
+                    className="gap-1.5 border-purple-200 hover:bg-purple-50 dark:border-purple-800 dark:hover:bg-purple-950/30"
+                  >
+                    <Sparkle size={18} weight="fill" className="text-purple-500" />
+                    IA
+                  </Button>
+                </div>
               </div>
 
               {/* Blocks List */}
@@ -582,12 +671,22 @@ export function ContentEditorStep({ course, updateCourse, courseId }: ContentEdi
                   <TextT size={40} className="mx-auto text-muted-foreground/50 mb-3" />
                   <p className="text-muted-foreground font-medium mb-1">Lección vacía</p>
                   <p className="text-sm text-muted-foreground mb-4">
-                    Agrega tu primer bloque de contenido: texto, imagen, video, audio y más
+                    Agrega contenido manualmente o genera con IA
                   </p>
-                  <Button onClick={handleAddBlock} variant="outline">
-                    <Plus className="mr-1.5" size={16} />
-                    Agregar primer bloque
-                  </Button>
+                  <div className="flex items-center justify-center gap-3">
+                    <Button onClick={handleAddBlock} variant="outline">
+                      <Plus className="mr-1.5" size={16} />
+                      Agregar bloque
+                    </Button>
+                    <Button
+                      onClick={handleOpenAIDialog}
+                      variant="outline"
+                      className="gap-1.5 border-purple-200 hover:bg-purple-50 dark:border-purple-800 dark:hover:bg-purple-950/30"
+                    >
+                      <Sparkle size={16} weight="fill" className="text-purple-500" />
+                      Generar con IA
+                    </Button>
+                  </div>
                 </div>
               ) : (
                 <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleBlockDragEnd}>
@@ -1213,6 +1312,246 @@ export function ContentEditorStep({ course, updateCourse, courseId }: ContentEdi
               {editingBlock ? 'Actualizar' : 'Crear'} Bloque
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── AI Content Generation Dialog ── */}
+      <Dialog open={isAIDialogOpen} onOpenChange={setIsAIDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Sparkle size={20} weight="fill" className="text-purple-500" />
+              Contenido con Inteligencia Artificial
+            </DialogTitle>
+            <DialogDescription>
+              Genera contenido automáticamente o sube un documento para extraer material educativo
+            </DialogDescription>
+          </DialogHeader>
+
+          <Tabs value={aiTab} onValueChange={(v) => setAITab(v as 'generate' | 'document')} className="flex-1 min-h-0 flex flex-col">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="generate">
+                <Sparkle className="mr-1.5 h-4 w-4" />
+                Generar desde Tema
+              </TabsTrigger>
+              <TabsTrigger value="document">
+                <UploadSimple className="mr-1.5 h-4 w-4" />
+                Subir Documento
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="generate" className="flex-1 min-h-0 overflow-y-auto space-y-4 mt-4">
+              {!aiResult ? (
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>¿Sobre qué tema quieres generar contenido?</Label>
+                    <Textarea
+                      value={aiTopic}
+                      onChange={(e) => setAITopic(e.target.value)}
+                      placeholder="Ej: Introducción a la accesibilidad web, principios WCAG, herramientas de evaluación..."
+                      rows={3}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Cantidad de bloques</Label>
+                    <Select value={aiBlockCount} onValueChange={setAIBlockCount}>
+                      <SelectTrigger className="w-32">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="2">2 bloques</SelectItem>
+                        <SelectItem value="4">4 bloques</SelectItem>
+                        <SelectItem value="6">6 bloques</SelectItem>
+                        <SelectItem value="8">8 bloques</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Button
+                    onClick={handleGenerateAIContent}
+                    disabled={isGeneratingAI || !aiTopic.trim()}
+                    className="w-full gap-2"
+                  >
+                    {isGeneratingAI ? (
+                      <>
+                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                        Generando contenido...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkle size={18} weight="fill" />
+                        Generar Contenido
+                      </>
+                    )}
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <Badge variant="outline" className="gap-1 text-purple-600 border-purple-200">
+                      <Sparkle size={12} weight="fill" />
+                      {aiResult.blocks.length} bloques generados
+                    </Badge>
+                    <Button variant="ghost" size="sm" onClick={() => setAIResult(null)}>
+                      Regenerar
+                    </Button>
+                  </div>
+                  <div className="space-y-3 max-h-[40vh] overflow-y-auto pr-1">
+                    {aiResult.blocks.map((block, i) => (
+                      <Card key={i} className="border-purple-100 dark:border-purple-900/30">
+                        <CardContent className="pt-4 space-y-2">
+                          <Badge variant="secondary" className="text-xs">
+                            {block.type === 'challenge' ? 'Desafío' : 'Texto'}
+                          </Badge>
+                          <div
+                            className="text-sm prose prose-sm max-w-none dark:prose-invert line-clamp-4"
+                            dangerouslySetInnerHTML={{ __html: block.content }}
+                          />
+                          {block.characterMessage && (
+                            <p className="text-xs text-muted-foreground italic">💬 {block.characterMessage}</p>
+                          )}
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                  <Button onClick={() => handleInsertAIBlocks(aiResult.blocks)} className="w-full gap-2">
+                    <Plus size={18} />
+                    Insertar {aiResult.blocks.length} bloques en la lección
+                  </Button>
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="document" className="flex-1 min-h-0 overflow-y-auto space-y-4 mt-4">
+              {!docResult ? (
+                <div className="space-y-4">
+                  <div className="border-2 border-dashed rounded-xl py-10 text-center">
+                    <UploadSimple size={40} className="mx-auto text-muted-foreground/50 mb-3" />
+                    <p className="text-muted-foreground font-medium mb-1">Sube un documento</p>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      PDF, Word (.docx), TXT o Markdown — máximo 10 MB
+                    </p>
+                    <input
+                      ref={docFileInputRef}
+                      type="file"
+                      accept=".pdf,.docx,.doc,.txt,.md,.html"
+                      className="hidden"
+                      onChange={handleDocumentUpload}
+                    />
+                    <Button
+                      variant="outline"
+                      onClick={() => docFileInputRef.current?.click()}
+                      disabled={isUploadingDoc}
+                      className="gap-2"
+                    >
+                      {isUploadingDoc ? (
+                        <>
+                          <span className="h-4 w-4 animate-spin rounded-full border-2 border-purple-500 border-t-transparent" />
+                          Procesando documento...
+                        </>
+                      ) : (
+                        <>
+                          <UploadSimple size={16} />
+                          Seleccionar Archivo
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                  <Alert>
+                    <Info className="h-4 w-4" />
+                    <AlertDescription>
+                      La IA analizará el documento y generará bloques de contenido, preguntas sugeridas y una estructura de módulos recomendada.
+                    </AlertDescription>
+                  </Alert>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {/* Document info */}
+                  <Card className="bg-green-50/50 dark:bg-green-950/10 border-green-200 dark:border-green-900/30">
+                    <CardContent className="pt-4">
+                      <div className="flex items-center gap-3">
+                        <FileIcon size={24} className="text-green-600" />
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm truncate">{docResult.documentInfo.fileName}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {(docResult.documentInfo.fileSize / 1024).toFixed(0)} KB · {docResult.documentInfo.textLength} caracteres extraídos
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Summary */}
+                  {docResult.extracted.summary && (
+                    <div className="bg-muted/50 rounded-lg p-3">
+                      <p className="text-xs font-semibold text-muted-foreground mb-1 uppercase">Resumen</p>
+                      <p className="text-sm">{docResult.extracted.summary}</p>
+                    </div>
+                  )}
+
+                  {/* Key Topics */}
+                  {docResult.extracted.keyTopics?.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5">
+                      {docResult.extracted.keyTopics.map((topic: string, i: number) => (
+                        <Badge key={i} variant="secondary" className="text-xs">{topic}</Badge>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Generated Blocks Preview */}
+                  <div>
+                    <p className="text-sm font-semibold mb-2">
+                      Bloques de Contenido ({docResult.extracted.blocks.length})
+                    </p>
+                    <div className="space-y-2 max-h-[25vh] overflow-y-auto pr-1">
+                      {docResult.extracted.blocks.map((block: any, i: number) => (
+                        <Card key={i} className="border-purple-100 dark:border-purple-900/30">
+                          <CardContent className="pt-3 pb-3">
+                            <div
+                              className="text-sm prose prose-sm max-w-none dark:prose-invert line-clamp-3"
+                              dangerouslySetInnerHTML={{ __html: block.content }}
+                            />
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Suggested Questions */}
+                  {docResult.extracted.suggestedQuestions?.length > 0 && (
+                    <div>
+                      <p className="text-sm font-semibold mb-2">
+                        Preguntas Sugeridas ({docResult.extracted.suggestedQuestions.length})
+                      </p>
+                      <div className="space-y-1.5 max-h-[15vh] overflow-y-auto pr-1">
+                        {docResult.extracted.suggestedQuestions.map((q: any, i: number) => (
+                          <div key={i} className="text-xs bg-muted/50 rounded px-2.5 py-1.5">
+                            <span className="font-medium">{i + 1}.</span> {q.question}
+                          </div>
+                        ))}
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1.5">
+                        Las preguntas se pueden agregar en el paso de Quizzes
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Actions */}
+                  <div className="flex gap-3">
+                    <Button
+                      onClick={() => handleInsertAIBlocks(docResult.extracted.blocks)}
+                      className="flex-1 gap-2"
+                    >
+                      <Plus size={18} />
+                      Insertar {docResult.extracted.blocks.length} bloques
+                    </Button>
+                    <Button variant="outline" onClick={() => setDocResult(null)} className="shrink-0">
+                      Subir otro
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
         </DialogContent>
       </Dialog>
     </div>

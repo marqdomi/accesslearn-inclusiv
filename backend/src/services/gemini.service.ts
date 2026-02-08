@@ -283,6 +283,125 @@ Responde SOLO con JSON válido, sin markdown, sin backticks:
   }
 }
 
+// ─── Lesson Content Generation ──────────────────────────────
+
+export interface GeneratedLessonBlock {
+  type: 'text' | 'challenge';
+  content: string;
+  characterMessage?: string;
+}
+
+export interface GeneratedLessonContent {
+  blocks: GeneratedLessonBlock[];
+  suggestedTitle?: string;
+}
+
+export async function generateLessonContent(
+  topic: string,
+  courseTitle: string,
+  lessonTitle: string,
+  context: string = '',
+  blockCount: number = 4,
+): Promise<GeneratedLessonContent | null> {
+  const m = getModel();
+
+  const prompt = `Eres un diseñador instruccional experto. Genera contenido de lección para una plataforma de e-learning inclusiva.
+
+CURSO: "${courseTitle}"
+LECCIÓN: "${lessonTitle}"
+TEMA/PROMPT DEL USUARIO: "${topic}"
+${context ? `CONTEXTO ADICIONAL:\n${context.slice(0, 4000)}` : ''}
+CANTIDAD DE BLOQUES: ${blockCount}
+
+Genera ${blockCount} bloques de contenido educativo en español. Incluye:
+- Bloques de tipo "text" con contenido HTML rico (usa <h3>, <p>, <ul>, <ol>, <strong>, <em>, <blockquote>)
+- Opcionalmente 1 bloque de tipo "challenge" con un ejercicio práctico
+- Cada bloque puede tener un "characterMessage" opcional (mensaje motivacional corto del personaje guía)
+
+El contenido debe ser:
+- Claro, inclusivo y accesible
+- Progresivo (de conceptos básicos a avanzados)
+- Con ejemplos prácticos
+- Bien estructurado con subtítulos
+
+Responde SOLO con JSON válido, sin markdown, sin backticks:
+{"blocks": [{"type": "text", "content": "<h3>...</h3><p>...</p>", "characterMessage": "..."}, ...], "suggestedTitle": "..."}`;
+
+  try {
+    const result = await m.generateContent(prompt);
+    const text = result.response.text().trim();
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return null;
+    return JSON.parse(jsonMatch[0]) as GeneratedLessonContent;
+  } catch (error) {
+    console.error('[GeminiService] Lesson content generation error:', error);
+    return null;
+  }
+}
+
+// ─── Document Content Extraction ────────────────────────────
+
+export interface ExtractedContent {
+  summary: string;
+  blocks: GeneratedLessonBlock[];
+  suggestedQuestions: Array<{
+    question: string;
+    type: 'multiple-choice' | 'true-false';
+    options: string[];
+    correctAnswer: string;
+    explanation: string;
+  }>;
+  keyTopics: string[];
+  suggestedModules: Array<{
+    title: string;
+    lessons: string[];
+  }>;
+}
+
+export async function extractContentFromDocument(
+  documentText: string,
+  courseTitle: string,
+  options: { generateQuestions?: boolean; generateStructure?: boolean; blockCount?: number } = {},
+): Promise<ExtractedContent | null> {
+  const m = getModel();
+  const { generateQuestions = true, generateStructure = true, blockCount = 6 } = options;
+
+  const prompt = `Eres un experto en diseño instruccional y creación de contenido e-learning. A partir del siguiente texto extraído de un documento, genera contenido educativo estructurado.
+
+CURSO: "${courseTitle}"
+TEXTO DEL DOCUMENTO:
+${documentText.slice(0, 12000)}
+
+INSTRUCCIONES:
+1. Genera un resumen ejecutivo del documento (2-3 oraciones)
+2. Crea ${blockCount} bloques de contenido educativo en HTML (usa <h3>, <p>, <ul>, <ol>, <strong>, <em>)
+3. ${generateQuestions ? 'Genera 5 preguntas de evaluación basadas en el contenido' : 'No generes preguntas'}
+4. Identifica los temas clave (máximo 8)
+5. ${generateStructure ? 'Sugiere una estructura de módulos y lecciones para organizar este contenido' : 'No sugieras estructura'}
+
+Todo el contenido debe ser en español, claro, inclusivo y accesible.
+
+Responde SOLO con JSON válido, sin markdown, sin backticks:
+{
+  "summary": "...",
+  "blocks": [{"type": "text", "content": "<h3>...</h3><p>...</p>", "characterMessage": "..."}],
+  "suggestedQuestions": ${generateQuestions ? '[{"question": "...", "type": "multiple-choice", "options": ["A","B","C","D"], "correctAnswer": "A", "explanation": "..."}]' : '[]'},
+  "keyTopics": ["..."],
+  "suggestedModules": ${generateStructure ? '[{"title": "...", "lessons": ["..."]}]' : '[]'}
+}`;
+
+  try {
+    const result = await m.generateContent(prompt);
+    const text = result.response.text().trim();
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return null;
+    return JSON.parse(jsonMatch[0]) as ExtractedContent;
+  } catch (error) {
+    console.error('[GeminiService] Document extraction error:', error);
+    return null;
+  }
+}
+
 // ─── Service health check ────────────────────────────────────
 
 export function isGeminiConfigured(): boolean {
