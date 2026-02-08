@@ -82,6 +82,23 @@ export interface User {
   invitedBy?: string;            // User ID who sent the invitation
   invitedAt?: string;            // ISO 8601 - When invitation was sent
   
+  // Mentor Profile Fields (only for role === 'mentor')
+  mentorBio?: string;            // Short bio / description  
+  mentorSpecialties?: string[];  // Array of specialty tags
+  mentorAvailability?: {         // Weekly availability slots
+    monday?: string[];
+    tuesday?: string[];
+    wednesday?: string[];
+    thursday?: string[];
+    friday?: string[];
+    saturday?: string[];
+    sunday?: string[];
+  };
+  mentorIsAvailable?: boolean;   // Currently accepting mentees
+  mentorRating?: number;         // Average rating (0-5)
+  totalMentorSessions?: number;  // Completed mentorship sessions
+  totalMentees?: number;         // Unique mentees helped
+
   // Metadata
   createdAt: string;             // ISO 8601
   updatedAt: string;             // ISO 8601

@@ -264,6 +264,19 @@ export async function updateProfile(
       zipCode?: string;
       country?: string;
     };
+    // Mentor profile fields
+    mentorBio?: string;
+    mentorSpecialties?: string[];
+    mentorAvailability?: {
+      monday?: string[];
+      tuesday?: string[];
+      wednesday?: string[];
+      thursday?: string[];
+      friday?: string[];
+      saturday?: string[];
+      sunday?: string[];
+    };
+    mentorIsAvailable?: boolean;
   }
 ): Promise<User> {
   const usersContainer = getContainer('users');
@@ -300,6 +313,11 @@ export async function updateProfile(
         country: profileUpdates.address.country || existingUser.address?.country || '',
       }
     }),
+    // Mentor profile fields
+    ...(profileUpdates.mentorBio !== undefined && { mentorBio: profileUpdates.mentorBio }),
+    ...(profileUpdates.mentorSpecialties !== undefined && { mentorSpecialties: profileUpdates.mentorSpecialties }),
+    ...(profileUpdates.mentorAvailability !== undefined && { mentorAvailability: profileUpdates.mentorAvailability }),
+    ...(profileUpdates.mentorIsAvailable !== undefined && { mentorIsAvailable: profileUpdates.mentorIsAvailable }),
     updatedAt: new Date().toISOString()
   };
   

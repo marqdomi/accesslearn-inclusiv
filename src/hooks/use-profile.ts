@@ -25,6 +25,21 @@ interface ProfileData {
   }
 }
 
+interface MentorProfileData {
+  mentorBio?: string
+  mentorSpecialties?: string[]
+  mentorAvailability?: {
+    monday?: string[]
+    tuesday?: string[]
+    wednesday?: string[]
+    thursday?: string[]
+    friday?: string[]
+    saturday?: string[]
+    sunday?: string[]
+  }
+  mentorIsAvailable?: boolean
+}
+
 interface UserProfile {
   id: string
   email: string
@@ -45,6 +60,22 @@ interface UserProfile {
   status: string
   totalXP?: number
   level?: number
+  // Mentor fields
+  mentorBio?: string
+  mentorSpecialties?: string[]
+  mentorAvailability?: {
+    monday?: string[]
+    tuesday?: string[]
+    wednesday?: string[]
+    thursday?: string[]
+    friday?: string[]
+    saturday?: string[]
+    sunday?: string[]
+  }
+  mentorIsAvailable?: boolean
+  mentorRating?: number
+  totalMentorSessions?: number
+  totalMentees?: number
 }
 
 export function useProfile() {
@@ -228,12 +259,46 @@ export function useProfile() {
     }
   }, [uploadAvatar, updateProfile])
 
+  // Update mentor profile (bio, specialties, availability)
+  const updateMentorProfile = useCallback(async (mentorData: MentorProfileData) => {
+    if (!user?.id) {
+      throw new Error('Usuario no disponible')
+    }
+
+    const tenantId = user.tenantId || currentTenant?.id
+    if (!tenantId) {
+      throw new Error('Tenant no disponible')
+    }
+
+    setLoading(true)
+    setError(null)
+
+    try {
+      const updatedUser = await ApiService.updateMentorProfile(
+        user.id,
+        tenantId,
+        mentorData
+      )
+      setProfile(updatedUser)
+      toast.success('Perfil de mentor actualizado correctamente')
+      return updatedUser
+    } catch (err: any) {
+      const errorMessage = err.message || 'Error al actualizar el perfil de mentor'
+      setError(errorMessage)
+      toast.error(errorMessage)
+      throw err
+    } finally {
+      setLoading(false)
+    }
+  }, [user?.id, user?.tenantId, currentTenant?.id])
+
   return {
     profile,
     loading,
     error,
     loadProfile,
     updateProfile,
+    updateMentorProfile,
     changePassword,
     uploadAvatar,
     updateAvatar,

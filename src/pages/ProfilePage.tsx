@@ -13,6 +13,9 @@ import { Label } from '@/components/ui/label'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Switch } from '@/components/ui/switch'
+import { Badge } from '@/components/ui/badge'
+import { Textarea } from '@/components/ui/textarea'
 import { 
   User, 
   Lock, 
@@ -22,13 +25,15 @@ import {
   X,
   Eye,
   EyeSlash,
+  Chalkboard,
+  Plus,
 } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { motion } from 'framer-motion'
 
 export function ProfilePage() {
   const navigate = useNavigate()
-  const { profile, loading, error, updateProfile, changePassword, updateAvatar } = useProfile()
+  const { profile, loading, error, updateProfile, updateMentorProfile, changePassword, updateAvatar } = useProfile()
   const [activeTab, setActiveTab] = useState('profile')
   
   // Profile form state
@@ -61,6 +66,16 @@ export function ProfilePage() {
   const [avatarPreview, setAvatarPreview] = useState<string | null>(profile?.avatar || null)
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false)
 
+  // Mentor profile state  
+  const isMentor = profile?.role === 'mentor'
+  const [mentorData, setMentorData] = useState({
+    mentorBio: profile?.mentorBio || '',
+    mentorSpecialties: profile?.mentorSpecialties || [] as string[],
+    mentorIsAvailable: profile?.mentorIsAvailable !== false,
+    mentorAvailability: profile?.mentorAvailability || {} as Record<string, string[]>,
+  })
+  const [newSpecialty, setNewSpecialty] = useState('')
+
   // Update profile data when profile loads
   useEffect(() => {
     if (profile) {
@@ -79,6 +94,15 @@ export function ProfilePage() {
         },
       })
       setAvatarPreview(profile.avatar || null)
+      // Load mentor fields
+      if (profile.role === 'mentor') {
+        setMentorData({
+          mentorBio: profile.mentorBio || '',
+          mentorSpecialties: profile.mentorSpecialties || [],
+          mentorIsAvailable: profile.mentorIsAvailable !== false,
+          mentorAvailability: profile.mentorAvailability || {},
+        })
+      }
     }
   }, [profile])
 
@@ -175,6 +199,68 @@ export function ProfilePage() {
     const first = profile.firstName?.[0] || ''
     const last = profile.lastName?.[0] || ''
     return `${first}${last}`.toUpperCase() || 'U'
+  }
+
+  // Handle mentor profile update
+  const handleUpdateMentorProfile = async (e: React.FormEvent) => {
+    e.preventDefault()
+    try {
+      await updateMentorProfile({
+        mentorBio: mentorData.mentorBio,
+        mentorSpecialties: mentorData.mentorSpecialties,
+        mentorIsAvailable: mentorData.mentorIsAvailable,
+        mentorAvailability: mentorData.mentorAvailability,
+      })
+    } catch (error: any) {
+      console.error('[ProfilePage] Error updating mentor profile:', error)
+    }
+  }
+
+  // Add a new specialty tag
+  const handleAddSpecialty = () => {
+    const trimmed = newSpecialty.trim()
+    if (trimmed && !mentorData.mentorSpecialties.includes(trimmed)) {
+      setMentorData({
+        ...mentorData,
+        mentorSpecialties: [...mentorData.mentorSpecialties, trimmed],
+      })
+      setNewSpecialty('')
+    }
+  }
+
+  // Remove a specialty tag
+  const handleRemoveSpecialty = (specialty: string) => {
+    setMentorData({
+      ...mentorData,
+      mentorSpecialties: mentorData.mentorSpecialties.filter(s => s !== specialty),
+    })
+  }
+
+  // Toggle availability for a day
+  const DAYS = [
+    { key: 'monday', label: 'Lunes' },
+    { key: 'tuesday', label: 'Martes' },
+    { key: 'wednesday', label: 'Miércoles' },
+    { key: 'thursday', label: 'Jueves' },
+    { key: 'friday', label: 'Viernes' },
+    { key: 'saturday', label: 'Sábado' },
+    { key: 'sunday', label: 'Domingo' },
+  ] as const
+
+  const TIME_SLOTS = ['09:00-11:00', '11:00-13:00', '13:00-15:00', '15:00-17:00', '17:00-19:00']
+
+  const toggleTimeSlot = (day: string, slot: string) => {
+    const current = mentorData.mentorAvailability[day] || []
+    const updated = current.includes(slot)
+      ? current.filter(s => s !== slot)
+      : [...current, slot]
+    setMentorData({
+      ...mentorData,
+      mentorAvailability: {
+        ...mentorData.mentorAvailability,
+        [day]: updated,
+      },
+    })
   }
 
   // Show loading state
@@ -330,7 +416,7 @@ export function ProfilePage() {
           }}
           className="space-y-4 sm:space-y-6"
         >
-          <TabsList className="w-full grid grid-cols-2 h-auto bg-muted/30 p-1.5 rounded-xl border-0 shadow-sm">
+          <TabsList className={`w-full grid ${isMentor ? 'grid-cols-3' : 'grid-cols-2'} h-auto bg-muted/30 p-1.5 rounded-xl border-0 shadow-sm`}>
             <TabsTrigger 
               value="profile" 
               className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md rounded-lg py-2.5 px-3 sm:px-4 text-xs sm:text-sm font-semibold transition-all duration-200 hover:bg-muted/50 data-[state=inactive]:text-muted-foreground touch-target"
@@ -339,6 +425,16 @@ export function ProfilePage() {
               <span className="hidden sm:inline">Información Personal</span>
               <span className="sm:hidden">Perfil</span>
             </TabsTrigger>
+            {isMentor && (
+              <TabsTrigger 
+                value="mentor" 
+                className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md rounded-lg py-2.5 px-3 sm:px-4 text-xs sm:text-sm font-semibold transition-all duration-200 hover:bg-muted/50 data-[state=inactive]:text-muted-foreground touch-target"
+              >
+                <Chalkboard className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2 flex-shrink-0" />
+                <span className="hidden sm:inline">Perfil de Mentor</span>
+                <span className="sm:hidden">Mentor</span>
+              </TabsTrigger>
+            )}
             <TabsTrigger 
               value="password" 
               className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md rounded-lg py-2.5 px-3 sm:px-4 text-xs sm:text-sm font-semibold transition-all duration-200 hover:bg-muted/50 data-[state=inactive]:text-muted-foreground touch-target"
@@ -543,6 +639,227 @@ export function ProfilePage() {
               </Card>
             </motion.div>
           </TabsContent>
+
+          {/* Mentor Profile Tab */}
+          {isMentor && (
+            <TabsContent value="mentor">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <form onSubmit={handleUpdateMentorProfile} className="space-y-4 sm:space-y-6">
+                  {/* Availability Toggle */}
+                  <Card>
+                    <CardHeader className="p-4 sm:p-6 pb-3 sm:pb-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <CardTitle className="text-base sm:text-xl">Disponibilidad</CardTitle>
+                          <CardDescription className="text-xs sm:text-sm mt-1">
+                            Indica si estás aceptando nuevos aprendices
+                          </CardDescription>
+                        </div>
+                        <Switch
+                          checked={mentorData.mentorIsAvailable}
+                          onCheckedChange={(checked) =>
+                            setMentorData({ ...mentorData, mentorIsAvailable: checked })
+                          }
+                        />
+                      </div>
+                    </CardHeader>
+                  </Card>
+
+                  {/* Bio */}
+                  <Card>
+                    <CardHeader className="p-4 sm:p-6 pb-3 sm:pb-4">
+                      <CardTitle className="text-base sm:text-xl">Sobre Mí</CardTitle>
+                      <CardDescription className="text-xs sm:text-sm mt-1">
+                        Describe tu experiencia y cómo puedes ayudar a los aprendices
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-4 sm:p-6 pt-0">
+                      <Textarea
+                        value={mentorData.mentorBio}
+                        onChange={(e) =>
+                          setMentorData({ ...mentorData, mentorBio: e.target.value })
+                        }
+                        placeholder="Cuéntanos sobre tu experiencia profesional, áreas de conocimiento y cómo te gusta mentorear..."
+                        rows={5}
+                        className="text-sm sm:text-base resize-none"
+                      />
+                      <p className="text-[10px] sm:text-xs text-muted-foreground mt-2">
+                        {mentorData.mentorBio.length}/500 caracteres
+                      </p>
+                    </CardContent>
+                  </Card>
+
+                  {/* Specialties */}
+                  <Card>
+                    <CardHeader className="p-4 sm:p-6 pb-3 sm:pb-4">
+                      <CardTitle className="text-base sm:text-xl">Especialidades</CardTitle>
+                      <CardDescription className="text-xs sm:text-sm mt-1">
+                        Agrega tus áreas de expertise para que los aprendices te encuentren
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-4 sm:p-6 pt-0">
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        {mentorData.mentorSpecialties.map((specialty) => (
+                          <Badge
+                            key={specialty}
+                            variant="secondary"
+                            className="flex items-center gap-1 px-3 py-1.5 text-xs sm:text-sm"
+                          >
+                            {specialty}
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveSpecialty(specialty)}
+                              className="ml-1 hover:text-destructive transition-colors"
+                              title={`Eliminar ${specialty}`}
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </Badge>
+                        ))}
+                        {mentorData.mentorSpecialties.length === 0 && (
+                          <p className="text-xs sm:text-sm text-muted-foreground italic">
+                            Aún no has agregado especialidades
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex gap-2">
+                        <Input
+                          value={newSpecialty}
+                          onChange={(e) => setNewSpecialty(e.target.value)}
+                          placeholder="Ej: React, Liderazgo, UX Design..."
+                          className="h-11 sm:h-12 text-sm sm:text-base touch-target flex-1"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault()
+                              handleAddSpecialty()
+                            }
+                          }}
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={handleAddSpecialty}
+                          disabled={!newSpecialty.trim()}
+                          className="touch-target"
+                        >
+                          <Plus className="h-4 w-4 mr-1" />
+                          Agregar
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Weekly Availability Grid */}
+                  <Card>
+                    <CardHeader className="p-4 sm:p-6 pb-3 sm:pb-4">
+                      <CardTitle className="text-base sm:text-xl">Horarios Disponibles</CardTitle>
+                      <CardDescription className="text-xs sm:text-sm mt-1">
+                        Selecciona los horarios en los que puedes atender sesiones de mentoría
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-4 sm:p-6 pt-0">
+                      <div className="overflow-x-auto -mx-4 sm:mx-0">
+                        <div className="min-w-[600px] px-4 sm:px-0">
+                          <div className="grid grid-cols-[100px_repeat(5,1fr)] gap-1 sm:gap-2">
+                            {/* Header row */}
+                            <div className="text-xs font-semibold text-muted-foreground p-1" />
+                            {TIME_SLOTS.map((slot) => (
+                              <div
+                                key={slot}
+                                className="text-[10px] sm:text-xs font-semibold text-muted-foreground text-center p-1"
+                              >
+                                {slot}
+                              </div>
+                            ))}
+                            {/* Day rows */}
+                            {DAYS.map(({ key, label }) => (
+                              <>
+                                <div
+                                  key={`label-${key}`}
+                                  className="text-xs sm:text-sm font-medium text-foreground flex items-center p-1"
+                                >
+                                  {label}
+                                </div>
+                                {TIME_SLOTS.map((slot) => {
+                                  const isSelected = (
+                                    mentorData.mentorAvailability[key] || []
+                                  ).includes(slot)
+                                  return (
+                                    <button
+                                      key={`${key}-${slot}`}
+                                      type="button"
+                                      onClick={() => toggleTimeSlot(key, slot)}
+                                      className={`rounded-md h-8 sm:h-10 text-[10px] sm:text-xs font-medium transition-all duration-150 border ${
+                                        isSelected
+                                          ? 'bg-primary text-primary-foreground border-primary shadow-sm'
+                                          : 'bg-muted/30 text-muted-foreground border-transparent hover:bg-muted/60 hover:border-border'
+                                      }`}
+                                    >
+                                      {isSelected ? '✓' : ''}
+                                    </button>
+                                  )
+                                })}
+                              </>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Stats (read only) */}
+                  {(profile.mentorRating !== undefined || profile.totalMentorSessions !== undefined) && (
+                    <Card>
+                      <CardHeader className="p-4 sm:p-6 pb-3 sm:pb-4">
+                        <CardTitle className="text-base sm:text-xl">Estadísticas</CardTitle>
+                      </CardHeader>
+                      <CardContent className="p-4 sm:p-6 pt-0">
+                        <div className="grid grid-cols-3 gap-4 text-center">
+                          <div>
+                            <p className="text-2xl font-bold text-primary">
+                              {profile.mentorRating?.toFixed(1) || '—'}
+                            </p>
+                            <p className="text-xs text-muted-foreground">Calificación</p>
+                          </div>
+                          <div>
+                            <p className="text-2xl font-bold text-primary">
+                              {profile.totalMentorSessions || 0}
+                            </p>
+                            <p className="text-xs text-muted-foreground">Sesiones</p>
+                          </div>
+                          <div>
+                            <p className="text-2xl font-bold text-primary">
+                              {profile.totalMentees || 0}
+                            </p>
+                            <p className="text-xs text-muted-foreground">Aprendices</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Submit */}
+                  <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-4">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => navigate('/dashboard')}
+                      className="w-full sm:w-auto touch-target"
+                    >
+                      Cancelar
+                    </Button>
+                    <Button type="submit" disabled={loading} className="w-full sm:w-auto touch-target">
+                      {loading ? 'Guardando...' : 'Guardar Perfil de Mentor'}
+                    </Button>
+                  </div>
+                </form>
+              </motion.div>
+            </TabsContent>
+          )}
 
           {/* Password Tab */}
           <TabsContent value="password">

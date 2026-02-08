@@ -124,6 +124,23 @@ export interface User {
   area?: string                    // Área o departamento organizacional
   departamento?: string            // Departamento (alternativa a área, según estructura de empresa)
   centroCostos?: string            // Centro de costos para control administrativo
+
+  // Mentor Profile Fields (only for role === 'mentor')
+  mentorBio?: string
+  mentorSpecialties?: string[]
+  mentorAvailability?: {
+    monday?: string[]
+    tuesday?: string[]
+    wednesday?: string[]
+    thursday?: string[]
+    friday?: string[]
+    saturday?: string[]
+    sunday?: string[]
+  }
+  mentorIsAvailable?: boolean
+  mentorRating?: number
+  totalMentorSessions?: number
+  totalMentees?: number
 }
 
 export type AchievementTier = 'bronze' | 'silver' | 'gold' | 'platinum'

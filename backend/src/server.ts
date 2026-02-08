@@ -2169,6 +2169,30 @@ app.get('/api/mentorship/mentors/:mentorId/stats', requireAuth, async (req, res)
   }
 });
 
+// PUT /api/mentorship/mentor-profile - Update mentor's own profile (bio, specialties, availability)
+app.put('/api/mentorship/mentor-profile', requireAuth, async (req, res) => {
+  try {
+    const { tenantId, userId, mentorBio, mentorSpecialties, mentorAvailability, mentorIsAvailable } = req.body;
+
+    if (!tenantId || !userId) {
+      return res.status(400).json({ error: 'tenantId and userId are required' });
+    }
+
+    const { updateProfile } = await import('./functions/UserFunctions.js');
+    const updatedUser = await updateProfile(userId, tenantId, {
+      mentorBio,
+      mentorSpecialties,
+      mentorAvailability,
+      mentorIsAvailable,
+    });
+
+    res.json(updatedUser);
+  } catch (error: any) {
+    console.error('[API] Error updating mentor profile:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // ============================================
 // LIBRARY ENDPOINTS
 // ============================================
