@@ -1861,6 +1861,102 @@ class ApiServiceClass {
       method: 'DELETE',
     })
   }
+
+  // ============================================
+  // STPS Compliance
+  // ============================================
+
+  async getSTPSStats() {
+    return this.fetchWithAuth<import('@/lib/types').STPSStats>('/stps/stats')
+  }
+
+  async getSTPSTenantConfig() {
+    return this.fetchWithAuth<import('@/lib/types').STPSTenantConfig>('/stps/config')
+  }
+
+  async updateSTPSTenantConfig(config: Partial<import('@/lib/types').STPSTenantConfig>) {
+    return this.fetchWithAuth<import('@/lib/types').STPSTenantConfig>('/stps/config', {
+      method: 'PUT',
+      body: JSON.stringify(config),
+    })
+  }
+
+  async getSTPSEnabledCourses() {
+    return this.fetchWithAuth<import('@/lib/types').STPSCourseConfig[]>('/stps/courses')
+  }
+
+  async getSTPSCourseConfig(courseId: string) {
+    return this.fetchWithAuth<import('@/lib/types').STPSCourseConfig>(`/stps/courses/${courseId}`)
+  }
+
+  async updateSTPSCourseConfig(courseId: string, config: Partial<import('@/lib/types').STPSCourseConfig>) {
+    return this.fetchWithAuth<import('@/lib/types').STPSCourseConfig>(`/stps/courses/${courseId}`, {
+      method: 'PUT',
+      body: JSON.stringify(config),
+    })
+  }
+
+  async generateConstancia(userId: string, courseId: string) {
+    return this.fetchWithAuth<import('@/lib/types').STPSConstancia>('/stps/constancias/generate', {
+      method: 'POST',
+      body: JSON.stringify({ userId, courseId }),
+    })
+  }
+
+  async getSTPSConstancias(filters?: { status?: string; startDate?: string; endDate?: string }) {
+    const params = new URLSearchParams()
+    if (filters?.status) params.set('status', filters.status)
+    if (filters?.startDate) params.set('startDate', filters.startDate)
+    if (filters?.endDate) params.set('endDate', filters.endDate)
+    const qs = params.toString()
+    return this.fetchWithAuth<import('@/lib/types').STPSConstancia[]>(`/stps/constancias${qs ? '?' + qs : ''}`)
+  }
+
+  async getSTPSConstancia(id: string) {
+    return this.fetchWithAuth<import('@/lib/types').STPSConstancia>(`/stps/constancias/${id}`)
+  }
+
+  async downloadDC3PDF(id: string): Promise<Blob> {
+    const url = `${API_BASE_URL}/stps/constancias/${id}/pdf`
+    const token = localStorage.getItem('auth-token')
+    const response = await fetch(url, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    if (!response.ok) throw new Error('Error descargando PDF')
+    return response.blob()
+  }
+
+  async getSTPSDC4Report(startDate: string, endDate: string) {
+    return this.fetchWithAuth<import('@/lib/types').STPSDC4Report>(
+      `/stps/dc4-report?startDate=${startDate}&endDate=${endDate}`
+    )
+  }
+
+  // ============================================
+  // Billing
+  // ============================================
+
+  async getBillingPlans() {
+    return this.fetchWithAuth<import('@/lib/types').PlanDefinition[]>('/billing/plans')
+  }
+
+  async getBillingStatus() {
+    return this.fetchWithAuth<import('@/lib/types').BillingStatus>('/billing/status')
+  }
+
+  async createCheckoutSession(plan: import('@/lib/types').BillingPlan, interval: import('@/lib/types').BillingInterval) {
+    return this.fetchWithAuth<{ url: string; sessionId: string }>('/billing/checkout', {
+      method: 'POST',
+      body: JSON.stringify({ plan, interval }),
+    })
+  }
+
+  async createBillingPortalSession() {
+    return this.fetchWithAuth<{ url: string }>('/billing/portal', {
+      method: 'POST',
+      body: JSON.stringify({}),
+    })
+  }
 }
 
 export const ApiService = new ApiServiceClass()
