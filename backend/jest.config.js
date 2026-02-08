@@ -14,14 +14,23 @@ module.exports = {
   coverageReporters: ['text', 'lcov', 'html'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
+    '^uuid$': '<rootDir>/__mocks__/uuid.js',
+    '^ulid$': '<rootDir>/__mocks__/ulid.js',
   },
   transformIgnorePatterns: [
     'node_modules/(?!(uuid)/)',
   ],
   transform: {
     '^.+\\.tsx?$': ['ts-jest', {
-      useESM: true,
+      tsconfig: {
+        module: 'commonjs',
+        target: 'ES2020',
+        esModuleInterop: true,
+        strict: false,
+        skipLibCheck: true,
+        resolveJsonModule: true,
+        moduleResolution: 'node',
+      },
     }],
   },
-  extensionsToTreatAsEsm: ['.ts'],
 };
