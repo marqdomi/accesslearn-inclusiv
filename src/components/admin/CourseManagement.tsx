@@ -160,7 +160,6 @@ export function CourseManagement({ onBack }: CourseManagementProps) {
     return (
       <ModernCourseBuilder
         courseId={editingCourseId || undefined}
-        onBack={handleCourseUpdated}
       />
     )
   }

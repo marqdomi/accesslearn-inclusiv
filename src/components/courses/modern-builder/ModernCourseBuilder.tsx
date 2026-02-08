@@ -25,7 +25,6 @@ import { ReviewPublishStep } from './steps/ReviewPublishStep'
 
 interface ModernCourseBuilderProps {
   courseId?: string
-  onBack: () => void
 }
 
 const STEPS = [
@@ -36,7 +35,7 @@ const STEPS = [
   { id: 5, title: 'Revisar', description: 'Publicar curso' },
 ]
 
-export function ModernCourseBuilder({ courseId, onBack }: ModernCourseBuilderProps) {
+export function ModernCourseBuilder({ courseId }: ModernCourseBuilderProps) {
   const navigate = useNavigate()
   const { user } = useAuth()
   const { currentTenant } = useTenant()
@@ -358,16 +357,7 @@ export function ModernCourseBuilder({ courseId, onBack }: ModernCourseBuilderPro
     }
   }
   
-  const handleBack = () => {
-    if (isDirty) {
-      const shouldLeave = window.confirm(
-        '¿Estás seguro de salir? Tienes cambios sin guardar que se perderán.'
-      )
-      if (!shouldLeave) return
-    }
-    
-    onBack()
-  }
+
   
   // Update course handler (passed to steps)
   const updateCourse = (updates: Partial<CourseStructure>) => {
@@ -434,13 +424,6 @@ export function ModernCourseBuilder({ courseId, onBack }: ModernCourseBuilderPro
       {/* Header */}
       <div className="border-b bg-background">
         <div className="container mx-auto px-4 py-6">
-          <div className="mb-4">
-            <Button variant="ghost" onClick={handleBack} className="gap-2">
-              <ArrowLeft size={18} />
-              Volver a Mis Cursos
-            </Button>
-          </div>
-          
           <div className="flex items-center justify-between mb-6">
             <div className="space-y-2">
               <h1 className="text-3xl font-bold">
