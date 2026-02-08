@@ -12,6 +12,7 @@ import {
   ClipboardList,
   BarChart3,
   Settings,
+  MessageCircle,
 } from 'lucide-react'
 import { RequireRole } from '@/components/auth/RequireRole'
 import { RequirePermission } from '@/components/auth/RequirePermission'
@@ -56,6 +57,12 @@ export function QuickActions({ notificationCounts = {} }: QuickActionsProps) {
       label: 'Buscar Mentor',
       icon: Users,
       onClick: () => navigate('/mentors'),
+    },
+    {
+      id: 'forum',
+      label: 'Foro',
+      icon: MessageCircle,
+      onClick: () => navigate('/forum'),
     },
   ]
 
