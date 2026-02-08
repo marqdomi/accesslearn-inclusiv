@@ -4,7 +4,7 @@
  * Covers login flow, token validation, and edge cases
  */
 
-import * as crypto from 'crypto'
+import bcrypt from 'bcryptjs';
 
 // Mock CosmosDB before importing
 jest.mock('../src/services/cosmosdb.service', () => {
@@ -35,8 +35,8 @@ import { createMockUser, createMockAdmin, TEST_TENANT_ID } from './helpers/fixtu
 
 const mockContainer = (getContainer as jest.Mock)()
 
-function hashPassword(password: string): string {
-  return crypto.createHash('sha256').update(password).digest('hex')
+async function hashPassword(password: string): Promise<string> {
+  return bcrypt.hash(password, 12);
 }
 
 describe('AuthFunctions', () => {
@@ -47,7 +47,7 @@ describe('AuthFunctions', () => {
   describe('login', () => {
     it('should login successfully with valid credentials', async () => {
       const user = createMockUser({
-        password: hashPassword('TestPass123!'),
+        password: await hashPassword('TestPass123!'),
       })
 
       // Mock tenants container for slug resolution
@@ -92,7 +92,7 @@ describe('AuthFunctions', () => {
 
     it('should fail with invalid password', async () => {
       const user = createMockUser({
-        password: hashPassword('CorrectPassword'),
+        password: await hashPassword('CorrectPassword'),
       })
 
       const usersContainer = {
@@ -139,7 +139,7 @@ describe('AuthFunctions', () => {
 
     it('should fail when user is inactive', async () => {
       const user = createMockUser({
-        password: hashPassword('TestPass123!'),
+        password: await hashPassword('TestPass123!'),
         status: 'inactive' as any,
       })
 
@@ -166,7 +166,7 @@ describe('AuthFunctions', () => {
 
     it('should resolve tenant slug to tenant ID', async () => {
       const user = createMockUser({
-        password: hashPassword('TestPass123!'),
+        password: await hashPassword('TestPass123!'),
       })
 
       const tenantsContainer = {
@@ -209,7 +209,7 @@ describe('AuthFunctions', () => {
     it('should validate a legitimate token', async () => {
       // First login to get a valid token
       const user = createMockUser({
-        password: hashPassword('TestPass123!'),
+        password: await hashPassword('TestPass123!'),
       })
 
       const usersContainer = {

@@ -1519,7 +1519,7 @@ async function main() {
         name: 'Kainet',
         slug: 'kainet',
         contactEmail: 'contacto@kainet.mx',
-        plan: 'profesional',
+        plan: 'professional',
       });
       console.log(`  ✅ Tenant creado: ${tenant.name}`);
     } else {

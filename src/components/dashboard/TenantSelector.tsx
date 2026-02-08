@@ -24,7 +24,7 @@ const AVAILABLE_TENANTS = [
     slug: 'demo',
     primaryColor: '#4F46E5',
     secondaryColor: '#10B981',
-    plan: 'demo' as const,
+    plan: 'free-trial' as const,
     status: 'active' as const,
   },
   {
@@ -33,7 +33,7 @@ const AVAILABLE_TENANTS = [
     slug: 'kainet',
     primaryColor: '#2563EB',
     secondaryColor: '#F59E0B',
-    plan: 'profesional' as const,
+    plan: 'professional' as const,
     status: 'active' as const,
   },
   {

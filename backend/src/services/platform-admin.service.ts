@@ -6,6 +6,7 @@
 import { Container } from '@azure/cosmos'
 import { getContainer, isOfflineMode } from './cosmosdb.service'
 import { v4 as uuidv4 } from 'uuid'
+import { BillingPlan } from '../types/billing.types'
 
 // ============================================
 // Types
@@ -18,7 +19,7 @@ export interface Tenant {
   contactEmail: string
   primaryColor: string
   secondaryColor: string
-  plan: 'starter' | 'profesional' | 'enterprise'
+  plan: BillingPlan
   status: 'active' | 'suspended' | 'pending' | 'trial'
   subscriptionStartDate: string
   subscriptionEndDate?: string
@@ -44,7 +45,7 @@ export interface Subscription {
   id: string
   tenantId: string
   tenantName: string
-  plan: 'starter' | 'profesional' | 'enterprise'
+  plan: BillingPlan
   status: 'active' | 'canceled' | 'past_due' | 'trial'
   priceMonthly: number
   billingCycle: 'monthly' | 'yearly'
@@ -286,20 +287,22 @@ class PlatformAdminService {
   
   private getMaxUsersByPlan(plan: string): number {
     const limits: Record<string, number> = {
-      starter: 50,
-      profesional: 200,
-      enterprise: 1000
+      'free-trial': 10,
+      'starter': 50,
+      'professional': 250,
+      'enterprise': 9999
     }
-    return limits[plan] || 50
+    return limits[plan] || 10
   }
   
   private getMaxCoursesByPlan(plan: string): number {
     const limits: Record<string, number> = {
-      starter: 10,
-      profesional: 50,
-      enterprise: -1 // unlimited
+      'free-trial': 3,
+      'starter': 10,
+      'professional': 999,
+      'enterprise': 9999
     }
-    return limits[plan] || 10
+    return limits[plan] || 3
   }
   
   // ---- Users ----
@@ -385,9 +388,10 @@ class PlatformAdminService {
     const container = getContainer('subscriptions')
     
     const prices: Record<string, number> = {
-      starter: 29,
-      profesional: 99,
-      enterprise: 299
+      'free-trial': 0,
+      'starter': 2999,
+      'professional': 6999,
+      'enterprise': 14999
     }
     
     const now = new Date()
@@ -748,11 +752,11 @@ class PlatformAdminService {
         contactEmail: 'admin@kainet.mx',
         primaryColor: '#18b0f2',
         secondaryColor: '#7422a0',
-        plan: 'profesional',
+        plan: 'professional',
         status: 'active',
         subscriptionStartDate: '2025-11-23T04:56:12.148Z',
-        maxUsers: 200,
-        maxCourses: 50,
+        maxUsers: 250,
+        maxCourses: 999,
         currentUsers: 11,
         currentCourses: 3,
         createdAt: '2025-11-23T04:56:12.148Z',
@@ -767,11 +771,11 @@ class PlatformAdminService {
         contactEmail: 'admin@laboral.mx',
         primaryColor: '#1E40AF',
         secondaryColor: '#059669',
-        plan: 'profesional',
+        plan: 'professional',
         status: 'active',
         subscriptionStartDate: '2025-11-24T06:54:49.925Z',
-        maxUsers: 200,
-        maxCourses: 50,
+        maxUsers: 250,
+        maxCourses: 999,
         currentUsers: 3,
         currentCourses: 0,
         createdAt: '2025-11-24T06:54:49.925Z',
@@ -785,11 +789,11 @@ class PlatformAdminService {
         contactEmail: 'any_g_a@hotmail.com',
         primaryColor: '#2563EB',
         secondaryColor: '#10B981',
-        plan: 'profesional',
+        plan: 'professional',
         status: 'active',
         subscriptionStartDate: '2025-11-24T06:54:50.688Z',
-        maxUsers: 200,
-        maxCourses: 50,
+        maxUsers: 250,
+        maxCourses: 999,
         currentUsers: 2,
         currentCourses: 1,
         createdAt: '2025-11-24T06:54:50.688Z',

@@ -39,7 +39,7 @@ export interface Tenant {
   contactEmail: string
   primaryColor: string
   secondaryColor: string
-  plan: 'starter' | 'profesional' | 'enterprise'
+  plan: 'free-trial' | 'starter' | 'professional' | 'enterprise'
   status: 'active' | 'suspended' | 'pending' | 'trial'
   subscriptionStartDate: string
   subscriptionEndDate?: string
@@ -57,7 +57,7 @@ export interface Subscription {
   id: string
   tenantId: string
   tenantName: string
-  plan: 'starter' | 'profesional' | 'enterprise'
+  plan: 'free-trial' | 'starter' | 'professional' | 'enterprise'
   status: 'active' | 'canceled' | 'past_due' | 'trial'
   priceMonthly: number
   billingCycle: 'monthly' | 'yearly'

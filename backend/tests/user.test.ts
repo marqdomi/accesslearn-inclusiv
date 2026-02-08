@@ -71,8 +71,8 @@ describe('UserFunctions', () => {
       expect(result.firstName).toBe('New')
       expect(result.role).toBe('student')
       expect(result.status).toBe('active')
-      // Password is stored from temporaryPassword field
-      expect(result.password).toBe('SecurePass123!')
+      // Password is now bcrypt-hashed (starts with $2b$)
+      expect(result.password).toMatch(/^\$2[aby]\$\d{2}\$/)
     })
 
     it('should reject duplicate email within same tenant', async () => {

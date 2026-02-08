@@ -29,8 +29,8 @@ Planes disponibles:
     const [slug, name, email, plan] = args
 
     // Validate plan
-    if (!["demo", "profesional", "enterprise"].includes(plan)) {
-      console.error("❌ Plan inválido. Usa: demo, profesional, o enterprise")
+    if (!["free-trial", "starter", "professional", "enterprise"].includes(plan)) {
+      console.error("❌ Plan inválido. Usa: free-trial, starter, professional, o enterprise")
       process.exit(1)
     }
 
@@ -48,7 +48,7 @@ Planes disponibles:
       name,
       slug,
       contactEmail: email,
-      plan: plan as "demo" | "profesional" | "enterprise"
+      plan: plan as "free-trial" | "starter" | "professional" | "enterprise"
     })
 
     console.log("✅ Tenant creado exitosamente!\n")

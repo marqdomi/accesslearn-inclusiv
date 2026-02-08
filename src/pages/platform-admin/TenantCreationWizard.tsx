@@ -253,18 +253,12 @@ export default function TenantCreationWizard() {
     setError(null);
 
     try {
-      // Map form plan values to API expected values
-      const planMap: Record<string, 'demo' | 'profesional' | 'enterprise'> = {
-        'starter': 'demo',
-        'professional': 'profesional',
-        'enterprise': 'enterprise',
-      };
-
+      // Plan names now match directly between frontend and backend
       const tenantData = {
         name: formData.name,
         slug: formData.slug,
         contactEmail: formData.adminEmail, // Use admin email as contact email
-        plan: planMap[formData.plan] || 'profesional',
+        plan: formData.plan as 'free-trial' | 'starter' | 'professional' | 'enterprise',
         primaryColor: formData.primaryColor,
         secondaryColor: formData.secondaryColor,
         logo: formData.logoUrl || undefined,

@@ -1,10 +1,13 @@
 // Azure Container Apps Deployment for AccessLearn Inclusiv
 // This Bicep template deploys:
+// - Azure Cosmos DB (Serverless, NoSQL API)
+// - Azure Blob Storage for tenant assets
+// - Application Insights for observability
 // - Azure Container Registry for Docker images
 // - Azure Container Apps Environment
 // - Backend Container App (Node.js API)
 // - Frontend Container App (React SPA with nginx)
-// - Networking and DNS configuration
+// - Custom domain + managed SSL certificates
 
 // Parameters
 @description('Location for all resources')
@@ -15,13 +18,6 @@ param environment string = 'prod'
 
 @description('Application name prefix')
 param appName string = 'accesslearn'
-
-@description('Cosmos DB endpoint')
-param cosmosEndpoint string
-
-@description('Cosmos DB key')
-@secure()
-param cosmosKey string
 
 @description('Resend API key for email service')
 @secure()
@@ -37,6 +33,20 @@ param jwtSecret string
 @description('Container image tag')
 param imageTag string = 'latest'
 
+@description('Stripe secret key')
+@secure()
+param stripeSecretKey string = ''
+
+@description('Stripe webhook secret')
+@secure()
+param stripeWebhookSecret string = ''
+
+@description('Custom domain for frontend (e.g., app.kainet.mx)')
+param frontendCustomDomain string = ''
+
+@description('Custom domain for backend API (e.g., api.kainet.mx)')
+param backendCustomDomain string = ''
+
 // Variables
 var resourceGroupName = 'rg-${appName}-${environment}'
 var containerRegistryName = 'cr${appName}${environment}${uniqueString(resourceGroup().id)}'
@@ -44,8 +54,150 @@ var containerAppsEnvName = 'cae-${appName}-${environment}'
 var backendAppName = 'ca-${appName}-backend-${environment}'
 var frontendAppName = 'ca-${appName}-frontend-${environment}'
 var logAnalyticsName = 'log-${appName}-${environment}'
+var cosmosAccountName = 'cosmos-${appName}-${environment}'
+var cosmosDatabaseName = 'accesslearn-db'
+var storageAccountName = 'st${appName}${environment}'
+var appInsightsName = 'ai-${appName}-${environment}'
 
-// Log Analytics Workspace for Container Apps
+// ============================================
+// Azure Cosmos DB (Serverless, NoSQL API)
+// ============================================
+resource cosmosAccount 'Microsoft.DocumentDB/databaseAccounts@2024-05-15' = {
+  name: cosmosAccountName
+  location: location
+  kind: 'GlobalDocumentDB'
+  properties: {
+    databaseAccountOfferType: 'Standard'
+    capabilities: [
+      { name: 'EnableServerless' }
+    ]
+    consistencyPolicy: {
+      defaultConsistencyLevel: 'Session'
+    }
+    locations: [
+      {
+        locationName: location
+        failoverPriority: 0
+        isZoneRedundant: false
+      }
+    ]
+    backupPolicy: {
+      type: 'Continuous'
+      continuousModeProperties: {
+        tier: 'Continuous7Days'
+      }
+    }
+  }
+}
+
+resource cosmosDatabase 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2024-05-15' = {
+  parent: cosmosAccount
+  name: cosmosDatabaseName
+  properties: {
+    resource: {
+      id: cosmosDatabaseName
+    }
+  }
+}
+
+// Core containers with partition keys
+var containers = [
+  { name: 'tenants', partitionKey: '/id' }
+  { name: 'users', partitionKey: '/tenantId' }
+  { name: 'courses', partitionKey: '/tenantId' }
+  { name: 'lessons', partitionKey: '/tenantId' }
+  { name: 'user-progress', partitionKey: '/tenantId' }
+  { name: 'certificates', partitionKey: '/tenantId' }
+  { name: 'stps-records', partitionKey: '/tenantId' }
+  { name: 'subscriptions', partitionKey: '/tenantId' }
+  { name: 'invoices', partitionKey: '/tenantId' }
+  { name: 'analytics', partitionKey: '/tenantId' }
+  { name: 'notifications', partitionKey: '/tenantId' }
+  { name: 'audit-logs', partitionKey: '/tenantId' }
+  { name: 'accessibility-profiles', partitionKey: '/tenantId' }
+  { name: 'gamification', partitionKey: '/tenantId' }
+  { name: 'quizzes', partitionKey: '/tenantId' }
+  { name: 'mentoring-sessions', partitionKey: '/tenantId' }
+  { name: 'forums', partitionKey: '/tenantId' }
+  { name: 'badges', partitionKey: '/tenantId' }
+  { name: 'missions', partitionKey: '/tenantId' }
+  { name: 'rewards', partitionKey: '/tenantId' }
+  { name: 'leaderboards', partitionKey: '/tenantId' }
+  { name: 'feedback', partitionKey: '/tenantId' }
+]
+
+resource cosmosContainers 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers@2024-05-15' = [for container in containers: {
+  parent: cosmosDatabase
+  name: container.name
+  properties: {
+    resource: {
+      id: container.name
+      partitionKey: {
+        paths: [container.partitionKey]
+        kind: 'Hash'
+        version: 2
+      }
+      indexingPolicy: {
+        automatic: true
+        indexingMode: 'consistent'
+      }
+    }
+  }
+}]
+
+// ============================================
+// Azure Blob Storage (tenant logos, course assets)
+// ============================================
+resource storageAccount 'Microsoft.Storage/storageAccounts@2023-05-01' = {
+  name: storageAccountName
+  location: location
+  sku: {
+    name: 'Standard_LRS'
+  }
+  kind: 'StorageV2'
+  properties: {
+    accessTier: 'Hot'
+    allowBlobPublicAccess: false
+    minimumTlsVersion: 'TLS1_2'
+    supportsHttpsTrafficOnly: true
+    networkAcls: {
+      defaultAction: 'Allow'
+    }
+  }
+}
+
+resource blobService 'Microsoft.Storage/storageAccounts/blobServices@2023-05-01' = {
+  parent: storageAccount
+  name: 'default'
+}
+
+resource tenantLogosContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-05-01' = {
+  parent: blobService
+  name: 'tenant-logos'
+  properties: {
+    publicAccess: 'None'
+  }
+}
+
+resource courseAssetsContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-05-01' = {
+  parent: blobService
+  name: 'course-assets'
+  properties: {
+    publicAccess: 'None'
+  }
+}
+
+resource certificateAssetsContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-05-01' = {
+  parent: blobService
+  name: 'certificates'
+  properties: {
+    publicAccess: 'None'
+  }
+}
+
+// ============================================
+// Log Analytics + Application Insights
+// ============================================
 resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2022-10-01' = {
   name: logAnalyticsName
   location: location
@@ -54,6 +206,20 @@ resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2022-10-01' = {
       name: 'PerGB2018'
     }
     retentionInDays: 30
+  }
+}
+
+// Application Insights
+resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
+  name: appInsightsName
+  location: location
+  kind: 'web'
+  properties: {
+    Application_Type: 'web'
+    WorkspaceResourceId: logAnalytics.id
+    IngestionMode: 'LogAnalytics'
+    publicNetworkAccessForIngestion: 'Enabled'
+    publicNetworkAccessForQuery: 'Enabled'
   }
 }
 
@@ -113,7 +279,7 @@ resource backendApp 'Microsoft.App/containerApps@2023-05-01' = {
         }
         {
           name: 'cosmos-key'
-          value: cosmosKey
+          value: cosmosAccount.listKeys().primaryMasterKey
         }
         {
           name: 'resend-api-key'
@@ -122,6 +288,22 @@ resource backendApp 'Microsoft.App/containerApps@2023-05-01' = {
         {
           name: 'jwt-secret'
           value: jwtSecret
+        }
+        {
+          name: 'stripe-secret-key'
+          value: stripeSecretKey
+        }
+        {
+          name: 'stripe-webhook-secret'
+          value: stripeWebhookSecret
+        }
+        {
+          name: 'storage-connection-string'
+          value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};AccountKey=${storageAccount.listKeys().keys[0].value};EndpointSuffix=core.windows.net'
+        }
+        {
+          name: 'appinsights-connection-string'
+          value: appInsights.properties.ConnectionString
         }
       ]
     }
@@ -145,7 +327,7 @@ resource backendApp 'Microsoft.App/containerApps@2023-05-01' = {
             }
             {
               name: 'COSMOS_ENDPOINT'
-              value: cosmosEndpoint
+              value: cosmosAccount.properties.documentEndpoint
             }
             {
               name: 'COSMOS_KEY'
@@ -153,7 +335,7 @@ resource backendApp 'Microsoft.App/containerApps@2023-05-01' = {
             }
             {
               name: 'COSMOS_DATABASE'
-              value: 'accesslearn-db'
+              value: cosmosDatabaseName
             }
             {
               name: 'RESEND_API_KEY'
@@ -172,8 +354,24 @@ resource backendApp 'Microsoft.App/containerApps@2023-05-01' = {
               secretRef: 'jwt-secret'
             }
             {
+              name: 'STRIPE_SECRET_KEY'
+              secretRef: 'stripe-secret-key'
+            }
+            {
+              name: 'STRIPE_WEBHOOK_SECRET'
+              secretRef: 'stripe-webhook-secret'
+            }
+            {
+              name: 'AZURE_STORAGE_CONNECTION_STRING'
+              secretRef: 'storage-connection-string'
+            }
+            {
+              name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
+              secretRef: 'appinsights-connection-string'
+            }
+            {
               name: 'FRONTEND_URL'
-              value: 'https://app.kainet.mx'
+              value: frontendCustomDomain != '' ? 'https://${frontendCustomDomain}' : 'https://${frontendAppName}.${containerAppsEnvironment.properties.defaultDomain}'
             }
           ]
           probes: [
@@ -304,3 +502,8 @@ output frontendFqdn string = frontendApp.properties.configuration.ingress.fqdn
 output containerRegistryLoginServer string = containerRegistry.properties.loginServer
 output containerRegistryName string = containerRegistry.name
 output resourceGroupName string = resourceGroupName
+output cosmosEndpoint string = cosmosAccount.properties.documentEndpoint
+output cosmosAccountName string = cosmosAccount.name
+output storageAccountName string = storageAccount.name
+output appInsightsInstrumentationKey string = appInsights.properties.InstrumentationKey
+output appInsightsConnectionString string = appInsights.properties.ConnectionString

@@ -570,8 +570,9 @@ export function TenantManagementConsole() {
                 <SelectContent>
                   <SelectItem value="all">All Plans</SelectItem>
                   <SelectItem value="enterprise">Enterprise</SelectItem>
-                  <SelectItem value="profesional">Professional</SelectItem>
-                  <SelectItem value="demo">Demo/Trial</SelectItem>
+                  <SelectItem value="professional">Professional</SelectItem>
+                  <SelectItem value="starter">Starter</SelectItem>
+                  <SelectItem value="free-trial">Free Trial</SelectItem>
                 </SelectContent>
               </Select>
 

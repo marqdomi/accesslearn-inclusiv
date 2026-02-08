@@ -1,3 +1,5 @@
+import { BillingPlan } from '../types/billing.types'
+
 export interface Tenant {
   id: string
   name: string
@@ -14,7 +16,7 @@ export interface Tenant {
   contactPhone?: string
   
   // Subscription
-  plan: "demo" | "profesional" | "enterprise"
+  plan: BillingPlan
   status: "active" | "suspended" | "canceled"
   trialEndsAt?: string // ISO date
   subscriptionStartDate: string
@@ -39,7 +41,7 @@ export interface CreateTenantRequest {
   slug: string
   contactEmail: string
   contactPhone?: string
-  plan: "demo" | "profesional" | "enterprise"
+  plan: BillingPlan
   
   // Optional branding
   logo?: string

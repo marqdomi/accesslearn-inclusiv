@@ -1,0 +1,173 @@
+name: Build, Test & Deploy to Azure
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  AZURE_RESOURCE_GROUP: rg-accesslearn-prod
+  ACR_NAME: craccesslearnprod
+  BACKEND_APP: ca-accesslearn-backend-prod
+  FRONTEND_APP: ca-accesslearn-frontend-prod
+  NODE_VERSION: '20'
+
+jobs:
+  # ============================================
+  # 1. Test Backend
+  # ============================================
+  test-backend:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test -- --ci --coverage
+        env:
+          NODE_ENV: test
+          COSMOS_OFFLINE_MODE: 'true'
+
+      - name: Upload coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage
+          path: backend/coverage/
+
+  # ============================================
+  # 2. Test Frontend
+  # ============================================
+  test-frontend:
+    name: Frontend Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: Run tests
+        run: npx vitest run --coverage
+        env:
+          NODE_ENV: test
+
+      - name: Upload coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage
+          path: coverage/
+
+  # ============================================
+  # 3. Build & Push Docker Images
+  # ============================================
+  build-and-push:
+    name: Build & Push to ACR
+    runs-on: ubuntu-latest
+    needs: [test-backend, test-frontend]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Login to ACR
+        run: az acr login --name ${{ env.ACR_NAME }}
+
+      - name: Set image tag
+        id: tag
+        run: echo "tag=$(echo $GITHUB_SHA | cut -c1-7)" >> $GITHUB_OUTPUT
+
+      - name: Build & push backend
+        run: |
+          docker build -t ${{ env.ACR_NAME }}.azurecr.io/accesslearn-backend:${{ steps.tag.outputs.tag }} \
+                        -t ${{ env.ACR_NAME }}.azurecr.io/accesslearn-backend:latest \
+                        -f backend/Dockerfile backend/
+          docker push ${{ env.ACR_NAME }}.azurecr.io/accesslearn-backend:${{ steps.tag.outputs.tag }}
+          docker push ${{ env.ACR_NAME }}.azurecr.io/accesslearn-backend:latest
+
+      - name: Build & push frontend
+        run: |
+          docker build -t ${{ env.ACR_NAME }}.azurecr.io/accesslearn-frontend:${{ steps.tag.outputs.tag }} \
+                        -t ${{ env.ACR_NAME }}.azurecr.io/accesslearn-frontend:latest \
+                        -f Dockerfile .
+          docker push ${{ env.ACR_NAME }}.azurecr.io/accesslearn-frontend:${{ steps.tag.outputs.tag }}
+          docker push ${{ env.ACR_NAME }}.azurecr.io/accesslearn-frontend:latest
+
+    outputs:
+      image_tag: ${{ steps.tag.outputs.tag }}
+
+  # ============================================
+  # 4. Deploy to Azure Container Apps
+  # ============================================
+  deploy:
+    name: Deploy to Azure
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy backend
+        uses: azure/container-apps-deploy-action@v1
+        with:
+          resourceGroup: ${{ env.AZURE_RESOURCE_GROUP }}
+          containerAppName: ${{ env.BACKEND_APP }}
+          imageToDeploy: ${{ env.ACR_NAME }}.azurecr.io/accesslearn-backend:${{ needs.build-and-push.outputs.image_tag }}
+
+      - name: Deploy frontend
+        uses: azure/container-apps-deploy-action@v1
+        with:
+          resourceGroup: ${{ env.AZURE_RESOURCE_GROUP }}
+          containerAppName: ${{ env.FRONTEND_APP }}
+          imageToDeploy: ${{ env.ACR_NAME }}.azurecr.io/accesslearn-frontend:${{ needs.build-and-push.outputs.image_tag }}
+
+      - name: Verify deployment
+        run: |
+          echo "Waiting for deployment to stabilize..."
+          sleep 30
+          
+          BACKEND_URL=$(az containerapp show -n ${{ env.BACKEND_APP }} -g ${{ env.AZURE_RESOURCE_GROUP }} --query "properties.configuration.ingress.fqdn" -o tsv)
+          FRONTEND_URL=$(az containerapp show -n ${{ env.FRONTEND_APP }} -g ${{ env.AZURE_RESOURCE_GROUP }} --query "properties.configuration.ingress.fqdn" -o tsv)
+          
+          echo "Backend: https://$BACKEND_URL"
+          echo "Frontend: https://$FRONTEND_URL"
+          
+          # Health checks
+          curl -sf "https://$BACKEND_URL/health" || (echo "Backend health check failed!" && exit 1)
+          curl -sf "https://$FRONTEND_URL/health" || (echo "Frontend health check failed!" && exit 1)
+          
+          echo "Deployment verified successfully!"

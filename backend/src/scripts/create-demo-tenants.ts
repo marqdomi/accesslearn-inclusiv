@@ -37,7 +37,7 @@ async function main() {
         name: 'LaboralMX',
         slug: laboralSlug,
         contactEmail: 'admin@laboral.mx',
-        plan: 'profesional',
+        plan: 'professional',
         primaryColor: '#1E40AF', // Azul corporativo
         secondaryColor: '#059669' // Verde
       })
@@ -112,7 +112,7 @@ async function main() {
         name: 'Dra. Amayrani Gómez Alonso',
         slug: draSlug,
         contactEmail: 'any_g_a@hotmail.com',
-        plan: 'profesional',
+        plan: 'professional',
         primaryColor: '#2563EB', // Azul médico
         secondaryColor: '#10B981' // Verde salud
       })

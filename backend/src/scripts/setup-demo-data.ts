@@ -24,7 +24,7 @@ async function main() {
         name: 'Kainet',
         slug: tenantSlug,
         contactEmail: 'admin@kainet.mx',
-        plan: 'profesional',
+        plan: 'professional',
         primaryColor: '#4F46E5',
         secondaryColor: '#10B981'
       })

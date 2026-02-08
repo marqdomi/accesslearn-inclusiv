@@ -4,18 +4,19 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
-import * as crypto from 'crypto';
+import bcrypt from 'bcryptjs';
 import { getContainer } from '../services/cosmosdb.service';
 import { User, UserRole, CreateUserRequest, UpdateUserRequest, UserProgress } from '../models/User';
 import { emailService } from '../services/email.service';
 import { getLevelFromXP } from './GamificationFunctions';
 
+const BCRYPT_ROUNDS = 12;
+
 /**
- * Hash password using SHA-256
- * In production, consider using bcrypt or Argon2 for better security
+ * Hash password using bcrypt (production-ready)
  */
-function hashPassword(password: string): string {
-  return crypto.createHash('sha256').update(password).digest('hex');
+async function hashPassword(password: string): Promise<string> {
+  return bcrypt.hash(password, BCRYPT_ROUNDS);
 }
 
 /**
@@ -82,6 +83,10 @@ export async function createUser(request: CreateUserRequest): Promise<User> {
   const now = new Date().toISOString();
   const userId = `user-${uuidv4()}`;
   
+  // Hash the password with bcrypt before storing
+  const rawPassword = request.temporaryPassword || 'Welcome123!';
+  const hashedPwd = await hashPassword(rawPassword);
+  
   const newUser: User = {
     id: userId,
     tenantId: request.tenantId,
@@ -91,8 +96,8 @@ export async function createUser(request: CreateUserRequest): Promise<User> {
     role: request.role,
     status: 'active',
     
-    // Authentication (for demo/testing - use temporaryPassword or default)
-    password: request.temporaryPassword || 'Welcome123!',
+    // Authentication - password hashed with bcrypt
+    password: hashedPwd,
     passwordResetRequired: true,
     
     // Mexican compliance
@@ -218,10 +223,15 @@ export async function changePassword(
     throw new Error(`Usuario ${userId} no encontrado.`);
   }
   
-  // Validate current password
-  const hashedCurrentPassword = hashPassword(currentPassword);
-  if (existingUser.password && existingUser.password !== hashedCurrentPassword) {
-    throw new Error('Contraseña actual incorrecta.');
+  // Validate current password using bcrypt
+  const isCurrentValid = await bcrypt.compare(currentPassword, existingUser.password || '');
+  if (!isCurrentValid) {
+    // Fallback: check SHA-256 for legacy passwords
+    const crypto = require('crypto');
+    const sha256Hash = crypto.createHash('sha256').update(currentPassword).digest('hex');
+    if (existingUser.password && existingUser.password !== sha256Hash) {
+      throw new Error('Contraseña actual incorrecta.');
+    }
   }
   
   // Validate new password (minimum 8 characters)
@@ -229,8 +239,8 @@ export async function changePassword(
     throw new Error('La nueva contraseña debe tener al menos 8 caracteres.');
   }
   
-  // Hash new password
-  const hashedNewPassword = hashPassword(newPassword);
+  // Hash new password with bcrypt
+  const hashedNewPassword = await hashPassword(newPassword);
   
   // Update password
   const updatedUser: User = {
@@ -620,8 +630,8 @@ export async function acceptInvitation(
     throw new Error('Esta invitación ya ha sido aceptada.');
   }
   
-  // Update user - set password (hashed) and activate
-  user.password = hashPassword(password); // Hash password for security
+  // Update user - set password (hashed with bcrypt) and activate
+  user.password = await hashPassword(password);
   user.status = 'active';
   user.invitationToken = undefined;
   user.invitationAcceptedAt = new Date().toISOString();
@@ -682,8 +692,8 @@ export async function registerUser(request: {
     role: userRole,
     status: 'active', // Directly active for public registration
     
-    // Hash password
-    password: hashPassword(request.password),
+    // Hash password with bcrypt
+    password: await hashPassword(request.password),
     passwordResetRequired: false,
     
     // Initialize empty

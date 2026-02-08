@@ -259,8 +259,9 @@ export default function PlatformBillingManagement() {
                     aria-label="Filtrar por plan"
                   >
                     <option value="all">Todos los planes</option>
+                    <option value="free-trial">Free Trial</option>
                     <option value="starter">Starter</option>
-                    <option value="profesional">Profesional</option>
+                    <option value="professional">Professional</option>
                     <option value="enterprise">Enterprise</option>
                   </select>
                   <select

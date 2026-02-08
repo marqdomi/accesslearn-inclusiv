@@ -13,6 +13,8 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import { ApiService } from '@/services/api.service'
 
+export type TenantPlan = 'free-trial' | 'starter' | 'professional' | 'enterprise'
+
 export interface Tenant {
   id: string              // tenant-demo, tenant-kainet
   name: string            // Empresa Demo, Kainet
@@ -21,7 +23,7 @@ export interface Tenant {
   logo?: string
   primaryColor: string
   secondaryColor: string
-  plan: 'demo' | 'profesional' | 'enterprise'
+  plan: TenantPlan
   status: 'active' | 'suspended' | 'canceled'
 }
 
@@ -66,7 +68,7 @@ export function TenantProvider({ children }: TenantProviderProps) {
             logo: tenant.logo, // This will be blobName if from Blob Storage
             primaryColor: tenant.primaryColor || '#4F46E5',
             secondaryColor: tenant.secondaryColor || '#10B981',
-            plan: tenant.plan as 'demo' | 'profesional' | 'enterprise',
+            plan: tenant.plan as TenantPlan,
             status: tenant.status as 'active' | 'suspended' | 'canceled'
           }
           setCurrentTenantState(frontendTenant)
@@ -78,7 +80,7 @@ export function TenantProvider({ children }: TenantProviderProps) {
             slug: slug,
             primaryColor: '#4F46E5',
             secondaryColor: '#10B981',
-            plan: tenantId === 'tenant-demo' ? 'demo' : 'profesional',
+            plan: tenantId === 'tenant-demo' ? 'free-trial' : 'professional',
             status: 'active'
           }
           setCurrentTenantState(defaultTenant)
@@ -92,7 +94,7 @@ export function TenantProvider({ children }: TenantProviderProps) {
           slug: slug,
           primaryColor: '#4F46E5',
           secondaryColor: '#10B981',
-          plan: tenantId === 'tenant-demo' ? 'demo' : 'profesional',
+          plan: tenantId === 'tenant-demo' ? 'free-trial' : 'professional',
           status: 'active'
         }
         setCurrentTenantState(defaultTenant)

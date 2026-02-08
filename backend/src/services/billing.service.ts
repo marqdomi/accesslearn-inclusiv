@@ -330,19 +330,12 @@ async function updateTenantPlan(tenantId: string, plan: BillingPlan) {
 
   const container = getContainer('tenants');
   
-  // Map billing plan to tenant plan field
-  const tenantPlanMap: Record<BillingPlan, string> = {
-    'free-trial': 'demo',
-    'starter': 'profesional',
-    'professional': 'profesional',
-    'enterprise': 'enterprise',
-  };
-
+  // Tenant model now uses BillingPlan directly — no mapping needed
   try {
     const { resource: tenant } = await container.item(tenantId, tenantId).read();
     if (!tenant) return;
 
-    tenant.plan = tenantPlanMap[plan] || 'demo';
+    tenant.plan = plan;
     tenant.maxUsers = planDef.limits.maxUsers;
     tenant.maxCourses = planDef.limits.maxCourses;
     tenant.updatedAt = new Date().toISOString();

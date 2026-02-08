@@ -4,6 +4,7 @@
  */
 
 import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
 import { getContainer } from '../services/cosmosdb.service';
 import { User } from '../models/User';
 
@@ -78,17 +79,24 @@ export async function login(request: LoginRequest): Promise<LoginResponse> {
 
     const user = resources[0];
 
-    // Validate password (using SHA-256 hash)
-    // In production, use bcrypt.compare(password, user.passwordHash)
-    const crypto = require('crypto');
-    const hashPassword = (pwd: string) => crypto.createHash('sha256').update(pwd).digest('hex');
-    const hashedPassword = hashPassword(password);
+    // Validate password using bcrypt
+    const isPasswordValid = await bcrypt.compare(password, user.password || '');
     
-    if (user.password && hashedPassword !== user.password) {
-      return {
-        success: false,
-        error: 'Usuario no encontrado o credenciales incorrectas.',
-      };
+    if (!isPasswordValid) {
+      // Fallback: check SHA-256 for legacy passwords (migration support)
+      const crypto = require('crypto');
+      const sha256Hash = crypto.createHash('sha256').update(password).digest('hex');
+      if (user.password && sha256Hash !== user.password) {
+        return {
+          success: false,
+          error: 'Usuario no encontrado o credenciales incorrectas.',
+        };
+      }
+      // Legacy password matched — rehash with bcrypt for future logins
+      if (user.password && sha256Hash === user.password) {
+        user.password = await bcrypt.hash(password, 12);
+        // Will be saved with the lastLoginAt update below
+      }
     }
 
     // Check if user is active (could add more validations here)

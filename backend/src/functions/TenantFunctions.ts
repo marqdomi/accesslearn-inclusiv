@@ -1,5 +1,6 @@
 import { getContainer, isOfflineMode } from "../services/cosmosdb.service"
 import { Tenant, CreateTenantRequest } from "../models/Tenant"
+import { BillingPlan } from "../types/billing.types"
 import { seedAccessibilityProfiles } from "../scripts/seed-accessibility-profiles"
 
 // Mock data for offline development
@@ -13,10 +14,10 @@ const MOCK_TENANTS: Tenant[] = [
     logo: "",
     primaryColor: "#4F46E5",
     secondaryColor: "#10B981",
-    plan: "demo",
+    plan: "free-trial",
     status: "active",
-    maxUsers: 50,
-    maxCourses: 10,
+    maxUsers: 10,
+    maxCourses: 3,
     subscriptionStartDate: new Date().toISOString(),
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
@@ -42,11 +43,12 @@ const MOCK_TENANTS: Tenant[] = [
   }
 ]
 
-// Plan limits
-const PLAN_LIMITS = {
-  demo: { maxUsers: 50, maxCourses: 10, trialDays: 60 },
-  profesional: { maxUsers: 200, maxCourses: 50, trialDays: 0 },
-  enterprise: { maxUsers: 1000, maxCourses: 500, trialDays: 0 }
+// Plan limits aligned with billing.types.ts PLAN_CATALOG
+const PLAN_LIMITS: Record<BillingPlan, { maxUsers: number; maxCourses: number; trialDays: number }> = {
+  'free-trial': { maxUsers: 10, maxCourses: 3, trialDays: 14 },
+  'starter': { maxUsers: 50, maxCourses: 10, trialDays: 0 },
+  'professional': { maxUsers: 250, maxCourses: 999, trialDays: 0 },
+  'enterprise': { maxUsers: 9999, maxCourses: 9999, trialDays: 0 }
 }
 
 export async function createTenant(
@@ -63,9 +65,9 @@ export async function createTenant(
   // Get plan limits
   const limits = PLAN_LIMITS[request.plan]
 
-  // Calculate trial end date for demo plan
+  // Calculate trial end date for free-trial plan
   let trialEndsAt: string | undefined
-  if (request.plan === "demo") {
+  if (request.plan === "free-trial") {
     const trialEnd = new Date()
     trialEnd.setDate(trialEnd.getDate() + limits.trialDays)
     trialEndsAt = trialEnd.toISOString()

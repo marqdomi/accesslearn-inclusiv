@@ -48,6 +48,7 @@ import {
   acceptInvitation,
 } from './functions/UserFunctions';
 import { emailService } from './services/email.service';
+import { selfServiceTenantSignup, checkSlugAvailability } from './services/tenant-onboarding.service';
 import { getCourses } from './functions/GetCourses';
 import {
   getCourses as getCoursesNew,
@@ -292,7 +293,7 @@ app.use(helmet({
 }));
 
 // Rate limiting - General API rate limit
-// More permissive for authenticated users, stricter for anonymous
+// Tenant-aware: authenticated users are keyed by tenantId + IP
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: (req) => {
@@ -302,6 +303,11 @@ const generalLimiter = rateLimit({
     }
     // Anonymous users get lower limits
     return process.env.NODE_ENV === 'production' ? 100 : 1000; // 100 requests per 15 min for anonymous
+  },
+  keyGenerator: (req) => {
+    // Key by tenantId + IP for tenant-aware rate limiting
+    const tenantId = (req as any).user?.tenantId || req.headers['x-tenant-id'] || 'anonymous';
+    return `${tenantId}:${req.ip}`;
   },
   message: {
     error: 'Demasiadas solicitudes desde esta IP, por favor intenta de nuevo más tarde.',
@@ -1247,6 +1253,35 @@ app.post('/api/users/accept-invitation', async (req, res) => {
   } catch (error: any) {
     console.error('[API] Error accepting invitation:', error);
     res.status(400).json({ error: error.message });
+  }
+});
+
+// ============================================
+// Tenant Self-Service Onboarding (Public)
+// ============================================
+
+// POST /api/onboarding/signup - Public tenant registration
+app.post('/api/onboarding/signup', async (req, res) => {
+  try {
+    const result = await selfServiceTenantSignup(req.body);
+    if (!result.success) {
+      return res.status(400).json({ error: result.error });
+    }
+    res.status(201).json(result);
+  } catch (error: any) {
+    console.error('[API] Onboarding error:', error);
+    res.status(500).json({ error: 'Error al procesar el registro.' });
+  }
+});
+
+// GET /api/onboarding/check-slug/:slug - Check slug availability
+app.get('/api/onboarding/check-slug/:slug', async (req, res) => {
+  try {
+    const available = await checkSlugAvailability(req.params.slug);
+    res.json({ available, slug: req.params.slug });
+  } catch (error: any) {
+    console.error('[API] Slug check error:', error);
+    res.status(500).json({ error: 'Error al verificar disponibilidad.' });
   }
 });
 
@@ -4345,9 +4380,10 @@ app.get('/api/platform/stats', requireAuth, requireSuperAdmin, async (req, res) 
     
     // Calculate MRR based on plan pricing
     const planPricing: Record<string, number> = {
-      'demo': 0,
-      'profesional': 199,
-      'enterprise': 499
+      'free-trial': 0,
+      'starter': 2999,
+      'professional': 6999,
+      'enterprise': 14999
     };
     
     const mrr = tenants.reduce((sum, tenant) => {
@@ -4419,9 +4455,10 @@ app.get('/api/platform/tenants', requireAuth, requireSuperAdmin, async (req, res
           .fetchAll();
         
         const planPricing: Record<string, number> = {
-          'demo': 0,
-          'profesional': 199,
-          'enterprise': 499
+          'free-trial': 0,
+          'starter': 2999,
+          'professional': 6999,
+          'enterprise': 14999
         };
         
         return {
