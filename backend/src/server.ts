@@ -211,6 +211,15 @@ import {
   getSTPSStats,
 } from './functions/STPSFunctions';
 import { generateDC3PDF } from './services/dc3-pdf.service';
+import {
+  createCheckoutSession,
+  createBillingPortalSession,
+  constructWebhookEvent,
+  handleWebhookEvent,
+  getBillingStats,
+  getTenantSubscription,
+} from './services/billing.service';
+import { PLAN_CATALOG } from './types/billing.types';
 import { platformAdminService } from './services/platform-admin.service';
 import {
   aiHealthCheck,
@@ -321,6 +330,23 @@ const authLimiter = rateLimit({
 
 // Apply general rate limiting to all routes
 app.use('/api/', generalLimiter);
+
+// Stripe webhook needs raw body BEFORE json parser
+app.post('/api/billing/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+  try {
+    const signature = req.headers['stripe-signature'] as string;
+    if (!signature) {
+      return res.status(400).json({ error: 'Missing Stripe signature' });
+    }
+    const event = constructWebhookEvent(req.body, signature);
+    await handleWebhookEvent(event);
+    res.json({ received: true });
+  } catch (error: any) {
+    console.error('[Billing] Webhook error:', error.message);
+    res.status(400).json({ error: error.message });
+  }
+});
+
 app.use(express.json({ limit: '10mb' })); // Limit JSON payload size
 
 // Application Insights telemetry middleware (track all requests)
@@ -3221,6 +3247,81 @@ app.get('/api/stps/dc4-report', requireAuth, requireRole('tenant-admin', 'super-
   } catch (error: any) {
     console.error('[STPS] Error generating DC-4 report:', error);
     res.status(500).json({ error: error.message });
+  }
+});
+
+// ============================================
+// BILLING / SUBSCRIPTION ENDPOINTS
+// ============================================
+
+// GET /api/billing/plans - List available plans (public info)
+app.get('/api/billing/plans', requireAuth, async (_req, res) => {
+  res.json(PLAN_CATALOG.map(p => ({
+    id: p.id,
+    name: p.name,
+    description: p.description,
+    features: p.features,
+    limits: p.limits,
+    pricing: p.pricing,
+  })));
+});
+
+// GET /api/billing/status - Get current billing status for tenant
+app.get('/api/billing/status', requireAuth, requireRole('tenant-admin', 'super-admin'), async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const stats = await getBillingStats(user.tenantId);
+    res.json(stats);
+  } catch (error: any) {
+    console.error('[Billing] Error getting status:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/billing/subscription - Get subscription details
+app.get('/api/billing/subscription', requireAuth, requireRole('tenant-admin', 'super-admin'), async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const subscription = await getTenantSubscription(user.tenantId);
+    res.json(subscription || { status: 'none', plan: 'free-trial' });
+  } catch (error: any) {
+    console.error('[Billing] Error getting subscription:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/billing/checkout - Create Stripe checkout session
+app.post('/api/billing/checkout', requireAuth, requireRole('tenant-admin', 'super-admin'), async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const { plan, interval, billingEmail } = req.body;
+
+    if (!plan || !interval) {
+      return res.status(400).json({ error: 'plan and interval are required' });
+    }
+
+    const result = await createCheckoutSession(user.tenantId, {
+      plan,
+      interval,
+      billingEmail: billingEmail || user.email,
+    }, user.email);
+
+    res.json(result);
+  } catch (error: any) {
+    console.error('[Billing] Error creating checkout:', error);
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// POST /api/billing/portal - Create Stripe billing portal session
+app.post('/api/billing/portal', requireAuth, requireRole('tenant-admin', 'super-admin'), async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const result = await createBillingPortalSession(user.tenantId, req.body.returnUrl);
+    res.json(result);
+  } catch (error: any) {
+    console.error('[Billing] Error creating portal session:', error);
+    res.status(400).json({ error: error.message });
   }
 });
 

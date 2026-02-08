@@ -1037,3 +1037,43 @@ export interface STPSDC4Report {
     totalConstancias: number
   }
 }
+
+// ============================================
+// Billing Types
+// ============================================
+
+export type BillingPlan = 'free-trial' | 'starter' | 'professional' | 'enterprise'
+export type BillingInterval = 'monthly' | 'yearly'
+export type SubscriptionStatus = 'trialing' | 'active' | 'past_due' | 'canceled' | 'unpaid'
+
+export interface PlanDefinition {
+  id: BillingPlan
+  name: string
+  description: string
+  features: string[]
+  limits: {
+    maxUsers: number
+    maxCourses: number
+    maxStorageGB: number
+    stpsEnabled: boolean
+    customBranding: boolean
+    apiAccess: boolean
+    prioritySupport: boolean
+  }
+  pricing: {
+    monthly: number
+    yearly: number
+  }
+}
+
+export interface BillingStatus {
+  currentPlan: BillingPlan
+  planName: string
+  status: SubscriptionStatus | 'none'
+  interval: BillingInterval | null
+  currentPeriodEnd: string | null
+  canceledAt: string | null
+  limits: PlanDefinition['limits']
+  pricing: PlanDefinition['pricing']
+  hasActiveSubscription: boolean
+}

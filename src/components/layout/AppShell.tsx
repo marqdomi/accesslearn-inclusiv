@@ -32,6 +32,7 @@ import {
   Wheelchair,
   ChatsCircle,
   Certificate,
+  CreditCard,
 } from '@phosphor-icons/react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useTenant } from '@/contexts/TenantContext'
@@ -202,6 +203,12 @@ function useNavItems(unreadCount: number) {
         label: 'STPS / DC-3',
         href: '/admin/stps',
         icon: Certificate,
+        roles: ['super-admin', 'tenant-admin'],
+      },
+      {
+        label: 'Facturación',
+        href: '/admin/billing',
+        icon: CreditCard,
         roles: ['super-admin', 'tenant-admin'],
       },
       {
