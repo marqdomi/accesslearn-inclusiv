@@ -196,6 +196,21 @@ import {
   getAuditStats,
 } from './functions/AuditFunctions';
 import { attachAuditMetadata, auditCreate, auditRoleChange } from './middleware/audit';
+import {
+  getSTPSTenantConfig,
+  upsertSTPSTenantConfig,
+  getSTPSCourseConfig,
+  getSTPSEnabledCourses,
+  upsertSTPSCourseConfig,
+  generateConstancia,
+  getConstanciasByUser,
+  getConstanciasByCourse,
+  getConstanciaById,
+  getAllConstancias,
+  generateDC4Report,
+  getSTPSStats,
+} from './functions/STPSFunctions';
+import { generateDC3PDF } from './services/dc3-pdf.service';
 import { platformAdminService } from './services/platform-admin.service';
 import {
   aiHealthCheck,
@@ -3009,6 +3024,202 @@ app.put('/api/certificate-templates', requireAuth, requirePermission('settings:w
     res.json(template);
   } catch (error: any) {
     console.error('[API] Error updating certificate template:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ============================================
+// STPS COMPLIANCE ENDPOINTS (DC-3 / DC-4)
+// ============================================
+
+// GET /api/stps/stats - Dashboard stats for STPS compliance
+app.get('/api/stps/stats', requireAuth, requireRole('tenant-admin', 'super-admin'), async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const stats = await getSTPSStats(user.tenantId);
+    res.json(stats);
+  } catch (error: any) {
+    console.error('[STPS] Error getting stats:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/stps/tenant-config - Get STPS config for current tenant
+app.get('/api/stps/tenant-config', requireAuth, requireRole('tenant-admin', 'super-admin'), async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const config = await getSTPSTenantConfig(user.tenantId);
+    res.json(config || { tenantId: user.tenantId, configured: false });
+  } catch (error: any) {
+    console.error('[STPS] Error getting tenant config:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// PUT /api/stps/tenant-config - Update STPS tenant config (IMSS, giro, etc.)
+app.put('/api/stps/tenant-config', requireAuth, requireRole('tenant-admin', 'super-admin'), async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const config = await upsertSTPSTenantConfig(user.tenantId, req.body);
+    res.json(config);
+  } catch (error: any) {
+    console.error('[STPS] Error updating tenant config:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/stps/courses - List STPS-enabled courses
+app.get('/api/stps/courses', requireAuth, requireRole('tenant-admin', 'super-admin'), async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const courses = await getSTPSEnabledCourses(user.tenantId);
+    res.json(courses);
+  } catch (error: any) {
+    console.error('[STPS] Error getting enabled courses:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/stps/course-config/:courseId - Get STPS config for a course
+app.get('/api/stps/course-config/:courseId', requireAuth, requireRole('tenant-admin', 'super-admin'), async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const config = await getSTPSCourseConfig(user.tenantId, req.params.courseId);
+    res.json(config || { courseId: req.params.courseId, habilitadoSTPS: false });
+  } catch (error: any) {
+    console.error('[STPS] Error getting course config:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// PUT /api/stps/course-config/:courseId - Update STPS course config
+app.put('/api/stps/course-config/:courseId', requireAuth, requireRole('tenant-admin', 'super-admin'), async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const config = await upsertSTPSCourseConfig({ ...req.body, tenantId: user.tenantId, courseId: req.params.courseId });
+    res.json(config);
+  } catch (error: any) {
+    console.error('[STPS] Error updating course config:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/stps/constancias/generate - Generate a DC-3 constancia
+app.post('/api/stps/constancias/generate', requireAuth, requireRole('tenant-admin', 'super-admin'), async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const { userId, courseId } = req.body;
+
+    if (!userId || !courseId) {
+      return res.status(400).json({ error: 'userId and courseId are required' });
+    }
+
+    const constancia = await generateConstancia({
+      tenantId: user.tenantId,
+      userId,
+      courseId,
+    });
+
+    res.status(201).json(constancia);
+  } catch (error: any) {
+    console.error('[STPS] Error generating constancia:', error);
+    res.status(error.message?.includes('not found') || error.message?.includes('falta') ? 400 : 500).json({
+      error: error.message,
+    });
+  }
+});
+
+// GET /api/stps/constancias - List all constancias (with optional filters)
+app.get('/api/stps/constancias', requireAuth, requireRole('tenant-admin', 'super-admin'), async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const { status, startDate, endDate } = req.query;
+    const constancias = await getAllConstancias(user.tenantId, {
+      status: status as any,
+      startDate: startDate as string,
+      endDate: endDate as string,
+    });
+    res.json(constancias);
+  } catch (error: any) {
+    console.error('[STPS] Error listing constancias:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/stps/constancias/user/:userId - Get constancias for a specific user
+app.get('/api/stps/constancias/user/:userId', requireAuth, async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const constancias = await getConstanciasByUser(user.tenantId, req.params.userId);
+    res.json(constancias);
+  } catch (error: any) {
+    console.error('[STPS] Error getting user constancias:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/stps/constancias/course/:courseId - Get constancias for a course
+app.get('/api/stps/constancias/course/:courseId', requireAuth, requireRole('tenant-admin', 'super-admin'), async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const constancias = await getConstanciasByCourse(user.tenantId, req.params.courseId);
+    res.json(constancias);
+  } catch (error: any) {
+    console.error('[STPS] Error getting course constancias:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/stps/constancias/:id - Get a specific constancia
+app.get('/api/stps/constancias/:id', requireAuth, async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const constancia = await getConstanciaById(user.tenantId, req.params.id);
+    if (!constancia) {
+      return res.status(404).json({ error: 'Constancia not found' });
+    }
+    res.json(constancia);
+  } catch (error: any) {
+    console.error('[STPS] Error getting constancia:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/stps/constancias/:id/pdf - Download DC-3 PDF
+app.get('/api/stps/constancias/:id/pdf', requireAuth, async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const constancia = await getConstanciaById(user.tenantId, req.params.id);
+    if (!constancia) {
+      return res.status(404).json({ error: 'Constancia not found' });
+    }
+
+    const pdfBytes = await generateDC3PDF(constancia);
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="DC3-${constancia.folioInterno}.pdf"`);
+    res.setHeader('Content-Length', pdfBytes.length);
+    res.send(Buffer.from(pdfBytes));
+  } catch (error: any) {
+    console.error('[STPS] Error generating DC-3 PDF:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/stps/dc4-report - Generate DC-4 report
+app.get('/api/stps/dc4-report', requireAuth, requireRole('tenant-admin', 'super-admin'), async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const { startDate, endDate } = req.query;
+
+    if (!startDate || !endDate) {
+      return res.status(400).json({ error: 'startDate and endDate query parameters are required' });
+    }
+
+    const report = await generateDC4Report(user.tenantId, startDate as string, endDate as string);
+    res.json(report);
+  } catch (error: any) {
+    console.error('[STPS] Error generating DC-4 report:', error);
     res.status(500).json({ error: error.message });
   }
 });

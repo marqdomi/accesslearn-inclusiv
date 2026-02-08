@@ -892,3 +892,148 @@ export interface CompanySettings {
   companyName: string
   companyLogo?: string
 }
+
+// ============================================
+// STPS Compliance Types
+// ============================================
+
+export type STPSAreaTematica = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8
+
+export const STPS_AREAS_TEMATICAS: Record<STPSAreaTematica, string> = {
+  1: 'Seguridad, salud en el trabajo y medio ambiente',
+  2: 'Competencia laboral',
+  3: 'Productividad',
+  4: 'Desarrollo tecnológico',
+  5: 'Habilidades administrativas',
+  6: 'Desarrollo humano',
+  7: 'Calidad',
+  8: 'Otras',
+}
+
+export type STPSModalidad = 'presencial' | 'en-linea' | 'mixta'
+export type STPSTipoAgente = 'interno' | 'externo'
+export type STPSConstanciaStatus = 'draft' | 'generated' | 'registered-sirce' | 'invalidated'
+
+export interface STPSConstancia {
+  id: string
+  tenantId: string
+  folioInterno: string
+  status: STPSConstanciaStatus
+  userId: string
+  courseId: string
+  trabajador: {
+    nombreCompleto: string
+    curp: string
+    rfc?: string
+    nss?: string
+    ocupacion: string
+    puesto: string
+    nacionalidad: string
+  }
+  empresa: {
+    razonSocial: string
+    rfc: string
+    registroPatronalIMSS?: string
+    actividadGiro?: string
+    domicilio: {
+      calle: string
+      colonia: string
+      municipio: string
+      estado: string
+      codigoPostal: string
+    }
+  }
+  curso: {
+    nombre: string
+    areaTematica: STPSAreaTematica
+    areaTematicaDescripcion: string
+    duracionHoras: number
+    fechaInicio: string
+    fechaFin: string
+    objetivoGeneral: string
+    modalidad: STPSModalidad
+  }
+  instructor: {
+    nombre: string
+    tipoAgente: STPSTipoAgente
+    registroSTPS?: string
+    nombreAgente?: string
+  }
+  resultado: {
+    calificacion: number
+    aprobado: boolean
+    observaciones?: string
+  }
+  fechaExpedicion: string
+  lugarExpedicion: string
+  createdAt: string
+}
+
+export interface STPSCourseConfig {
+  id?: string
+  tenantId: string
+  courseId: string
+  habilitadoSTPS: boolean
+  areaTematica: STPSAreaTematica
+  objetivoGeneral: string
+  modalidad: STPSModalidad
+  horasOficiales: number
+  instructorNombre?: string
+  instructorTipoAgente?: STPSTipoAgente
+  agentCapacitadorRegistro?: string
+  agentCapacitadorNombre?: string
+  calificacionMinima?: number
+}
+
+export interface STPSTenantConfig {
+  tenantId: string
+  registroPatronalIMSS?: string
+  actividadGiro?: string
+  representanteLegal?: string
+  domicilioEstructurado?: {
+    calle: string
+    colonia: string
+    municipio: string
+    estado: string
+    codigoPostal: string
+  }
+  configured?: boolean
+}
+
+export interface STPSStats {
+  totalConstancias: number
+  constanciasAprobadas: number
+  constanciasNoAprobadas: number
+  tasaAprobacion: number
+  totalTrabajadoresCapacitados: number
+  totalHorasCapacitacion: number
+  cursosConSTPSHabilitado: number
+}
+
+export interface STPSDC4Report {
+  tenantId: string
+  periodo: { inicio: string; fin: string }
+  cursos: Array<{
+    nombre: string
+    areaTematica: STPSAreaTematica
+    areaTematicaDescripcion: string
+    duracionHoras: number
+    fechaInicio: string
+    fechaFin: string
+    modalidad: STPSModalidad
+    instructorNombre: string
+    trabajadores: Array<{
+      nombreCompleto: string
+      curp: string
+      ocupacion: string
+      resultado: 'Aprobado' | 'No aprobado'
+      calificacion: number
+    }>
+  }>
+  totales: {
+    totalTrabajadoresCapacitados: number
+    totalHorasHombreCapacitacion: number
+    totalCursos: number
+    totalConstancias: number
+  }
+}

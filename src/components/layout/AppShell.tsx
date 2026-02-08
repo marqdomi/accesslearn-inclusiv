@@ -31,6 +31,7 @@ import {
   Globe,
   Wheelchair,
   ChatsCircle,
+  Certificate,
 } from '@phosphor-icons/react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useTenant } from '@/contexts/TenantContext'
@@ -195,6 +196,12 @@ function useNavItems(unreadCount: number) {
         label: 'Usuarios',
         href: '/admin/users',
         icon: Users,
+        roles: ['super-admin', 'tenant-admin'],
+      },
+      {
+        label: 'STPS / DC-3',
+        href: '/admin/stps',
+        icon: Certificate,
         roles: ['super-admin', 'tenant-admin'],
       },
       {
