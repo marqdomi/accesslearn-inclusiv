@@ -197,6 +197,14 @@ import {
 } from './functions/AuditFunctions';
 import { attachAuditMetadata, auditCreate, auditRoleChange } from './middleware/audit';
 import { platformAdminService } from './services/platform-admin.service';
+import {
+  aiHealthCheck,
+  getRecommendations,
+  generateQuiz,
+  summarizeCourse,
+  chatAssistant,
+  getInsights,
+} from './functions/AIFunctions';
 
 dotenv.config();
 
@@ -733,12 +741,26 @@ app.get('/api/platform-admin/health', authenticateToken, requireSuperAdmin, asyn
 });
 
 // ============================================
+// AI ENDPOINTS (Public health, protected features)
+// ============================================
+
+// AI health check (public)
+app.get('/api/ai/health', aiHealthCheck);
+
+// ============================================
 // PROTECTED ENDPOINTS (Apply auth middleware)
 // ============================================
 
 // Apply authentication and audit middleware to all routes below
 app.use(authenticateToken); // Validate JWT and attach user to request
 app.use(attachAuditMetadata); // Add audit metadata to all requests
+
+// ── AI Feature Endpoints (authenticated) ──
+app.post('/api/ai/recommendations', requireAuth, getRecommendations);
+app.post('/api/ai/generate-quiz', requireAuth, generateQuiz);
+app.get('/api/ai/course-summary/:courseId', requireAuth, summarizeCourse);
+app.post('/api/ai/chat', requireAuth, chatAssistant);
+app.post('/api/ai/analytics-insights', requireAuth, requireRole('admin', 'super-admin'), getInsights);
 
 // ============================================
 // USER ENDPOINTS

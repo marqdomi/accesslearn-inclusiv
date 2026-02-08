@@ -21,6 +21,7 @@ import { StatsCard } from '@/components/dashboard/StatsCard'
 import { QuickActions } from '@/components/dashboard/QuickActions'
 import { RecommendedCourses } from '@/components/dashboard/RecommendedCourses'
 import { AchievementsProgressCard } from '@/components/dashboard/AchievementsProgressCard'
+import { AIRecommendations } from '@/components/ai'
 import { useDashboardTrends } from '@/hooks/use-dashboard-trends'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
@@ -422,6 +423,9 @@ export function DashboardPage() {
           </TabsList>
           
           <TabsContent value="overview" className="mt-6 space-y-6">
+            {/* AI Recommendations */}
+            <AIRecommendations />
+
             {/* Recommended Courses */}
             <RecommendedCourses
               courses={courses}

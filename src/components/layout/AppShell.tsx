@@ -7,6 +7,7 @@
 
 import { useMemo, useState } from 'react'
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { PageTransition } from './PageTransition'
 import { useTranslation } from 'react-i18next'
 import {
   House,
@@ -692,6 +693,7 @@ function TopBar({ onOpenCommandPalette }: { onOpenCommandPalette: () => void }) 
 
 export function AppShell() {
   const [commandOpen, setCommandOpen] = useState(false)
+  const location = useLocation()
 
   return (
     <SidebarProvider>
@@ -700,7 +702,9 @@ export function AppShell() {
         <TopBar onOpenCommandPalette={() => setCommandOpen(true)} />
         <main className="flex-1 overflow-auto">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
-            <Outlet />
+            <PageTransition key={location.pathname}>
+              <Outlet />
+            </PageTransition>
           </div>
         </main>
       </SidebarInset>

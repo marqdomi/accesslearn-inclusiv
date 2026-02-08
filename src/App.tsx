@@ -34,6 +34,7 @@ import { AdvancedAccessibilityPanel } from '@/components/accessibility/AdvancedA
 import { AdminAnalyticsPage } from '@/pages/AdminAnalyticsPage'
 import { ProfilePage } from '@/pages/ProfilePage'
 import { CertificateSettingsPage } from '@/pages/CertificateSettingsPage'
+import { NotFoundPage } from '@/pages/NotFoundPage'
 
 // Platform Admin (lazy loaded for super-admin only)
 const PlatformAdminLayout = lazy(() => import('@/components/platform-admin/PlatformAdminLayout').then(m => ({ default: m.PlatformAdminLayout })))
@@ -196,7 +197,7 @@ function AppRoutes() {
       </Route>
       
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   )
 }

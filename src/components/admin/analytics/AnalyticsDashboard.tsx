@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { HighLevelDashboard } from './HighLevelDashboard'
+import { AIAnalyticsInsights } from '@/components/ai'
 import { ArrowLeft } from 'lucide-react'
 
 interface AnalyticsDashboardProps {
@@ -31,6 +32,11 @@ export function AnalyticsDashboard({ onBack }: AnalyticsDashboardProps) {
               Métricas y estadísticas de la plataforma
             </p>
           </div>
+        </div>
+
+        {/* AI Insights */}
+        <div className="mb-6">
+          <AIAnalyticsInsights />
         </div>
 
         {/* High Level Dashboard */}

@@ -25,6 +25,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { ContentBlock } from '@/components/course/BlockRenderer'
+import { AIChatAssistant } from '@/components/ai'
 
 interface Lesson {
   id: string
@@ -1267,6 +1268,11 @@ export function CourseViewerPage() {
           setGameNotifications((prev) => prev.filter((notification) => notification.id !== id))
         }
       />
+
+      {/* AI Chat Assistant */}
+      {course && (
+        <AIChatAssistant courseId={course.id} courseTitle={course.title} />
+      )}
     </div>
   )
 }

@@ -1,0 +1,5 @@
+export { AIRecommendations } from './AIRecommendations'
+export { AIQuizGenerator } from './AIQuizGenerator'
+export { AIChatAssistant } from './AIChatAssistant'
+export { AICourseSummary } from './AICourseSummary'
+export { AIAnalyticsInsights } from './AIAnalyticsInsights'

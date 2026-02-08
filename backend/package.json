@@ -51,6 +51,7 @@
     "@azure/cosmos": "^4.7.0",
     "@azure/functions": "^4.9.0",
     "@azure/storage-blob": "^12.29.1",
+    "@google/generative-ai": "^0.24.1",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/multer": "^2.0.0",
     "@types/node": "^24.10.1",
