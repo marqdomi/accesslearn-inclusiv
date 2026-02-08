@@ -36,6 +36,7 @@ import { AdminAnalyticsPage } from '@/pages/AdminAnalyticsPage'
 import { ProfilePage } from '@/pages/ProfilePage'
 import { CertificateSettingsPage } from '@/pages/CertificateSettingsPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
+import { ForumPage } from '@/pages/ForumPage'
 
 // Platform Admin (lazy loaded for super-admin only)
 const PlatformAdminLayout = lazy(() => import('@/components/platform-admin/PlatformAdminLayout').then(m => ({ default: m.PlatformAdminLayout })))
@@ -163,6 +164,7 @@ function AppRoutes() {
         <Route path="/admin/users" element={<AdminUsersPage />} />
         <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />
         <Route path="/notifications" element={<NotificationsPage />} />
+        <Route path="/forum" element={<ForumPage />} />
         <Route path="/admin/settings" element={<AdminSettingsPage />} />
         <Route path="/admin/settings/branding" element={<BrandingSettingsPage />} />
         <Route path="/admin/settings/notifications" element={<NotificationSettingsPage />} />

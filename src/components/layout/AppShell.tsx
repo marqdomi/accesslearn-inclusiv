@@ -30,6 +30,7 @@ import {
   Buildings,
   Globe,
   Wheelchair,
+  ChatsCircle,
 } from '@phosphor-icons/react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useTenant } from '@/contexts/TenantContext'
@@ -105,6 +106,7 @@ const breadcrumbNameMap: Record<string, string> = {
   certificates: 'Certificados',
   users: 'Usuarios',
   analytics: 'Analytics',
+  forum: 'Foro',
 }
 
 /* ─── Role helpers ──────────────────────────────────────────── */
@@ -173,6 +175,10 @@ function useNavItems(unreadCount: number) {
       },
     ]
 
+    const communityItems: NavItem[] = [
+      { label: 'Foro', href: '/forum', icon: ChatsCircle },
+    ]
+
     const mentorshipItems: NavItem[] = [
       { label: 'Buscar Mentor', href: '/mentors', icon: Users },
       { label: 'Mis Mentorías', href: '/my-mentorships', icon: Handshake },
@@ -214,6 +220,7 @@ function useNavItems(unreadCount: number) {
     return {
       main: mainItems.filter(canSee),
       content: contentItems.filter(canSee),
+      community: communityItems.filter(canSee),
       mentorship: mentorshipItems.filter(canSee),
       admin: adminItems.filter(canSee),
     }
@@ -301,6 +308,31 @@ function AppSidebar() {
             <SidebarGroupContent>
               <SidebarMenu>
                 {navGroups.content.map((item) => (
+                  <SidebarMenuItem key={item.href}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive(item.href)}
+                      tooltip={item.label}
+                    >
+                      <Link to={item.href}>
+                        <item.icon weight={isActive(item.href) ? 'fill' : 'regular'} />
+                        <span>{item.label}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
+        {/* Comunidad */}
+        {navGroups.community.length > 0 && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Comunidad</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {navGroups.community.map((item) => (
                   <SidebarMenuItem key={item.href}>
                     <SidebarMenuButton
                       asChild
