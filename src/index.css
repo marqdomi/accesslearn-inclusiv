@@ -302,259 +302,124 @@ select:focus-visible {
 .low-vision-profile,
 [data-low-vision="true"] {
   /* Enhanced contrast - yellow on black scheme */
-  --background: oklch(0 0 0) !important; /* Pure black */
-  --foreground: oklch(0.90 0.18 90) !important; /* Bright yellow */
-  --card: oklch(0.05 0 0) !important; /* Very dark gray */
-  --card-foreground: oklch(0.90 0.18 90) !important; /* Bright yellow */
-  --primary: oklch(0.90 0.18 90) !important; /* Bright yellow */
-  --primary-foreground: oklch(0 0 0) !important; /* Black */
-  --secondary: oklch(0.85 0.15 195) !important; /* Bright cyan */
-  --secondary-foreground: oklch(0 0 0) !important; /* Black */
-  --accent: oklch(0.90 0.18 30) !important; /* Bright orange */
-  --accent-foreground: oklch(0 0 0) !important; /* Black */
-  --destructive: oklch(0.70 0.25 25) !important; /* Bright red */
-  --destructive-foreground: oklch(0 0 0) !important; /* Black */
-  --success: oklch(0.80 0.20 130) !important; /* Bright green */
-  --success-foreground: oklch(0 0 0) !important; /* Black */
-  --border: oklch(0.90 0.18 90) !important; /* Bright yellow */
-  --input: oklch(0.90 0.18 90) !important; /* Bright yellow */
-  --ring: oklch(0.90 0.18 90) !important; /* Bright yellow */
-  --muted: oklch(0.10 0 0) !important; /* Dark gray */
-  --muted-foreground: oklch(0.80 0.15 90) !important; /* Yellow-gray */
-  
-  /* Larger text size - 150% */
-  font-size: 1.5em !important;
-  
+  --background: oklch(0 0 0) !important;
+  --foreground: oklch(0.90 0.18 90) !important;
+  --card: oklch(0.05 0 0) !important;
+  --card-foreground: oklch(0.90 0.18 90) !important;
+  --primary: oklch(0.90 0.18 90) !important;
+  --primary-foreground: oklch(0 0 0) !important;
+  --secondary: oklch(0.85 0.15 195) !important;
+  --secondary-foreground: oklch(0 0 0) !important;
+  --accent: oklch(0.90 0.18 30) !important;
+  --accent-foreground: oklch(0 0 0) !important;
+  --destructive: oklch(0.70 0.25 25) !important;
+  --destructive-foreground: oklch(0 0 0) !important;
+  --success: oklch(0.80 0.20 130) !important;
+  --success-foreground: oklch(0 0 0) !important;
+  --border: oklch(0.70 0.10 90) !important;
+  --input: oklch(0.70 0.10 90) !important;
+  --ring: oklch(0.90 0.18 90) !important;
+  --muted: oklch(0.10 0 0) !important;
+  --muted-foreground: oklch(0.80 0.15 90) !important;
+
+  /*
+   * NOTE: Do NOT set font-size here — the user controls text size
+   * via the "Tamaño de Texto" setting in the sheet (normal / large / x-large).
+   * Setting it here compounds with that value and makes everything unreadable.
+   */
+
   /* Enhanced line height for readability */
-  line-height: 1.8 !important;
-  
-  /* Better letter spacing */
-  letter-spacing: 0.02em !important;
-  
-  /* Strong borders for better visibility */
-  * {
-    border-color: oklch(0.90 0.18 90) !important;
-  }
-  
+  line-height: 1.7 !important;
+  letter-spacing: 0.01em !important;
+
   /* Headings with enhanced visibility */
   h1, h2, h3, h4, h5, h6 {
-    color: oklch(0.95 0.20 90) !important; /* Very bright yellow */
+    color: oklch(0.95 0.20 90) !important;
     font-weight: 700 !important;
-    text-shadow: 0 0 2px oklch(0.95 0.20 90) !important;
-    line-height: 1.6 !important;
   }
-  
-  h1 {
-    font-size: 2.5em !important;
-    border-bottom: 3px solid oklch(0.90 0.18 90) !important;
-    padding-bottom: 0.5em !important;
-  }
-  
-  h2 {
-    font-size: 2em !important;
-    border-bottom: 2px solid oklch(0.90 0.18 90) !important;
-    padding-bottom: 0.4em !important;
-  }
-  
-  h3 {
-    font-size: 1.75em !important;
-  }
-  
-  /* Paragraphs with better spacing */
-  p {
-    margin-bottom: 1.5em !important;
-    line-height: 1.8 !important;
-    color: oklch(0.90 0.18 90) !important;
-  }
-  
+
   /* Links with strong underline */
   a {
     color: oklch(0.95 0.20 90) !important;
     text-decoration: underline !important;
-    text-decoration-thickness: 3px !important;
-    text-underline-offset: 0.3em !important;
-    font-weight: 600 !important;
+    text-decoration-thickness: 2px !important;
+    text-underline-offset: 0.2em !important;
   }
-  
+
   a:hover, a:focus {
     background-color: oklch(0.90 0.18 90) !important;
     color: oklch(0 0 0) !important;
+  }
+
+  /* Buttons with visible borders */
+  button {
+    border: 2px solid oklch(0.90 0.18 90) !important;
+    font-weight: 600 !important;
+  }
+
+  button:focus-visible {
     outline: 3px solid oklch(0.95 0.20 90) !important;
     outline-offset: 2px !important;
   }
-  
-  /* Buttons with strong borders and larger size */
-  button {
-    border-width: 3px !important;
-    border-color: oklch(0.90 0.18 90) !important;
-    font-size: 1.2em !important;
-    padding: 0.875em 1.75em !important;
-    font-weight: 600 !important;
-    min-height: 56px !important; /* Larger touch target */
-    box-shadow: 0 0 8px oklch(0.90 0.18 90 / 0.5) !important;
-  }
-  
-  button:focus-visible {
-    outline: 4px solid oklch(0.95 0.20 90) !important;
-    outline-offset: 3px !important;
-    box-shadow: 0 0 12px oklch(0.95 0.20 90) !important;
-  }
-  
-  /* Inputs with strong borders */
+
+  /* Inputs with visible borders */
   input, textarea, select {
-    border-width: 3px !important;
-    border-color: oklch(0.90 0.18 90) !important;
+    border: 2px solid oklch(0.70 0.10 90) !important;
     background-color: oklch(0.05 0 0) !important;
     color: oklch(0.90 0.18 90) !important;
-    font-size: 1.2em !important;
-    padding: 0.875em !important;
-    min-height: 56px !important;
   }
-  
+
   input:focus, textarea:focus, select:focus {
-    outline: 4px solid oklch(0.95 0.20 90) !important;
+    outline: 3px solid oklch(0.95 0.20 90) !important;
     outline-offset: 2px !important;
-    box-shadow: 0 0 12px oklch(0.95 0.20 90 / 0.5) !important;
   }
-  
-  /* Cards with strong borders */
+
+  /* Cards with visible borders */
   .card, [class*="Card"] {
-    border-width: 3px !important;
-    border-color: oklch(0.90 0.18 90) !important;
+    border: 2px solid oklch(0.70 0.10 90) !important;
     background-color: oklch(0.05 0 0) !important;
-    box-shadow: 0 0 12px oklch(0.90 0.18 90 / 0.3) !important;
-    padding: 1.5em !important;
   }
-  
-  /* Badges with strong borders */
-  [class*="Badge"], [class*="badge"] {
-    border-width: 2px !important;
-    border-color: oklch(0.90 0.18 90) !important;
-    font-weight: 600 !important;
-    font-size: 1.1em !important;
-    padding: 0.5em 1em !important;
-  }
-  
-  /* Tables with strong borders */
-  table {
-    border-collapse: separate !important;
-    border-spacing: 0 !important;
-    border: 3px solid oklch(0.90 0.18 90) !important;
-  }
-  
+
+  /* Tables */
   th, td {
-    border: 2px solid oklch(0.90 0.18 90) !important;
-    padding: 1em !important;
-    font-size: 1.1em !important;
+    border: 1px solid oklch(0.70 0.10 90) !important;
   }
-  
+
   th {
     background-color: oklch(0.10 0 0) !important;
     color: oklch(0.95 0.20 90) !important;
     font-weight: 700 !important;
   }
-  
-  /* Lists with better visibility */
-  ul, ol {
-    margin-left: 2em !important;
-    margin-bottom: 1.5em !important;
-  }
-  
-  li {
-    margin-bottom: 0.75em !important;
-    line-height: 1.8 !important;
-    color: oklch(0.90 0.18 90) !important;
-  }
-  
-  li::marker {
-    color: oklch(0.95 0.20 90) !important;
-    font-weight: 700 !important;
-  }
-  
-  /* Code blocks with strong borders */
-  code, pre {
-    border: 2px solid oklch(0.90 0.18 90) !important;
-    background-color: oklch(0.05 0 0) !important;
-    color: oklch(0.90 0.18 90) !important;
-    padding: 1em !important;
-    font-size: 1.1em !important;
-  }
-  
-  /* Blockquotes with strong borders */
-  blockquote {
-    border-left: 5px solid oklch(0.90 0.18 90) !important;
-    padding-left: 1.5em !important;
-    margin: 1.5em 0 !important;
-    background-color: oklch(0.05 0 0) !important;
-    padding: 1em 1.5em !important;
-  }
-  
-  /* Progress bars with strong visibility */
-  [class*="Progress"], [role="progressbar"] {
-    border: 2px solid oklch(0.90 0.18 90) !important;
-    background-color: oklch(0.10 0 0) !important;
-    height: 24px !important;
-  }
-  
-  /* Icons with better visibility */
-  svg, [class*="Icon"] {
-    filter: drop-shadow(0 0 2px oklch(0.90 0.18 90)) !important;
-  }
-  
+
   /* Focus indicators - very visible */
   *:focus-visible {
-    outline: 4px solid oklch(0.95 0.20 90) !important;
-    outline-offset: 3px !important;
-    box-shadow: 0 0 12px oklch(0.95 0.20 90) !important;
+    outline: 3px solid oklch(0.95 0.20 90) !important;
+    outline-offset: 2px !important;
   }
-  
+
   /* Scrollbars visible */
   ::-webkit-scrollbar {
-    width: 16px !important;
-    height: 16px !important;
+    width: 12px !important;
+    height: 12px !important;
   }
-  
+
   ::-webkit-scrollbar-track {
     background: oklch(0.05 0 0) !important;
-    border: 2px solid oklch(0.90 0.18 90) !important;
   }
-  
+
   ::-webkit-scrollbar-thumb {
-    background: oklch(0.90 0.18 90) !important;
-    border: 2px solid oklch(0 0 0) !important;
+    background: oklch(0.70 0.10 90) !important;
+    border-radius: 6px !important;
   }
-  
+
   ::-webkit-scrollbar-thumb:hover {
-    background: oklch(0.95 0.20 90) !important;
+    background: oklch(0.90 0.18 90) !important;
   }
-  
-  /* Images with borders for better visibility */
-  img {
-    border: 2px solid oklch(0.90 0.18 90) !important;
-    box-shadow: 0 0 8px oklch(0.90 0.18 90 / 0.5) !important;
-  }
-  
-  /* Videos with borders */
-  video, iframe {
-    border: 3px solid oklch(0.90 0.18 90) !important;
-    box-shadow: 0 0 12px oklch(0.90 0.18 90 / 0.5) !important;
-  }
-  
-  /* Modals and dialogs with strong borders */
+
+  /* Dialogs */
   [role="dialog"], [class*="Dialog"], [class*="Modal"] {
-    border: 4px solid oklch(0.90 0.18 90) !important;
-    box-shadow: 0 0 20px oklch(0.90 0.18 90 / 0.6) !important;
-    background-color: oklch(0 0 0) !important;
-  }
-  
-  /* Tooltips with strong visibility */
-  [role="tooltip"], [class*="Tooltip"] {
-    background-color: oklch(0.90 0.18 90) !important;
-    color: oklch(0 0 0) !important;
-    border: 2px solid oklch(0 0 0) !important;
-    font-size: 1.1em !important;
-    font-weight: 600 !important;
-    padding: 0.75em 1em !important;
+    border: 2px solid oklch(0.90 0.18 90) !important;
+    background-color: oklch(0.02 0 0) !important;
   }
 }
 
@@ -1158,80 +1023,55 @@ body.hearing-profile {
 /* Apply when motor profile is active */
 .motor-profile,
 [data-motor="true"] {
-  /* Simplified navigation - hide complex navigation */
-  .sidebar, nav[class*="Sidebar"], [class*="Sidebar"] {
-    display: none !important;
+  /*
+   * Motor profile — Focus on large touch targets, no time pressure,
+   * and strong focus indicators. We intentionally do NOT hide the sidebar
+   * or forcefully resize everything, because that breaks the app layout.
+   */
+
+  /* Larger touch targets for main content area buttons (WCAG 2.5.5 — 44px min) */
+  main button,
+  main a[role="button"],
+  main input[type="button"],
+  main input[type="submit"] {
+    min-height: 48px !important;
+    min-width: 48px !important;
+    padding: 0.625em 1.25em !important;
   }
-  
-  main, [role="main"] {
-    margin-left: 0 !important;
-    width: 100% !important;
-    padding-left: 1rem !important;
-    padding-right: 1rem !important;
+
+  /* Larger form inputs in content area */
+  main input,
+  main textarea,
+  main select {
+    min-height: 48px !important;
+    padding: 0.625em 0.875em !important;
   }
-  
-  /* Larger touch targets - minimum 56px (WCAG AAA) */
-  button, a[role="button"], 
-  input[type="button"], input[type="submit"],
-  [role="button"], [role="link"] {
-    min-height: 56px !important;
-    min-width: 56px !important;
-    padding: 0.875em 1.75em !important;
-    font-size: 1.1em !important;
-    line-height: 1.6 !important;
-  }
-  
-  /* Larger form inputs */
-  input, textarea, select {
-    min-height: 56px !important;
-    padding: 0.875em 1em !important;
-    font-size: 1.1em !important;
-    line-height: 1.6 !important;
-  }
-  
+
   /* Larger checkboxes and radio buttons */
   input[type="checkbox"], input[type="radio"] {
-    min-width: 32px !important;
-    min-height: 32px !important;
-    width: 32px !important;
-    height: 32px !important;
+    min-width: 24px !important;
+    min-height: 24px !important;
+    width: 24px !important;
+    height: 24px !important;
   }
-  
-  /* Larger spacing between interactive elements */
-  button + button, 
-  a + a,
-  input + input,
-  button + input,
-  input + button {
-    margin-left: 1.5em !important;
-    margin-top: 1em !important;
-  }
-  
+
   /* Remove time limits - hide timers */
   [class*="Timer"], [class*="timer"],
-  [data-timer], [data-time-limit],
-  [aria-label*="timer"], [aria-label*="Timer"],
-  [aria-label*="time"], [aria-label*="Time"] {
+  [data-timer], [data-time-limit] {
     display: none !important;
   }
-  
+
   /* Hide countdown timers */
   [class*="Countdown"], [class*="countdown"],
   [data-countdown] {
     display: none !important;
   }
-  
-  /* Disable time pressure indicators */
-  [class*="time-limit"], [class*="TimeLimit"],
-  [data-time-limit] {
-    display: none !important;
-  }
-  
-  /* Auto-pause indicators - show when paused */
+
+  /* Auto-pause indicators */
   [data-auto-pause="true"] {
     position: relative !important;
   }
-  
+
   [data-auto-pause="true"]::before {
     content: "⏸ Pausa automática activa" !important;
     position: absolute !important;
@@ -1240,226 +1080,56 @@ body.hearing-profile {
     right: 0 !important;
     background-color: oklch(0.70 0.18 30 / 0.95) !important;
     color: white !important;
-    padding: 1em !important;
+    padding: 0.75em !important;
     text-align: center !important;
     font-weight: 700 !important;
-    font-size: 1.2em !important;
     z-index: 1000 !important;
-    border-bottom: 3px solid white !important;
+    border-bottom: 2px solid white !important;
   }
-  
-  /* Extended pause duration indicator */
-  [data-pause-duration]::after {
-    content: "Pausa: " attr(data-pause-duration) " segundos" !important;
-    display: block !important;
-    margin-top: 0.5em !important;
-    font-size: 0.9em !important;
-    color: oklch(0.50 0.05 280) !important;
-    font-style: italic !important;
-  }
-  
-  /* Larger cards with more padding */
-  .card, [class*="Card"] {
-    padding: 2em !important;
-    margin-bottom: 2em !important;
-  }
-  
-  /* Larger badges */
-  [class*="Badge"], [class*="badge"] {
-    padding: 0.75em 1.25em !important;
-    font-size: 1.1em !important;
-    min-height: 44px !important;
-  }
-  
-  /* Larger tabs */
-  [role="tab"], [class*="Tab"] {
-    min-height: 56px !important;
-    padding: 1em 1.5em !important;
-    font-size: 1.1em !important;
-  }
-  
-  /* Larger dropdowns and selects */
-  [role="listbox"], [role="menu"],
-  [class*="Dropdown"], [class*="Select"] {
-    min-height: 56px !important;
-  }
-  
-  [role="option"], [role="menuitem"] {
-    min-height: 48px !important;
-    padding: 0.75em 1em !important;
-    font-size: 1.1em !important;
-  }
-  
-  /* Larger modals and dialogs */
-  [role="dialog"], [class*="Dialog"], [class*="Modal"] {
-    padding: 2em !important;
-    min-width: 90vw !important;
-    max-width: 95vw !important;
-  }
-  
-  /* Larger progress bars */
-  [class*="Progress"], [role="progressbar"] {
-    height: 16px !important;
-    min-height: 16px !important;
-  }
-  
-  /* Larger sliders */
-  input[type="range"] {
-    height: 24px !important;
-    min-height: 24px !important;
-  }
-  
-  input[type="range"]::-webkit-slider-thumb {
-    width: 32px !important;
-    height: 32px !important;
-  }
-  
-  input[type="range"]::-moz-range-thumb {
-    width: 32px !important;
-    height: 32px !important;
-  }
-  
-  /* Larger tooltips */
-  [role="tooltip"], [class*="Tooltip"] {
-    padding: 1em 1.5em !important;
-    font-size: 1.1em !important;
-    min-height: 48px !important;
-  }
-  
-  /* Simplified navigation - larger menu items */
-  [role="navigation"] a,
-  [role="navigation"] button {
-    min-height: 64px !important;
-    padding: 1em 1.5em !important;
-    font-size: 1.2em !important;
-    margin-bottom: 0.5em !important;
-  }
-  
-  /* Larger icons */
-  svg, [class*="Icon"] {
-    min-width: 32px !important;
-    min-height: 32px !important;
-  }
-  
-  /* Larger spacing in lists */
-  ul, ol {
-    margin-left: 2em !important;
-    margin-bottom: 1.5em !important;
-  }
-  
-  li {
-    margin-bottom: 1em !important;
-    line-height: 1.8 !important;
-  }
-  
-  /* Larger table cells */
-  td, th {
-    padding: 1em !important;
-    min-height: 56px !important;
-  }
-  
-  /* Simplified forms - larger labels */
-  label {
-    font-size: 1.2em !important;
-    margin-bottom: 0.75em !important;
-    font-weight: 600 !important;
-  }
-  
-  /* Larger switches */
-  [role="switch"], [class*="Switch"] {
-    min-width: 64px !important;
-    min-height: 36px !important;
-  }
-  
-  /* Remove complex animations that might cause issues */
+
+  /* Remove complex animations */
   [class*="animate-"], [class*="motion-"] {
     animation-duration: 0s !important;
     transition-duration: 0s !important;
   }
-  
-  /* Larger focus indicators */
+
+  /* Strong focus indicators */
   *:focus-visible {
-    outline: 4px solid oklch(0.55 0.20 290) !important;
-    outline-offset: 4px !important;
-    box-shadow: 0 0 12px oklch(0.55 0.20 290 / 0.5) !important;
+    outline: 3px solid oklch(0.55 0.20 290) !important;
+    outline-offset: 3px !important;
   }
-  
-  /* Larger skip links */
-  .skip-link {
-    min-height: 64px !important;
-    padding: 1.25em 2em !important;
-    font-size: 1.3em !important;
-  }
-  
+
   /* Quiz specific - remove time pressure */
   [class*="Quiz"] [class*="Timer"],
   [class*="quiz"] [class*="timer"],
   [data-quiz] [data-timer] {
     display: none !important;
   }
-  
+
   /* Show "No time limit" indicator */
   [class*="Quiz"]::before,
   [class*="quiz"]::before,
   [data-quiz]::before {
     content: "⏱ Sin límite de tiempo" !important;
     display: block !important;
-    background-color: oklch(0.75 0.20 130 / 0.2) !important;
-    color: oklch(0.75 0.20 130) !important;
-    padding: 0.75em 1em !important;
-    border-radius: 8px !important;
-    margin-bottom: 1em !important;
+    background-color: oklch(0.75 0.20 130 / 0.15) !important;
+    color: oklch(0.55 0.15 130) !important;
+    padding: 0.5em 0.75em !important;
+    border-radius: 6px !important;
+    margin-bottom: 0.75em !important;
     font-weight: 600 !important;
-    font-size: 1.1em !important;
-    border: 2px solid oklch(0.75 0.20 130) !important;
+    font-size: 0.9em !important;
+    border: 1px solid oklch(0.75 0.20 130) !important;
   }
-  
-  /* Larger quiz answer options */
+
+  /* Larger quiz answer buttons (these ARE the main interactive targets) */
   [class*="Quiz"] button,
   [class*="quiz"] button,
   [data-quiz] button {
-    min-height: 64px !important;
-    padding: 1.25em 1.75em !important;
-    font-size: 1.2em !important;
-    margin-bottom: 1em !important;
-    text-align: left !important;
-  }
-  
-  /* Larger quiz navigation buttons */
-  [class*="Quiz"] [class*="Next"],
-  [class*="Quiz"] [class*="Previous"],
-  [class*="quiz"] [class*="next"],
-  [class*="quiz"] [class*="previous"] {
-    min-height: 72px !important;
-    padding: 1.5em 2em !important;
-    font-size: 1.3em !important;
-    font-weight: 700 !important;
-  }
-  
-  /* Simplified breadcrumbs - larger */
-  [aria-label*="breadcrumb"], [class*="Breadcrumb"] {
-    font-size: 1.2em !important;
-  }
-  
-  [aria-label*="breadcrumb"] a,
-  [class*="Breadcrumb"] a {
-    min-height: 48px !important;
-    padding: 0.75em 1em !important;
-  }
-  
-  /* Larger pagination */
-  [role="navigation"][aria-label*="pagination"],
-  [class*="Pagination"] {
-    font-size: 1.2em !important;
-  }
-  
-  [role="navigation"][aria-label*="pagination"] a,
-  [role="navigation"][aria-label*="pagination"] button,
-  [class*="Pagination"] a,
-  [class*="Pagination"] button {
     min-height: 56px !important;
-    min-width: 56px !important;
-    padding: 1em !important;
+    padding: 1em 1.5em !important;
+    margin-bottom: 0.75em !important;
+    text-align: left !important;
   }
 }
 

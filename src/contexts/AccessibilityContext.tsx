@@ -121,13 +121,12 @@ export const accessibilityProfiles: ProfileDefinition[] = [
   {
     key: 'lowVision',
     name: 'Baja Visión',
-    description: 'Alto contraste amarillo/negro, texto extra-grande, zoom 150%, bordes gruesos',
+    description: 'Alto contraste amarillo/negro, texto grande, bordes visibles',
     icon: '👁️',
     settings: {
       highContrast: true,
       contrastScheme: 'yellow-on-black',
-      textSize: 'x-large',
-      pageZoom: 150,
+      textSize: 'large',
     },
   },
   {
@@ -155,10 +154,9 @@ export const accessibilityProfiles: ProfileDefinition[] = [
   {
     key: 'motor',
     name: 'Motricidad',
-    description: 'Objetivos de toque 56px+, sin límites de tiempo, navegación simplificada',
+    description: 'Objetivos de toque 48px+, sin límites de tiempo, sin animaciones',
     icon: '🖐️',
     settings: {
-      simplifiedNavigation: true,
       noTimeLimits: true,
       autoPause: true,
       pauseDuration: 10,
