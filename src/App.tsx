@@ -30,7 +30,8 @@ import { SecuritySettingsPage } from '@/pages/SecuritySettingsPage'
 import { DataSettingsPage } from '@/pages/DataSettingsPage'
 import { CategoryManagementPage } from '@/pages/CategoryManagementPage'
 import { AccessibilitySettingsPage } from '@/pages/AccessibilitySettingsPage'
-import { AdvancedAccessibilityPanel } from '@/components/accessibility/AdvancedAccessibilityPanel'
+import { AccessibilityProvider } from '@/contexts/AccessibilityContext'
+import { AccessibilitySheet } from '@/components/accessibility/AccessibilitySheet'
 import { AdminAnalyticsPage } from '@/pages/AdminAnalyticsPage'
 import { ProfilePage } from '@/pages/ProfilePage'
 import { CertificateSettingsPage } from '@/pages/CertificateSettingsPage'
@@ -209,12 +210,14 @@ function App() {
         <AuthProvider>
           <ImpersonationProvider>
             <TenantProvider>
-              <TenantResolver>
-                <ImpersonationBanner />
-                <AppRoutes />
-                <AdvancedAccessibilityPanel />
-                <Toaster position="top-right" richColors />
-              </TenantResolver>
+              <AccessibilityProvider>
+                <TenantResolver>
+                  <ImpersonationBanner />
+                  <AppRoutes />
+                  <AccessibilitySheet />
+                  <Toaster position="top-right" richColors />
+                </TenantResolver>
+              </AccessibilityProvider>
             </TenantProvider>
           </ImpersonationProvider>
         </AuthProvider>

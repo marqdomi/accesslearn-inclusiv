@@ -5,7 +5,7 @@
  * and an <Outlet /> for nested route content.
  */
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { PageTransition } from './PageTransition'
 import { useTranslation } from 'react-i18next'
@@ -29,6 +29,7 @@ import {
   Trophy,
   Buildings,
   Globe,
+  Wheelchair,
 } from '@phosphor-icons/react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useTenant } from '@/contexts/TenantContext'
@@ -40,6 +41,7 @@ import { LevelBadge } from '@/components/gamification/LevelBadge'
 import { TenantSwitcher } from '@/components/dashboard/TenantSwitcher'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { CommandPalette } from '@/components/layout/CommandPalette'
+import { useAccessibility } from '@/contexts/AccessibilityContext'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
@@ -369,6 +371,22 @@ function AppSidebar() {
       {/* ─ Footer: User ─ */}
       <SidebarFooter className="p-2">
         <SidebarMenu>
+          {/* Accessibility button */}
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              tooltip="Accesibilidad"
+              onClick={() => {
+                const event = new CustomEvent('open-accessibility-sheet')
+                window.dispatchEvent(event)
+              }}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <Wheelchair weight="regular" />
+              <span>Accesibilidad</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+
+          {/* User dropdown */}
           <SidebarMenuItem>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -694,6 +712,14 @@ function TopBar({ onOpenCommandPalette }: { onOpenCommandPalette: () => void }) 
 export function AppShell() {
   const [commandOpen, setCommandOpen] = useState(false)
   const location = useLocation()
+  const { setIsOpen: setAccessibilityOpen } = useAccessibility()
+
+  // Listen for sidebar accessibility button clicks
+  useEffect(() => {
+    const handler = () => setAccessibilityOpen(true)
+    window.addEventListener('open-accessibility-sheet', handler)
+    return () => window.removeEventListener('open-accessibility-sheet', handler)
+  }, [setAccessibilityOpen])
 
   return (
     <SidebarProvider>

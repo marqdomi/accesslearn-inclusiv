@@ -22,8 +22,7 @@ import {
   Plus,
   Trash2,
 } from 'lucide-react'
-import { AdvancedPreferences } from '@/components/accessibility/AdvancedAccessibilityPanel'
-import { defaultAdvancedPreferences } from '@/components/accessibility/AdvancedAccessibilityPanel'
+import { AdvancedPreferences, defaultPreferences as defaultAdvancedPreferences } from '@/contexts/AccessibilityContext'
 
 interface AccessibilityProfileEditorProps {
   profile?: AccessibilityProfile
