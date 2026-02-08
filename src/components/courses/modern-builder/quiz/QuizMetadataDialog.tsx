@@ -55,7 +55,7 @@ export function QuizMetadataDialog({
 }: QuizMetadataDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle>Configuración del Quiz</DialogTitle>
           <DialogDescription>
@@ -63,7 +63,7 @@ export function QuizMetadataDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
+        <div className="space-y-4 py-4 flex-1 overflow-y-auto min-h-0">
           <div className="space-y-2">
             <Label htmlFor="quiz-title">Título del Quiz *</Label>
             <Input

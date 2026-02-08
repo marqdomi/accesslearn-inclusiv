@@ -1,5 +1,6 @@
 import { CourseStructure, LessonBlock, Lesson } from '@/lib/types'
 import { getFileTypeIcon, formatFileSize } from '@/lib/file-utils'
+import { cn } from '@/lib/utils'
 import { useState, useRef, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -8,9 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import {
   Select,
   SelectContent,
-  SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
@@ -449,131 +448,176 @@ export function ContentEditorStep({ course, updateCourse, courseId }: ContentEdi
     acc + m.lessons.reduce((acc2, l) => acc2 + l.blocks.length, 0), 0
   )
 
+  // Auto-select first lesson on mount or when modules change
+  const allLessons = course.modules.flatMap((m, mi) =>
+    m.lessons.map((l, li) => ({ path: `${mi}-${li}`, lesson: l, moduleIndex: mi, lessonIndex: li, moduleTitle: m.title }))
+  )
+  
+  // If nothing selected but lessons exist, auto-select first
+  if (!selectedLessonPath && allLessons.length > 0) {
+    // Use a setTimeout to avoid setting state during render
+    setTimeout(() => setSelectedLessonPath(allLessons[0].path), 0)
+  }
+
+  // Completed lessons (have at least one block)
+  const completedLessons = allLessons.filter(l => l.lesson.blocks.length > 0).length
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <div>
-        <h2 className="text-2xl font-bold mb-2">Editor de Contenido</h2>
-        <p className="text-muted-foreground">
-          Crea bloques de aprendizaje para cada lección
+        <h2 className="text-2xl font-bold mb-1">Editor de Contenido</h2>
+        <p className="text-muted-foreground text-sm">
+          Crea bloques de aprendizaje para cada lección &mdash; {completedLessons}/{allLessons.length} lecciones con contenido
         </p>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <p className="text-3xl font-bold">{totalBlocks}</p>
-              <p className="text-sm text-muted-foreground">Bloques Totales</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <p className="text-3xl font-bold">{selectedLesson?.lesson.blocks.length || 0}</p>
-              <p className="text-sm text-muted-foreground">Bloques en Lección</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <p className="text-3xl font-bold">{selectedLesson?.lesson.totalXP || 0} XP</p>
-              <p className="text-sm text-muted-foreground">XP de Lección</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Lesson Selector */}
-      <div className="space-y-2">
-        <Label>Seleccionar Lección</Label>
-        <Select value={selectedLessonPath} onValueChange={setSelectedLessonPath}>
-          <SelectTrigger>
-            <SelectValue placeholder="Selecciona una lección para agregar contenido" />
-          </SelectTrigger>
-          <SelectContent>
-            {course.modules.map((module, moduleIndex) => (
-              <SelectGroup key={module.id}>
-                <SelectLabel>{module.title}</SelectLabel>
-                {module.lessons.map((lesson, lessonIndex) => (
-                  <SelectItem 
-                    key={lesson.id} 
-                    value={`${moduleIndex}-${lessonIndex}`}
-                  >
-                    {lesson.title} ({lesson.blocks.length} bloques)
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {!selectedLesson ? (
-        <Alert>
-          <Info className="h-4 w-4" />
-          <AlertDescription>
-            Selecciona una lección para comenzar a agregar bloques de contenido.
-          </AlertDescription>
-        </Alert>
-      ) : (
-        <>
-          {/* Lesson Info */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <span>{selectedLesson.lesson.title}</span>
-                <Badge>{selectedLesson.lesson.totalXP} XP</Badge>
+      {/* Two‑column layout: lesson sidebar + content editor */}
+      <div className="flex gap-5 items-start">
+        {/* ─── Left sidebar: module/lesson tree ─── */}
+        <div className="w-64 shrink-0">
+          <Card className="sticky top-4">
+            <CardHeader className="pb-2 pt-4 px-4">
+              <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+                Lecciones
               </CardTitle>
-              <p className="text-sm text-muted-foreground">
-                {selectedLesson.lesson.description}
-              </p>
             </CardHeader>
-          </Card>
-
-          {/* Add Block Button */}
-          <Button onClick={handleAddBlock} size="lg" className="w-full">
-            <Plus className="mr-2" size={20} />
-            Agregar Bloque
-          </Button>
-
-          {/* Blocks List */}
-          {selectedLesson.lesson.blocks.length === 0 ? (
-            <Alert>
-              <Info className="h-4 w-4" />
-              <AlertDescription>
-                Esta lección aún no tiene bloques de contenido. Agrega tu primer bloque.
-              </AlertDescription>
-            </Alert>
-          ) : (
-            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleBlockDragEnd}>
-              <SortableContext items={selectedLesson.lesson.blocks.map(b => b.id)} strategy={verticalListSortingStrategy}>
-                <div className="space-y-3">
-                  {selectedLesson.lesson.blocks.map((block, blockIndex) => {
-                    const BlockIcon = block.type === 'file' ? getFileTypeIcon(block.fileType) : getBlockIcon(block.type)
+            <CardContent className="px-2 pb-3 max-h-[60vh] overflow-y-auto">
+              {course.modules.map((module, moduleIndex) => (
+                <div key={module.id} className="mb-2">
+                  <p className="text-xs font-semibold text-muted-foreground px-2 py-1.5 uppercase tracking-wide truncate" title={module.title}>
+                    {module.title}
+                  </p>
+                  {module.lessons.map((lesson, lessonIndex) => {
+                    const path = `${moduleIndex}-${lessonIndex}`
+                    const isActive = selectedLessonPath === path
+                    const blockCount = lesson.blocks.length
+                    const hasContent = blockCount > 0
                     return (
-                      <SortableBlockCard
-                        key={block.id}
-                        block={block}
-                        blockIndex={blockIndex}
-                        BlockIcon={BlockIcon}
-                        onEdit={() => handleEditBlock(selectedLesson.moduleIndex, selectedLesson.lessonIndex, blockIndex)}
-                        onDelete={() => handleDeleteBlock(selectedLesson.moduleIndex, selectedLesson.lessonIndex, blockIndex)}
-                      />
+                      <button
+                        key={lesson.id}
+                        onClick={() => setSelectedLessonPath(path)}
+                        className={cn(
+                          'w-full text-left px-2.5 py-2 rounded-md text-sm flex items-center gap-2 transition-colors',
+                          isActive
+                            ? 'bg-primary/10 text-primary font-medium'
+                            : 'text-foreground hover:bg-muted/80'
+                        )}
+                      >
+                        <span className={cn(
+                          'shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold',
+                          hasContent ? 'bg-primary/15 text-primary' : 'bg-muted text-muted-foreground'
+                        )}>
+                          {hasContent ? '✓' : '·'}
+                        </span>
+                        <span className="truncate flex-1" title={lesson.title}>{lesson.title}</span>
+                        {blockCount > 0 && (
+                          <Badge variant="secondary" className="shrink-0 text-[10px] h-5 px-1.5">
+                            {blockCount}
+                          </Badge>
+                        )}
+                      </button>
                     )
                   })}
                 </div>
-              </SortableContext>
-            </DndContext>
+              ))}
+              {allLessons.length === 0 && (
+                <p className="px-2 py-4 text-xs text-muted-foreground text-center">
+                  Crea módulos y lecciones en el paso anterior
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* ─── Right: editor area ─── */}
+        <div className="flex-1 min-w-0 space-y-4">
+          {/* Stats row (compact) */}
+          <div className="grid grid-cols-3 gap-3">
+            <Card>
+              <CardContent className="py-3 px-4">
+                <p className="text-2xl font-bold text-center">{totalBlocks}</p>
+                <p className="text-xs text-muted-foreground text-center">Bloques Totales</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="py-3 px-4">
+                <p className="text-2xl font-bold text-center">{selectedLesson?.lesson.blocks.length || 0}</p>
+                <p className="text-xs text-muted-foreground text-center">En esta Lección</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="py-3 px-4">
+                <p className="text-2xl font-bold text-center">{selectedLesson?.lesson.totalXP || 0} XP</p>
+                <p className="text-xs text-muted-foreground text-center">XP de Lección</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {!selectedLesson ? (
+            <Alert>
+              <Info className="h-4 w-4" />
+              <AlertDescription>
+                Selecciona una lección del panel izquierdo para agregar bloques de contenido.
+              </AlertDescription>
+            </Alert>
+          ) : (
+            <>
+              {/* Lesson header + add button */}
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <h3 className="text-lg font-semibold truncate">{selectedLesson.lesson.title}</h3>
+                  {selectedLesson.lesson.description && (
+                    <p className="text-sm text-muted-foreground truncate">{selectedLesson.lesson.description}</p>
+                  )}
+                </div>
+                <Button onClick={handleAddBlock} size="default" className="shrink-0">
+                  <Plus className="mr-1.5" size={18} />
+                  Agregar Bloque
+                </Button>
+              </div>
+
+              {/* Blocks List */}
+              {selectedLesson.lesson.blocks.length === 0 ? (
+                <div className="border-2 border-dashed rounded-xl py-12 text-center">
+                  <TextT size={40} className="mx-auto text-muted-foreground/50 mb-3" />
+                  <p className="text-muted-foreground font-medium mb-1">Lección vacía</p>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Agrega tu primer bloque de contenido: texto, imagen, video, audio y más
+                  </p>
+                  <Button onClick={handleAddBlock} variant="outline">
+                    <Plus className="mr-1.5" size={16} />
+                    Agregar primer bloque
+                  </Button>
+                </div>
+              ) : (
+                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleBlockDragEnd}>
+                  <SortableContext items={selectedLesson.lesson.blocks.map(b => b.id)} strategy={verticalListSortingStrategy}>
+                    <div className="space-y-3">
+                      {selectedLesson.lesson.blocks.map((block, blockIndex) => {
+                        const BlockIcon = block.type === 'file' ? getFileTypeIcon(block.fileType) : getBlockIcon(block.type)
+                        return (
+                          <SortableBlockCard
+                            key={block.id}
+                            block={block}
+                            blockIndex={blockIndex}
+                            BlockIcon={BlockIcon}
+                            onEdit={() => handleEditBlock(selectedLesson.moduleIndex, selectedLesson.lessonIndex, blockIndex)}
+                            onDelete={() => handleDeleteBlock(selectedLesson.moduleIndex, selectedLesson.lessonIndex, blockIndex)}
+                          />
+                        )
+                      })}
+                    </div>
+                  </SortableContext>
+                </DndContext>
+              )}
+            </>
           )}
-        </>
-      )}
+        </div>
+      </div>
 
       {/* Block Dialog */}
       <Dialog open={isBlockDialogOpen} onOpenChange={setIsBlockDialogOpen}>
-        <DialogContent className="!max-w-[90vw] !w-full max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogContent className="max-w-4xl max-h-[85vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle>
               {editingBlock ? 'Editar Bloque' : 'Nuevo Bloque'}

@@ -89,13 +89,13 @@ export function QuestionDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-4xl max-h-[85vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle>{editingQuestion ? 'Editar Pregunta' : 'Nueva Pregunta'}</DialogTitle>
           <DialogDescription>Las preguntas evalúan la comprensión del estudiante</DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto">
+        <div className="space-y-4 py-4 flex-1 overflow-y-auto min-h-0">
           {/* Question Type */}
           <div className="space-y-2">
             <Label>Tipo de Pregunta *</Label>

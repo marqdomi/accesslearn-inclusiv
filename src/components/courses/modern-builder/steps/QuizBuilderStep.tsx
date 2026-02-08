@@ -8,20 +8,12 @@
  *  - quiz/ScenarioEditor.tsx      (~260 lines) — decision-tree editor
  */
 import { CourseStructure, Quiz, QuizQuestion, ScenarioQuestion } from '@/lib/types'
+import { cn } from '@/lib/utils'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { Plus, PencilSimple, Trash, Info } from '@phosphor-icons/react'
 
 import { QuizMetadataDialog, type QuizFormState } from '../quiz/QuizMetadataDialog'
@@ -355,68 +347,106 @@ export function QuizBuilderStep({ course, updateCourse }: QuizBuilderStepProps) 
   // ── Stats ──────────────────────────────────────────────
   const totalQuizzes = course.modules.reduce((acc, m) => acc + m.lessons.filter((l) => l.quiz).length, 0)
 
+  // ── Lesson tree ────────────────────────────────────────
+  const allLessons = course.modules.flatMap((m, mi) =>
+    m.lessons.map((l, li) => ({ path: `${mi}-${li}`, lesson: l, moduleIndex: mi, lessonIndex: li, moduleTitle: m.title }))
+  )
+
+  // Auto-select first lesson
+  if (!selectedLessonPath && allLessons.length > 0) {
+    setTimeout(() => setSelectedLessonPath(allLessons[0].path), 0)
+  }
+
   // ── Render ─────────────────────────────────────────────
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <div>
-        <h2 className="text-2xl font-bold mb-2">Constructor de Quizzes</h2>
-        <p className="text-muted-foreground">Añade evaluaciones a tus lecciones para validar el aprendizaje</p>
+        <h2 className="text-2xl font-bold mb-1">Constructor de Quizzes</h2>
+        <p className="text-muted-foreground text-sm">
+          Añade evaluaciones a tus lecciones &mdash; {totalQuizzes} quiz(zes) creados
+        </p>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <p className="text-3xl font-bold">{totalQuizzes}</p>
-              <p className="text-sm text-muted-foreground">Quizzes Totales</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <p className="text-3xl font-bold">{currentQuiz?.questions.length || 0}</p>
-              <p className="text-sm text-muted-foreground">Preguntas</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <p className="text-3xl font-bold">{currentQuiz?.totalXP || 0} XP</p>
-              <p className="text-sm text-muted-foreground">XP del Quiz</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Two-column layout */}
+      <div className="flex gap-5 items-start">
+        {/* ─── Left sidebar: lesson tree ─── */}
+        <div className="w-64 shrink-0">
+          <Card className="sticky top-4">
+            <CardHeader className="pb-2 pt-4 px-4">
+              <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+                Lecciones
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="px-2 pb-3 max-h-[60vh] overflow-y-auto">
+              {course.modules.map((module, moduleIndex) => (
+                <div key={module.id} className="mb-2">
+                  <p className="text-xs font-semibold text-muted-foreground px-2 py-1.5 uppercase tracking-wide truncate" title={module.title}>
+                    {module.title}
+                  </p>
+                  {module.lessons.map((lesson, lessonIndex) => {
+                    const path = `${moduleIndex}-${lessonIndex}`
+                    const isActive = selectedLessonPath === path
+                    const hasQuiz = !!lesson.quiz
+                    return (
+                      <button
+                        key={lesson.id}
+                        onClick={() => setSelectedLessonPath(path)}
+                        className={cn(
+                          'w-full text-left px-2.5 py-2 rounded-md text-sm flex items-center gap-2 transition-colors',
+                          isActive
+                            ? 'bg-primary/10 text-primary font-medium'
+                            : 'text-foreground hover:bg-muted/80'
+                        )}
+                      >
+                        <span className={cn(
+                          'shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold',
+                          hasQuiz ? 'bg-primary/15 text-primary' : 'bg-muted text-muted-foreground'
+                        )}>
+                          {hasQuiz ? '✓' : '·'}
+                        </span>
+                        <span className="truncate flex-1" title={lesson.title}>{lesson.title}</span>
+                        {hasQuiz && (
+                          <Badge variant="secondary" className="shrink-0 text-[10px] h-5 px-1.5">
+                            {lesson.quiz!.questions.length}q
+                          </Badge>
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        </div>
 
-      {/* Lesson Selector */}
-      <div className="space-y-2">
-        <label className="text-sm font-medium">Seleccionar Lección</label>
-        <Select value={selectedLessonPath} onValueChange={setSelectedLessonPath}>
-          <SelectTrigger>
-            <SelectValue placeholder="Selecciona una lección para agregar un quiz" />
-          </SelectTrigger>
-          <SelectContent>
-            {course.modules.map((module, moduleIndex) => (
-              <SelectGroup key={module.id}>
-                <SelectLabel>{module.title}</SelectLabel>
-                {module.lessons.map((lesson, lessonIndex) => (
-                  <SelectItem key={lesson.id} value={`${moduleIndex}-${lessonIndex}`}>
-                    {lesson.title} {lesson.quiz && '✓'}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+        {/* ─── Right: quiz editor ─── */}
+        <div className="flex-1 min-w-0 space-y-4">
+          {/* Stats row (compact) */}
+          <div className="grid grid-cols-3 gap-3">
+            <Card>
+              <CardContent className="py-3 px-4">
+                <p className="text-2xl font-bold text-center">{totalQuizzes}</p>
+                <p className="text-xs text-muted-foreground text-center">Quizzes Totales</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="py-3 px-4">
+                <p className="text-2xl font-bold text-center">{currentQuiz?.questions.length || 0}</p>
+                <p className="text-xs text-muted-foreground text-center">Preguntas</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="py-3 px-4">
+                <p className="text-2xl font-bold text-center">{currentQuiz?.totalXP || 0} XP</p>
+                <p className="text-xs text-muted-foreground text-center">XP del Quiz</p>
+              </CardContent>
+            </Card>
+          </div>
 
       {!selectedLesson ? (
         <Alert>
           <Info className="h-4 w-4" />
-          <AlertDescription>Selecciona una lección para agregar o editar un quiz.</AlertDescription>
+          <AlertDescription>Selecciona una lección del panel izquierdo para agregar o editar un quiz.</AlertDescription>
         </Alert>
       ) : !currentQuiz ? (
         <Card>
@@ -476,6 +506,8 @@ export function QuizBuilderStep({ course, updateCourse }: QuizBuilderStepProps) 
           )}
         </>
       )}
+        </div>
+      </div>
 
       {/* Dialogs */}
       <QuizMetadataDialog

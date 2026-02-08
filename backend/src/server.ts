@@ -760,7 +760,7 @@ app.post('/api/ai/recommendations', requireAuth, getRecommendations);
 app.post('/api/ai/generate-quiz', requireAuth, generateQuiz);
 app.get('/api/ai/course-summary/:courseId', requireAuth, summarizeCourse);
 app.post('/api/ai/chat', requireAuth, chatAssistant);
-app.post('/api/ai/analytics-insights', requireAuth, requireRole('admin', 'super-admin'), getInsights);
+app.post('/api/ai/analytics-insights', requireAuth, requireRole('tenant-admin', 'super-admin'), getInsights);
 
 // ============================================
 // USER ENDPOINTS
