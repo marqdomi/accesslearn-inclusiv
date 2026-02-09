@@ -41,11 +41,14 @@ param stripeSecretKey string = ''
 @secure()
 param stripeWebhookSecret string = ''
 
-@description('Custom domain for frontend (e.g., app.kainet.mx)')
-param frontendCustomDomain string = ''
+@description('Primary custom domain for frontend (e.g., kaido.kainet.mx)')
+param frontendCustomDomain string = 'kaido.kainet.mx'
+
+@description('Legacy frontend domain to keep bound (e.g., app.kainet.mx)')
+param frontendLegacyDomain string = 'app.kainet.mx'
 
 @description('Custom domain for backend API (e.g., api.kainet.mx)')
-param backendCustomDomain string = ''
+param backendCustomDomain string = 'api.kainet.mx'
 
 // Variables
 var resourceGroupName = 'rg-${appName}-${environment}'

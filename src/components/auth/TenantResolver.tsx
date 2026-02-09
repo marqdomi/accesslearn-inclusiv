@@ -26,11 +26,13 @@ const PUBLIC_ROUTES = ['/accept-invitation', '/register', '/login'];
 /**
  * TenantResolver: Detecta y resuelve el tenant actual
  * 
- * Estrategia de resolución:
- * 1. Subdomain (producción): kainet.lms.kainet.mx → tenant: kainet
- * 2. Query param (desarrollo): localhost:5001?tenant=kainet → tenant: kainet
- * 3. localStorage: Última selección del usuario
- * 4. Selector manual: Usuario elige de lista
+ * Estrategia de resolución (en orden de prioridad):
+ * 1. Usuario autenticado: usa tenantId del JWT
+ * 2. Query param: ?tenant=kainet
+ * 3. URL path: /t/kainet → tenant: kainet (path-based routing)
+ * 4. Subdomain (producción): kainet.kaido.kainet.mx → tenant: kainet
+ * 5. localStorage: Última selección del usuario
+ * 6. Selector manual: Usuario elige de lista
  * 
  * Solo renderiza children cuando el tenant está confirmado O en rutas públicas.
  */

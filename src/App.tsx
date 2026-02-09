@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useParams, useLocation } from 'react-router-dom'
 import { Toaster } from 'sonner'
 import { ThemeProvider } from '@/contexts/ThemeContext'
 import { TenantProvider } from '@/contexts/TenantContext'
@@ -116,6 +116,20 @@ function PageLoadingFallback() {
   )
 }
 
+/**
+ * TenantSlugRedirect: Handles /t/:slug/* URLs
+ * TenantResolver already extracted the slug and set the tenant context.
+ * This component strips /t/:slug from the URL and redirects to the inner path.
+ * Example: /t/scientifica/dashboard → /dashboard (tenant already set)
+ *          /t/scientifica → /login (default landing)
+ */
+function TenantSlugRedirect() {
+  const { '*': rest } = useParams();
+  const location = useLocation();
+  const target = rest ? `/${rest}` : '/login';
+  return <Navigate to={`${target}${location.search}`} replace />;
+}
+
 function AppRoutes() {
   const { isAuthenticated } = useAuth()
 
@@ -203,6 +217,10 @@ function AppRoutes() {
         <Route path="settings" element={<PlatformSettings />} />
       </Route>
       
+      {/* Tenant slug redirect: /t/:slug/* → /:rest (tenant resolved by TenantResolver) */}
+      <Route path="/t/:slug/*" element={<TenantSlugRedirect />} />
+      <Route path="/t/:slug" element={<TenantSlugRedirect />} />
+
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
       <Route path="*" element={<NotFoundPage />} />
     </Routes>

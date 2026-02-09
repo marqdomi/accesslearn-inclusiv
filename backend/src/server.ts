@@ -251,9 +251,10 @@ const corsOptions = {
     
     const allowedOrigins = process.env.NODE_ENV === 'production' 
       ? [
+          'https://kaido.kainet.mx',
           'https://app.kainet.mx',
           'https://api.kainet.mx',
-          process.env.FRONTEND_URL || 'https://app.kainet.mx'
+          process.env.FRONTEND_URL || 'https://kaido.kainet.mx'
         ]
       : ['http://localhost:5173', 'http://localhost:5001', 'http://127.0.0.1:5173', 'http://127.0.0.1:5001'];
     

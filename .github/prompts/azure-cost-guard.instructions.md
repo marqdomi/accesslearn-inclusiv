@@ -121,6 +121,13 @@ The GitHub Actions pipeline (`.github/workflows/deploy.yml`) should:
 - `log-accesslearn-prod` — Log Analytics (30d retention, 0.1 GB/day cap)
 - `AP-insights-access-learn` — App Insights Basic (30d retention, 0.1 GB/day cap)
 
+**DNS Architecture:**
+- `kaido.kainet.mx` → Frontend Container App (primary domain)
+- `app.kainet.mx` → Frontend Container App (legacy, 301 redirect to kaido.kainet.mx)
+- `api.kainet.mx` → Backend Container App
+- Tenant URLs: `kaido.kainet.mx/t/{slug}` (e.g., `/t/scientifica`, `/t/laboralmx`)
+- Platform Admin: `kaido.kainet.mx/platform-admin`
+
 **Resource Group: `DefaultResourceGroup-EUS`** (eastus)
 - `accesslearnmedia` — Storage Account Standard_LRS Hot (6 blob containers, in use)
 
