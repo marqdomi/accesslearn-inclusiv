@@ -206,6 +206,9 @@ resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2022-10-01' = {
       name: 'PerGB2018'
     }
     retentionInDays: 30
+    workspaceCapping: {
+      dailyQuotaGb: json('0.1') // Stay within free 5 GB/month
+    }
   }
 }
 
@@ -218,6 +221,7 @@ resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
     Application_Type: 'web'
     WorkspaceResourceId: logAnalytics.id
     IngestionMode: 'LogAnalytics'
+    RetentionInDays: 30 // Minimize retention cost
     publicNetworkAccessForIngestion: 'Enabled'
     publicNetworkAccessForQuery: 'Enabled'
   }
@@ -313,8 +317,8 @@ resource backendApp 'Microsoft.App/containerApps@2023-05-01' = {
           name: 'backend'
           image: '${containerRegistry.properties.loginServer}/${appName}-backend:${imageTag}'
           resources: {
-            cpu: json('0.5')
-            memory: '1Gi'
+            cpu: json('0.25') // Minimum for low-traffic stage
+            memory: '0.5Gi'
           }
           env: [
             {
@@ -397,8 +401,8 @@ resource backendApp 'Microsoft.App/containerApps@2023-05-01' = {
         }
       ]
       scale: {
-        minReplicas: 1
-        maxReplicas: 10
+        minReplicas: 0 // Scale to zero when idle — $0 cost
+        maxReplicas: 3
         rules: [
           {
             name: 'http-scaling'
@@ -479,8 +483,8 @@ resource frontendApp 'Microsoft.App/containerApps@2023-05-01' = {
         }
       ]
       scale: {
-        minReplicas: 1
-        maxReplicas: 5
+        minReplicas: 0 // Scale to zero when idle — $0 cost
+        maxReplicas: 2
         rules: [
           {
             name: 'http-scaling'
