@@ -15,6 +15,7 @@ on:
       - 'Dockerfile'
       - 'nginx.conf'
       - 'docker-entrypoint.sh'
+      - 'index.html'
       - 'infra/**'
       - '.github/workflows/**'
   workflow_dispatch: # Permite deploy manual desde GitHub UI
