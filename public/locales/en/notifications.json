@@ -1,9 +1,9 @@
 {
-  "title": "Notifications",
-  "markAllRead": "Mark all as read",
-  "unreadCount": "You have {count} unread notification",
-  "unreadCountPlural": "You have {count} unread notifications",
-  "allCaughtUp": "You're all caught up!",
-  "noNotifications": "No notifications yet",
-  "deleteNotification": "Delete notification"
+  "title": "Notificaciones",
+  "markAllRead": "Marcar todas como leídas",
+  "unreadCount": "Tienes {count} notificación sin leer",
+  "unreadCountPlural": "Tienes {count} notificaciones sin leer",
+  "allCaughtUp": "¡Estás al día!",
+  "noNotifications": "Aún no hay notificaciones",
+  "deleteNotification": "Eliminar notificación"
 }
