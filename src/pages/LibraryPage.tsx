@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/contexts/AuthContext'
 import { useTenant } from '@/contexts/TenantContext'
 import { ApiService } from '@/services/api.service'
@@ -17,6 +18,7 @@ interface LibraryItem {
 }
 
 export function LibraryPage() {
+  const { t } = useTranslation('courses')
   const { user } = useAuth()
   const { currentTenant } = useTenant()
   const navigate = useNavigate()
@@ -75,9 +77,9 @@ export function LibraryPage() {
       console.error('[LibraryPage] Failed to load library:', err)
       if (err.status === 401) {
         // Let ApiService handle 401 errors (logout)
-        setError('Sesión expirada. Por favor, inicia sesión nuevamente.')
+        setError(t('library.sessionExpired'))
       } else {
-        setError(err.message || 'No se pudo cargar tu biblioteca. Por favor, intenta de nuevo.')
+        setError(err.message || t('library.loadError'))
       }
     } finally {
       setLoading(false)
@@ -92,7 +94,7 @@ export function LibraryPage() {
       navigate(`/courses/${courseId}`)
     } catch (err) {
       console.error('Failed to start retake:', err)
-      setError('No se pudo iniciar el reintento. Por favor, intenta de nuevo.')
+      setError(t('library.retakeError'))
     }
   }
 
@@ -143,7 +145,7 @@ export function LibraryPage() {
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4 animate-pulse" />
-            <p className="text-muted-foreground">Cargando tu biblioteca...</p>
+            <p className="text-muted-foreground">{t('library.loading')}</p>
           </div>
         </div>
       </div>
@@ -157,7 +159,7 @@ export function LibraryPage() {
           <CardContent className="pt-6">
             <p className="text-destructive text-center">{error}</p>
             <div className="flex justify-center mt-4">
-              <Button onClick={loadLibrary}>Reintentar</Button>
+              <Button onClick={loadLibrary}>{t('library.retry')}</Button>
             </div>
           </CardContent>
         </Card>
@@ -168,9 +170,9 @@ export function LibraryPage() {
   return (
     <div className="container mx-auto p-6">
       <div className="mb-8">
-        <h1 className="text-2xl sm:text-3xl font-bold mb-2">Mi Biblioteca</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold mb-2">{t('library.title')}</h1>
         <p className="text-sm sm:text-base text-muted-foreground">
-          Gestiona tus cursos y realiza seguimiento de tu progreso
+          {t('library.subtitle')}
         </p>
       </div>
 
@@ -179,7 +181,7 @@ export function LibraryPage() {
         <Card className="p-3 sm:p-6">
           <CardHeader className="pb-2 p-0">
             <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
-              Total de Cursos
+              {t('library.totalCourses')}
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0 pt-2">
@@ -193,7 +195,7 @@ export function LibraryPage() {
         <Card className="p-3 sm:p-6">
           <CardHeader className="pb-2 p-0">
             <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
-              XP Total Ganado
+              {t('library.totalXP')}
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0 pt-2">
@@ -207,7 +209,7 @@ export function LibraryPage() {
         <Card className="p-3 sm:p-6">
           <CardHeader className="pb-2 p-0">
             <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
-              Promedio de Calificación
+              {t('library.averageScore')}
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0 pt-2">
@@ -221,7 +223,7 @@ export function LibraryPage() {
         <Card className="p-3 sm:p-6">
           <CardHeader className="pb-2 p-0">
             <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
-              Total de Intentos
+              {t('library.totalAttempts')}
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0 pt-2">
@@ -237,17 +239,17 @@ export function LibraryPage() {
       <Tabs defaultValue="in-progress" className="w-full">
         <TabsList className="grid w-full grid-cols-3 h-auto">
           <TabsTrigger value="in-progress" className="text-xs sm:text-sm py-2 sm:py-3 px-2 sm:px-4 touch-target">
-            <span className="hidden sm:inline">En Progreso</span>
-            <span className="sm:hidden">Progreso</span>
+            <span className="hidden sm:inline">{t('library.inProgress')}</span>
+            <span className="sm:hidden">{t('library.inProgressShort')}</span>
             <span className="ml-1">({inProgressItems.length})</span>
           </TabsTrigger>
           <TabsTrigger value="completed" className="text-xs sm:text-sm py-2 sm:py-3 px-2 sm:px-4 touch-target">
-            <span className="hidden sm:inline">Completados</span>
-            <span className="sm:hidden">Complet.</span>
+            <span className="hidden sm:inline">{t('library.completed')}</span>
+            <span className="sm:hidden">{t('library.completedShort')}</span>
             <span className="ml-1">({completedItems.length})</span>
           </TabsTrigger>
           <TabsTrigger value="all" className="text-xs sm:text-sm py-2 sm:py-3 px-2 sm:px-4 touch-target">
-            Todos ({library.length})
+            {t('library.all')} ({library.length})
           </TabsTrigger>
         </TabsList>
 
@@ -257,7 +259,7 @@ export function LibraryPage() {
               <CardContent className="pt-6 text-center">
                 <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <p className="text-muted-foreground">
-                  No tienes cursos en progreso. ¡Comienza uno nuevo!
+                  {t('library.noInProgress')}
                 </p>
               </CardContent>
             </Card>
@@ -281,7 +283,7 @@ export function LibraryPage() {
               <CardContent className="pt-6 text-center">
                 <Trophy className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <p className="text-muted-foreground">
-                  Aún no has completado ningún curso al 100%.
+                  {t('library.noCompleted')}
                 </p>
               </CardContent>
             </Card>
@@ -305,7 +307,7 @@ export function LibraryPage() {
               <CardContent className="pt-6 text-center">
                 <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <p className="text-muted-foreground">
-                  Tu biblioteca está vacía. Inscríbete en cursos para comenzar.
+                  {t('library.emptyLibrary')}
                 </p>
               </CardContent>
             </Card>
@@ -334,6 +336,7 @@ interface CourseLibraryCardProps {
 }
 
 function CourseLibraryCard({ course, progress, onRetake }: CourseLibraryCardProps) {
+  const { t } = useTranslation('courses')
   const navigate = useNavigate()
   const bestScore = progress.bestScore || 0
   
@@ -378,13 +381,13 @@ function CourseLibraryCard({ course, progress, onRetake }: CourseLibraryCardProp
         {/* Progress Bar */}
         <div className="space-y-2">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Progreso</span>
+            <span className="text-muted-foreground">{t('library.progress')}</span>
             <span className="font-semibold">{progressPercentage}%</span>
           </div>
           <Progress value={progressPercentage} className="h-2" />
           {totalLessons > 0 && (
             <p className="text-xs text-muted-foreground">
-              {completedLessons} de {totalLessons} lecciones completadas
+              {completedLessons} {t('library.ofLessons')} {totalLessons} {t('library.lessonsCompleted')}
             </p>
           )}
         </div>
@@ -393,7 +396,7 @@ function CourseLibraryCard({ course, progress, onRetake }: CourseLibraryCardProp
         <div className="flex flex-wrap gap-2">
           <Badge variant="secondary" className="gap-1">
             <History className="h-3 w-3" />
-            {attemptCount} {attemptCount === 1 ? 'intento' : 'intentos'}
+            {attemptCount} {attemptCount === 1 ? t('library.attempt') : t('library.attempts')}
           </Badge>
           <Badge variant="secondary" className="gap-1">
             <Trophy className="h-3 w-3" />
@@ -420,12 +423,12 @@ function CourseLibraryCard({ course, progress, onRetake }: CourseLibraryCardProp
               {isInProgress ? (
                 <>
                   <BookOpen className="h-4 w-4" />
-                  Continuar
+                  {t('library.continue')}
                 </>
               ) : (
                 <>
                   <RotateCcw className="h-4 w-4" />
-                  Reintentar
+                  {t('library.retake')}
                 </>
               )}
             </Button>
@@ -444,7 +447,7 @@ function CourseLibraryCard({ course, progress, onRetake }: CourseLibraryCardProp
               variant={isCompleted ? 'default' : 'outline'}
               className="flex-1"
             >
-              {attemptCount === 0 ? 'Iniciar' : 'Ver Curso'}
+              {attemptCount === 0 ? t('library.start') : t('library.viewCourse')}
             </Button>
           )}
         </div>
@@ -460,7 +463,7 @@ function CourseLibraryCard({ course, progress, onRetake }: CourseLibraryCardProp
             size="sm"
           >
             <History className="h-4 w-4" />
-            Ver Historial de Intentos
+            {t('library.viewAttemptHistory')}
           </Button>
         )}
       </CardContent>

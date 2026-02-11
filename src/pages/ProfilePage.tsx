@@ -5,6 +5,7 @@
 
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useProfile } from '@/hooks/use-profile'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -33,6 +34,7 @@ import { motion } from 'framer-motion'
 
 export function ProfilePage() {
   const navigate = useNavigate()
+  const { t } = useTranslation('common')
   const { profile, loading, error, updateProfile, updateMentorProfile, changePassword, updateAvatar } = useProfile()
   const [activeTab, setActiveTab] = useState('profile')
   
@@ -132,22 +134,22 @@ export function ProfilePage() {
 
     // Validation
     if (!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword) {
-      toast.error('Todos los campos son obligatorios')
+      toast.error(t('profile.allFieldsRequired'))
       return
     }
 
     if (passwordData.newPassword.length < 8) {
-      toast.error('La nueva contraseña debe tener al menos 8 caracteres')
+      toast.error(t('profile.passwordMinLength'))
       return
     }
 
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      toast.error('Las contraseñas no coinciden')
+      toast.error(t('profile.passwordsMismatch'))
       return
     }
 
     if (passwordData.currentPassword === passwordData.newPassword) {
-      toast.error('La nueva contraseña debe ser diferente a la actual')
+      toast.error(t('profile.passwordMustBeDifferent'))
       return
     }
 
@@ -171,13 +173,13 @@ export function ProfilePage() {
 
     // Validate file type
     if (!file.type.startsWith('image/')) {
-      toast.error('El archivo debe ser una imagen')
+      toast.error(t('profile.fileMustBeImage'))
       return
     }
 
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      toast.error('La imagen debe ser menor a 5MB')
+      toast.error(t('profile.imageTooLarge'))
       return
     }
 
@@ -238,13 +240,13 @@ export function ProfilePage() {
 
   // Toggle availability for a day
   const DAYS = [
-    { key: 'monday', label: 'Lunes' },
-    { key: 'tuesday', label: 'Martes' },
-    { key: 'wednesday', label: 'Miércoles' },
-    { key: 'thursday', label: 'Jueves' },
-    { key: 'friday', label: 'Viernes' },
-    { key: 'saturday', label: 'Sábado' },
-    { key: 'sunday', label: 'Domingo' },
+    { key: 'monday', label: t('profile.days.monday') },
+    { key: 'tuesday', label: t('profile.days.tuesday') },
+    { key: 'wednesday', label: t('profile.days.wednesday') },
+    { key: 'thursday', label: t('profile.days.thursday') },
+    { key: 'friday', label: t('profile.days.friday') },
+    { key: 'saturday', label: t('profile.days.saturday') },
+    { key: 'sunday', label: t('profile.days.sunday') },
   ] as const
 
   const TIME_SLOTS = ['09:00-11:00', '11:00-13:00', '13:00-15:00', '15:00-17:00', '17:00-19:00']
@@ -269,7 +271,7 @@ export function ProfilePage() {
       <div className="min-h-screen flex items-center justify-center bg-muted/30">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Cargando perfil...</p>
+          <p className="mt-4 text-muted-foreground">{t('profile.loadingProfile')}</p>
         </div>
       </div>
     )
@@ -284,15 +286,15 @@ export function ProfilePage() {
             <Alert variant="destructive">
               <WarningCircle className="h-4 w-4" />
               <AlertDescription>
-                {error || 'No se pudo cargar el perfil. Por favor, intenta de nuevo.'}
+                {error || t('profile.loadError')}
               </AlertDescription>
             </Alert>
             <div className="flex gap-2 mt-4">
               <Button onClick={() => navigate('/dashboard')} variant="outline" className="flex-1">
-                Volver al Dashboard
+                {t('profile.backToDashboard')}
               </Button>
               <Button onClick={() => window.location.reload()} className="flex-1">
-                Recargar Página
+                {t('profile.reloadPage')}
               </Button>
             </div>
           </CardContent>
@@ -310,15 +312,15 @@ export function ProfilePage() {
             <Alert>
               <WarningCircle className="h-4 w-4" />
               <AlertDescription>
-                No hay información de perfil disponible. Por favor, intenta recargar la página.
+                {t('profile.noProfileInfo')}
               </AlertDescription>
             </Alert>
             <div className="flex gap-2 mt-4">
               <Button onClick={() => navigate('/dashboard')} variant="outline" className="flex-1">
-                Volver al Dashboard
+                {t('profile.backToDashboard')}
               </Button>
               <Button onClick={() => window.location.reload()} className="flex-1">
-                Recargar Página
+                {t('profile.reloadPage')}
               </Button>
             </div>
           </CardContent>
@@ -332,9 +334,9 @@ export function ProfilePage() {
       <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 max-w-4xl">
         {/* Header */}
         <div className="mb-4 sm:mb-6">
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Mi Perfil</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">{t('profile.title')}</h1>
           <p className="text-sm sm:text-base text-muted-foreground mt-2">
-            Administra tu información personal y configuración de cuenta
+            {t('profile.subtitle')}
           </p>
         </div>
 
@@ -381,12 +383,12 @@ export function ProfilePage() {
                   </p>
                   <div className="flex flex-col sm:flex-row items-center sm:items-center gap-1.5 sm:gap-4 mt-2">
                     <span className="text-[10px] sm:text-sm text-muted-foreground">
-                      {profile.role === 'super-admin' && 'Super Administrador'}
-                      {profile.role === 'tenant-admin' && 'Administrador'}
-                      {profile.role === 'instructor' && 'Instructor'}
-                      {profile.role === 'mentor' && 'Mentor'}
-                      {profile.role === 'employee' && 'Empleado'}
-                      {profile.role === 'student' && 'Estudiante'}
+                      {profile.role === 'super-admin' && t('role.superAdmin')}
+                      {profile.role === 'tenant-admin' && t('role.tenantAdmin')}
+                      {profile.role === 'instructor' && t('role.instructor')}
+                      {profile.role === 'mentor' && t('role.mentor')}
+                      {profile.role === 'employee' && t('profile.employee')}
+                      {profile.role === 'student' && t('role.student')}
                     </span>
                     {profile.totalXP !== undefined && (
                       <span className="text-[10px] sm:text-sm text-muted-foreground">
@@ -422,8 +424,8 @@ export function ProfilePage() {
               className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md rounded-lg py-2.5 px-3 sm:px-4 text-xs sm:text-sm font-semibold transition-all duration-200 hover:bg-muted/50 data-[state=inactive]:text-muted-foreground touch-target"
             >
               <User className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2 flex-shrink-0" />
-              <span className="hidden sm:inline">Información Personal</span>
-              <span className="sm:hidden">Perfil</span>
+              <span className="hidden sm:inline">{t('profile.personalInfo')}</span>
+              <span className="sm:hidden">{t('profile.profileShort')}</span>
             </TabsTrigger>
             {isMentor && (
               <TabsTrigger 
@@ -431,8 +433,8 @@ export function ProfilePage() {
                 className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md rounded-lg py-2.5 px-3 sm:px-4 text-xs sm:text-sm font-semibold transition-all duration-200 hover:bg-muted/50 data-[state=inactive]:text-muted-foreground touch-target"
               >
                 <Chalkboard className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2 flex-shrink-0" />
-                <span className="hidden sm:inline">Perfil de Mentor</span>
-                <span className="sm:hidden">Mentor</span>
+                <span className="hidden sm:inline">{t('profile.mentorProfile')}</span>
+                <span className="sm:hidden">{t('role.mentor')}</span>
               </TabsTrigger>
             )}
             <TabsTrigger 
@@ -440,8 +442,8 @@ export function ProfilePage() {
               className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md rounded-lg py-2.5 px-3 sm:px-4 text-xs sm:text-sm font-semibold transition-all duration-200 hover:bg-muted/50 data-[state=inactive]:text-muted-foreground touch-target"
             >
               <Lock className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2 flex-shrink-0" />
-              <span className="hidden sm:inline">Cambiar Contraseña</span>
-              <span className="sm:hidden">Contraseña</span>
+              <span className="hidden sm:inline">{t('profile.changePassword')}</span>
+              <span className="sm:hidden">{t('profile.passwordShort')}</span>
             </TabsTrigger>
           </TabsList>
 
@@ -454,9 +456,9 @@ export function ProfilePage() {
             >
               <Card>
                 <CardHeader className="p-4 sm:p-6 pb-3 sm:pb-4">
-                  <CardTitle className="text-base sm:text-xl">Información Personal</CardTitle>
+                  <CardTitle className="text-base sm:text-xl">{t('profile.personalInfo')}</CardTitle>
                   <CardDescription className="text-xs sm:text-sm mt-1">
-                    Actualiza tu información personal y datos de contacto
+                    {t('profile.personalInfoDesc')}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="p-4 sm:p-6 pt-0">
@@ -465,7 +467,7 @@ export function ProfilePage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                       <div className="space-y-1.5 sm:space-y-2">
                         <Label htmlFor="firstName" required className="text-xs sm:text-sm">
-                          Nombre
+                          {t('profile.firstName')}
                         </Label>
                         <Input
                           id="firstName"
@@ -477,7 +479,7 @@ export function ProfilePage() {
                       </div>
                       <div className="space-y-1.5 sm:space-y-2">
                         <Label htmlFor="lastName" required className="text-xs sm:text-sm">
-                          Apellido
+                          {t('profile.lastName')}
                         </Label>
                         <Input
                           id="lastName"
@@ -491,7 +493,7 @@ export function ProfilePage() {
 
                     {/* Email (read-only) */}
                     <div className="space-y-1.5 sm:space-y-2">
-                      <Label htmlFor="email" className="text-xs sm:text-sm">Correo Electrónico</Label>
+                      <Label htmlFor="email" className="text-xs sm:text-sm">{t('profile.email')}</Label>
                       <Input
                         id="email"
                         type="email"
@@ -500,13 +502,13 @@ export function ProfilePage() {
                         className="bg-muted h-11 sm:h-12 text-sm sm:text-base touch-target"
                       />
                       <p className="text-[10px] sm:text-xs text-muted-foreground">
-                        El correo electrónico no se puede cambiar
+                        {t('profile.emailCannotChange')}
                       </p>
                     </div>
 
                     {/* Phone */}
                     <div className="space-y-1.5 sm:space-y-2">
-                      <Label htmlFor="phone" className="text-xs sm:text-sm">Teléfono</Label>
+                      <Label htmlFor="phone" className="text-xs sm:text-sm">{t('profile.phone')}</Label>
                       <Input
                         id="phone"
                         type="tel"
@@ -520,7 +522,7 @@ export function ProfilePage() {
                     {/* Date of Birth and Gender */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                       <div className="space-y-1.5 sm:space-y-2">
-                        <Label htmlFor="dateOfBirth" className="text-xs sm:text-sm">Fecha de Nacimiento</Label>
+                        <Label htmlFor="dateOfBirth" className="text-xs sm:text-sm">{t('profile.dateOfBirth')}</Label>
                         <Input
                           id="dateOfBirth"
                           type="date"
@@ -530,7 +532,7 @@ export function ProfilePage() {
                         />
                       </div>
                       <div className="space-y-1.5 sm:space-y-2">
-                        <Label htmlFor="gender" className="text-xs sm:text-sm">Género</Label>
+                        <Label htmlFor="gender" className="text-xs sm:text-sm">{t('profile.gender')}</Label>
                         <select
                           id="gender"
                           value={profileData.gender}
@@ -540,19 +542,19 @@ export function ProfilePage() {
                           })}
                           className="w-full px-3 py-2.5 sm:py-3 h-11 sm:h-12 border border-border rounded-md bg-background text-sm sm:text-base text-foreground touch-target"
                         >
-                          <option value="prefer-not-to-say">Prefiero no decir</option>
-                          <option value="male">Masculino</option>
-                          <option value="female">Femenino</option>
-                          <option value="other">Otro</option>
+                          <option value="prefer-not-to-say">{t('profile.genderPreferNot')}</option>
+                          <option value="male">{t('profile.genderMale')}</option>
+                          <option value="female">{t('profile.genderFemale')}</option>
+                          <option value="other">{t('profile.genderOther')}</option>
                         </select>
                       </div>
                     </div>
 
                     {/* Address */}
                     <div className="space-y-3 sm:space-y-4 border-t pt-3 sm:pt-4">
-                      <h3 className="text-sm sm:text-lg font-semibold">Dirección (Opcional)</h3>
+                      <h3 className="text-sm sm:text-lg font-semibold">{t('profile.addressOptional')}</h3>
                       <div className="space-y-1.5 sm:space-y-2">
-                        <Label htmlFor="street" className="text-xs sm:text-sm">Calle</Label>
+                        <Label htmlFor="street" className="text-xs sm:text-sm">{t('profile.street')}</Label>
                         <Input
                           id="street"
                           value={profileData.address.street}
@@ -566,7 +568,7 @@ export function ProfilePage() {
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
                         <div className="space-y-1.5 sm:space-y-2">
-                          <Label htmlFor="city" className="text-xs sm:text-sm">Ciudad</Label>
+                          <Label htmlFor="city" className="text-xs sm:text-sm">{t('profile.city')}</Label>
                           <Input
                             id="city"
                             value={profileData.address.city}
@@ -579,7 +581,7 @@ export function ProfilePage() {
                           />
                         </div>
                         <div className="space-y-1.5 sm:space-y-2">
-                          <Label htmlFor="state" className="text-xs sm:text-sm">Estado</Label>
+                          <Label htmlFor="state" className="text-xs sm:text-sm">{t('profile.state')}</Label>
                           <Input
                             id="state"
                             value={profileData.address.state}
@@ -592,7 +594,7 @@ export function ProfilePage() {
                           />
                         </div>
                         <div className="space-y-1.5 sm:space-y-2">
-                          <Label htmlFor="zipCode" className="text-xs sm:text-sm">Código Postal</Label>
+                          <Label htmlFor="zipCode" className="text-xs sm:text-sm">{t('profile.zipCode')}</Label>
                           <Input
                             id="zipCode"
                             value={profileData.address.zipCode}
@@ -606,7 +608,7 @@ export function ProfilePage() {
                         </div>
                       </div>
                       <div className="space-y-1.5 sm:space-y-2">
-                        <Label htmlFor="country" className="text-xs sm:text-sm">País</Label>
+                        <Label htmlFor="country" className="text-xs sm:text-sm">{t('profile.country')}</Label>
                         <Input
                           id="country"
                           value={profileData.address.country}
@@ -628,10 +630,10 @@ export function ProfilePage() {
                         onClick={() => navigate('/dashboard')}
                         className="w-full sm:w-auto touch-target"
                       >
-                        Cancelar
+                        {t('cancel')}
                       </Button>
                       <Button type="submit" disabled={loading} className="w-full sm:w-auto touch-target">
-                        {loading ? 'Guardando...' : 'Guardar Cambios'}
+                        {loading ? t('profile.saving') : t('profile.saveChanges')}
                       </Button>
                     </div>
                   </form>
@@ -654,9 +656,9 @@ export function ProfilePage() {
                     <CardHeader className="p-4 sm:p-6 pb-3 sm:pb-4">
                       <div className="flex items-center justify-between">
                         <div>
-                          <CardTitle className="text-base sm:text-xl">Disponibilidad</CardTitle>
+                          <CardTitle className="text-base sm:text-xl">{t('profile.mentor.availability')}</CardTitle>
                           <CardDescription className="text-xs sm:text-sm mt-1">
-                            Indica si estás aceptando nuevos aprendices
+                            {t('profile.mentor.availabilityDesc')}
                           </CardDescription>
                         </div>
                         <Switch
@@ -672,9 +674,9 @@ export function ProfilePage() {
                   {/* Bio */}
                   <Card>
                     <CardHeader className="p-4 sm:p-6 pb-3 sm:pb-4">
-                      <CardTitle className="text-base sm:text-xl">Sobre Mí</CardTitle>
+                      <CardTitle className="text-base sm:text-xl">{t('profile.mentor.aboutMe')}</CardTitle>
                       <CardDescription className="text-xs sm:text-sm mt-1">
-                        Describe tu experiencia y cómo puedes ayudar a los aprendices
+                        {t('profile.mentor.aboutMeDesc')}
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="p-4 sm:p-6 pt-0">
@@ -683,12 +685,12 @@ export function ProfilePage() {
                         onChange={(e) =>
                           setMentorData({ ...mentorData, mentorBio: e.target.value })
                         }
-                        placeholder="Cuéntanos sobre tu experiencia profesional, áreas de conocimiento y cómo te gusta mentorear..."
+                        placeholder={t('profile.mentor.bioPlaceholder')}
                         rows={5}
                         className="text-sm sm:text-base resize-none"
                       />
                       <p className="text-[10px] sm:text-xs text-muted-foreground mt-2">
-                        {mentorData.mentorBio.length}/500 caracteres
+                        {mentorData.mentorBio.length}/500 {t('profile.mentor.characters')}
                       </p>
                     </CardContent>
                   </Card>
@@ -696,9 +698,9 @@ export function ProfilePage() {
                   {/* Specialties */}
                   <Card>
                     <CardHeader className="p-4 sm:p-6 pb-3 sm:pb-4">
-                      <CardTitle className="text-base sm:text-xl">Especialidades</CardTitle>
+                      <CardTitle className="text-base sm:text-xl">{t('profile.mentor.specialties')}</CardTitle>
                       <CardDescription className="text-xs sm:text-sm mt-1">
-                        Agrega tus áreas de expertise para que los aprendices te encuentren
+                        {t('profile.mentor.specialtiesDesc')}
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="p-4 sm:p-6 pt-0">
@@ -722,7 +724,7 @@ export function ProfilePage() {
                         ))}
                         {mentorData.mentorSpecialties.length === 0 && (
                           <p className="text-xs sm:text-sm text-muted-foreground italic">
-                            Aún no has agregado especialidades
+                            {t('profile.mentor.noSpecialties')}
                           </p>
                         )}
                       </div>
@@ -730,7 +732,7 @@ export function ProfilePage() {
                         <Input
                           value={newSpecialty}
                           onChange={(e) => setNewSpecialty(e.target.value)}
-                          placeholder="Ej: React, Liderazgo, UX Design..."
+                          placeholder={t('profile.mentor.specialtyPlaceholder')}
                           className="h-11 sm:h-12 text-sm sm:text-base touch-target flex-1"
                           onKeyDown={(e) => {
                             if (e.key === 'Enter') {
@@ -747,7 +749,7 @@ export function ProfilePage() {
                           className="touch-target"
                         >
                           <Plus className="h-4 w-4 mr-1" />
-                          Agregar
+                          {t('profile.mentor.add')}
                         </Button>
                       </div>
                     </CardContent>
@@ -756,9 +758,9 @@ export function ProfilePage() {
                   {/* Weekly Availability Grid */}
                   <Card>
                     <CardHeader className="p-4 sm:p-6 pb-3 sm:pb-4">
-                      <CardTitle className="text-base sm:text-xl">Horarios Disponibles</CardTitle>
+                      <CardTitle className="text-base sm:text-xl">{t('profile.mentor.availableHours')}</CardTitle>
                       <CardDescription className="text-xs sm:text-sm mt-1">
-                        Selecciona los horarios en los que puedes atender sesiones de mentoría
+                        {t('profile.mentor.availableHoursDesc')}
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="p-4 sm:p-6 pt-0">
@@ -815,7 +817,7 @@ export function ProfilePage() {
                   {(profile.mentorRating !== undefined || profile.totalMentorSessions !== undefined) && (
                     <Card>
                       <CardHeader className="p-4 sm:p-6 pb-3 sm:pb-4">
-                        <CardTitle className="text-base sm:text-xl">Estadísticas</CardTitle>
+                        <CardTitle className="text-base sm:text-xl">{t('profile.mentor.statistics')}</CardTitle>
                       </CardHeader>
                       <CardContent className="p-4 sm:p-6 pt-0">
                         <div className="grid grid-cols-3 gap-4 text-center">
@@ -823,19 +825,19 @@ export function ProfilePage() {
                             <p className="text-2xl font-bold text-primary">
                               {profile.mentorRating?.toFixed(1) || '—'}
                             </p>
-                            <p className="text-xs text-muted-foreground">Calificación</p>
+                            <p className="text-xs text-muted-foreground">{t('profile.mentor.rating')}</p>
                           </div>
                           <div>
                             <p className="text-2xl font-bold text-primary">
                               {profile.totalMentorSessions || 0}
                             </p>
-                            <p className="text-xs text-muted-foreground">Sesiones</p>
+                            <p className="text-xs text-muted-foreground">{t('profile.mentor.sessions')}</p>
                           </div>
                           <div>
                             <p className="text-2xl font-bold text-primary">
                               {profile.totalMentees || 0}
                             </p>
-                            <p className="text-xs text-muted-foreground">Aprendices</p>
+                            <p className="text-xs text-muted-foreground">{t('profile.mentor.mentees')}</p>
                           </div>
                         </div>
                       </CardContent>
@@ -850,10 +852,10 @@ export function ProfilePage() {
                       onClick={() => navigate('/dashboard')}
                       className="w-full sm:w-auto touch-target"
                     >
-                      Cancelar
+                      {t('profile.cancel')}
                     </Button>
                     <Button type="submit" disabled={loading} className="w-full sm:w-auto touch-target">
-                      {loading ? 'Guardando...' : 'Guardar Perfil de Mentor'}
+                      {loading ? t('profile.saving') : t('profile.mentor.saveMentorProfile')}
                     </Button>
                   </div>
                 </form>
@@ -870,9 +872,9 @@ export function ProfilePage() {
             >
               <Card>
                 <CardHeader className="p-4 sm:p-6 pb-3 sm:pb-4">
-                  <CardTitle className="text-base sm:text-xl">Cambiar Contraseña</CardTitle>
+                  <CardTitle className="text-base sm:text-xl">{t('profile.password.title')}</CardTitle>
                   <CardDescription className="text-xs sm:text-sm mt-1">
-                    Actualiza tu contraseña para mantener tu cuenta segura
+                    {t('profile.password.description')}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="p-4 sm:p-6 pt-0">
@@ -880,7 +882,7 @@ export function ProfilePage() {
                     {/* Current Password */}
                     <div className="space-y-1.5 sm:space-y-2">
                       <Label htmlFor="currentPassword" required className="text-xs sm:text-sm">
-                        Contraseña Actual
+                        {t('profile.password.currentPassword')}
                       </Label>
                       <div className="relative">
                         <Input
@@ -913,7 +915,7 @@ export function ProfilePage() {
                     {/* New Password */}
                     <div className="space-y-1.5 sm:space-y-2">
                       <Label htmlFor="newPassword" required className="text-xs sm:text-sm">
-                        Nueva Contraseña
+                        {t('profile.password.newPassword')}
                       </Label>
                       <div className="relative">
                         <Input
@@ -943,14 +945,14 @@ export function ProfilePage() {
                         </Button>
                       </div>
                       <p className="text-[10px] sm:text-xs text-muted-foreground">
-                        La contraseña debe tener al menos 8 caracteres
+                        {t('profile.password.minLength')}
                       </p>
                     </div>
 
                     {/* Confirm Password */}
                     <div className="space-y-1.5 sm:space-y-2">
                       <Label htmlFor="confirmPassword" required className="text-xs sm:text-sm">
-                        Confirmar Nueva Contraseña
+                        {t('profile.password.confirmNewPassword')}
                       </Label>
                       <div className="relative">
                         <Input
@@ -982,7 +984,7 @@ export function ProfilePage() {
                       {passwordData.newPassword && passwordData.confirmPassword && 
                        passwordData.newPassword !== passwordData.confirmPassword && (
                         <p className="text-[10px] sm:text-xs text-destructive">
-                          Las contraseñas no coinciden
+                          {t('profile.password.passwordsMismatch')}
                         </p>
                       )}
                     </div>
@@ -999,10 +1001,10 @@ export function ProfilePage() {
                         })}
                         className="w-full sm:w-auto touch-target"
                       >
-                        Limpiar
+                        {t('profile.password.clear')}
                       </Button>
                       <Button type="submit" disabled={loading} className="w-full sm:w-auto touch-target">
-                        {loading ? 'Cambiando...' : 'Cambiar Contraseña'}
+                        {loading ? t('profile.password.changing') : t('profile.password.title')}
                       </Button>
                     </div>
                   </form>

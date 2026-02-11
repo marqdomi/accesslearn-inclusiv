@@ -515,7 +515,10 @@ export async function unarchiveCourse(
 }
 
 /**
- * Delete course (soft delete by archiving)
+ * Delete course
+ * - Draft/rejected courses: hard delete (never published, safe to remove)
+ * - Published courses: soft delete by archiving first
+ * - Archived courses: already archived, just log deletion
  */
 export async function deleteCourse(
   courseId: string,
@@ -529,7 +532,21 @@ export async function deleteCourse(
     throw new Error('Course not found')
   }
   
-  // Soft delete by archiving
+  // Draft or pending-review courses can be hard-deleted (never published)
+  if (course.status === 'draft' || course.status === 'pending-review') {
+    await container.item(courseId, tenantId).delete()
+    
+    await logCourseAudit({
+      tenantId,
+      userId,
+      action: 'course.deleted',
+      resourceId: courseId,
+      metadata: { title: course.title, previousStatus: course.status, deleteType: 'hard' }
+    })
+    return
+  }
+  
+  // Published courses: soft delete by archiving first
   if (course.status !== 'archived') {
     await archiveCourse(courseId, tenantId, userId)
   }
@@ -540,6 +557,6 @@ export async function deleteCourse(
     userId,
     action: 'course.deleted',
     resourceId: courseId,
-    metadata: { title: course.title }
+    metadata: { title: course.title, previousStatus: course.status, deleteType: 'soft' }
   })
 }

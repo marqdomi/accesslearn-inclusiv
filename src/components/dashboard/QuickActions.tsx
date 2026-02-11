@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
@@ -38,29 +39,30 @@ interface QuickActionsProps {
 export function QuickActions({ notificationCounts = {} }: QuickActionsProps) {
   const navigate = useNavigate()
   const { user } = useAuth()
+  const { t } = useTranslation()
 
   const studentActions: QuickAction[] = [
     {
       id: 'catalog',
-      label: 'Catálogo de Cursos',
+      label: t('quickActions.catalogCourses'),
       icon: BookOpen,
       onClick: () => navigate('/catalog'),
     },
     {
       id: 'library',
-      label: 'Mi Biblioteca',
+      label: t('quickActions.myLibrary'),
       icon: Library,
       onClick: () => navigate('/library'),
     },
     {
       id: 'mentors',
-      label: 'Buscar Mentor',
+      label: t('quickActions.findMentor'),
       icon: Users,
       onClick: () => navigate('/mentors'),
     },
     {
       id: 'forum',
-      label: 'Foro',
+      label: t('quickActions.forum'),
       icon: MessageCircle,
       onClick: () => navigate('/forum'),
     },
@@ -69,7 +71,7 @@ export function QuickActions({ notificationCounts = {} }: QuickActionsProps) {
   const instructorActions: QuickAction[] = [
     {
       id: 'my-courses',
-      label: 'Mis Cursos',
+      label: t('quickActions.myCourses'),
       icon: BookOpen,
       onClick: () => navigate('/my-courses'),
       role: ['super-admin', 'tenant-admin', 'content-manager', 'instructor'],
@@ -79,21 +81,21 @@ export function QuickActions({ notificationCounts = {} }: QuickActionsProps) {
   const adminActions: QuickAction[] = [
     {
       id: 'approve',
-      label: 'Aprobar Cursos',
+      label: t('quickActions.approveCourses'),
       icon: CheckCircle2,
       onClick: () => navigate('/content-manager'),
       role: ['super-admin', 'tenant-admin', 'content-manager'],
     },
     {
       id: 'analytics',
-      label: 'Analytics',
+      label: t('quickActions.analytics'),
       icon: BarChart3,
       onClick: () => navigate('/admin/analytics'),
       permission: 'analytics:view-all',
     },
     {
       id: 'settings',
-      label: 'Configuración',
+      label: t('quickActions.settings'),
       icon: Settings,
       onClick: () => navigate('/admin/settings'),
       role: ['super-admin', 'tenant-admin'],
@@ -103,7 +105,7 @@ export function QuickActions({ notificationCounts = {} }: QuickActionsProps) {
   const mentorActions: QuickAction[] = [
     {
       id: 'mentor-dashboard',
-      label: 'Mentorados',
+      label: t('quickActions.mentees'),
       icon: Calendar,
       onClick: () => navigate('/mentor/dashboard'),
       badge: notificationCounts.pendingRequests,
@@ -113,7 +115,7 @@ export function QuickActions({ notificationCounts = {} }: QuickActionsProps) {
   const menteeActions: QuickAction[] = [
     {
       id: 'mentorships',
-      label: 'Solicitudes',
+      label: t('quickActions.requests'),
       icon: ClipboardList,
       onClick: () => navigate('/my-mentorships'),
       badge: notificationCounts.acceptedSessions,

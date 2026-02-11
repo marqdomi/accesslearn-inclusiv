@@ -8,8 +8,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Eye, EyeOff, CheckCircle, AlertCircle, UserPlus, Building2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
 
 export function RegisterPage() {
+  const { t } = useTranslation('auth')
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const tenantSlug = searchParams.get('tenant') || 'kainet' // Default to kainet for demos
@@ -51,8 +53,8 @@ export function RegisterPage() {
       const tenant = await ApiService.getTenantBySlug(tenantSlug)
       
       if (!tenant) {
-        toast.error('Organización no encontrada', {
-          description: `La organización "${tenantSlug}" no existe.`,
+        toast.error(t('register.orgNotFound'), {
+          description: t('register.orgNotFoundDesc', { slug: tenantSlug }),
         })
         setValidatingTenant(false)
         return
@@ -61,8 +63,8 @@ export function RegisterPage() {
       setTenantInfo(tenant)
     } catch (error: any) {
       console.error('Error validating tenant:', error)
-      toast.error('Error al validar organización', {
-        description: error.message || 'Por favor intenta nuevamente',
+      toast.error(t('register.orgValidationError'), {
+        description: error.message || t('register.tryAgain'),
       })
     } finally {
       setValidatingTenant(false)
@@ -79,29 +81,29 @@ export function RegisterPage() {
     }
 
     if (!formData.firstName.trim()) {
-      newErrors.firstName = 'El nombre es requerido'
+      newErrors.firstName = t('register.firstNameRequired')
     }
 
     if (!formData.lastName.trim()) {
-      newErrors.lastName = 'El apellido es requerido'
+      newErrors.lastName = t('register.lastNameRequired')
     }
 
     if (!formData.email.trim()) {
-      newErrors.email = 'El email es requerido'
+      newErrors.email = t('register.emailRequired')
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'El email no es válido'
+      newErrors.email = t('register.emailInvalid')
     }
 
     if (!formData.password) {
-      newErrors.password = 'La contraseña es requerida'
+      newErrors.password = t('register.passwordRequired')
     } else if (formData.password.length < 8) {
-      newErrors.password = 'La contraseña debe tener al menos 8 caracteres'
+      newErrors.password = t('register.passwordMinLength')
     }
 
     if (!formData.confirmPassword) {
-      newErrors.confirmPassword = 'Debes confirmar tu contraseña'
+      newErrors.confirmPassword = t('register.confirmPasswordRequired')
     } else if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Las contraseñas no coinciden'
+      newErrors.confirmPassword = t('register.passwordsMismatch')
     }
 
     setErrors(newErrors)
@@ -125,8 +127,8 @@ export function RegisterPage() {
         role: 'student', // Default role for public registration
       })
 
-      toast.success('¡Registro exitoso!', {
-        description: 'Tu cuenta ha sido creada. Ya puedes iniciar sesión.',
+      toast.success(t('register.success'), {
+        description: t('register.successDescription'),
       })
 
       // Redirect to login after 2 seconds
@@ -137,12 +139,12 @@ export function RegisterPage() {
       console.error('Error registering user:', error)
       
       if (error.message?.includes('ya está registrado')) {
-        toast.error('Email ya registrado', {
-          description: 'Este email ya está registrado en esta organización. Intenta iniciar sesión.',
+        toast.error(t('register.emailAlreadyRegistered'), {
+          description: t('register.emailAlreadyRegisteredDescription'),
         })
       } else {
-        toast.error('Error al registrar', {
-          description: error.message || 'Por favor intenta nuevamente',
+        toast.error(t('register.error'), {
+          description: error.message || t('register.tryAgain'),
         })
       }
     } finally {
@@ -157,7 +159,7 @@ export function RegisterPage() {
           <CardContent className="pt-6">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-              <p className="text-muted-foreground">Validando organización...</p>
+              <p className="text-muted-foreground">{t('register.validatingOrg')}</p>
             </div>
           </CardContent>
         </Card>
@@ -172,15 +174,15 @@ export function RegisterPage() {
           <CardHeader>
             <div className="flex items-center gap-2 text-destructive">
               <AlertCircle className="h-5 w-5" />
-              <CardTitle>Organización no encontrada</CardTitle>
+              <CardTitle>{t('register.orgNotFound')}</CardTitle>
             </div>
             <CardDescription>
-              La organización especificada no existe o no está disponible.
+              {t('register.orgNotAvailable')}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Button onClick={() => navigate('/login')} className="w-full">
-              Volver al Login
+              {t('register.backToLogin')}
             </Button>
           </CardContent>
         </Card>
@@ -197,15 +199,15 @@ export function RegisterPage() {
               <UserPlus className="h-8 w-8 text-primary" />
             </div>
           </div>
-          <CardTitle className="text-2xl font-bold">Crear Cuenta</CardTitle>
+          <CardTitle className="text-2xl font-bold">{t('register.createAccount')}</CardTitle>
           <CardDescription>
-            Únete a {tenantInfo.name}
+            {t('register.joinOrg', { name: tenantInfo.name })}
           </CardDescription>
           {tenantInfo.primaryColor && (
             <div className="flex items-center justify-center gap-2 mt-2">
               <Building2 className="h-4 w-4 text-muted-foreground" />
               <span className="text-sm text-muted-foreground">
-                Organización: {tenantInfo.slug}
+                {t('register.organization')}: {tenantInfo.slug}
               </span>
             </div>
           )}
@@ -214,7 +216,7 @@ export function RegisterPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* First Name */}
             <div className="space-y-2">
-              <Label htmlFor="firstName">Nombre</Label>
+              <Label htmlFor="firstName">{t('register.firstName')}</Label>
               <Input
                 id="firstName"
                 type="text"
@@ -231,7 +233,7 @@ export function RegisterPage() {
 
             {/* Last Name */}
             <div className="space-y-2">
-              <Label htmlFor="lastName">Apellido</Label>
+              <Label htmlFor="lastName">{t('register.lastName')}</Label>
               <Input
                 id="lastName"
                 type="text"
@@ -248,7 +250,7 @@ export function RegisterPage() {
 
             {/* Email */}
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t('register.emailLabel')}</Label>
               <Input
                 id="email"
                 type="email"
@@ -265,12 +267,12 @@ export function RegisterPage() {
 
             {/* Password */}
             <div className="space-y-2">
-              <Label htmlFor="password">Contraseña</Label>
+              <Label htmlFor="password">{t('register.passwordLabel')}</Label>
               <div className="relative">
                 <Input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
-                  placeholder="Mínimo 8 caracteres"
+                  placeholder={t('register.passwordPlaceholder')}
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   disabled={loading}
@@ -292,12 +294,12 @@ export function RegisterPage() {
 
             {/* Confirm Password */}
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirmar Contraseña</Label>
+              <Label htmlFor="confirmPassword">{t('register.confirmPasswordLabel')}</Label>
               <div className="relative">
                 <Input
                   id="confirmPassword"
                   type={showConfirmPassword ? 'text' : 'password'}
-                  placeholder="Confirma tu contraseña"
+                  placeholder={t('register.confirmPasswordPlaceholder')}
                   value={formData.confirmPassword}
                   onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                   disabled={loading}
@@ -322,12 +324,12 @@ export function RegisterPage() {
               {loading ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Creando cuenta...
+                  {t('register.creatingAccount')}
                 </>
               ) : (
                 <>
                   <UserPlus className="mr-2 h-4 w-4" />
-                  Crear Cuenta
+                  {t('register.createAccount')}
                 </>
               )}
             </Button>
@@ -336,12 +338,12 @@ export function RegisterPage() {
           {/* Login Link */}
           <div className="mt-6 text-center">
             <p className="text-sm text-muted-foreground">
-              ¿Ya tienes una cuenta?{' '}
+              {t('register.alreadyHaveAccount')}{' '}
               <button
                 onClick={() => navigate(`/login?tenant=${tenantSlug}`)}
                 className="text-primary hover:underline font-medium"
               >
-                Inicia sesión
+                {t('register.signIn')}
               </button>
             </p>
           </div>

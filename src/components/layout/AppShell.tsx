@@ -87,28 +87,31 @@ import type { UserNotification } from '@/lib/types'
 
 /* ─── Breadcrumb name map ──────────────────────────────────── */
 
-const breadcrumbNameMap: Record<string, string> = {
-  dashboard: 'Inicio',
-  library: 'Mi Biblioteca',
-  catalog: 'Catálogo',
-  mentors: 'Mentores',
-  'my-courses': 'Mis Cursos',
-  'my-mentorships': 'Mis Mentorías',
-  'content-manager': 'Gestor de Contenido',
-  mentor: 'Mentor',
-  notifications: 'Notificaciones',
-  profile: 'Mi Perfil',
-  admin: 'Administración',
-  settings: 'Configuración',
-  branding: 'Marca',
-  security: 'Seguridad',
-  accessibility: 'Accesibilidad',
-  data: 'Datos',
-  categories: 'Categorías',
-  certificates: 'Certificados',
-  users: 'Usuarios',
-  analytics: 'Analytics',
-  forum: 'Foro',
+function useBreadcrumbNameMap() {
+  const { t } = useTranslation()
+  return useMemo(() => ({
+    dashboard: t('nav.home'),
+    library: t('nav.library'),
+    catalog: t('nav.catalog'),
+    mentors: t('nav.findMentor'),
+    'my-courses': t('nav.myCourses'),
+    'my-mentorships': t('nav.myMentorships'),
+    'content-manager': t('nav.approveContent'),
+    mentor: t('nav.mentorDashboard'),
+    notifications: t('nav.notifications'),
+    profile: t('userMenu.myProfile'),
+    admin: t('nav.admin'),
+    settings: t('nav.settings'),
+    branding: t('breadcrumb.branding', 'Branding'),
+    security: t('breadcrumb.security', 'Security'),
+    accessibility: t('breadcrumb.accessibility', 'Accessibility'),
+    data: t('breadcrumb.data', 'Data'),
+    categories: t('breadcrumb.categories', 'Categories'),
+    certificates: t('breadcrumb.certificates', 'Certificates'),
+    users: t('nav.users'),
+    analytics: t('nav.analytics'),
+    forum: t('nav.forum'),
+  } as Record<string, string>), [t])
 }
 
 /* ─── Role helpers ──────────────────────────────────────────── */
@@ -125,15 +128,16 @@ function getRoleColor(role: string) {
 }
 
 function getRoleLabel(role: string) {
-  switch (role) {
-    case 'super-admin': return 'Super Admin'
-    case 'tenant-admin': return 'Admin'
-    case 'content-manager': return 'Gestor'
-    case 'instructor': return 'Instructor'
-    case 'mentor': return 'Mentor'
-    case 'student': return 'Estudiante'
-    default: return role
+  // Role labels are translated via the t() function in components
+  const labels: Record<string, string> = {
+    'super-admin': 'Super Admin',
+    'tenant-admin': 'Admin',
+    'content-manager': 'Manager',
+    'instructor': 'Instructor',
+    'mentor': 'Mentor',
+    'student': 'Student',
   }
+  return labels[role] || role
 }
 
 /* ─── Navigation definition ─────────────────────────────────── */
@@ -152,25 +156,26 @@ interface NavItem {
 function useNavItems(unreadCount: number) {
   const { user } = useAuth()
   const { hasAnyPermission } = usePermissions()
+  const { t } = useTranslation()
   const role = user?.role || 'student'
 
   return useMemo(() => {
     const mainItems: NavItem[] = [
-      { label: 'Inicio', href: '/dashboard', icon: House },
-      { label: 'Catálogo', href: '/catalog', icon: MagnifyingGlass },
-      { label: 'Mi Biblioteca', href: '/library', icon: Books },
-      { label: 'Notificaciones', href: '/notifications', icon: Bell, badge: unreadCount || undefined },
+      { label: t('nav.home'), href: '/dashboard', icon: House },
+      { label: t('nav.catalog'), href: '/catalog', icon: MagnifyingGlass },
+      { label: t('nav.library'), href: '/library', icon: Books },
+      { label: t('nav.notifications'), href: '/notifications', icon: Bell, badge: unreadCount || undefined },
     ]
 
     const contentItems: NavItem[] = [
       {
-        label: 'Mis Cursos',
+        label: t('nav.myCourses'),
         href: '/my-courses',
         icon: PencilSimpleLine,
         roles: ['super-admin', 'tenant-admin', 'content-manager', 'instructor'],
       },
       {
-        label: 'Aprobar Contenido',
+        label: t('nav.approveContent'),
         href: '/content-manager',
         icon: CheckCircle,
         roles: ['super-admin', 'tenant-admin', 'content-manager'],
@@ -178,14 +183,14 @@ function useNavItems(unreadCount: number) {
     ]
 
     const communityItems: NavItem[] = [
-      { label: 'Foro', href: '/forum', icon: ChatsCircle },
+      { label: t('nav.forum'), href: '/forum', icon: ChatsCircle },
     ]
 
     const mentorshipItems: NavItem[] = [
-      { label: 'Buscar Mentor', href: '/mentors', icon: Users },
-      { label: 'Mis Mentorías', href: '/my-mentorships', icon: Handshake },
+      { label: t('nav.findMentor'), href: '/mentors', icon: Users },
+      { label: t('nav.myMentorships'), href: '/my-mentorships', icon: Handshake },
       {
-        label: 'Dashboard Mentor',
+        label: t('nav.mentorDashboard'),
         href: '/mentor/dashboard',
         icon: BookOpen,
         roles: ['super-admin', 'tenant-admin', 'mentor'],
@@ -194,31 +199,31 @@ function useNavItems(unreadCount: number) {
 
     const adminItems: NavItem[] = [
       {
-        label: 'Usuarios',
+        label: t('nav.users'),
         href: '/admin/users',
         icon: Users,
         roles: ['super-admin', 'tenant-admin'],
       },
       {
-        label: 'STPS / DC-3',
+        label: t('nav.stps'),
         href: '/admin/stps',
         icon: Certificate,
         roles: ['super-admin', 'tenant-admin'],
       },
       {
-        label: 'Facturación',
+        label: t('nav.billing'),
         href: '/admin/billing',
         icon: CreditCard,
         roles: ['super-admin', 'tenant-admin'],
       },
       {
-        label: 'Analytics',
+        label: t('nav.analytics'),
         href: '/admin/analytics',
         icon: ChartBar,
         permissions: ['analytics:view-all'],
       },
       {
-        label: 'Configuración',
+        label: t('nav.settings'),
         href: '/admin/settings',
         icon: Gear,
         roles: ['super-admin', 'tenant-admin'],
@@ -238,7 +243,7 @@ function useNavItems(unreadCount: number) {
       mentorship: mentorshipItems.filter(canSee),
       admin: adminItems.filter(canSee),
     }
-  }, [role, unreadCount, hasAnyPermission])
+  }, [role, unreadCount, hasAnyPermission, t])
 }
 
 /* ─── AppSidebar ────────────────────────────────────────────── */
@@ -248,6 +253,7 @@ function AppSidebar() {
   const { currentTenant } = useTenant()
   const navigate = useNavigate()
   const location = useLocation()
+  const { t } = useTranslation()
   const {
     notifications,
     unreadCount,
@@ -279,7 +285,7 @@ function AppSidebar() {
               {currentTenant?.name || 'AccessLearn'}
             </h1>
             <p className="text-[11px] text-muted-foreground truncate">
-              Plataforma de Aprendizaje
+              {t('sidebar.learningPlatform')}
             </p>
           </div>
         </Link>
@@ -291,7 +297,7 @@ function AppSidebar() {
       <SidebarContent>
         {/* Main Navigation */}
         <SidebarGroup>
-          <SidebarGroupLabel>Navegación</SidebarGroupLabel>
+          <SidebarGroupLabel>{t('sidebar.navigation')}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {navGroups.main.map((item) => (
@@ -318,7 +324,7 @@ function AppSidebar() {
         {/* Content Management */}
         {navGroups.content.length > 0 && (
           <SidebarGroup>
-            <SidebarGroupLabel>Contenido</SidebarGroupLabel>
+            <SidebarGroupLabel>{t('sidebar.content')}</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 {navGroups.content.map((item) => (
@@ -343,7 +349,7 @@ function AppSidebar() {
         {/* Comunidad */}
         {navGroups.community.length > 0 && (
           <SidebarGroup>
-            <SidebarGroupLabel>Comunidad</SidebarGroupLabel>
+            <SidebarGroupLabel>{t('sidebar.community')}</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 {navGroups.community.map((item) => (
@@ -367,7 +373,7 @@ function AppSidebar() {
 
         {/* Mentorship */}
         <SidebarGroup>
-          <SidebarGroupLabel>Mentoría</SidebarGroupLabel>
+          <SidebarGroupLabel>{t('sidebar.mentorship')}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {navGroups.mentorship.map((item) => (
@@ -391,7 +397,7 @@ function AppSidebar() {
         {/* Admin */}
         {navGroups.admin.length > 0 && (
           <SidebarGroup>
-            <SidebarGroupLabel>Administración</SidebarGroupLabel>
+            <SidebarGroupLabel>{t('sidebar.administration')}</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 {navGroups.admin.map((item) => (
@@ -420,7 +426,7 @@ function AppSidebar() {
           {/* Accessibility button */}
           <SidebarMenuItem>
             <SidebarMenuButton
-              tooltip="Accesibilidad"
+              tooltip={t('nav.accessibility', 'Accessibility')}
               onClick={() => {
                 const event = new CustomEvent('open-accessibility-sheet')
                 window.dispatchEvent(event)
@@ -428,7 +434,7 @@ function AppSidebar() {
               className="text-muted-foreground hover:text-foreground"
             >
               <Wheelchair weight="regular" />
-              <span>Accesibilidad</span>
+              <span>{t('nav.accessibility', 'Accessibility')}</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
 
@@ -487,13 +493,13 @@ function AppSidebar() {
                 {/* Profile */}
                 <DropdownMenuItem onClick={() => navigate('/profile')}>
                   <UserCircle className="mr-2 h-4 w-4" />
-                  Mi Perfil
+                  {t('userMenu.myProfile')}
                 </DropdownMenuItem>
 
                 {/* Theme */}
                 <div className="px-2 py-1">
                   <div className="flex items-center justify-between px-2 py-1.5">
-                    <span className="text-sm text-muted-foreground">Tema</span>
+                    <span className="text-sm text-muted-foreground">{t('userMenu.theme')}</span>
                     <ThemeToggle className="h-8 w-8" />
                   </div>
                 </div>
@@ -504,7 +510,7 @@ function AppSidebar() {
                 <div className="px-4 py-2">
                   <div className="flex items-center gap-2 mb-2">
                     <Trophy className="h-4 w-4 text-yellow-600 dark:text-yellow-400" weight="fill" />
-                    <span className="text-xs font-medium text-muted-foreground">Progreso</span>
+                    <span className="text-xs font-medium text-muted-foreground">{t('userMenu.progress')}</span>
                   </div>
                   <LevelBadge xp={0} size="sm" showProgress />
                 </div>
@@ -515,7 +521,7 @@ function AppSidebar() {
                 <div className="px-4 py-2">
                   <div className="flex items-center gap-2 mb-2">
                     <Buildings className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-xs font-medium text-muted-foreground">Organización</span>
+                    <span className="text-xs font-medium text-muted-foreground">{t('userMenu.organization')}</span>
                   </div>
                   <TenantSwitcher />
                 </div>
@@ -526,7 +532,7 @@ function AppSidebar() {
                 <div className="px-4 py-2">
                   <div className="flex items-center gap-2 mb-2">
                     <Globe className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-xs font-medium text-muted-foreground">Idioma</span>
+                    <span className="text-xs font-medium text-muted-foreground">{t('userMenu.language')}</span>
                   </div>
                   <LanguageSwitcher variant="ghost" showLabel />
                 </div>
@@ -539,7 +545,7 @@ function AppSidebar() {
                   className="text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400"
                 >
                   <SignOut className="mr-2 h-4 w-4" />
-                  Cerrar Sesión
+                  {t('userMenu.signOut')}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -568,6 +574,7 @@ function TopBar({ onOpenCommandPalette }: { onOpenCommandPalette: () => void }) 
   } = useNotifications(user?.id || '')
 
   const [notificationsOpen, setNotificationsOpen] = useState(false)
+  const breadcrumbNameMap = useBreadcrumbNameMap()
 
   const breadcrumbs = useMemo(() => {
     const segments = location.pathname.split('/').filter(Boolean)
@@ -585,7 +592,7 @@ function TopBar({ onOpenCommandPalette }: { onOpenCommandPalette: () => void }) 
         segment.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
       return { label, href: pathAccumulator, isLast: index === segments.length - 1 }
     })
-  }, [location.pathname])
+  }, [location.pathname, breadcrumbNameMap])
 
   const notificationItems = notifications.slice(0, 5)
 
@@ -615,7 +622,7 @@ function TopBar({ onOpenCommandPalette }: { onOpenCommandPalette: () => void }) 
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link to="/dashboard">Inicio</Link>
+              <Link to="/dashboard">{t('nav.home')}</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           {breadcrumbs.map((crumb) => (
@@ -644,7 +651,7 @@ function TopBar({ onOpenCommandPalette }: { onOpenCommandPalette: () => void }) 
         onClick={onOpenCommandPalette}
       >
         <Command className="h-3.5 w-3.5" />
-        <span>Buscar...</span>
+        <span>{t('notifications.search', 'Search...')}</span>
         <kbd className="pointer-events-none ml-1 inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
           <span className="text-xs">⌘</span>K
         </kbd>
@@ -661,15 +668,15 @@ function TopBar({ onOpenCommandPalette }: { onOpenCommandPalette: () => void }) 
                   {unreadCount > 9 ? '9+' : unreadCount}
                 </span>
               )}
-              <span className="sr-only">Notificaciones</span>
+              <span className="sr-only">{t('nav.notifications')}</span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-80 p-0">
             <div className="px-4 py-3 border-b flex items-start justify-between">
               <div>
-                <p className="text-sm font-medium">Notificaciones</p>
+                <p className="text-sm font-medium">{t('notifications.title')}</p>
                 <p className="text-xs text-muted-foreground">
-                  {unreadCount > 0 ? `${unreadCount} pendientes` : 'Estás al día'}
+                  {unreadCount > 0 ? `${unreadCount} ${t('notifications.pending')}` : t('notifications.allCaughtUp')}
                 </p>
               </div>
               <Button
@@ -682,7 +689,7 @@ function TopBar({ onOpenCommandPalette }: { onOpenCommandPalette: () => void }) 
                 disabled={!unreadCount}
               >
                 <Check className="h-3 w-3" />
-                Marcar todo
+                {t('notifications.markAll')}
               </Button>
             </div>
             <ScrollArea className="max-h-80">
@@ -700,7 +707,7 @@ function TopBar({ onOpenCommandPalette }: { onOpenCommandPalette: () => void }) 
                 </div>
               ) : notificationItems.length === 0 ? (
                 <div className="p-6 text-center text-sm text-muted-foreground">
-                  No tienes notificaciones recientes
+                  {t('notifications.noRecent')}
                 </div>
               ) : (
                 <div className="divide-y">
@@ -715,12 +722,12 @@ function TopBar({ onOpenCommandPalette }: { onOpenCommandPalette: () => void }) 
                       <p className="text-sm font-medium line-clamp-1">
                         {notification.titleKey
                           ? t(notification.titleKey, notification.messageParams)
-                          : notification.title || 'Actualización'}
+                          : notification.title || t('notifications.update')}
                       </p>
                       <p className="text-xs text-muted-foreground line-clamp-2">
                         {notification.messageKey
                           ? t(notification.messageKey, notification.messageParams)
-                          : notification.message || 'Revisa los detalles'}
+                          : notification.message || t('notifications.checkDetails')}
                       </p>
                       <p className="text-[11px] text-muted-foreground mt-1">
                         {formatNotificationTime(notification.timestamp)}
@@ -740,7 +747,7 @@ function TopBar({ onOpenCommandPalette }: { onOpenCommandPalette: () => void }) 
                   navigate('/notifications')
                 }}
               >
-                Ver todas las notificaciones
+                {t('notifications.viewAll')}
               </Button>
             </div>
           </DropdownMenuContent>

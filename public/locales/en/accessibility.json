@@ -1,11 +1,11 @@
 {
-  "panel": "Panel de Accesibilidad",
-  "highContrast": "Alto Contraste",
-  "textSize": "Tamaño de Texto",
-  "reduceMotion": "Reducir Movimiento",
-  "disableSound": "Desactivar Sonidos",
-  "settings": "Configuración de Accesibilidad",
-  "captionsEnabled": "Subtítulos Activados",
-  "playbackSpeed": "Velocidad de Reproducción",
-  "languageLabel": "Idioma / Language"
+  "panel": "Accessibility Panel",
+  "highContrast": "High Contrast",
+  "textSize": "Text Size",
+  "reduceMotion": "Reduce Motion",
+  "disableSound": "Disable Sounds",
+  "settings": "Accessibility Settings",
+  "captionsEnabled": "Captions Enabled",
+  "playbackSpeed": "Playback Speed",
+  "languageLabel": "Language / Idioma"
 }

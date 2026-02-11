@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/contexts/AuthContext'
 import { useTenant } from '@/contexts/TenantContext'
 import { ApiService } from '@/services/api.service'
@@ -41,6 +42,7 @@ interface CourseCatalogProps {
 }
 
 export function CourseCatalog({ onCourseEnrolled }: CourseCatalogProps) {
+  const { t } = useTranslation('courses')
   const { user, refreshUser } = useAuth()
   const { currentTenant } = useTenant()
   const [courses, setCourses] = useState<Course[]>([])
@@ -134,9 +136,9 @@ export function CourseCatalog({ onCourseEnrolled }: CourseCatalogProps) {
       console.error('[CourseCatalog] Error loading courses:', error)
       if (error.status === 401) {
         // Let ApiService handle 401 errors (logout)
-        toast.error('Sesión expirada. Por favor, inicia sesión nuevamente.')
+        toast.error(t('catalog.sessionExpired'))
       } else {
-        toast.error(error.message || 'Error al cargar cursos')
+        toast.error(error.message || t('catalog.loadError'))
       }
       setCourses([]) // Set empty array on error
     } finally {
@@ -150,7 +152,7 @@ export function CourseCatalog({ onCourseEnrolled }: CourseCatalogProps) {
     // Prefer user's tenantId from auth context, fallback to currentTenant
     const tenantId = user.tenantId || currentTenant?.id
     if (!tenantId) {
-      toast.error('No se pudo determinar el tenant. Por favor, inicia sesión nuevamente.')
+      toast.error(t('catalog.cannotDetermineTenant'))
       return
     }
 
@@ -167,8 +169,8 @@ export function CourseCatalog({ onCourseEnrolled }: CourseCatalogProps) {
         await ApiService.enrollUserInCourse(user.id, tenantId, course.id)
       }
       
-      toast.success(`¡Te has inscrito en "${course.title}"!`, {
-        description: 'El curso ya está disponible en tu biblioteca'
+      toast.success(t('catalog.enrolledIn', { title: course.title }), {
+        description: t('catalog.courseAvailableInLibrary')
       })
       
       // Actualizar estado local inmediatamente
@@ -185,10 +187,10 @@ export function CourseCatalog({ onCourseEnrolled }: CourseCatalogProps) {
     } catch (error: any) {
       console.error('Error enrolling in course:', error)
       const errorMessage = error.status === 400 && error.message?.includes('no encontrado')
-        ? 'Usuario no encontrado. Por favor, contacta al administrador.'
+        ? t('catalog.userNotFound')
         : error.status === 403
-        ? 'No tienes permisos para inscribirte en este curso o el curso no está disponible.'
-        : error.message || 'Error al inscribirse en el curso'
+        ? t('catalog.noPermission')
+        : error.message || t('catalog.enrollError')
       toast.error(errorMessage)
     } finally {
       setEnrolling(null)
@@ -218,7 +220,7 @@ export function CourseCatalog({ onCourseEnrolled }: CourseCatalogProps) {
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Cargando catálogo...</p>
+          <p className="text-muted-foreground">{t('catalog.loading')}</p>
         </div>
       </div>
     )
@@ -228,9 +230,9 @@ export function CourseCatalog({ onCourseEnrolled }: CourseCatalogProps) {
     <div className="space-y-4 sm:space-y-6">
       {/* Header */}
       <div className="space-y-1 sm:space-y-2">
-        <h1 className="text-2xl sm:text-3xl font-bold">Catálogo de Cursos</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold">{t('catalog.title')}</h1>
         <p className="text-sm sm:text-base text-muted-foreground">
-          Explora y inscríbete en los cursos disponibles
+          {t('catalog.subtitle')}
         </p>
       </div>
 
@@ -245,7 +247,7 @@ export function CourseCatalog({ onCourseEnrolled }: CourseCatalogProps) {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-[10px] font-medium text-muted-foreground truncate leading-tight">
-                  Total de Cursos
+                  {t('catalog.totalCourses')}
                 </p>
                 <p className="text-lg font-bold leading-none mt-0.5">{courses.length}</p>
               </div>
@@ -253,7 +255,7 @@ export function CourseCatalog({ onCourseEnrolled }: CourseCatalogProps) {
             {/* Desktop: Original vertical layout */}
             <div className="hidden sm:flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Total de Cursos</p>
+                <p className="text-sm font-medium text-muted-foreground">{t('catalog.totalCourses')}</p>
                 <p className="text-2xl font-bold mt-1">{courses.length}</p>
               </div>
               <div className="h-12 w-12 rounded-lg bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center">
@@ -271,14 +273,14 @@ export function CourseCatalog({ onCourseEnrolled }: CourseCatalogProps) {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-[10px] font-medium text-muted-foreground truncate leading-tight">
-                  Categorías
+                  {t('catalog.categories')}
                 </p>
                 <p className="text-lg font-bold leading-none mt-0.5">{categories.length}</p>
               </div>
             </div>
             <div className="hidden sm:flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Categorías</p>
+                <p className="text-sm font-medium text-muted-foreground">{t('catalog.categories')}</p>
                 <p className="text-2xl font-bold mt-1">{categories.length}</p>
               </div>
               <div className="h-12 w-12 rounded-lg bg-purple-100 dark:bg-purple-900/50 flex items-center justify-center">
@@ -296,14 +298,14 @@ export function CourseCatalog({ onCourseEnrolled }: CourseCatalogProps) {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-[10px] font-medium text-muted-foreground truncate leading-tight">
-                  Resultados
+                  {t('catalog.results')}
                 </p>
                 <p className="text-lg font-bold leading-none mt-0.5">{filteredCourses.length}</p>
               </div>
             </div>
             <div className="hidden sm:flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Resultados</p>
+                <p className="text-sm font-medium text-muted-foreground">{t('catalog.results')}</p>
                 <p className="text-2xl font-bold mt-1">{filteredCourses.length}</p>
               </div>
               <div className="h-12 w-12 rounded-lg bg-green-100 dark:bg-green-900/50 flex items-center justify-center">
@@ -324,7 +326,7 @@ export function CourseCatalog({ onCourseEnrolled }: CourseCatalogProps) {
               size={18} 
             />
             <Input
-              placeholder="Buscar por título, descripción, instructor..."
+              placeholder={t('catalog.searchPlaceholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10 h-12 touch-target"
@@ -335,10 +337,10 @@ export function CourseCatalog({ onCourseEnrolled }: CourseCatalogProps) {
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
               <SelectTrigger className="w-full sm:w-[200px] h-12 touch-target">
-                <SelectValue placeholder="Todas las categorías" />
+                <SelectValue placeholder={t('catalog.allCategories')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todas las categorías</SelectItem>
+                <SelectItem value="all">{t('catalog.allCategories')}</SelectItem>
                 {categories.map(cat => (
                   <SelectItem key={cat} value={cat!}>{cat}</SelectItem>
                 ))}
@@ -347,10 +349,10 @@ export function CourseCatalog({ onCourseEnrolled }: CourseCatalogProps) {
 
             <Select value={levelFilter} onValueChange={setLevelFilter}>
               <SelectTrigger className="w-full sm:w-[200px] h-12 touch-target">
-                <SelectValue placeholder="Todos los niveles" />
+                <SelectValue placeholder={t('catalog.allLevels')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todos los niveles</SelectItem>
+                <SelectItem value="all">{t('catalog.allLevels')}</SelectItem>
                 {levels.map(level => (
                   <SelectItem key={level} value={level!}>{level}</SelectItem>
                 ))}
@@ -367,12 +369,12 @@ export function CourseCatalog({ onCourseEnrolled }: CourseCatalogProps) {
             <BookOpen size={48} className="sm:hidden mx-auto text-muted-foreground mb-4" />
             <BookOpen size={64} className="hidden sm:block mx-auto text-muted-foreground mb-4" />
             <h3 className="text-lg sm:text-xl font-semibold mb-2">
-              {courses.length === 0 ? 'No hay cursos disponibles' : 'No se encontraron cursos'}
+              {courses.length === 0 ? t('catalog.noCoursesAvailable') : t('catalog.noCoursesFound')}
             </h3>
             <p className="text-sm sm:text-base text-muted-foreground">
               {searchQuery || categoryFilter !== 'all' || levelFilter !== 'all'
-                ? 'Intenta ajustar los filtros de búsqueda'
-                : 'Pronto habrá nuevos cursos disponibles'}
+                ? t('catalog.tryAdjustFilters')
+                : t('catalog.newCoursesSoon')}
             </p>
           </CardContent>
         </Card>
@@ -448,7 +450,7 @@ export function CourseCatalog({ onCourseEnrolled }: CourseCatalogProps) {
 
                   {course.instructorName && (
                     <p className="text-xs sm:text-sm text-muted-foreground line-clamp-1">
-                      Instructor: {course.instructorName}
+                      {t('catalog.instructor')}: {course.instructorName}
                     </p>
                   )}
                 </CardContent>
@@ -463,18 +465,18 @@ export function CourseCatalog({ onCourseEnrolled }: CourseCatalogProps) {
                     {isEnrolled ? (
                       <>
                         <CheckCircle size={18} weight="fill" />
-                        <span className="hidden sm:inline">Inscrito</span>
-                        <span className="sm:hidden">Inscrito</span>
+                        <span className="hidden sm:inline">{t('catalog.enrolled')}</span>
+                        <span className="sm:hidden">{t('catalog.enrolled')}</span>
                       </>
                     ) : isEnrolling ? (
                       <>
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        Inscribiendo...
+                        {t('catalog.enrolling')}
                       </>
                     ) : (
                       <>
                         <CheckCircle size={18} weight="fill" />
-                        Inscribirse
+                        {t('catalog.enroll')}
                       </>
                     )}
                   </Button>

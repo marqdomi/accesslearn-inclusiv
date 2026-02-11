@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { useAuth } from '@/contexts/AuthContext'
 import { useTenant } from '@/contexts/TenantContext'
@@ -95,6 +96,7 @@ interface Course {
 export function CourseViewerPage() {
   const { courseId } = useParams<{ courseId: string }>()
   const navigate = useNavigate()
+  const { t } = useTranslation('courses')
   const { user } = useAuth()
   const { currentTenant } = useTenant()
 
@@ -462,8 +464,8 @@ export function CourseViewerPage() {
       setShowXPAnimation(true)
 
       pushGameNotification({
-        title: 'Lección completada',
-        description: `Has ganado ${xpReward} XP`,
+        title: t('viewer.lessonCompleted'),
+        description: t('viewer.earnedXP', { xp: xpReward }),
         type: 'xp',
         meta: { value: xpReward, unit: 'XP' },
       })
@@ -479,8 +481,8 @@ export function CourseViewerPage() {
         if (allModuleLessonsCompleted) {
           setShowConfetti(true)
           pushGameNotification({
-            title: 'Módulo completado',
-            description: `Has completado "${currentModule.title}"`,
+            title: t('viewer.moduleCompleted'),
+            description: t('viewer.completedModule', { title: currentModule.title }),
             type: 'module',
           })
 
@@ -500,8 +502,8 @@ export function CourseViewerPage() {
               return // Don't auto-advance, show completion page
             } else {
               // Show warning but don't block - user can still navigate
-              toast.warning('Curso no completado', {
-                description: validation.reason || 'No cumples con los requisitos de completación'
+              toast.warning(t('viewer.courseNotCompleted'), {
+                description: validation.reason || t('viewer.completionRequirementsNotMet')
               })
             }
           }
@@ -514,8 +516,8 @@ export function CourseViewerPage() {
       }, 1500)
     } catch (error) {
       console.error('Error completing lesson:', error)
-      toast.error('Error al completar la lección', {
-        description: 'Por favor intenta de nuevo'
+      toast.error(t('viewer.lessonCompleteError'), {
+        description: t('viewer.tryAgain')
       })
     } finally {
       setCompleting(false)
@@ -583,7 +585,7 @@ export function CourseViewerPage() {
     )
     
     if (!allCourseLessonsCompleted) {
-      return { canComplete: false, reason: 'No todos los módulos están completados' }
+      return { canComplete: false, reason: t('viewer.notAllModulesCompleted') }
     }
     
     const completionMode = course.completionMode || 'modules-and-quizzes'
@@ -751,11 +753,11 @@ export function CourseViewerPage() {
         const totalXpGained = result.xpAwarded.xpEarned
         
         pushGameNotification({
-          title: breakdown.improvement > 0 ? 'Mejoraste tu récord' : 'Curso completado',
+          title: breakdown.improvement > 0 ? t('viewer.improvedRecord') : t('viewer.courseCompleted'),
           description:
             breakdown.improvement > 0
-              ? `Aumentaste ${breakdown.improvement}% respecto al intento anterior`
-              : `Calificación final: ${finalScore}%`,
+              ? t('viewer.improvedBy', { percent: breakdown.improvement })
+              : t('viewer.finalScore', { score: finalScore }),
           type: 'course',
           meta: { value: totalXpGained, unit: 'XP' },
         })
@@ -951,7 +953,7 @@ export function CourseViewerPage() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Cargando curso...</p>
+          <p className="mt-4 text-muted-foreground">{t('viewer.loadingCourse')}</p>
         </div>
       </div>
     )
@@ -961,9 +963,9 @@ export function CourseViewerPage() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-2xl font-bold mb-2">Curso no encontrado</h2>
+          <h2 className="text-2xl font-bold mb-2">{t('viewer.courseNotFound')}</h2>
           <Button onClick={() => navigate('/dashboard')}>
-            Volver al Dashboard
+            {t('viewer.backToDashboard')}
           </Button>
         </div>
       </div>
@@ -983,7 +985,7 @@ export function CourseViewerPage() {
                 className="gap-2 flex-shrink-0 touch-target"
               >
                 <ArrowLeft size={18} />
-                <span className="hidden sm:inline">Mi Biblioteca</span>
+                <span className="hidden sm:inline">{t('viewer.myLibrary')}</span>
               </Button>
               {/* Mobile: Menu button for sidebar */}
               {isMobile && (
@@ -995,12 +997,12 @@ export function CourseViewerPage() {
                       className="h-10 w-10 touch-target flex-shrink-0"
                     >
                       <Menu className="h-5 w-5" />
-                      <span className="sr-only">Abrir navegación</span>
+                      <span className="sr-only">{t('viewer.openNavigation')}</span>
                     </Button>
                   </SheetTrigger>
                   <SheetContent side="left" className="w-[280px] sm:w-[320px] p-0">
                     <SheetHeader className="p-4 border-b">
-                      <SheetTitle className="text-left">Navegación del Curso</SheetTitle>
+                      <SheetTitle className="text-left">{t('viewer.courseNavigation')}</SheetTitle>
                     </SheetHeader>
                     <div className="p-4 space-y-4 max-h-[calc(100vh-80px)] overflow-y-auto">
                       {/* Sidebar content */}
@@ -1015,7 +1017,7 @@ export function CourseViewerPage() {
                             )}
                             onClick={() => setNavigatorMode('heatmap')}
                           >
-                            Mapa
+                            {t('viewer.map')}
                           </button>
                           <button
                             className={cn(
@@ -1026,7 +1028,7 @@ export function CourseViewerPage() {
                             )}
                             onClick={() => setNavigatorMode('list')}
                           >
-                            Lista
+                            {t('viewer.list')}
                           </button>
                         </div>
                       </div>
@@ -1059,7 +1061,7 @@ export function CourseViewerPage() {
               <div className="border-l pl-2 sm:pl-4 min-w-0 flex-1">
                 <h1 className="text-base sm:text-lg font-bold truncate">{course.title}</h1>
                 <p className="text-xs sm:text-sm text-muted-foreground">
-                  {completedLessons.size} de {totalLessons || 0} lecciones completadas
+                  {completedLessons.size} {t('viewer.of')} {totalLessons || 0} {t('viewer.lessonsCompleted')}
                 </p>
               </div>
             </div>
@@ -1068,7 +1070,7 @@ export function CourseViewerPage() {
             <div className="hidden md:flex items-center gap-3">
               <div className="text-right">
                 <p className="text-sm font-medium">{totalLessons > 0 ? Math.round((completedLessons.size / totalLessons) * 100) : 0}%</p>
-                <p className="text-xs text-muted-foreground">Progreso</p>
+                <p className="text-xs text-muted-foreground">{t('viewer.progress')}</p>
               </div>
               <div className="w-32 h-2 bg-muted rounded-full overflow-hidden">
                 <div 
@@ -1098,7 +1100,7 @@ export function CourseViewerPage() {
                     )}
                     onClick={() => setNavigatorMode('heatmap')}
                   >
-                    Mapa
+                    {t('viewer.map')}
                   </button>
                   <button
                     className={cn(
@@ -1109,7 +1111,7 @@ export function CourseViewerPage() {
                     )}
                     onClick={() => setNavigatorMode('list')}
                   >
-                    Lista
+                    {t('viewer.list')}
                   </button>
                 </div>
                 <TooltipProvider>
@@ -1123,7 +1125,7 @@ export function CourseViewerPage() {
                       </button>
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p>Ocultar navegación</p>
+                      <p>{t('viewer.hideNavigation')}</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
@@ -1164,7 +1166,7 @@ export function CourseViewerPage() {
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p>Mostrar navegación</p>
+                      <p>{t('viewer.showNavigation')}</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
@@ -1218,7 +1220,7 @@ export function CourseViewerPage() {
                       className="min-w-[120px] touch-target flex-1 sm:flex-initial"
                     >
                       <ChevronLeft className="h-4 w-4 mr-2" />
-                      Anterior
+                      {t('viewer.previous')}
                     </Button>
                     {!isCurrentLessonCompleted && (
                       <Button
@@ -1227,13 +1229,13 @@ export function CourseViewerPage() {
                         className="gap-2 min-w-[190px] touch-target flex-1 sm:flex-initial"
                         title={
                           isCurrentLessonQuiz && !isQuizCompleted
-                            ? 'Debes completar el quiz antes de marcar la lección como completada'
+                            ? t('viewer.completeQuizFirst')
                             : ''
                         }
                       >
                         <CheckCircle className="h-4 w-4" />
-                        <span className="hidden sm:inline">{completing ? 'Completando...' : 'Marcar como completada'}</span>
-                        <span className="sm:hidden">{completing ? 'Completando...' : 'Completar'}</span>
+                        <span className="hidden sm:inline">{completing ? t('viewer.completing') : t('viewer.markAsCompleted')}</span>
+                        <span className="sm:hidden">{completing ? t('viewer.completing') : t('viewer.complete')}</span>
                       </Button>
                     )}
 
@@ -1243,7 +1245,7 @@ export function CourseViewerPage() {
                       disabled={isLastLesson()}
                       className="min-w-[120px] touch-target flex-1 sm:flex-initial"
                     >
-                      Siguiente
+                      {t('viewer.next')}
                       <ChevronRight className="h-4 w-4 ml-2" />
                     </Button>
                   </div>

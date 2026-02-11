@@ -52,10 +52,10 @@ function getRoleColor(role: string): string {
 function getRoleLabel(role: string): string {
   const labels: Record<string, string> = {
     'super-admin': 'Super Admin',
-    'admin': 'Administrador',
+    'admin': 'Admin',
     'instructor': 'Instructor',
     'mentor': 'Mentor',
-    'student': 'Estudiante',
+    'student': 'Student',
   }
   return labels[role] || role
 }
@@ -64,20 +64,25 @@ interface AppNavbarProps {
   userXP?: number
 }
 
-const breadcrumbNameMap: Record<string, string> = {
-  dashboard: 'Dashboard',
-  catalog: 'Catálogo de Cursos',
-  courses: 'Cursos',
-  library: 'Mi Biblioteca',
-  mentors: 'Mentores',
-  'my-mentorships': 'Mis Mentorías',
-  'content-manager': 'Gestor de Contenido',
-  analytics: 'Analytics',
-  admin: 'Administración',
-  settings: 'Configuración',
-  profile: 'Perfil',
-  notifications: 'Notificaciones',
-  accessibility: 'Accesibilidad',
+const breadcrumbNameMap: Record<string, string> = {}
+
+function useBreadcrumbNames() {
+  const { t } = useTranslation()
+  return useMemo(() => ({
+    dashboard: t('nav.home'),
+    catalog: t('nav.catalog'),
+    courses: t('nav.myCourses'),
+    library: t('nav.library'),
+    mentors: t('nav.findMentor'),
+    'my-mentorships': t('nav.myMentorships'),
+    'content-manager': t('nav.approveContent'),
+    analytics: t('nav.analytics'),
+    admin: t('nav.admin'),
+    settings: t('nav.settings'),
+    profile: t('userMenu.myProfile'),
+    notifications: t('nav.notifications'),
+    accessibility: t('nav.accessibility', 'Accessibility'),
+  }), [t])
 }
 
 const SETTINGS_PERMISSIONS: Permission[] = [
@@ -111,6 +116,8 @@ export function AppNavbar({ userXP = 0 }: AppNavbarProps) {
     navigate('/login')
   }
 
+  const navBreadcrumbNames = useBreadcrumbNames()
+
   const breadcrumbs = useMemo(() => {
     const segments = location.pathname.split('/').filter(Boolean)
     if (
@@ -124,7 +131,7 @@ export function AppNavbar({ userXP = 0 }: AppNavbarProps) {
     return segments.map((segment, index) => {
       pathAccumulator += `/${segment}`
       const label =
-        breadcrumbNameMap[segment] ||
+        navBreadcrumbNames[segment as keyof typeof navBreadcrumbNames] ||
         segment
           .replace(/-/g, ' ')
           .replace(/\b\w/g, (char) => char.toUpperCase())
@@ -134,7 +141,7 @@ export function AppNavbar({ userXP = 0 }: AppNavbarProps) {
         isLast: index === segments.length - 1,
       }
     })
-  }, [location.pathname])
+  }, [location.pathname, navBreadcrumbNames])
 
   const notificationItems = notifications.slice(0, 5)
   const canAccessSettings = hasAnyPermission(SETTINGS_PERMISSIONS as unknown as string[])
@@ -165,7 +172,7 @@ export function AppNavbar({ userXP = 0 }: AppNavbarProps) {
     if (canAccessSettings) {
       navigate('/admin/settings')
     } else {
-      toast.error('No tienes permisos para acceder a Configuración')
+      toast.error(t('notifications.noAccessPermission', 'You don\'t have permission to access Settings'))
     }
   }
 
@@ -181,7 +188,7 @@ export function AppNavbar({ userXP = 0 }: AppNavbarProps) {
                 {currentTenant?.name || 'Kaido'}
               </h1>
               <p className="text-xs text-muted-foreground hidden md:block">
-                Plataforma de Aprendizaje
+                {t('sidebar.learningPlatform')}
               </p>
             </div>
           </div>
@@ -198,15 +205,15 @@ export function AppNavbar({ userXP = 0 }: AppNavbarProps) {
                         {unreadCount > 9 ? '9+' : unreadCount}
                       </span>
                     )}
-                    <span className="sr-only">Notificaciones</span>
+                    <span className="sr-only">{t('nav.notifications')}</span>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-80 p-0">
                   <div className="px-4 py-3 border-b flex items-start justify-between">
                     <div>
-                      <p className="text-sm font-medium">Notificaciones</p>
+                      <p className="text-sm font-medium">{t('notifications.title')}</p>
                       <p className="text-xs text-muted-foreground">
-                        {unreadCount > 0 ? `${unreadCount} pendientes` : 'Estás al día'}
+                        {unreadCount > 0 ? `${unreadCount} ${t('notifications.pending')}` : t('notifications.allCaughtUp')}
                       </p>
                     </div>
                     <Button
@@ -223,7 +230,7 @@ export function AppNavbar({ userXP = 0 }: AppNavbarProps) {
                       disabled={!unreadCount}
                     >
                       <Check className="h-3 w-3" />
-                      Marcar todo
+                      {t('notifications.markAll')}
                     </Button>
                   </div>
                   <ScrollArea className="max-h-80">
@@ -241,7 +248,7 @@ export function AppNavbar({ userXP = 0 }: AppNavbarProps) {
                       </div>
                     ) : notificationItems.length === 0 ? (
                       <div className="p-6 text-center text-sm text-muted-foreground">
-                        No tienes notificaciones recientes
+                        {t('notifications.noRecent')}
                       </div>
                     ) : (
                       <div className="divide-y">
@@ -256,12 +263,12 @@ export function AppNavbar({ userXP = 0 }: AppNavbarProps) {
                             <p className="text-sm font-medium line-clamp-1">
                               {notification.titleKey
                                 ? t(notification.titleKey, notification.messageParams)
-                                : notification.title || 'Actualización'}
+                                : notification.title || t('notifications.update')}
                             </p>
                             <p className="text-xs text-muted-foreground line-clamp-2">
                               {notification.messageKey
                                 ? t(notification.messageKey, notification.messageParams)
-                                : notification.message || 'Revisa los detalles'}
+                                : notification.message || t('notifications.checkDetails')}
                             </p>
                             <p className="text-[11px] text-muted-foreground mt-1">
                               {formatNotificationTime(notification.timestamp)}
@@ -281,7 +288,7 @@ export function AppNavbar({ userXP = 0 }: AppNavbarProps) {
                         navigate('/notifications')
                       }}
                     >
-                      Ver todas las notificaciones
+                      {t('notifications.viewAll')}
                     </Button>
                   </div>
                 </DropdownMenuContent>
@@ -302,7 +309,7 @@ export function AppNavbar({ userXP = 0 }: AppNavbarProps) {
                   <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
                     <User className="h-4 w-4 text-primary" />
                   </div>
-                  <span className="sr-only">Menú de usuario</span>
+                  <span className="sr-only">{t('userMenu.userMenu', 'User menu')}</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-64">
@@ -335,20 +342,20 @@ export function AppNavbar({ userXP = 0 }: AppNavbarProps) {
                 {/* Profile Actions */}
                 <DropdownMenuItem onClick={() => navigate('/profile')}>
                   <User className="mr-2 h-4 w-4" />
-                  Mi Perfil
+                  {t('userMenu.myProfile')}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleSettingsAccess}>
                   <Settings className="mr-2 h-4 w-4" />
-                  Configuración
+                  {t('nav.settings')}
                   {!canAccessSettings && (
                     <Badge variant="outline" className="ml-auto text-[10px]">
-                      Sin acceso
+                      {t('notifications.noAccess', 'No access')}
                     </Badge>
                   )}
                 </DropdownMenuItem>
                 <div className="px-2 py-1">
                   <div className="flex items-center justify-between px-2 py-1.5">
-                    <span className="text-sm text-muted-foreground">Tema</span>
+                    <span className="text-sm text-muted-foreground">{t('userMenu.theme')}</span>
                     <ThemeToggle className="h-8 w-8" />
                   </div>
                 </div>
@@ -359,7 +366,7 @@ export function AppNavbar({ userXP = 0 }: AppNavbarProps) {
                   <div className="flex items-center gap-2 mb-2">
                     <Trophy className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
                     <span className="text-xs font-medium text-muted-foreground">
-                      Nivel y Progreso
+                      {t('userMenu.progress')}
                     </span>
                   </div>
                   <div className="pl-6">
@@ -373,7 +380,7 @@ export function AppNavbar({ userXP = 0 }: AppNavbarProps) {
                   <div className="flex items-center gap-2 mb-2">
                     <Building2 className="h-4 w-4 text-muted-foreground" />
                     <span className="text-xs font-medium text-muted-foreground">
-                      Organización
+                      {t('userMenu.organization')}
                     </span>
                   </div>
                   <div className="pl-6">
@@ -387,7 +394,7 @@ export function AppNavbar({ userXP = 0 }: AppNavbarProps) {
                   <div className="flex items-center gap-2 mb-2">
                     <Globe className="h-4 w-4 text-muted-foreground" />
                     <span className="text-xs font-medium text-muted-foreground">
-                      Idioma
+                      {t('userMenu.language')}
                     </span>
                   </div>
                   <div className="pl-6">
@@ -402,7 +409,7 @@ export function AppNavbar({ userXP = 0 }: AppNavbarProps) {
                   className="text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400"
                 >
                   <LogOut className="mr-2 h-4 w-4" />
-                  Cerrar Sesión
+                  {t('userMenu.signOut')}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -414,7 +421,7 @@ export function AppNavbar({ userXP = 0 }: AppNavbarProps) {
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon" className="h-10 w-10 touch-target">
                   <Menu className="h-5 w-5" />
-                  <span className="sr-only">Abrir menú</span>
+                  <span className="sr-only">{t('userMenu.openMenu', 'Open menu')}</span>
                 </Button>
               </SheetTrigger>
               <SheetContent side="right" className="w-[300px] sm:w-[400px]">
@@ -426,7 +433,7 @@ export function AppNavbar({ userXP = 0 }: AppNavbarProps) {
                         {currentTenant?.name || 'Kaido'}
                       </h2>
                       <p className="text-xs text-muted-foreground">
-                        Plataforma de Aprendizaje
+                        {t('sidebar.learningPlatform')}
                       </p>
                     </div>
                   </SheetTitle>
@@ -465,7 +472,7 @@ export function AppNavbar({ userXP = 0 }: AppNavbarProps) {
                     {/* Tenant Switcher */}
                     <div className="px-2">
                       <p className="text-xs font-medium text-muted-foreground mb-2">
-                        Organización
+                        {t('userMenu.organization')}
                       </p>
                       <TenantSwitcher />
                     </div>
@@ -473,7 +480,7 @@ export function AppNavbar({ userXP = 0 }: AppNavbarProps) {
                     {/* Language Switcher */}
                     <div className="px-2">
                       <p className="text-xs font-medium text-muted-foreground mb-2">
-                        Idioma
+                        {t('userMenu.language')}
                       </p>
                       <LanguageSwitcher variant="outline" showLabel={true} />
                     </div>
@@ -490,7 +497,7 @@ export function AppNavbar({ userXP = 0 }: AppNavbarProps) {
                       }}
                     >
                       <Bell className="mr-2 h-4 w-4" />
-                      Notificaciones
+                      {t('nav.notifications')}
                       {unreadCount > 0 && (
                         <Badge className="ml-auto" variant="destructive">
                           {unreadCount > 9 ? '9+' : unreadCount}
@@ -506,7 +513,7 @@ export function AppNavbar({ userXP = 0 }: AppNavbarProps) {
                       }}
                     >
                       <User className="mr-2 h-4 w-4" />
-                      Mi Perfil
+                      {t('userMenu.myProfile')}
                     </Button>
                     <Button
                       variant="ghost"
@@ -517,10 +524,10 @@ export function AppNavbar({ userXP = 0 }: AppNavbarProps) {
                       }}
                     >
                       <Settings className="mr-2 h-4 w-4" />
-                      Configuración
+                      {t('nav.settings')}
                       {!canAccessSettings && (
                         <Badge variant="outline" className="ml-auto text-[10px]">
-                          Sin acceso
+                          {t('notifications.noAccess', 'No access')}
                         </Badge>
                       )}
                     </Button>
@@ -533,7 +540,7 @@ export function AppNavbar({ userXP = 0 }: AppNavbarProps) {
                       }}
                     >
                       <LogOut className="mr-2 h-4 w-4" />
-                      Cerrar Sesión
+                      {t('userMenu.signOut')}
                     </Button>
                   </div>
                 </div>
@@ -544,7 +551,7 @@ export function AppNavbar({ userXP = 0 }: AppNavbarProps) {
         {breadcrumbs.length > 0 && (
           <nav className="hidden md:flex items-center gap-1 text-xs text-muted-foreground">
             <Link to="/dashboard" className="hover:text-foreground transition-colors">
-              Inicio
+              {t('nav.home')}
             </Link>
             {breadcrumbs.map((crumb) => (
               <div key={crumb.href} className="flex items-center gap-1">

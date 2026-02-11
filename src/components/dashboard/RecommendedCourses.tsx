@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -40,6 +41,7 @@ export function RecommendedCourses({
   loading = false,
 }: RecommendedCoursesProps) {
   const navigate = useNavigate()
+  const { t } = useTranslation()
 
   // Smart recommendation algorithm
   // Priority: 1) Same category as enrolled courses, 2) New courses, 3) High XP courses, 4) Shorter courses
@@ -106,10 +108,10 @@ export function RecommendedCourses({
             </div>
             <div>
               <h3 className="text-lg font-semibold mb-2">
-                ¡Has explorado todos los cursos disponibles!
+                {t('recommended.exploredAll')}
               </h3>
               <p className="text-sm text-muted-foreground">
-                Nuevos cursos estarán disponibles pronto
+                {t('recommended.newCoursesSoon')}
               </p>
             </div>
           </div>
@@ -124,7 +126,7 @@ export function RecommendedCourses({
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
             <Star className="h-4 w-4 sm:h-5 sm:w-5 text-primary flex-shrink-0" />
-            <CardTitle className="text-sm sm:text-base truncate">Recomendados para Ti</CardTitle>
+            <CardTitle className="text-sm sm:text-base truncate">{t('recommended.title')}</CardTitle>
           </div>
           {courses.length > recommended.length && (
             <Button
@@ -133,8 +135,8 @@ export function RecommendedCourses({
               onClick={() => navigate('/catalog')}
               className="gap-1 flex-shrink-0 text-xs sm:text-sm touch-target"
             >
-              <span className="hidden sm:inline">Ver todos</span>
-              <span className="sm:hidden">Todos</span>
+              <span className="hidden sm:inline">{t('recommended.viewAll')}</span>
+              <span className="sm:hidden">{t('recommended.viewAllShort')}</span>
               <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4" />
             </Button>
           )}
@@ -200,7 +202,7 @@ export function RecommendedCourses({
                     </Badge>
                     {course.enrollments && course.enrollments > 0 && (
                       <span className="text-xs text-muted-foreground">
-                        {course.enrollments} estudiantes
+                        {course.enrollments} {t('recommended.students')}
                       </span>
                     )}
                   </div>

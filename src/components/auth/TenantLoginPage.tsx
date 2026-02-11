@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useTenant } from '@/contexts/TenantContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -19,6 +20,7 @@ import { TenantLogo } from '@/components/branding/TenantLogo';
  * - Información del tenant detectado
  */
 export function TenantLoginPage() {
+  const { t } = useTranslation('auth');
   const { currentTenant } = useTenant();
   const { login } = useAuth();
   const [activeTab, setActiveTab] = useState<'login' | 'register'>('login');
@@ -53,7 +55,7 @@ export function TenantLoginPage() {
     e.preventDefault();
     
     if (!currentTenant) {
-      setError('Error: No se ha seleccionado un tenant');
+      setError(t('login.noTenantError'));
       return;
     }
 
@@ -65,7 +67,7 @@ export function TenantLoginPage() {
       // El AuthContext maneja el resto (guardar en localStorage y actualizar estado)
     } catch (error: any) {
       console.error('[Login] Error:', error);
-      setError(error.message || 'Error al iniciar sesión. Verifica tus credenciales.');
+      setError(error.message || t('login.error'));
       setIsLoading(false);
     }
   };
@@ -80,29 +82,29 @@ export function TenantLoginPage() {
     };
 
     if (!registerData.firstName.trim()) {
-      newErrors.firstName = 'El nombre es requerido';
+      newErrors.firstName = t('register.firstNameRequired');
     }
 
     if (!registerData.lastName.trim()) {
-      newErrors.lastName = 'El apellido es requerido';
+      newErrors.lastName = t('register.lastNameRequired');
     }
 
     if (!registerData.email.trim()) {
-      newErrors.email = 'El email es requerido';
+      newErrors.email = t('register.emailRequired');
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(registerData.email)) {
-      newErrors.email = 'El email no es válido';
+      newErrors.email = t('register.emailInvalid');
     }
 
     if (!registerData.password) {
-      newErrors.password = 'La contraseña es requerida';
+      newErrors.password = t('register.passwordRequired');
     } else if (registerData.password.length < 8) {
-      newErrors.password = 'La contraseña debe tener al menos 8 caracteres';
+      newErrors.password = t('register.passwordMinLength');
     }
 
     if (!registerData.confirmPassword) {
-      newErrors.confirmPassword = 'Debes confirmar tu contraseña';
+      newErrors.confirmPassword = t('register.confirmPasswordRequired');
     } else if (registerData.password !== registerData.confirmPassword) {
-      newErrors.confirmPassword = 'Las contraseñas no coinciden';
+      newErrors.confirmPassword = t('register.passwordsMismatch');
     }
 
     setRegisterErrors(newErrors);
@@ -126,8 +128,8 @@ export function TenantLoginPage() {
         role: 'student',
       });
 
-      toast.success('¡Registro exitoso!', {
-        description: 'Tu cuenta ha sido creada. Ya puedes iniciar sesión.',
+      toast.success(t('register.success'), {
+        description: t('register.successDescription'),
       });
 
       // Cambiar a tab de login y limpiar formulario
@@ -144,14 +146,14 @@ export function TenantLoginPage() {
       console.error('Error registering user:', error);
       
       if (error.message?.includes('ya está registrado')) {
-        toast.error('Email ya registrado', {
-          description: 'Este email ya está registrado. Intenta iniciar sesión.',
+        toast.error(t('register.emailAlreadyRegistered'), {
+          description: t('register.emailAlreadyRegisteredDescription'),
         });
         setActiveTab('login');
         setEmail(registerData.email);
       } else {
-        toast.error('Error al registrar', {
-          description: error.message || 'Por favor intenta nuevamente',
+        toast.error(t('register.error'), {
+          description: error.message || t('register.tryAgain'),
         });
       }
     } finally {
@@ -183,7 +185,7 @@ export function TenantLoginPage() {
             {currentTenant?.name || 'Kaido'}
           </h1>
           <p className="text-lg opacity-90">
-            Plataforma de Aprendizaje Inclusivo
+            {t('login.platformSubtitle')}
           </p>
         </div>
 
@@ -191,34 +193,34 @@ export function TenantLoginPage() {
           <div className="flex items-start space-x-3">
             <CheckCircle className="w-6 h-6 flex-shrink-0" weight="fill" />
             <div>
-              <h3 className="font-semibold mb-1">Contenido Accesible</h3>
+              <h3 className="font-semibold mb-1">{t('login.feature1Title')}</h3>
               <p className="text-sm opacity-90">
-                Cursos diseñados para todos los estilos de aprendizaje
+                {t('login.feature1Description')}
               </p>
             </div>
           </div>
           <div className="flex items-start space-x-3">
             <CheckCircle className="w-6 h-6 flex-shrink-0" weight="fill" />
             <div>
-              <h3 className="font-semibold mb-1">Seguimiento Personalizado</h3>
+              <h3 className="font-semibold mb-1">{t('login.feature2Title')}</h3>
               <p className="text-sm opacity-90">
-                Monitorea tu progreso y logros en tiempo real
+                {t('login.feature2Description')}
               </p>
             </div>
           </div>
           <div className="flex items-start space-x-3">
             <CheckCircle className="w-6 h-6 flex-shrink-0" weight="fill" />
             <div>
-              <h3 className="font-semibold mb-1">Certificación Profesional</h3>
+              <h3 className="font-semibold mb-1">{t('login.feature3Title')}</h3>
               <p className="text-sm opacity-90">
-                Obtén certificados verificables al completar cursos
+                {t('login.feature3Description')}
               </p>
             </div>
           </div>
         </div>
 
         <div className="text-sm opacity-75">
-          © {new Date().getFullYear()} {currentTenant?.name || 'Kaido'}. Todos los derechos reservados.
+          © {new Date().getFullYear()} {currentTenant?.name || 'Kaido'}. {t('login.allRightsReserved')}
         </div>
       </div>
 
@@ -243,20 +245,20 @@ export function TenantLoginPage() {
                 />
               </div>
               <h2 className="text-2xl font-bold text-foreground">
-                Bienvenido a {currentTenant?.name}
+                {t('login.welcomeTo', { name: currentTenant?.name })}
               </h2>
               <p className="text-muted-foreground">
-                Ingresa tus credenciales para continuar
+                {t('login.enterCredentials')}
               </p>
             </div>
 
             {/* Tenant Info Badge */}
             <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-3 text-center">
               <p className="text-sm text-blue-800 dark:text-blue-200">
-                🏢 Accediendo a: <strong>{currentTenant?.name}</strong>
+                🏢 {t('login.accessingTo')}: <strong>{currentTenant?.name}</strong>
               </p>
               <p className="text-xs text-blue-600 dark:text-blue-300 mt-1">
-                Plan: {currentTenant?.plan || 'Básico'}
+                {t('login.plan')}: {currentTenant?.plan || t('login.planBasic')}
               </p>
             </div>
 
@@ -272,11 +274,11 @@ export function TenantLoginPage() {
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="login" className="gap-2">
                   <SignIn className="w-4 h-4" />
-                  Iniciar Sesión
+                  {t('login.signInTab')}
                 </TabsTrigger>
                 <TabsTrigger value="register" className="gap-2">
                   <UserPlus className="w-4 h-4" />
-                  Registrarse
+                  {t('login.registerTab')}
                 </TabsTrigger>
               </TabsList>
 
@@ -284,7 +286,7 @@ export function TenantLoginPage() {
               <TabsContent value="login" className="space-y-4 mt-6">
                 <form onSubmit={handleLogin} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="email">Correo Electrónico</Label>
+                    <Label htmlFor="email">{t('login.emailLabel')}</Label>
                     <Input
                       id="email"
                       type="email"
@@ -298,13 +300,13 @@ export function TenantLoginPage() {
 
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <Label htmlFor="password">Contraseña</Label>
+                      <Label htmlFor="password">{t('login.passwordLabel')}</Label>
                       <button
                         type="button"
                         className="text-sm text-primary hover:text-primary/80"
-                        onClick={() => alert('🚧 Recuperación de contraseña en desarrollo')}
+                        onClick={() => alert(t('login.passwordRecoveryWIP'))}
                       >
-                        ¿Olvidaste tu contraseña?
+                        {t('login.forgotPassword')}
                       </button>
                     </div>
                     <div className="relative">
@@ -337,7 +339,7 @@ export function TenantLoginPage() {
                     disabled={isLoading}
                     style={{ backgroundColor: primaryColor }}
                   >
-                    {isLoading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
+                    {isLoading ? t('login.signingIn') : t('login.signIn')}
                   </Button>
                 </form>
               </TabsContent>
@@ -347,7 +349,7 @@ export function TenantLoginPage() {
                 <form onSubmit={handleRegister} className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="firstName">Nombre</Label>
+                      <Label htmlFor="firstName">{t('register.firstName')}</Label>
                       <Input
                         id="firstName"
                         type="text"
@@ -363,7 +365,7 @@ export function TenantLoginPage() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="lastName">Apellido</Label>
+                      <Label htmlFor="lastName">{t('register.lastName')}</Label>
                       <Input
                         id="lastName"
                         type="text"
@@ -380,7 +382,7 @@ export function TenantLoginPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="registerEmail">Correo Electrónico</Label>
+                    <Label htmlFor="registerEmail">{t('register.emailLabel')}</Label>
                     <Input
                       id="registerEmail"
                       type="email"
@@ -396,12 +398,12 @@ export function TenantLoginPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="registerPassword">Contraseña</Label>
+                    <Label htmlFor="registerPassword">{t('register.passwordLabel')}</Label>
                     <div className="relative">
                       <Input
                         id="registerPassword"
                         type={showRegisterPassword ? 'text' : 'password'}
-                        placeholder="Mínimo 8 caracteres"
+                        placeholder={t('register.passwordPlaceholder')}
                         value={registerData.password}
                         onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
                         disabled={isRegistering}
@@ -426,12 +428,12 @@ export function TenantLoginPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="confirmPassword">Confirmar Contraseña</Label>
+                    <Label htmlFor="confirmPassword">{t('register.confirmPasswordLabel')}</Label>
                     <div className="relative">
                       <Input
                         id="confirmPassword"
                         type={showConfirmPassword ? 'text' : 'password'}
-                        placeholder="Confirma tu contraseña"
+                        placeholder={t('register.confirmPasswordPlaceholder')}
                         value={registerData.confirmPassword}
                         onChange={(e) => setRegisterData({ ...registerData, confirmPassword: e.target.value })}
                         disabled={isRegistering}
@@ -464,12 +466,12 @@ export function TenantLoginPage() {
                     {isRegistering ? (
                       <>
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                        Creando cuenta...
+                        {t('register.creatingAccount')}
                       </>
                     ) : (
                       <>
                         <UserPlus className="mr-2 h-4 w-4" />
-                        Crear Cuenta
+                        {t('register.createAccount')}
                       </>
                     )}
                   </Button>

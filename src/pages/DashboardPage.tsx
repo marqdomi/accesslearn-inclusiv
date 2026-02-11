@@ -1,9 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, lazy, Suspense } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { useTenant } from '@/contexts/TenantContext'
 import { ApiService } from '@/services/api.service'
-import { LevelProgressDashboard } from '@/components/gamification/LevelProgressDashboard'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -25,6 +24,13 @@ import { AIRecommendations } from '@/components/ai'
 import { useDashboardTrends } from '@/hooks/use-dashboard-trends'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
+
+// Lazy load heavy tab content for better initial load performance
+const LevelProgressDashboard = lazy(() =>
+  import('@/components/gamification/LevelProgressDashboard').then((m) => ({
+    default: m.LevelProgressDashboard,
+  }))
+)
 
 interface Course {
   id: string
@@ -303,7 +309,7 @@ export function DashboardPage() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Cargando dashboard...</p>
+          <p className="mt-4 text-muted-foreground">{t('loadingDashboard')}</p>
         </div>
       </div>
     )
@@ -312,9 +318,9 @@ export function DashboardPage() {
   // Get greeting based on time of day
   const getGreeting = () => {
     const hour = new Date().getHours()
-    if (hour < 12) return 'Buenos días'
-    if (hour < 18) return 'Buenas tardes'
-    return 'Buenas noches'
+    if (hour < 12) return t('greeting.morning')
+    if (hour < 18) return t('greeting.afternoon')
+    return t('greeting.evening')
   }
 
   return (
@@ -325,7 +331,7 @@ export function DashboardPage() {
             {getGreeting()}, {user?.firstName}!
           </h1>
           <p className="text-sm md:text-base text-muted-foreground">
-            Continúa tu viaje de aprendizaje y alcanza nuevas metas
+            {t('journeySubtitle')}
           </p>
         </div>
 
@@ -341,7 +347,7 @@ export function DashboardPage() {
         {/* Stats Grid - More Compact - 2 columns on mobile for better space usage */}
         <div className="grid gap-2 sm:gap-3 md:gap-4 grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 mb-6 md:mb-8">
           <StatsCard
-            title="Total de Cursos"
+            title={t('stats.totalCourses')}
             value={stats.totalCourses}
             icon={BookOpen}
             color="blue"
@@ -349,7 +355,7 @@ export function DashboardPage() {
             loading={loading}
           />
           <StatsCard
-            title="Inscrito"
+            title={t('stats.enrolled')}
             value={stats.enrolledCourses}
             icon={PlayCircle}
             color="purple"
@@ -357,7 +363,7 @@ export function DashboardPage() {
             loading={loading}
           />
           <StatsCard
-            title="Completado"
+            title={t('stats.completed')}
             value={stats.completedCourses}
             icon={CheckCircle2}
             color="green"
@@ -365,7 +371,7 @@ export function DashboardPage() {
             loading={loading}
           />
           <StatsCard
-            title="XP Total"
+            title={t('stats.totalXP')}
             value={stats.totalXP}
             icon={Zap}
             color="yellow"
@@ -378,8 +384,8 @@ export function DashboardPage() {
         <div className="mb-6 md:mb-8">
           <Card className="border-2">
             <CardHeader>
-              <CardTitle>Acciones Rápidas</CardTitle>
-              <CardDescription>Accede a las funciones más importantes</CardDescription>
+              <CardTitle>{t('quickActionsTitle')}</CardTitle>
+              <CardDescription>{t('quickActionsDesc')}</CardDescription>
             </CardHeader>
             <CardContent>
               <QuickActions notificationCounts={notificationCounts} />
@@ -412,13 +418,13 @@ export function DashboardPage() {
               value="overview" 
               className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md rounded-lg py-2.5 px-4 text-sm font-semibold transition-all duration-200 hover:bg-muted/50 data-[state=inactive]:text-muted-foreground"
             >
-              Inicio
+              {t('tabs.home')}
             </TabsTrigger>
             <TabsTrigger 
               value="progress" 
               className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md rounded-lg py-2.5 px-4 text-sm font-semibold transition-all duration-200 hover:bg-muted/50 data-[state=inactive]:text-muted-foreground"
             >
-              Progreso de Nivel
+              {t('tabs.levelProgress')}
             </TabsTrigger>
           </TabsList>
           
@@ -438,7 +444,16 @@ export function DashboardPage() {
           </TabsContent>
           
           <TabsContent value="progress" className="mt-6">
-            <LevelProgressDashboard userId={user?.id} />
+            <Suspense fallback={
+              <div className="flex items-center justify-center py-12">
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                  <p className="mt-3 text-sm text-muted-foreground">{t('loadingProgress')}</p>
+                </div>
+              </div>
+            }>
+              <LevelProgressDashboard userId={user?.id} />
+            </Suspense>
           </TabsContent>
         </Tabs>
       </main>

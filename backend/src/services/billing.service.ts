@@ -21,10 +21,21 @@ import {
 } from '../types/billing.types';
 import { ulid } from 'ulid';
 
-// Initialize Stripe (will use STRIPE_SECRET_KEY env var)
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2026-01-28.clover',
-});
+// Initialize Stripe lazily to avoid crash when STRIPE_SECRET_KEY is not set
+let _stripe: Stripe | null = null;
+
+function getStripe(): Stripe {
+  if (!_stripe) {
+    const key = process.env.STRIPE_SECRET_KEY;
+    if (!key) {
+      throw new Error('STRIPE_SECRET_KEY is not configured. Billing features are unavailable.');
+    }
+    _stripe = new Stripe(key, {
+      apiVersion: '2026-01-28.clover',
+    });
+  }
+  return _stripe;
+}
 
 function getSubscriptionsContainer() {
   return getContainer('subscriptions');
@@ -86,7 +97,7 @@ export async function getOrCreateStripeCustomer(
   }
 
   // Create new Stripe customer
-  const customer = await stripe.customers.create({
+  const customer = await getStripe().customers.create({
     email,
     name: name || undefined,
     metadata: {
@@ -126,7 +137,7 @@ export async function createCheckoutSession(
     request.billingEmail || tenantEmail
   );
 
-  const session = await stripe.checkout.sessions.create({
+  const session = await getStripe().checkout.sessions.create({
     customer: customerId,
     mode: 'subscription',
     line_items: [
@@ -173,7 +184,7 @@ export async function createBillingPortalSession(
     throw new Error('No active subscription found. Please subscribe first.');
   }
 
-  const session = await stripe.billingPortal.sessions.create({
+  const session = await getStripe().billingPortal.sessions.create({
     customer: subscription.stripeCustomerId,
     return_url: returnUrl || `${process.env.FRONTEND_URL}/admin/billing`,
   });
@@ -193,7 +204,7 @@ export function constructWebhookEvent(
   if (!webhookSecret) {
     throw new Error('STRIPE_WEBHOOK_SECRET not configured');
   }
-  return stripe.webhooks.constructEvent(payload, signature, webhookSecret);
+  return getStripe().webhooks.constructEvent(payload, signature, webhookSecret);
 }
 
 export async function handleWebhookEvent(event: Stripe.Event): Promise<void> {
