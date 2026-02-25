@@ -164,8 +164,8 @@ export function UserManagement({ onBack }: UserManagementProps) {
   const openEditModal = (user: User) => {
     setSelectedUser(user)
     setEditForm({
-      firstName: user.firstName,
-      lastName: user.lastName,
+      firstName: user.firstName ?? '',
+      lastName: user.lastName ?? '',
       role: user.role,
       status: user.status === 'active' ? 'active' : 'inactive',
     })
@@ -337,7 +337,7 @@ export function UserManagement({ onBack }: UserManagementProps) {
               </CardDescription>
             </div>
             <Button onClick={() => setIsInviteModalOpen(true)} className="w-full sm:w-auto touch-target text-xs sm:text-sm">
-              <UserPlus className="mr-1.5 sm:mr-2" size={16} className="sm:w-[18px] sm:h-[18px]" />
+              <UserPlus className="mr-1.5 sm:mr-2 sm:w-[18px] sm:h-[18px]" size={16} />
               <span className="hidden sm:inline">Invitar Usuario</span>
               <span className="sm:hidden">Invitar</span>
             </Button>
@@ -346,7 +346,7 @@ export function UserManagement({ onBack }: UserManagementProps) {
           {/* Search and Filters */}
           <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 mt-3 sm:mt-4">
             <div className="flex-1 relative">
-              <MagnifyingGlass className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={14} className="sm:w-4 sm:h-4" />
+              <MagnifyingGlass className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground sm:w-4 sm:h-4" size={14} />
               <Input
                 placeholder="Buscar por nombre o email..."
                 value={searchQuery}
@@ -357,7 +357,7 @@ export function UserManagement({ onBack }: UserManagementProps) {
 
             <Select value={roleFilter} onValueChange={setRoleFilter}>
               <SelectTrigger className="w-full sm:w-[180px] h-11 sm:h-12 text-sm sm:text-base touch-target">
-                <FunnelSimple className="mr-2" size={14} className="sm:w-4 sm:h-4" />
+                <FunnelSimple className="mr-2 sm:w-4 sm:h-4" size={14} />
                 <SelectValue placeholder="Rol" />
               </SelectTrigger>
               <SelectContent>
@@ -393,7 +393,7 @@ export function UserManagement({ onBack }: UserManagementProps) {
               </p>
               {users.length === 0 && (
                 <Button onClick={() => setIsInviteModalOpen(true)} className="touch-target text-xs sm:text-sm">
-                  <UserPlus className="mr-1.5 sm:mr-2" size={16} className="sm:w-[18px] sm:h-[18px]" />
+                  <UserPlus className="mr-1.5 sm:mr-2 sm:w-[18px] sm:h-[18px]" size={16} />
                   Invitar Primer Usuario
                 </Button>
               )}
@@ -528,7 +528,7 @@ export function UserManagement({ onBack }: UserManagementProps) {
               Cancelar
             </Button>
             <Button onClick={handleInviteUser} className="w-full sm:w-auto touch-target text-xs sm:text-sm">
-              <EnvelopeSimple className="mr-1.5 sm:mr-2" size={14} className="sm:w-4 sm:h-4" />
+              <EnvelopeSimple className="mr-1.5 sm:mr-2 sm:w-4 sm:h-4" size={14} />
               Enviar Invitación
             </Button>
           </DialogFooter>

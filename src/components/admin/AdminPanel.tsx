@@ -15,7 +15,7 @@ import { AnalyticsDashboard } from './analytics/AnalyticsDashboard'
 import { BrandingManagement } from './BrandingManagement'
 import { CertificateTemplateSettings } from './CertificateTemplateSettings'
 
-type AdminSection = 'dashboard' | 'courses' | 'users' | 'gamification' | 'reports' | 'enrollment' | 'manual-enrollment' | 'corporate-reports' | 'assignments' | 'groups' | 'mentorship' | 'teams' | 'analytics' | 'certificate-templates' | 'branding'
+type AdminSection = 'dashboard' | 'courses' | 'users' | 'gamification' | 'reports' | 'enrollment' | 'manual-enrollment' | 'corporate-reports' | 'assignments' | 'groups' | 'mentorship' | 'teams' | 'analytics' | 'certificate-templates' | 'branding' | 'company-settings'
 
 export function AdminPanel() {
   const [currentSection, setCurrentSection] = useState<AdminSection>('dashboard')

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ActivityFeedItem } from '@/lib/types'
+import { ActivityFeedItem, ActivityComment, ActivityReaction } from '@/lib/types'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -32,7 +32,7 @@ const ACTIVITY_ICONS = {
 }
 
 export function ActivityFeed({ currentUserId, maxItems = 20 }: ActivityFeedProps) {
-  const { t, language } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { activities, loading, addReaction, addComment } = useActivityFeed()
   const [expandedActivity, setExpandedActivity] = useState<string | null>(null)
   const [expandedComments, setExpandedComments] = useState<string | null>(null)
@@ -198,7 +198,7 @@ export function ActivityFeed({ currentUserId, maxItems = 20 }: ActivityFeedProps
                               <p className="text-xs text-muted-foreground mb-3">
                                 {formatDistanceToNow(activity.timestamp, { 
                                   addSuffix: true,
-                                  locale: language === 'es' ? es : undefined
+                                  locale: i18n.language === 'es' ? es : undefined
                                 })}
                               </p>
 
@@ -248,7 +248,7 @@ export function ActivityFeed({ currentUserId, maxItems = 20 }: ActivityFeedProps
                                   >
                                     {isExpanded 
                                       ? t('activityFeed.hideReactions') 
-                                      : t('activityFeed.showReactions', { count: String(activity.reactions.length) })}
+                                      : t('activityFeed.showReactions', { count: activity.reactions.length })}
                                   </Button>
 
                                   {isExpanded && (
@@ -306,7 +306,7 @@ export function ActivityFeed({ currentUserId, maxItems = 20 }: ActivityFeedProps
                                       <ChatCircle size={16} aria-hidden="true" />
                                       {expandedComments === activity.id
                                         ? t('activityFeed.hideComments')
-                                        : t('activityFeed.showComments', { count: String(activity.comments.length) })}
+                                        : t('activityFeed.showComments', { count: activity.comments.length })}
                                     </Button>
 
                                     {expandedComments === activity.id && (
@@ -336,7 +336,7 @@ export function ActivityFeed({ currentUserId, maxItems = 20 }: ActivityFeedProps
                                               <p className="text-xs text-muted-foreground mt-1 ml-3">
                                                 {formatDistanceToNow(comment.timestamp, {
                                                   addSuffix: true,
-                                                  locale: language === 'es' ? es : undefined
+                                                  locale: i18n.language === 'es' ? es : undefined
                                                 })}
                                               </p>
                                             </div>

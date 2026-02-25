@@ -122,9 +122,9 @@ export function ModernCourseBuilder({ courseId }: ModernCourseBuilderProps) {
       }
       
       // Ensure course has draft status if not published
-      const courseToSave = {
+      const courseToSave: typeof courseData & { status: CourseStructure['status']; updatedAt: number } = {
         ...courseData,
-        status: courseData.published ? 'published' : ('draft' as const),
+        status: (courseData.published ? 'published' : 'draft') as CourseStructure['status'],
         updatedAt: Date.now(),
       }
       

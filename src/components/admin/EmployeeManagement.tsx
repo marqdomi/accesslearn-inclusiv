@@ -46,7 +46,7 @@ export function EmployeeManagement({ onBack }: EmployeeManagementProps) {
   const [userToDelete, setUserToDelete] = useState<User | null>(null)
   const [editName, setEditName] = useState('')
   const [editDepartment, setEditDepartment] = useState('')
-  const [editStatus, setEditStatus] = useState<'active' | 'pending'>('active')
+  const [editStatus, setEditStatus] = useState<'active' | 'inactive' | 'suspended' | 'pending'>('active')
 
   // 🔥 SINGLE SOURCE OF TRUTH: Read from 'users' only
   // employee-credentials is only for temporary password lookup
@@ -196,7 +196,7 @@ export function EmployeeManagement({ onBack }: EmployeeManagementProps) {
         role: 'admin',
         assignedCourses: [],
         department: 'Administration',
-        createdAt: Date.now(),
+        createdAt: new Date().toISOString(),
         status: 'active'
       }
     ]
@@ -508,7 +508,7 @@ export function EmployeeManagement({ onBack }: EmployeeManagementProps) {
             </div>
             <div className="space-y-2">
               <Label htmlFor="edit-status">Status</Label>
-              <Select value={editStatus} onValueChange={(val: 'active' | 'pending') => setEditStatus(val)}>
+              <Select value={editStatus} onValueChange={(val: 'active' | 'inactive' | 'suspended' | 'pending') => setEditStatus(val)}>
                 <SelectTrigger id="edit-status">
                   <SelectValue />
                 </SelectTrigger>

@@ -46,7 +46,7 @@ export function TeamReport() {
       const reports = await ApiService.getTeamReport(selectedTeam === '__ALL__' ? undefined : selectedTeam)
       setTeamReports(reports)
 
-      const groupsData = await ApiService.getGroups(currentTenant.id)
+      const groupsData = await ApiService.getGroups()
       setGroups(groupsData)
     } catch (error) {
       console.error('Error loading team report:', error)
@@ -166,10 +166,45 @@ export function TeamReport() {
                   </Card>
                 </div>
 
-                <TeamReportDetail 
-                  teamReport={currentTeamReport}
-                  viewMode={viewMode}
-                />
+                {viewMode === 'table' ? (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>{t('analytics.user')}</TableHead>
+                        <TableHead>{t('analytics.email')}</TableHead>
+                        <TableHead>{t('analytics.completionRate')}</TableHead>
+                        <TableHead>{t('analytics.totalXP')}</TableHead>
+                        <TableHead>{t('analytics.coursesCompleted')}</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {currentTeamReport.members.map((member) => (
+                        <TableRow key={member.userId}>
+                          <TableCell>{member.userName}</TableCell>
+                          <TableCell>{member.userEmail}</TableCell>
+                          <TableCell>{member.completionRate}%</TableCell>
+                          <TableCell>{member.totalXP.toLocaleString()}</TableCell>
+                          <TableCell>{member.coursesCompleted}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                ) : (
+                  <div className="space-y-2">
+                    {currentTeamReport.members.map((member) => (
+                      <div key={member.userId} className="flex items-center justify-between p-3 rounded-lg border">
+                        <div>
+                          <p className="font-medium">{member.userName}</p>
+                          <p className="text-sm text-muted-foreground">{member.userEmail}</p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="text-sm">{member.completionRate}%</span>
+                          <span className="text-sm font-medium">{member.totalXP.toLocaleString()} XP</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </>
             )}
           </div>

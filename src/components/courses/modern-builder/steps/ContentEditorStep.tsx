@@ -479,7 +479,7 @@ export function ContentEditorStep({ course, updateCourse, courseId }: ContentEdi
         lessonTitle: selectedLesson.lesson.title,
         blockCount: parseInt(aiBlockCount),
       })
-      setAIResult(data.content)
+      setAIResult(data.content as any)
     } catch (err: any) {
       toast.error(err.message || 'Error al generar contenido con IA')
     } finally {
@@ -518,6 +518,7 @@ export function ContentEditorStep({ course, updateCourse, courseId }: ContentEdi
       content: b.content,
       characterMessage: b.characterMessage || '',
       xpValue: b.type === 'challenge' ? 20 : 10,
+      order: (lesson.blocks?.length || 0) + i,
     }))
     lesson.blocks.push(...newBlocks)
     lesson.totalXP = lesson.blocks.reduce((acc, block) => acc + (block.xpValue || 0), 0)

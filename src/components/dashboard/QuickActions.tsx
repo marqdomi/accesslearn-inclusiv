@@ -17,6 +17,7 @@ import {
 } from 'lucide-react'
 import { RequireRole } from '@/components/auth/RequireRole'
 import { RequirePermission } from '@/components/auth/RequirePermission'
+import { Permission } from '@/hooks/use-permissions'
 import { cn } from '@/lib/utils'
 
 interface QuickAction {
@@ -26,7 +27,7 @@ interface QuickAction {
   onClick: () => void
   badge?: number
   role?: string[]
-  permission?: string
+  permission?: Permission
 }
 
 interface QuickActionsProps {

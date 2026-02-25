@@ -103,8 +103,8 @@ Return a JSON object with a "groups" property containing an array of group sugge
 
 Make sure each employee is only assigned to ONE group. Prioritize creating balanced, meaningful groups.`
 
-      const response = await window.spark.llm(promptText, 'gpt-4o', true)
-      const result = JSON.parse(response)
+      const response = await window.spark?.llm?.(promptText, 'gpt-4o', true)
+const result = JSON.parse(response ?? '{}')
       
       if (result.groups && Array.isArray(result.groups)) {
         const validEmployeeIds = new Set((employees || []).map(emp => emp.id))

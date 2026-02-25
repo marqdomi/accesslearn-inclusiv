@@ -333,7 +333,7 @@ export function MarkdownLesson({ content }: MarkdownLessonProps) {
                   const dataFileEncoded = (props as any)['data-file-encoded']
                   const dataFile = (props as any)['data-file']
                   
-                  let fileData = null
+                  let fileData: { fileUrl?: string; fileName?: string; fileSize?: number; fileType?: string; description?: string } | null = null
                   if (dataFileEncoded) {
                     // Decode base64 encoded data
                     fileData = JSON.parse(atob(dataFileEncoded))
@@ -346,7 +346,7 @@ export function MarkdownLesson({ content }: MarkdownLessonProps) {
                     return (
                       <div className="my-6">
                         <FileBlock 
-                          fileUrl={fileData.fileUrl}
+                          fileUrl={fileData.fileUrl ?? ''}
                           fileName={fileData.fileName}
                           fileSize={fileData.fileSize}
                           fileType={fileData.fileType}

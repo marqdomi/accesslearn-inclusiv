@@ -38,7 +38,7 @@ export function AICourseSummary({ courseId, courseTitle, className }: AICourseSu
     setError(null)
     try {
       const data = await ApiService.getAICourseSummary(courseId)
-      setSummary(data.summary)
+      setSummary(typeof data.summary === 'string' ? JSON.parse(data.summary) : data.summary)
     } catch (err: any) {
       setError(err.message || 'Error al generar resumen')
     } finally {

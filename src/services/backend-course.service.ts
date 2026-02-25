@@ -68,7 +68,7 @@ class BackendCourseServiceClass {
 
   async getById(courseId: string): Promise<CourseStructure | null> {
     try {
-      const backendCourse = await ApiService.getCourseById(courseId, this.tenantId)
+      const backendCourse = await ApiService.getCourseById(courseId)
       return this.adaptCourse(backendCourse)
     } catch (error) {
       console.error(`❌ Error fetching course ${courseId}:`, error)
@@ -81,40 +81,53 @@ class BackendCourseServiceClass {
     return courses.filter(c => c.published)
   }
 
+  async getByCategory(category: string): Promise<CourseStructure[]> {
+    const courses = await this.getAll()
+    return courses.filter(c => c.category === category)
+  }
+
+  async search(query: string): Promise<CourseStructure[]> {
+    const courses = await this.getAll()
+    const q = query.toLowerCase()
+    return courses.filter(c =>
+      c.title.toLowerCase().includes(q) ||
+      c.description.toLowerCase().includes(q)
+    )
+  }
+
+  async publish(courseId: string): Promise<CourseStructure | null> {
+    return this.update(courseId, { published: true })
+  }
+
+  async unpublish(courseId: string): Promise<CourseStructure | null> {
+    return this.update(courseId, { published: false })
+  }
+
   async create(data: {
     title: string
     description: string
-    instructor: string
+    instructor?: string
     duration?: number
     level?: 'beginner' | 'intermediate' | 'advanced'
   }): Promise<CourseStructure> {
     const backendCourse = await ApiService.createCourse({
-      tenantId: this.tenantId,
-      ...data,
-      status: 'draft'
+      title: data.title,
+      description: data.description,
+      category: 'General',
+      estimatedTime: data.duration ? data.duration * 60 : 60,
     })
     return this.adaptCourse(backendCourse)
   }
 
   async update(courseId: string, updates: Partial<CourseStructure>): Promise<CourseStructure | null> {
     try {
-      // Map frontend difficulty back to backend level
-      let backendLevel: 'beginner' | 'intermediate' | 'advanced' | undefined
-      if (updates.difficulty) {
-        const levelMap: Record<string, 'beginner' | 'intermediate' | 'advanced'> = {
-          'Novice': 'beginner',
-          'Specialist': 'intermediate',
-          'Master': 'advanced'
-        }
-        backendLevel = levelMap[updates.difficulty]
-      }
-      
-      const backendCourse = await ApiService.updateCourse(courseId, this.tenantId, {
+      const backendCourse = await ApiService.updateCourse(courseId, {
         title: updates.title,
         description: updates.description,
-        duration: updates.estimatedHours,
-        level: backendLevel,
-        status: updates.published ? 'active' : 'draft'
+        estimatedTime: updates.estimatedHours ? updates.estimatedHours * 60 : undefined,
+        status: updates.published !== undefined
+          ? (updates.published ? 'published' : 'draft')
+          : undefined,
       })
       return this.adaptCourse(backendCourse)
     } catch (error) {

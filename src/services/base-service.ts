@@ -9,7 +9,7 @@
  */
 
 // KV Storage Access via Spark
-const kv = window.spark?.kv
+const kv = window.spark?.kv as SparkKV
 
 if (!kv) {
   console.warn('GitHub Spark KV storage not available - services will not function properly. Ensure you are running in a Spark environment.')

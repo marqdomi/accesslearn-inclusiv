@@ -36,8 +36,8 @@ export function HighLevelDashboard() {
       completed: number
       inProgress: number
       notStarted: number
-      certificatesIssued: number
-      certificatesRequired: number
+      certificatesIssued?: number
+      certificatesRequired?: number
     }
   } | null>(null)
   const [engagementTrendData, setEngagementTrendData] = useState<Array<{
@@ -635,15 +635,15 @@ export function HighLevelDashboard() {
               <p className="text-[10px] text-muted-foreground mt-1">En riesgo</p>
             </div>
           </div>
-          {stats.complianceStatus.certificatesIssued > 0 && (
+          {(stats.complianceStatus.certificatesIssued ?? 0) > 0 && (
             <div className="pt-3 border-t">
               <p className="text-xs text-muted-foreground mb-1">Certificados Emitidos</p>
               <p className="text-lg font-bold">
-                {stats.complianceStatus.certificatesIssued} / {stats.complianceStatus.certificatesRequired}
+                {stats.complianceStatus.certificatesIssued ?? 0} / {stats.complianceStatus.certificatesRequired ?? 0}
               </p>
               <p className="text-[10px] text-muted-foreground mt-1">
-                {stats.complianceStatus.certificatesRequired > 0
-                  ? Math.round((stats.complianceStatus.certificatesIssued / stats.complianceStatus.certificatesRequired) * 100)
+                {(stats.complianceStatus.certificatesRequired ?? 0) > 0
+                  ? Math.round(((stats.complianceStatus.certificatesIssued ?? 0) / (stats.complianceStatus.certificatesRequired ?? 0)) * 100)
                   : 0}% de cursos completados tienen certificado
               </p>
             </div>

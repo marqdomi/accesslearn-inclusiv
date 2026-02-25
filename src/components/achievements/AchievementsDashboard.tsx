@@ -64,7 +64,7 @@ export function AchievementsDashboard({ userId }: { userId?: string }) {
 
   const handleShare = async () => {
     const shareText = t('achievementsDashboard.shareText', {
-      count: unlockedCount.toString(),
+      count: unlockedCount,
       level: currentLevel.toString(),
       rank: getRankName(),
       xp: totalXP.toLocaleString(),

@@ -26,7 +26,7 @@ const NOTIFICATION_ICONS = {
 export function NotificationsPage() {
   const navigate = useNavigate()
   const { user } = useAuth()
-  const { t, language } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { notifications, unreadCount, markAsRead, markAllAsRead, deleteNotification, loading } =
     useNotifications(user?.id || '')
 
@@ -182,7 +182,7 @@ export function NotificationsPage() {
                                 <span>
                                   {formatDistanceToNow(notification.timestamp, {
                                     addSuffix: true,
-                                    locale: language === 'es' ? es : undefined,
+                                    locale: i18n.language === 'es' ? es : undefined,
                                   })}
                                 </span>
                                 {notification.type && (

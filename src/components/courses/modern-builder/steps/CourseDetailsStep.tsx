@@ -244,10 +244,8 @@ export function CourseDetailsStep({ course, updateCourse, courseId }: CourseDeta
           <Select 
             value={course.category} 
             onValueChange={(value) => updateCourse({ category: value })}
-            className="flex-1"
-            disabled={categoriesLoading}
           >
-            <SelectTrigger id="course-category">
+            <SelectTrigger id="course-category" className="flex-1" disabled={categoriesLoading}>
               <SelectValue placeholder={categoriesLoading ? "Cargando categorías..." : "Selecciona una categoría"} />
             </SelectTrigger>
             <SelectContent>

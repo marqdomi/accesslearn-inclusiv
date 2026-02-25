@@ -923,7 +923,7 @@ export function CourseViewerPage() {
           certificateRequiresPassingScore: course.certificateRequiresPassingScore,
           minimumScoreForCertificate: course.minimumScoreForCertificate,
           allowRetakes: course.allowRetakes,
-          completionMode: course.completionMode,
+          completionMode: course.completionMode as 'modules-only' | 'modules-and-quizzes' | 'exam-mode' | 'study-guide' | undefined,
         }}
         quizzesToRetake={quizzesToRetake}
         onRetakeQuizzes={() => {
@@ -1190,7 +1190,7 @@ export function CourseViewerPage() {
               >
                 {currentLesson && (
                   <LessonContent 
-                    lesson={currentLesson}
+                    lesson={currentLesson as any}
                     onQuizComplete={(results) => {
                       // Guardar score del quiz (accuracy) para el cálculo final
                       // Incluso si no pasó el quiz, guardamos el score para el cálculo del curso

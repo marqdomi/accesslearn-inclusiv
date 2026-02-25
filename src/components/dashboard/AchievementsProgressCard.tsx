@@ -142,7 +142,7 @@ export function AchievementsProgressCard() {
                       <Trophy className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs sm:text-sm font-medium line-clamp-1">{achievement.name}</p>
+                      <p className="text-xs sm:text-sm font-medium line-clamp-1">{achievement.title}</p>
                       <p className="text-[10px] sm:text-xs text-muted-foreground line-clamp-1">
                         {achievement.description}
                       </p>
@@ -181,7 +181,7 @@ export function AchievementsProgressCard() {
                 </span>
               </div>
               <div className="space-y-1.5 sm:space-y-2">
-                <p className="text-xs sm:text-sm font-medium line-clamp-1">{nextAchievement.name}</p>
+                <p className="text-xs sm:text-sm font-medium line-clamp-1">{nextAchievement.title}</p>
                 <Progress value={achievementProgress.progress} className="h-1.5 sm:h-2" />
                 <p className="text-[10px] sm:text-xs text-muted-foreground line-clamp-2">
                   {nextAchievement.description}

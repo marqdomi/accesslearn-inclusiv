@@ -178,6 +178,21 @@ class ApiServiceClass {
     })
   }
 
+  async createPlatformTenant(data: {
+    name: string
+    slug: string
+    contactEmail: string
+    plan: 'free-trial' | 'starter' | 'professional' | 'enterprise'
+    primaryColor?: string
+    secondaryColor?: string
+    logo?: string
+  }) {
+    return this.fetchWithAuth<any>(`/tenants`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
   async updateTenant(tenantId: string, updates: {
     name?: string
     contactEmail?: string
@@ -408,6 +423,7 @@ class ApiServiceClass {
     estimatedTime?: number
     coverImage?: string
     modules?: any[]
+    status?: 'draft' | 'pending-review' | 'published' | 'archived'
   }) {
     return this.fetchWithAuth<any>(`/courses`, {
       method: 'POST',
@@ -437,8 +453,9 @@ class ApiServiceClass {
     })
   }
 
-  async deleteCourse(courseId: string, tenantId: string) {
-    return this.fetchWithAuth<void>(`/courses/${courseId}?tenantId=${tenantId}`, {
+  async deleteCourse(courseId: string, tenantId?: string) {
+    const query = tenantId ? `?tenantId=${tenantId}` : ''
+    return this.fetchWithAuth<void>(`/courses/${courseId}${query}`, {
       method: 'DELETE',
     })
   }
@@ -1013,9 +1030,13 @@ class ApiServiceClass {
 
   async getCourseProgress(userId: string, courseId: string) {
     return this.fetchWithAuth<{
+      courseId?: string
       completedLessons: string[]
       lastAccessedAt: string | null
       xpEarned: number
+      status?: string
+      quizScores?: Array<{ quizId: string; score: number }>
+      progress?: number
     }>(`/user-progress/${userId}/course/${courseId}`)
   }
 
@@ -1271,6 +1292,8 @@ class ApiServiceClass {
         completed: number
         inProgress: number
         notStarted: number
+        certificatesIssued?: number
+        certificatesRequired?: number
       }
     }>(`/analytics/high-level`)
   }
@@ -1955,6 +1978,54 @@ class ApiServiceClass {
     return this.fetchWithAuth<{ url: string }>('/billing/portal', {
       method: 'POST',
       body: JSON.stringify({}),
+    })
+  }
+
+  // ============================================
+  // AI APIs
+  // ============================================
+
+  async getAIAnalyticsInsights() {
+    return this.fetchWithAuth<any>('/ai/analytics-insights')
+  }
+
+  async chatWithAI(courseId: string, message: string, history: Array<{ role: string; content: string }>) {
+    return this.fetchWithAuth<{ reply: string; suggestions?: string[] }>('/ai/chat', {
+      method: 'POST',
+      body: JSON.stringify({ courseId, message, history }),
+    })
+  }
+
+  async getAICourseSummary(courseId: string) {
+    return this.fetchWithAuth<{ summary: { overview: string; keyTopics: string[]; learningObjectives: string[]; estimatedEffort: string; prerequisites: string[]; targetAudience: string } | string; keyPoints?: string[] }>(`/ai/course-summary/${courseId}`)
+  }
+
+  async generateAIQuiz(courseId: string, options: { questionCount?: number; difficulty?: string; moduleIndex?: number; topics?: string[] }) {
+    return this.fetchWithAuth<{ questions: any[] }>('/ai/generate-quiz', {
+      method: 'POST',
+      body: JSON.stringify({ courseId, ...options }),
+    })
+  }
+
+  async getAIRecommendations() {
+    return this.fetchWithAuth<{ recommendations: any[] }>('/ai/recommendations')
+  }
+
+  async generateAIContent(options: { topic: string; courseTitle: string; lessonTitle: string; blockCount?: number }) {
+    return this.fetchWithAuth<{ content: any[] }>('/ai/generate-content', {
+      method: 'POST',
+      body: JSON.stringify(options),
+    })
+  }
+
+  async extractAIFromDocument(file: File, courseTitle: string, options: { generateQuestions?: boolean; generateStructure?: boolean; blockCount?: number }) {
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('data', JSON.stringify({ courseTitle, ...options }))
+    return this.fetchWithAuth<any>('/ai/extract-document', {
+      method: 'POST',
+      body: formData,
+      headers: {} as HeadersInit,
     })
   }
 }

@@ -72,6 +72,10 @@ class MentorshipServiceClass extends BaseService<MentorshipPairing> {
 }
 
 class ForumServiceClass extends BaseService<ForumQuestion> {
+  constructor() {
+    super('forum-questions')
+  }
+
   /**
    * Get questions for a course
    */

@@ -22,6 +22,12 @@ interface LessonContentProps {
         showTimer?: boolean
         timeLimit?: number
         passingScore?: number
+        examModeType?: 'timed' | 'untimed'
+        examDuration?: number
+        examMinPassingScore?: number
+        examQuestionCount?: number
+        questionBank?: any[]
+        useRandomSelection?: boolean
       }
     }
   }

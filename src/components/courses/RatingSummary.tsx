@@ -31,7 +31,7 @@ export function RatingSummary({ summary, className }: RatingSummaryProps) {
           </div>
           <StarRating rating={summary.averageRating} size={24} />
           <div className="text-sm text-muted-foreground">
-            {t('reviews.totalReviews', { count: summary.totalReviews.toString() })}
+            {t('reviews.totalReviews', { count: summary.totalReviews })}
           </div>
         </div>
 

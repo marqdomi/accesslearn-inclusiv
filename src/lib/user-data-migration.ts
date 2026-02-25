@@ -63,7 +63,7 @@ export function consolidateUsers(
         assignedCourses: [],
         department: emp.department,
         // New fields for tracking
-        createdAt: emp.createdAt,
+        createdAt: emp.createdAt ? new Date(emp.createdAt).toISOString() : undefined,
         status: emp.status === 'pending' ? 'pending' : 'active'
       }
       userMap.set(key, newUser)
@@ -72,7 +72,7 @@ export function consolidateUsers(
   })
 
   const migratedUsers = Array.from(userMap.values())
-    .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
+    .sort((a, b) => (new Date(b.createdAt || 0).getTime()) - (new Date(a.createdAt || 0).getTime()))
 
   const result: MigrationResult = {
     totalUsers: migratedUsers.length,

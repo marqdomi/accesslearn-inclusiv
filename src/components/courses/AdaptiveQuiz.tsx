@@ -202,7 +202,7 @@ export function AdaptiveQuiz({
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: -20 }}
         >
-          <h3 className="text-xl font-semibold mb-6">{currentQuestion.question}</h3>
+          <h3 className="text-xl font-semibold mb-6">{typeof currentQuestion.question === 'string' ? currentQuestion.question : ''}</h3>
 
           <RadioGroup
             value={userAnswers[currentQuestionIndex]?.toString()}

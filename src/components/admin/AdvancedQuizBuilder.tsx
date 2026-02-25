@@ -191,7 +191,7 @@ export function AdvancedQuizBuilder({ questions, onChange }: AdvancedQuizBuilder
                         <div className="space-y-2">
                           <Label>Question Text</Label>
                           <Textarea
-                            value={question.question}
+                            value={typeof question.question === 'string' ? question.question : ''}
                             onChange={(e) => updateQuestion(index, { question: e.target.value })}
                             placeholder="Enter your question here..."
                             rows={2}
@@ -341,7 +341,7 @@ export function AdvancedQuizBuilder({ questions, onChange }: AdvancedQuizBuilder
 
                         {editingIndex !== index && (
                           <div className="text-sm text-muted-foreground">
-                            {question.question || 'No question text yet'} • {question.xpValue} XP
+                            {typeof question.question === 'string' ? question.question : 'No question text yet'} • {question.xpValue} XP
                           </div>
                         )}
                       </div>

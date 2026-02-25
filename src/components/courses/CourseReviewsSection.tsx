@@ -138,7 +138,7 @@ export function CourseReviewsSection({ courseId, userId, userName, userAvatar }:
         <div className="space-y-4">
           <Separator />
           <h3 className="text-lg font-semibold text-foreground">
-            {t('reviews.learnerReviews', { count: otherReviews.length.toString() })}
+            {t('reviews.learnerReviews', { count: otherReviews.length })}
           </h3>
           <div className="space-y-4">
             {otherReviews.map((review) => (

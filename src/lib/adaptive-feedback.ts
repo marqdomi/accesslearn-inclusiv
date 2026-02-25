@@ -92,7 +92,7 @@ export function analyzeFailure(
   failedIndices.forEach((index) => {
     const question = questions[index]
     if (question) {
-      const concept = extractConceptFromQuestion(question.question)
+      const concept = extractConceptFromQuestion(typeof question.question === 'string' ? question.question : '')
       conceptMap[concept] = (conceptMap[concept] || 0) + 1
     }
   })

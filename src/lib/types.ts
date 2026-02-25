@@ -75,6 +75,11 @@ export interface UserProgress {
   bestScore?: number
   totalXpEarned?: number
   currentAttempt?: number
+
+  // Extended fields
+  progress?: number            // 0-100 completion percentage
+  completedLessons?: string[]  // Array of completed lesson IDs
+  timeSpent?: number           // Total time in seconds
 }
 
 export interface UserPreferences {
@@ -105,11 +110,11 @@ export type UserRole =
 export interface User {
   id: string
   name: string
-  firstName: string
-  lastName: string
+  firstName?: string
+  lastName?: string
   email: string
   role: UserRole
-  tenantId: string
+  tenantId?: string
   assignedCourses: string[]
   enrolledCourses?: string[]       // Array of course IDs the user is enrolled in
   
@@ -141,6 +146,21 @@ export interface User {
   mentorRating?: number
   totalMentorSessions?: number
   totalMentees?: number
+
+  // Status & activity tracking
+  status?: 'active' | 'inactive' | 'suspended' | 'pending'
+  isActive?: boolean               // Convenience alias for status === 'active'
+  department?: string              // Department (alternative to departamento)
+  createdAt?: string | Date
+  updatedAt?: string | Date
+  lastLoginAt?: string | Date
+
+  // Gamification
+  totalXP?: number
+  level?: number
+  badges?: Array<{ id: string; name: string; icon?: string; [key: string]: unknown }>
+  completedCourses?: string[]
+  avatar?: string
 }
 
 export type AchievementTier = 'bronze' | 'silver' | 'gold' | 'platinum'
@@ -245,7 +265,7 @@ export interface ScenarioQuestion {
 
 export interface QuizQuestion {
   id: string
-  type: 'multiple-choice' | 'multiple-select' | 'true-false' | 'fill-blank' | 'ordering' | 'scenario-solver'
+  type: 'multiple-choice' | 'multiple-select' | 'true-false' | 'fill-blank' | 'ordering' | 'scenario-solver' | 'short-answer'
   question: string | ScenarioQuestion
   options: string[]
   correctAnswer: number | number[] | string
@@ -345,6 +365,17 @@ export interface CourseStructure {
   allowRetakes?: boolean // Permitir reintentar quizzes para mejorar calificación
   maxRetakesPerQuiz?: number // Límite de reintentos por quiz (0 = ilimitado)
   certificateRequiresPassingScore?: boolean // Si true, certificado solo si pasa todos los quizzes
+
+  // Extended fields used in admin management
+  status?: 'draft' | 'published' | 'archived' | 'review' | 'pending-review'
+  instructorName?: string
+  instructorId?: string
+  estimatedMinutes?: number
+  estimatedTime?: number
+  tags?: string[]
+  price?: number
+  language?: string
+  lastModifiedBy?: string
 }
 
 export interface UserLibrary {

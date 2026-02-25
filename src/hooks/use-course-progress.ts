@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { UserProgress } from '@/lib/types'
+import { UserProgress, CourseStatus } from '@/lib/types'
 import { ApiService } from '@/services/api.service'
 import { useAuth } from '@/contexts/AuthContext'
 import { useTenant } from '@/contexts/TenantContext'
@@ -29,10 +29,10 @@ export function useCourseProgress(courseId: string, userId?: string, courseName?
       if (progressData) {
         // Convert backend format to frontend format
         setProgress({
-          courseId: progressData.courseId,
-          status: progressData.status || 'not-started',
+          courseId: progressData.courseId || courseId,
+          status: (progressData.status as CourseStatus) || 'not-started',
           completedModules: progressData.completedLessons || [],
-          lastAccessed: new Date(progressData.lastAccessedAt).getTime(),
+          lastAccessed: progressData.lastAccessedAt ? new Date(progressData.lastAccessedAt).getTime() : Date.now(),
           assessmentAttempts: progressData.quizScores?.length || 0,
           assessmentScore: progressData.progress || 0,
         })

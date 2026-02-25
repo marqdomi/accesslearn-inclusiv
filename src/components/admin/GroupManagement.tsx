@@ -19,13 +19,13 @@ import { useTenant } from '@/contexts/TenantContext'
 
 interface BackendGroup {
   id: string
-  tenantId: string
+  tenantId?: string
   name: string
   description?: string
   memberIds: string[]
-  createdBy: string
-  createdAt: string
-  updatedAt: string
+  createdBy?: string
+  createdAt?: string
+  updatedAt?: string
 }
 
 export function GroupManagement() {
@@ -606,7 +606,7 @@ export function GroupManagement() {
                           <Badge variant="secondary">{validCount}</Badge>
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">
-                          {new Date(group.createdAt).toLocaleDateString()}
+                          {new Date(group.createdAt ?? '').toLocaleDateString()}
                         </TableCell>
                       </TableRow>
                     )

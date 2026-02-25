@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Plus, Trash, ArrowLeft, FloppyDisk, Image, VideoCamera, MicrophoneStage, Article, Code, GameController, Warning } from '@phosphor-icons/react'
+import { Plus, Trash, ArrowLeft, FloppyDisk, Image, VideoCamera, MicrophoneStage, Article, Code, GameController, Warning, File } from '@phosphor-icons/react'
 import { Badge } from '@/components/ui/badge'
 
 interface LessonEditorProps {
@@ -104,7 +104,8 @@ export function LessonEditor({ lesson, moduleTitle, onSave, onCancel }: LessonEd
     audio: MicrophoneStage,
     video: VideoCamera,
     challenge: GameController,
-    code: Code
+    code: Code,
+    file: File
   }
 
   return (

@@ -88,7 +88,7 @@ export function CourseCard({ course, progress, onSelect }: CourseCardProps) {
             <div className="flex flex-wrap items-center gap-3 text-sm">
               <div className="flex items-center gap-1.5 text-muted-foreground">
                 <Clock size={16} aria-hidden="true" />
-                <span>{course.estimatedTime || course.estimatedHours || 0} {course.estimatedHours ? 'horas' : 'min'}</span>
+                <span>{(course as any).estimatedTime || (course as any).estimatedHours || 0} {(course as any).estimatedHours ? 'horas' : 'min'}</span>
               </div>
               <div className="flex items-center gap-1.5 text-muted-foreground">
                 <Target size={16} weight="fill" aria-hidden="true" />

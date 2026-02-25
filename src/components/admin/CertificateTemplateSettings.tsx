@@ -38,6 +38,8 @@ interface CertificateTemplate {
   awardedToText: string
   completionText: string
   signatureText: string
+  createdAt?: string
+  updatedAt?: string
 }
 
 export function CertificateTemplateSettings({ onBack }: CertificateTemplateSettingsProps) {

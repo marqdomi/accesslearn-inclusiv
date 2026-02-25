@@ -62,8 +62,8 @@ export function useNotifications(userId: string) {
 
     try {
       const created = await ApiService.createNotification({
+        ...notification,
         userId,
-        ...notification
       })
       
       // Add to local state

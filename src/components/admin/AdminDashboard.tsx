@@ -143,14 +143,14 @@ export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
     {
       title: t('adminDashboard.stats.totalEmployees'),
       value: totalEmployees,
-      subtitle: t('adminDashboard.stats.pendingActivation', { count: String(pendingEmployees) }),
+      subtitle: t('adminDashboard.stats.pendingActivation', { count: pendingEmployees }),
       icon: Users,
       color: 'text-primary'
     },
     {
       title: t('adminDashboard.stats.totalCourses'),
       value: totalCourses,
-      subtitle: t('adminDashboard.stats.published', { count: String(publishedCourses) }),
+      subtitle: t('adminDashboard.stats.published', { count: publishedCourses }),
       icon: BookOpen,
       color: 'text-secondary'
     },

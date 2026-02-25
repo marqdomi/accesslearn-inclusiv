@@ -113,8 +113,8 @@ export function BulkEmployeeUpload() {
       if (previewData.successful.length > 0) {
         setCredentials((current) => [...(current || []), ...previewData.successful])
         const message = previewData.successful.length === 1 
-          ? t('bulkUpload.accountsCreated', { count: previewData.successful.length.toString() })
-          : t('bulkUpload.accountsCreatedPlural', { count: previewData.successful.length.toString() })
+          ? t('bulkUpload.accountsCreated', { count: previewData.successful.length })
+          : t('bulkUpload.accountsCreatedPlural', { count: previewData.successful.length })
         toast.success(message)
       }
 
@@ -485,7 +485,7 @@ export function BulkEmployeeUpload() {
       {pendingCredentials.length > 0 && !uploadResult && (
         <Card>
           <CardHeader>
-            <CardTitle>{t('bulkUpload.pendingAccounts', { count: pendingCredentials.length.toString() })}</CardTitle>
+            <CardTitle>{t('bulkUpload.pendingAccounts', { count: pendingCredentials.length })}</CardTitle>
             <CardDescription>{t('bulkUpload.pendingDescription')}</CardDescription>
           </CardHeader>
           <CardContent>

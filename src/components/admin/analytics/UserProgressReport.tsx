@@ -60,7 +60,7 @@ export function UserProgressReport() {
       setReportData(data)
 
       // Load groups for filter
-      const groupsData = await ApiService.getGroups(currentTenant.id)
+const groupsData = await ApiService.getGroups()
       setGroups(groupsData)
 
       // TODO: Load mentors when endpoint is ready

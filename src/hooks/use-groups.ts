@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import { GroupService, type UserGroup, type CourseAssignment } from '@/services'
+import { GroupService } from '@/services'
+import type { UserGroup, CourseAssignment } from '@/lib/types'
 
 /**
  * Hook to fetch all user groups
@@ -13,7 +14,7 @@ export function useGroups() {
     try {
       setLoading(true)
       setError(null)
-      const data = await GroupService.getAllGroups()
+      const data = await GroupService.getAll()
       setGroups(data)
     } catch (err) {
       setError(err as Error)
@@ -40,7 +41,7 @@ export function useGroupActions() {
     try {
       setLoading(true)
       setError(null)
-      const newGroup = await GroupService.createGroup(groupData)
+      const newGroup = await GroupService.create({ ...groupData, id: `group-${Date.now()}` } as UserGroup)
       return newGroup
     } catch (err) {
       setError(err as Error)
@@ -54,7 +55,7 @@ export function useGroupActions() {
     try {
       setLoading(true)
       setError(null)
-      const updated = await GroupService.updateGroup(id, groupData)
+      const updated = await GroupService.update(id, groupData)
       return updated
     } catch (err) {
       setError(err as Error)
@@ -68,7 +69,7 @@ export function useGroupActions() {
     try {
       setLoading(true)
       setError(null)
-      await GroupService.deleteGroup(id)
+      await GroupService.delete(id)
     } catch (err) {
       setError(err as Error)
       throw err
@@ -81,7 +82,11 @@ export function useGroupActions() {
     try {
       setLoading(true)
       setError(null)
-      const updated = await GroupService.addUsersToGroup(groupId, userIds)
+      // Add each user individually
+      let updated: UserGroup | null = null
+      for (const userId of userIds) {
+        updated = await GroupService.addUser(groupId, userId)
+      }
       return updated
     } catch (err) {
       setError(err as Error)
@@ -95,7 +100,11 @@ export function useGroupActions() {
     try {
       setLoading(true)
       setError(null)
-      const updated = await GroupService.removeUsersFromGroup(groupId, userIds)
+      // Remove each user individually
+      let updated: UserGroup | null = null
+      for (const userId of userIds) {
+        updated = await GroupService.removeUser(groupId, userId)
+      }
       return updated
     } catch (err) {
       setError(err as Error)
@@ -118,70 +127,56 @@ export function useGroupActions() {
 
 /**
  * Hook for course assignments
+ * Note: Uses localStorage since assignment service is not yet in the team-service layer.
  */
 export function useAssignments() {
-  const [assignments, setAssignments] = useState<CourseAssignment[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<Error | null>(null)
+  const STORAGE_KEY = 'course-assignments'
 
-  const refresh = async () => {
+  const loadAssignments = (): CourseAssignment[] => {
     try {
-      setLoading(true)
-      setError(null)
-      const data = await GroupService.getAllAssignments()
-      setAssignments(data)
-    } catch (err) {
-      setError(err as Error)
-    } finally {
-      setLoading(false)
+      const raw = localStorage.getItem(STORAGE_KEY)
+      return raw ? JSON.parse(raw) as CourseAssignment[] : []
+    } catch {
+      return []
     }
   }
 
-  useEffect(() => {
-    refresh()
-  }, [])
-
-  const createAssignment = async (assignmentData: Omit<CourseAssignment, 'id'>) => {
+  const saveAssignments = (assignments: CourseAssignment[]): void => {
     try {
-      const newAssignment = await GroupService.createAssignment(assignmentData)
-      await refresh()
-      return newAssignment
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(assignments))
     } catch (err) {
-      setError(err as Error)
-      throw err
+      console.warn('[useAssignments] Failed to persist assignments:', err)
     }
   }
 
-  const deleteAssignment = async (id: string) => {
-    try {
-      await GroupService.deleteAssignment(id)
-      await refresh()
-    } catch (err) {
-      setError(err as Error)
-      throw err
-    }
+  const [assignments, setAssignments] = useState<CourseAssignment[]>(() => loadAssignments())
+  const [loading] = useState(false)
+  const [error] = useState<Error | null>(null)
+
+  const refresh = () => {
+    setAssignments(loadAssignments())
   }
 
-  const assignCourseToUser = async (courseId: string, userId: string, assignedBy: string, dueDate?: number) => {
-    try {
-      const assignment = await GroupService.assignCourseToUser(courseId, userId, assignedBy, dueDate)
-      await refresh()
-      return assignment
-    } catch (err) {
-      setError(err as Error)
-      throw err
-    }
+  const createAssignment = (assignmentData: Omit<CourseAssignment, 'id'>): CourseAssignment => {
+    const newAssignment: CourseAssignment = { ...assignmentData, id: `assignment-${Date.now()}` }
+    const updated = [...loadAssignments(), newAssignment]
+    saveAssignments(updated)
+    setAssignments(updated)
+    return newAssignment
   }
 
-  const assignCourseToGroup = async (courseId: string, groupId: string, assignedBy: string, dueDate?: number) => {
-    try {
-      const assignment = await GroupService.assignCourseToGroup(courseId, groupId, assignedBy, dueDate)
-      await refresh()
-      return assignment
-    } catch (err) {
-      setError(err as Error)
-      throw err
-    }
+  const deleteAssignment = (id: string): void => {
+    const updated = loadAssignments().filter(a => a.id !== id)
+    saveAssignments(updated)
+    setAssignments(updated)
+  }
+
+  const assignCourseToUser = (courseId: string, userId: string, assignedBy: string, dueDate?: number): CourseAssignment => {
+    return createAssignment({ courseId, userId, assignedBy, assignedAt: Date.now(), dueDate })
+  }
+
+  const assignCourseToGroup = (courseId: string, groupId: string, assignedBy: string, dueDate?: number): CourseAssignment => {
+    return createAssignment({ courseId, groupId, assignedBy, assignedAt: Date.now(), dueDate })
   }
 
   return {

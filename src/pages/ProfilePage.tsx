@@ -329,6 +329,11 @@ export function ProfilePage() {
     )
   }
 
+  // Safety guard — profile must be defined at this point
+  if (!profile) {
+    return null
+  }
+
   return (
     <div className="min-h-screen bg-muted/30">
       <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 max-w-4xl">

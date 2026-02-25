@@ -6,9 +6,10 @@ import { cn } from "@/lib/utils"
 function Label({
   className,
   children,
+  required,
   ...props
-}: ComponentProps<typeof LabelPrimitive.Root> & { children?: React.ReactNode }) {
-  const isRequired = className?.includes('required') || props['data-required'] === 'true'
+}: ComponentProps<typeof LabelPrimitive.Root> & { children?: React.ReactNode; required?: boolean }) {
+  const isRequired = required || className?.includes('required') || props['data-required'] === 'true'
   
   return (
     <LabelPrimitive.Root
@@ -26,3 +27,4 @@ function Label({
 }
 
 export { Label }
+export type LabelProps = ComponentProps<typeof LabelPrimitive.Root> & { children?: React.ReactNode; required?: boolean }

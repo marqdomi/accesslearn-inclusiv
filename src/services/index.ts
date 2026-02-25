@@ -18,6 +18,10 @@ export * from './gamification-service'
 // Re-export service instances for convenient access
 export { UserProgressService } from './user-progress-service'
 export { TeamService, GroupService } from './team-service'
+
+// CourseService alias — delegates to BackendCourseService
+export { BackendCourseService as CourseService } from './backend-course.service'
+export type { CourseStructure } from '../lib/types'
 export { UserProfileService, UserStatsService, XPEventService, DEFAULT_USER_STATS, XP_PER_LEVEL } from './user-service'
 export { MentorshipService, ForumService, ActivityFeedService, NotificationService } from './social-service'
 export { AchievementService, CertificateService, QuizAttemptService, CourseReviewService, QUIZ_PASSING_SCORE } from './gamification-service'

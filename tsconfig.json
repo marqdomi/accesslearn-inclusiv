@@ -24,10 +24,24 @@
     "paths": {
       "@/*": [
         "./src/*"
+      ],
+      "@github/spark/hooks": [
+        "./src/shims/spark-hooks.ts"
+      ],
+      "@github/spark/db": [
+        "./src/shims/spark-db.ts"
       ]
     },
   },
   "include": [
     "src"
+  ],
+  "exclude": [
+    "src/services/achievement.service.ts",
+    "src/services/group.service.ts",
+    "src/services/user-progress.service.ts",
+    "src/components/auth/__tests__",
+    "src/hooks/__tests__",
+    "src/pages/__tests__"
   ]
 }

@@ -165,7 +165,7 @@ export function useXP(userId?: string) {
 
       if (result.levelUp && result.newLevel) {
         if (effectiveUserId) {
-          postLevelUp(effectiveUserId, result.newLevel)
+          postLevelUp(result.newLevel)
         }
         
         // Check if it's a milestone level

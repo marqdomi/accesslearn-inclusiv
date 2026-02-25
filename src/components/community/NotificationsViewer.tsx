@@ -32,7 +32,7 @@ const NOTIFICATION_ICONS = {
 }
 
 export function NotificationsViewer({ userId }: NotificationsViewerProps) {
-  const { t, language } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { notifications, unreadCount, markAsRead, markAllAsRead, deleteNotification } =
     useNotifications(userId)
   const [isOpen, setIsOpen] = useState(false)
@@ -92,8 +92,8 @@ export function NotificationsViewer({ userId }: NotificationsViewerProps) {
           <SheetDescription>
             {unreadCount > 0
               ? (unreadCount === 1 
-                  ? t('notifications.unreadCount', { count: String(unreadCount) })
-                  : t('notifications.unreadCountPlural', { count: String(unreadCount) }))
+                  ? t('notifications.unreadCount', { count: unreadCount })
+                  : t('notifications.unreadCountPlural', { count: unreadCount }))
               : t('notifications.allCaughtUp')}
           </SheetDescription>
         </SheetHeader>
@@ -173,7 +173,7 @@ export function NotificationsViewer({ userId }: NotificationsViewerProps) {
                             <p className="text-xs text-muted-foreground">
                               {formatDistanceToNow(notification.timestamp, {
                                 addSuffix: true,
-                                locale: language === 'es' ? es : undefined,
+                                locale: i18n.language === 'es' ? es : undefined,
                               })}
                             </p>
                           </div>

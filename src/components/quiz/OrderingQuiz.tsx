@@ -200,7 +200,7 @@ export function OrderingQuiz({
               transition={{ delay: position * 0.05 }}
               draggable={!isAnswered}
               onDragStart={(e) => handleDragStart(e as any, shuffledIndex)}
-              onDragEnd={handleDragEnd}
+              onDragEnd={handleDragEnd as any}
               onDragOver={(e) => handleDragOver(e as any, shuffledIndex)}
               onDragLeave={handleDragLeave}
               onDrop={(e) => handleDrop(e as any, shuffledIndex)}

@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, type ReactElement } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Trophy, Sparkles, Star } from 'lucide-react'
 
@@ -20,7 +20,7 @@ interface GameNotificationQueueProps {
 
 const typeStyles: Record<
   NonNullable<GameNotification['type']>,
-  { bg: string; icon: JSX.Element }
+  { bg: string; icon: ReactElement }
 > = {
   xp: {
     bg: 'from-purple-600/90 via-purple-500/90 to-indigo-500/90',

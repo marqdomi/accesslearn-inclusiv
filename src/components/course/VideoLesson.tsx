@@ -136,7 +136,7 @@ export function VideoLesson({ videoProvider, videoId, videoUrl, title }: VideoLe
     }
     
     // Check if ReactPlayer can play this URL
-    const canPlay = ReactPlayer.canPlay(url)
+    const canPlay = ReactPlayer.canPlay?.(url) ?? false
     console.log('VideoLesson: canPlay check', { url, canPlay, videoProvider })
     
     // For providers with native iframe embeds, we don't need ReactPlayer
@@ -278,7 +278,7 @@ export function VideoLesson({ videoProvider, videoId, videoUrl, title }: VideoLe
                     portrait: false,
                     autoplay: false,
                   },
-                },
+                } as any,
               }}
             />
             {!isReady && (

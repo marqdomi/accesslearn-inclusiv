@@ -144,7 +144,7 @@ export function AppNavbar({ userXP = 0 }: AppNavbarProps) {
   }, [location.pathname, navBreadcrumbNames])
 
   const notificationItems = notifications.slice(0, 5)
-  const canAccessSettings = hasAnyPermission(SETTINGS_PERMISSIONS as unknown as string[])
+  const canAccessSettings = hasAnyPermission(SETTINGS_PERMISSIONS)
 
   const handleNotificationClick = async (notification: UserNotification) => {
     try {

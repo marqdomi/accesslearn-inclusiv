@@ -200,12 +200,53 @@ export function CourseReport() {
               <div className="flex items-center justify-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
               </div>
-            ) : (
-              <CourseReportDetail 
-                courseReport={courseReport}
-                viewMode={viewMode}
-              />
-            )}
+            ) : courseReport ? (
+              viewMode === 'table' ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>{t('analytics.user')}</TableHead>
+                      <TableHead>{t('analytics.email')}</TableHead>
+                      <TableHead>{t('analytics.status')}</TableHead>
+                      <TableHead>{t('analytics.progress')}</TableHead>
+                      <TableHead>{t('analytics.score')}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {courseReport.users.map((user) => (
+                      <TableRow key={user.userId}>
+                        <TableCell>{user.userName}</TableCell>
+                        <TableCell>{user.userEmail}</TableCell>
+                        <TableCell>
+                          <Badge variant={user.status === 'completed' ? 'default' : user.status === 'in-progress' ? 'secondary' : 'outline'}>
+                            {user.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{user.progress}%</TableCell>
+                        <TableCell>{user.quizScore !== undefined ? `${user.quizScore}%` : '-'}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <div className="space-y-2">
+                  {courseReport.users.map((user) => (
+                    <div key={user.userId} className="flex items-center justify-between p-3 rounded-lg border">
+                      <div>
+                        <p className="font-medium">{user.userName}</p>
+                        <p className="text-sm text-muted-foreground">{user.userEmail}</p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Badge variant={user.status === 'completed' ? 'default' : user.status === 'in-progress' ? 'secondary' : 'outline'}>
+                          {user.status}
+                        </Badge>
+                        <span className="text-sm">{user.progress}%</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )
+            ) : null}
           </div>
         )}
 
