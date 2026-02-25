@@ -187,7 +187,7 @@ class ApiServiceClass {
     secondaryColor?: string
     logo?: string
   }) {
-    return this.fetchWithAuth<any>(`/tenants`, {
+    return this.fetchWithAuth<any>(`/platform-admin/tenants`, {
       method: 'POST',
       body: JSON.stringify(data),
     })
@@ -324,6 +324,21 @@ class ApiServiceClass {
     return this.fetchWithAuth<any>(`/users/${userId}/profile`, {
       method: 'PUT',
       body: JSON.stringify({ tenantId, ...profileData }),
+    })
+  }
+
+  /**
+   * Update mentor profile (bio, specialties, availability)
+   */
+  async updateMentorProfile(userId: string, tenantId: string, mentorData: {
+    mentorBio?: string
+    mentorSpecialties?: string[]
+    mentorAvailability?: object
+    mentorIsAvailable?: boolean
+  }) {
+    return this.fetchWithAuth<any>(`/mentorship/mentor-profile`, {
+      method: 'PUT',
+      body: JSON.stringify({ userId, tenantId, ...mentorData }),
     })
   }
 

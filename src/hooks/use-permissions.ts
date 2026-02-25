@@ -6,7 +6,32 @@
 
 import { useMemo } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
-import { UserRole } from '@/lib/types'
+import { UserRole, User } from '@/lib/types'
+/**
+ * Standalone utility: hasRole(user, roles)
+ */
+export function hasRole(user: User | null | undefined, roles: UserRole | UserRole[]): boolean {
+  if (!user) return false
+  const rolesArray = Array.isArray(roles) ? roles : [roles]
+  const normalizedUserRole = user.role === 'admin' ? 'tenant-admin' : user.role === 'employee' ? 'student' : user.role
+  return rolesArray.some(role => {
+    const normalizedRole = role === 'admin' ? 'tenant-admin' : role === 'employee' ? 'student' : role
+    return normalizedUserRole === normalizedRole
+  })
+}
+
+/**
+ * Standalone utility: canAccess(user, permission, customPermissions?)
+ */
+export function canAccess(user: User | null | undefined, permission: Permission, customPermissions?: Permission[]): boolean {
+  if (!user) return false
+  const normalizedRole = user.role === 'admin' ? 'tenant-admin' : user.role === 'employee' ? 'student' : user.role
+  const rolePermissions = ROLE_PERMISSIONS[normalizedRole] || []
+  if (rolePermissions.includes(permission)) return true
+  if (customPermissions && customPermissions.includes(permission)) return true
+  if (user.customPermissions && user.customPermissions.includes(permission)) return true
+  return false
+}
 
 /**
  * Tipos de permisos (sincronizado con backend)
@@ -198,50 +223,12 @@ export function usePermissions() {
  */
 export function useHasRole() {
   const { user } = useAuth()
-  
-  const hasRole = useMemo(() => {
-    return (roles: UserRole | UserRole[]): boolean => {
-      if (!user) return false
-      
-      const rolesArray = Array.isArray(roles) ? roles : [roles]
-      
-      // Manejar aliases
-      const normalizedUserRole = user.role === 'admin' ? 'tenant-admin' : 
-                                  user.role === 'employee' ? 'student' : 
-                                  user.role
-      
-      return rolesArray.some(role => {
-        const normalizedRole = role === 'admin' ? 'tenant-admin' : 
-                               role === 'employee' ? 'student' : 
-                               role
-        return normalizedUserRole === normalizedRole
-      })
-    }
-  }, [user])
-  
-  const isAdmin = useMemo(() => {
-    return hasRole(['super-admin', 'tenant-admin', 'content-manager', 'user-manager'])
-  }, [hasRole])
-  
-  const canCreateContent = useMemo(() => {
-    return hasRole(['super-admin', 'tenant-admin', 'content-manager', 'instructor'])
-  }, [hasRole])
-  
-  const canManageUsers = useMemo(() => {
-    return hasRole(['super-admin', 'tenant-admin', 'user-manager'])
-  }, [hasRole])
-  
-  const canViewAnalytics = useMemo(() => {
-    return hasRole(['super-admin', 'tenant-admin', 'analytics-viewer', 'user-manager'])
-  }, [hasRole])
-  
-  return {
-    hasRole,
-    isAdmin,
-    canCreateContent,
-    canManageUsers,
-    canViewAnalytics,
-  }
+  const hasRoleFn = (roles: UserRole | UserRole[]) => hasRole(user, roles)
+  const isAdmin = hasRoleFn(['super-admin', 'tenant-admin', 'content-manager', 'user-manager'])
+  const canCreateContent = hasRoleFn(['super-admin', 'tenant-admin', 'content-manager', 'instructor'])
+  const canManageUsers = hasRoleFn(['super-admin', 'tenant-admin', 'user-manager'])
+  const canViewAnalytics = hasRoleFn(['super-admin', 'tenant-admin', 'analytics-viewer', 'user-manager'])
+  return { hasRole: hasRoleFn, isAdmin, canCreateContent, canManageUsers, canViewAnalytics }
 }
 
 /**
@@ -249,15 +236,9 @@ export function useHasRole() {
  */
 export function useCanAccess() {
   const { hasPermission } = usePermissions()
-  
-  const canAccessResource = useMemo(() => {
-    return (resource: string, action: string): boolean => {
-      const permission = `${resource}:${action}` as Permission
-      return hasPermission(permission)
-    }
-  }, [hasPermission])
-  
-  return {
-    canAccessResource,
+  const canAccessResource = (resource: string, action: string): boolean => {
+    const permission = `${resource}:${action}` as Permission
+    return hasPermission(permission)
   }
+  return { canAccessResource }
 }

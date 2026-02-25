@@ -119,7 +119,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!user || !token) return
 
     try {
-      const updatedUser = await ApiService.getUserById(user.id, user.tenantId)
+      const updatedUser = await ApiService.getUserById(user.id, user.tenantId ?? '')
       
       // Construir objeto User completo desde response
       const userData: User = {

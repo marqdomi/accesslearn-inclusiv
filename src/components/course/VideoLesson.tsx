@@ -1,4 +1,7 @@
 import ReactPlayer from 'react-player'
+import type React from 'react'
+// react-player type workaround: cast to avoid ref type conflict
+const AnyReactPlayer = ReactPlayer as React.ComponentType<any>
 import { Card } from '@/components/ui/card'
 import { PlayCircle } from 'lucide-react'
 import { useState, useEffect, useMemo } from 'react'
@@ -241,7 +244,7 @@ export function VideoLesson({ videoProvider, videoId, videoUrl, title }: VideoLe
         ) : (
           // Use ReactPlayer for other providers (Vimeo, etc.)
           <div className="relative w-full h-full">
-            <ReactPlayer
+            <AnyReactPlayer
               url={url}
               width="100%"
               height="100%"

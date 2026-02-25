@@ -274,7 +274,7 @@ export function useProfile() {
     setError(null)
 
     try {
-      const updatedUser = await ApiService.updateProfile(
+      const updatedUser = await ApiService.updateMentorProfile(
         user.id,
         tenantId,
         mentorData
