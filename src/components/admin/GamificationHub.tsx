@@ -11,12 +11,14 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { ArrowLeft, Trophy, Lightning, Plus, Trash } from '@phosphor-icons/react'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
 
 interface GamificationHubProps {
   onBack: () => void
 }
 
 export function GamificationHub({ onBack }: GamificationHubProps) {
+  const { t } = useTranslation('admin')
   const [badges, setBadges] = useKV<BadgeType[]>('badges', [])
   const [xpDefaults, setXpDefaults] = useKV<{
     module: number
@@ -37,7 +39,7 @@ export function GamificationHub({ onBack }: GamificationHubProps) {
 
   const handleCreateBadge = () => {
     if (!newBadge.name) {
-      toast.error('Badge name is required')
+      toast.error(t('gamification.badgeNameRequired'))
       return
     }
 
@@ -51,13 +53,13 @@ export function GamificationHub({ onBack }: GamificationHubProps) {
     setBadges((current) => [...(current || []), badge])
     setNewBadge({ name: '', description: '', icon: '' })
     setIsCreatingBadge(false)
-    toast.success('Badge created successfully')
+    toast.success(t('gamification.badgeCreated'))
   }
 
   const deleteBadge = (badgeId: string) => {
-    if (confirm('Are you sure you want to delete this badge?')) {
+    if (confirm(t('gamification.confirmDeleteBadge'))) {
       setBadges((current) => (current || []).filter(b => b.id !== badgeId))
-      toast.success('Badge deleted')
+      toast.success(t('gamification.badgeDeleted'))
     }
   }
 
@@ -80,9 +82,9 @@ export function GamificationHub({ onBack }: GamificationHubProps) {
             <ArrowLeft size={20} />
           </Button>
           <div>
-            <h2 className="text-2xl font-bold">Gamification Hub</h2>
+            <h2 className="text-2xl font-bold">{t('gamification.title')}</h2>
             <p className="text-sm text-muted-foreground">
-              Configure XP values and create badges
+              {t('gamification.subtitle')}
             </p>
           </div>
         </div>
@@ -92,26 +94,26 @@ export function GamificationHub({ onBack }: GamificationHubProps) {
         <TabsList>
           <TabsTrigger value="xp" className="gap-2">
             <Lightning size={16} weight="fill" />
-            XP Settings
+            {t('gamification.xpSettings')}
           </TabsTrigger>
           <TabsTrigger value="badges" className="gap-2">
             <Trophy size={16} weight="fill" />
-            Badges
+            {t('gamification.badges')}
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="xp" className="space-y-4 mt-4">
           <Card>
             <CardHeader>
-              <CardTitle>Default XP Values</CardTitle>
+              <CardTitle>{t('gamification.defaultXPValues')}</CardTitle>
               <CardDescription>
-                Set standard XP rewards for common learning activities
+                {t('gamification.defaultXPDescription')}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="xp-module">Complete Module</Label>
+                  <Label htmlFor="xp-module">{t('gamification.completeModule')}</Label>
                   <Input
                     id="xp-module"
                     type="number"
@@ -120,12 +122,12 @@ export function GamificationHub({ onBack }: GamificationHubProps) {
                     onChange={(e) => updateXPDefault('module', parseInt(e.target.value) || 0)}
                   />
                   <p className="text-xs text-muted-foreground">
-                    Awarded when a learner completes a module
+                    {t('gamification.completeModuleDesc')}
                   </p>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="xp-course">Complete Course</Label>
+                  <Label htmlFor="xp-course">{t('gamification.completeCourse')}</Label>
                   <Input
                     id="xp-course"
                     type="number"
@@ -134,12 +136,12 @@ export function GamificationHub({ onBack }: GamificationHubProps) {
                     onChange={(e) => updateXPDefault('course', parseInt(e.target.value) || 0)}
                   />
                   <p className="text-xs text-muted-foreground">
-                    Awarded when a learner completes an entire course
+                    {t('gamification.completeCourseDesc')}
                   </p>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="xp-assessment">Pass Assessment</Label>
+                  <Label htmlFor="xp-assessment">{t('gamification.passAssessment')}</Label>
                   <Input
                     id="xp-assessment"
                     type="number"
@@ -148,12 +150,12 @@ export function GamificationHub({ onBack }: GamificationHubProps) {
                     onChange={(e) => updateXPDefault('assessment', parseInt(e.target.value) || 0)}
                   />
                   <p className="text-xs text-muted-foreground">
-                    Awarded when a learner passes an assessment
+                    {t('gamification.passAssessmentDesc')}
                   </p>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="xp-login">Daily Login</Label>
+                  <Label htmlFor="xp-login">{t('gamification.dailyLogin')}</Label>
                   <Input
                     id="xp-login"
                     type="number"
@@ -162,12 +164,12 @@ export function GamificationHub({ onBack }: GamificationHubProps) {
                     onChange={(e) => updateXPDefault('login', parseInt(e.target.value) || 0)}
                   />
                   <p className="text-xs text-muted-foreground">
-                    Awarded for daily login streaks
+                    {t('gamification.dailyLoginDesc')}
                   </p>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="xp-perfect">Perfect Score</Label>
+                  <Label htmlFor="xp-perfect">{t('gamification.perfectScore')}</Label>
                   <Input
                     id="xp-perfect"
                     type="number"
@@ -176,13 +178,13 @@ export function GamificationHub({ onBack }: GamificationHubProps) {
                     onChange={(e) => updateXPDefault('perfectScore', parseInt(e.target.value) || 0)}
                   />
                   <p className="text-xs text-muted-foreground">
-                    Bonus for scoring 100% on an assessment
+                    {t('gamification.perfectScoreDesc')}
                   </p>
                 </div>
               </div>
 
-              <Button onClick={() => toast.success('XP defaults saved')}>
-                Save XP Settings
+              <Button onClick={() => toast.success(t('gamification.xpSaved'))}>
+                {t('gamification.saveXPSettings')}
               </Button>
             </CardContent>
           </Card>
@@ -194,32 +196,32 @@ export function GamificationHub({ onBack }: GamificationHubProps) {
               <DialogTrigger asChild>
                 <Button>
                   <Plus className="mr-2" size={18} />
-                  Create Badge
+                  {t('gamification.createBadge')}
                 </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Create New Badge</DialogTitle>
+                  <DialogTitle>{t('gamification.createNewBadge')}</DialogTitle>
                   <DialogDescription>
-                    Design a badge to reward learner achievements
+                    {t('gamification.designBadge')}
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
                   <div className="space-y-2">
-                    <Label htmlFor="badge-name">Badge Name *</Label>
+                    <Label htmlFor="badge-name">{t('gamification.badgeName')}</Label>
                     <Input
                       id="badge-name"
-                      placeholder="e.g., HTML Master"
+                      placeholder={t('gamification.badgeNamePlaceholder')}
                       value={newBadge.name}
                       onChange={(e) => setNewBadge({ ...newBadge, name: e.target.value })}
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="badge-description">Description</Label>
+                    <Label htmlFor="badge-description">{t('gamification.description')}</Label>
                     <Textarea
                       id="badge-description"
-                      placeholder="What this badge represents"
+                      placeholder={t('gamification.descriptionPlaceholder')}
                       value={newBadge.description}
                       onChange={(e) => setNewBadge({ ...newBadge, description: e.target.value })}
                       rows={2}
@@ -227,23 +229,23 @@ export function GamificationHub({ onBack }: GamificationHubProps) {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="badge-icon">Icon (emoji or URL)</Label>
+                    <Label htmlFor="badge-icon">{t('gamification.iconLabel')}</Label>
                     <Input
                       id="badge-icon"
-                      placeholder="🏆 or https://example.com/icon.png"
+                      placeholder={t('gamification.iconPlaceholder')}
                       value={newBadge.icon}
                       onChange={(e) => setNewBadge({ ...newBadge, icon: e.target.value })}
                     />
                     <p className="text-xs text-muted-foreground">
-                      Use an emoji or provide an image URL
+                      {t('gamification.iconHelp')}
                     </p>
                   </div>
 
                   <div className="flex justify-end gap-2">
                     <Button variant="outline" onClick={() => setIsCreatingBadge(false)}>
-                      Cancel
+                      {t('gamification.cancel')}
                     </Button>
-                    <Button onClick={handleCreateBadge}>Create Badge</Button>
+                    <Button onClick={handleCreateBadge}>{t('gamification.createBadge')}</Button>
                   </div>
                 </div>
               </DialogContent>
@@ -254,10 +256,10 @@ export function GamificationHub({ onBack }: GamificationHubProps) {
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-16">
                 <Trophy size={48} className="text-muted-foreground mb-4" weight="fill" />
-                <p className="text-muted-foreground mb-4">No badges created yet</p>
+                <p className="text-muted-foreground mb-4">{t('gamification.noBadges')}</p>
                 <Button onClick={() => setIsCreatingBadge(true)}>
                   <Plus className="mr-2" size={18} />
-                  Create Your First Badge
+                  {t('gamification.createFirstBadge')}
                 </Button>
               </CardContent>
             </Card>
@@ -284,7 +286,7 @@ export function GamificationHub({ onBack }: GamificationHubProps) {
                       onClick={() => deleteBadge(badge.id)}
                     >
                       <Trash size={14} className="mr-1 text-destructive" />
-                      Delete
+                      {t('gamification.delete')}
                     </Button>
                   </CardContent>
                 </Card>

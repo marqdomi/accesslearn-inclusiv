@@ -14,6 +14,7 @@ import { translateCourse } from '@/lib/translate-course'
 import { ApiService } from '@/services/api.service'
 import { useTenant } from '@/contexts/TenantContext'
 import { adaptBackendCourseToFrontend } from '@/lib/course-adapter'
+import type { CourseStructure, Course } from '@/lib/types'
 
 interface BackendAssignment {
   id: string
@@ -31,9 +32,9 @@ interface BackendAssignment {
 export function CourseAssignmentManager() {
   const { t } = useTranslation()
   const { currentTenant } = useTenant()
-  const [courses, setCourses] = useState<any[]>([])
-  const [groups, setGroups] = useState<any[]>([])
-  const [users, setUsers] = useState<any[]>([])
+  const [courses, setCourses] = useState<CourseStructure[]>([])
+  const [groups, setGroups] = useState<Array<{ id: string; name: string; description?: string; memberIds: string[] }>>([])
+  const [users, setUsers] = useState<Array<{ id: string; firstName?: string; lastName?: string; email: string }>>([])
   const [assignments, setAssignments] = useState<BackendAssignment[]>([])
   const [loading, setLoading] = useState(true)
   
@@ -74,7 +75,7 @@ export function CourseAssignmentManager() {
   }
 
   const translatedCourses = useMemo(() => {
-    return courses.map(course => translateCourse(course, t))
+    return courses.map(course => translateCourse(course as unknown as Course, t))
   }, [courses, t])
 
   const handleAssignment = async () => {

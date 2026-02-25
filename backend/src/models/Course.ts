@@ -5,6 +5,16 @@
 
 export type CourseStatus = 'draft' | 'pending-review' | 'published' | 'archived'
 
+export interface Lesson {
+  id: string
+  title: string
+  quiz?: {
+    id: string
+    title: string
+    questions?: unknown[]
+  }
+}
+
 export interface ContentModule {
   id: string
   title: string
@@ -16,6 +26,8 @@ export interface ContentModule {
     transcript?: string
     captionsUrl?: string
   }
+  /** Nested lessons (frontend-compatible structure) */
+  lessons?: Lesson[]
 }
 
 export interface Assessment {
@@ -51,6 +63,10 @@ export interface Course {
   archivedAt?: string
   submittedForReviewAt?: string
   
+  // Compliance / mandatory flag
+  isMandatory?: boolean
+  mandatory?: boolean
+
   // Configuración flexible de completación y certificación
   certificateEnabled?: boolean
   completionMode?: 'modules-only' | 'modules-and-quizzes' | 'exam-mode' | 'study-guide'

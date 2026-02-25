@@ -140,7 +140,7 @@ export async function getHighLevelStats(tenantId: string): Promise<{
     .slice(0, 5)
 
   // Compliance status (check for mandatory courses - using isMandatory flag if exists)
-  const mandatoryCourses = courses.filter(c => (c as any).isMandatory === true || (c as any).mandatory === true)
+  const mandatoryCourses = courses.filter(c => c.isMandatory === true || c.mandatory === true)
   let totalMandatory = 0
   let completed = 0
   let inProgress = 0
@@ -592,9 +592,8 @@ export async function getAssessmentReport(
           break
         }
         // Check if module has nested structure (for frontend compatibility)
-        const moduleAny = module as any
-        if (moduleAny.lessons) {
-          for (const lesson of moduleAny.lessons) {
+        if (module.lessons) {
+          for (const lesson of module.lessons) {
             if (lesson.quiz && lesson.quiz.id === quizId) {
               quizData = {
                 quiz: lesson.quiz,

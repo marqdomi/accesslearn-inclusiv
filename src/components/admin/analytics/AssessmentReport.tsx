@@ -13,7 +13,7 @@ export function AssessmentReport() {
   const { t } = useTranslation()
   const { currentTenant } = useTenant()
   const [loading, setLoading] = useState(true)
-  const [courses, setCourses] = useState<any[]>([])
+  const [courses, setCourses] = useState<Array<{ id: string; title: string; status: string; modules?: Array<{ id: string; title: string; type: string; lessons?: Array<{ quiz?: { id: string; title: string } }> }> }>>([])
   const [assessmentReport, setAssessmentReport] = useState<{
     quizId: string
     quizTitle: string
@@ -52,7 +52,7 @@ export function AssessmentReport() {
 
     try {
       const data = await ApiService.getCourses(currentTenant.id)
-      const published = data.filter((c: any) => c.status === 'active')
+      const published = data.filter((c: { status: string }) => c.status === 'active')
       setCourses(published)
     } catch (error) {
       console.error('Error loading courses:', error)
@@ -76,12 +76,13 @@ export function AssessmentReport() {
   }
 
   // Build quiz options from courses (for frontend compatibility)
-  const quizOptions = courses.flatMap((course: any) => {
-    const quizzes: any[] = []
+  interface QuizOption { quizId: string; courseTitle: string; quizTitle: string; quiz: unknown }
+  const quizOptions: QuizOption[] = courses.flatMap((course) => {
+    const quizzes: QuizOption[] = []
     if (course.modules) {
-      course.modules.forEach((module: any) => {
+      course.modules.forEach((module) => {
         if (module.lessons) {
-          module.lessons.forEach((lesson: any) => {
+          module.lessons.forEach((lesson) => {
             if (lesson.quiz) {
               quizzes.push({
                 quizId: lesson.quiz.id,

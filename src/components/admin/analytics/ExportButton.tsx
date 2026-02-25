@@ -3,7 +3,7 @@ import { DownloadSimple } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
 
 interface ExportButtonProps {
-    data: any[]
+    data: Record<string, unknown>[]
     filename: string
     headers: string[]
 }

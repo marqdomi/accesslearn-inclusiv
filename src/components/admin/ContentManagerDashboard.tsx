@@ -79,7 +79,7 @@ export function ContentManagerDashboard({ onReviewCourse }: ContentManagerDashbo
       // Get all unique instructor IDs
       const instructorIds = [...new Set(
         data
-          .map((course: any) => course.createdBy || course.instructor)
+          .map((course: { createdBy?: string; instructor?: string }) => course.createdBy || course.instructor)
           .filter((id: string | undefined) => id)
       )]
       
@@ -101,7 +101,7 @@ export function ContentManagerDashboard({ onReviewCourse }: ContentManagerDashbo
       )
       
       // Map courses with instructor names
-      const mappedCourses = data.map((course: any) => {
+      const mappedCourses = data.map((course: { id: string; title?: string; description?: string; createdBy?: string; instructor?: string; status?: string; category?: string; createdAt?: string; submittedForReviewAt?: string; publishedAt?: string; archivedAt?: string; reviewComments?: string; requestedChanges?: string }) => {
         const instructorId = course.createdBy || course.instructor
         const instructorName = instructorId ? instructorMap.get(instructorId) || 'Desconocido' : 'No asignado'
         
@@ -111,7 +111,7 @@ export function ContentManagerDashboard({ onReviewCourse }: ContentManagerDashbo
           description: course.description || '',
           instructor: instructorId || '',
           instructorName: instructorName,
-          status: course.status || 'draft',
+          status: (course.status || 'draft') as CourseStatus,
           category: course.category || 'Sin categoría',
           createdAt: course.createdAt || new Date().toISOString(),
           submittedForReviewAt: course.submittedForReviewAt,
@@ -123,7 +123,7 @@ export function ContentManagerDashboard({ onReviewCourse }: ContentManagerDashbo
       })
       
       setCourses(mappedCourses)
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error loading courses:', error)
       toast.error('Error al cargar cursos')
       setCourses([])

@@ -9,8 +9,10 @@ import { CourseCompletionRateChart } from './CourseCompletionRateChart'
 import { MonthlyCompletionTrendChart } from './MonthlyCompletionTrendChart'
 import { ScoreDistributionChart } from './ScoreDistributionChart'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts'
+import { useTranslation } from 'react-i18next'
 
 export function HighLevelDashboard() {
+  const { t } = useTranslation('admin')
   const { currentTenant } = useTenant()
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState<{
@@ -211,7 +213,7 @@ export function HighLevelDashboard() {
       <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         <Card className="bg-blue-50/50 dark:bg-blue-950/20 border-blue-100 dark:border-blue-900">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs md:text-sm font-medium">Usuarios Activos</CardTitle>
+            <CardTitle className="text-xs md:text-sm font-medium">{t('dashboard.activeUsers')}</CardTitle>
             <Users className="h-4 w-4 md:h-5 md:w-5 text-blue-600 dark:text-blue-400" />
           </CardHeader>
           <CardContent>
@@ -219,43 +221,43 @@ export function HighLevelDashboard() {
               {totalActiveUsers} <span className="text-base md:text-lg text-muted-foreground">/ {totalSeats}</span>
             </div>
             <p className="text-[10px] md:text-xs text-muted-foreground mt-1">
-              {Math.round((totalActiveUsers / totalSeats) * 100)}% ocupados
+              {Math.round((totalActiveUsers / totalSeats) * 100)}% {t('dashboard.occupied')}
             </p>
           </CardContent>
         </Card>
 
         <Card className="bg-green-50/50 dark:bg-green-950/20 border-green-100 dark:border-green-900">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs md:text-sm font-medium">Tasa Finalización</CardTitle>
+            <CardTitle className="text-xs md:text-sm font-medium">{t('dashboard.completionRate')}</CardTitle>
             <CheckCircle className="h-4 w-4 md:h-5 md:w-5 text-green-600 dark:text-green-400" />
           </CardHeader>
           <CardContent>
             <div className="text-xl md:text-2xl font-bold">{platformCompletionRate}%</div>
-            <p className="text-[10px] md:text-xs text-muted-foreground mt-1">Promedio</p>
+            <p className="text-[10px] md:text-xs text-muted-foreground mt-1">{t('dashboard.average')}</p>
           </CardContent>
         </Card>
 
         <Card className="bg-purple-50/50 dark:bg-purple-950/20 border-purple-100 dark:border-purple-900">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs md:text-sm font-medium">Cursos Totales</CardTitle>
+            <CardTitle className="text-xs md:text-sm font-medium">{t('dashboard.totalCourses')}</CardTitle>
             <BookOpen className="h-4 w-4 md:h-5 md:w-5 text-purple-600 dark:text-purple-400" />
           </CardHeader>
           <CardContent>
             <div className="text-xl md:text-2xl font-bold">{totalPublishedCourses}</div>
-            <p className="text-[10px] md:text-xs text-muted-foreground mt-1">Publicados</p>
+            <p className="text-[10px] md:text-xs text-muted-foreground mt-1">{t('dashboard.published')}</p>
           </CardContent>
         </Card>
 
         <Card className="bg-yellow-50/50 dark:bg-yellow-950/20 border-yellow-100 dark:border-yellow-900">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs md:text-sm font-medium">XP Total</CardTitle>
+            <CardTitle className="text-xs md:text-sm font-medium">{t('dashboard.totalXP')}</CardTitle>
             <Trophy className="h-4 w-4 md:h-5 md:w-5 text-yellow-600 dark:text-yellow-400" />
           </CardHeader>
           <CardContent>
             <div className="text-xl md:text-2xl font-bold">
               {totalXPAwarded.toLocaleString()}
             </div>
-            <p className="text-[10px] md:text-xs text-muted-foreground mt-1">Plataforma</p>
+            <p className="text-[10px] md:text-xs text-muted-foreground mt-1">{t('dashboard.platform')}</p>
           </CardContent>
         </Card>
       </div>
@@ -264,7 +266,7 @@ export function HighLevelDashboard() {
         <Card className="p-4 md:p-6">
           <h3 className="font-semibold mb-3 md:mb-4 flex items-center gap-2 text-sm md:text-base">
             <Trophy size={18} className="md:w-5 md:h-5 text-primary flex-shrink-0" />
-            Usuarios Más Comprometidos
+            {t('dashboard.mostEngagedUsers')}
           </h3>
           {topEngagedUsers.length > 0 ? (
             <div className="space-y-2 md:space-y-3">
@@ -281,20 +283,20 @@ export function HighLevelDashboard() {
                     <span className="font-medium text-sm md:text-base truncate">{user.userName}</span>
                   </div>
                   <span className="text-xs md:text-sm font-semibold text-primary flex-shrink-0 ml-2">
-                    {user.xp.toLocaleString()} XP • Nv. {user.level}
+                    {user.xp.toLocaleString()} XP • {t('dashboard.level')} {user.level}
                   </span>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-xs md:text-sm text-muted-foreground">No hay datos disponibles</p>
+            <p className="text-xs md:text-sm text-muted-foreground">{t('dashboard.noDataAvailable')}</p>
           )}
         </Card>
 
         <Card className="p-4 md:p-6">
           <h3 className="font-semibold mb-3 md:mb-4 flex items-center gap-2 text-sm md:text-base">
             <BookOpen size={18} className="md:w-5 md:h-5 text-secondary flex-shrink-0" />
-            Cursos Más Populares
+            {t('dashboard.mostPopularCourses')}
           </h3>
           {topPopularCourses.length > 0 ? (
             <div className="space-y-2 md:space-y-3">
@@ -307,13 +309,13 @@ export function HighLevelDashboard() {
                     <span className="font-medium text-sm md:text-base truncate">{course.courseTitle}</span>
                   </div>
                   <span className="text-xs md:text-sm font-semibold text-secondary flex-shrink-0 ml-2">
-                    {course.enrollments} inscritos
+                    {course.enrollments} {t('dashboard.enrolled')}
                   </span>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-xs md:text-sm text-muted-foreground">No hay datos disponibles</p>
+            <p className="text-xs md:text-sm text-muted-foreground">{t('dashboard.noDataAvailable')}</p>
           )}
         </Card>
       </div>
@@ -323,37 +325,37 @@ export function HighLevelDashboard() {
         <Card className="p-4 md:p-6">
           <h3 className="font-semibold mb-3 md:mb-4 flex items-center gap-2 text-sm md:text-base">
             <Activity size={18} className="md:w-5 md:h-5 text-primary flex-shrink-0" />
-            Métricas de Engagement
+            {t('dashboard.engagementMetrics')}
           </h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
             <div className="p-3 rounded-lg bg-muted/50">
-              <p className="text-xs text-muted-foreground mb-1">Usuarios Activos Este Mes</p>
+              <p className="text-xs text-muted-foreground mb-1">{t('dashboard.activeUsersThisMonth')}</p>
               <p className="text-xl font-bold">{engagementMetrics.currentMonthActiveUsers}</p>
               {engagementMetrics.previousMonthActiveUsers > 0 && (
                 <p className="text-[10px] text-muted-foreground mt-1">
                   {engagementMetrics.currentMonthActiveUsers >= engagementMetrics.previousMonthActiveUsers ? '+' : ''}
-                  {engagementMetrics.currentMonthActiveUsers - engagementMetrics.previousMonthActiveUsers} vs mes anterior
+                  {engagementMetrics.currentMonthActiveUsers - engagementMetrics.previousMonthActiveUsers} {t('dashboard.vsPrevMonth')}
                 </p>
               )}
             </div>
             <div className="p-3 rounded-lg bg-muted/50">
-              <p className="text-xs text-muted-foreground mb-1">Tasa de Retención</p>
+              <p className="text-xs text-muted-foreground mb-1">{t('dashboard.retentionRate')}</p>
               <p className="text-xl font-bold">{engagementMetrics.retentionRate}%</p>
-              <p className="text-[10px] text-muted-foreground mt-1">Usuarios que volvieron</p>
+              <p className="text-[10px] text-muted-foreground mt-1">{t('dashboard.usersReturned')}</p>
             </div>
             <div className="p-3 rounded-lg bg-muted/50">
-              <p className="text-xs text-muted-foreground mb-1">Días Promedio Activos</p>
+              <p className="text-xs text-muted-foreground mb-1">{t('dashboard.avgActiveDays')}</p>
               <p className="text-xl font-bold">{engagementMetrics.averageActiveDaysPerUser}</p>
-              <p className="text-[10px] text-muted-foreground mt-1">Por usuario</p>
+              <p className="text-[10px] text-muted-foreground mt-1">{t('dashboard.perUser')}</p>
             </div>
             <div className="p-3 rounded-lg bg-muted/50">
-              <p className="text-xs text-muted-foreground mb-1">Pico de Actividad</p>
+              <p className="text-xs text-muted-foreground mb-1">{t('dashboard.peakActivity')}</p>
               <p className="text-xl font-bold">
                 {engagementMetrics.peakActivityDay 
                   ? new Date(engagementMetrics.peakActivityDay).toLocaleDateString('es-MX', { day: 'numeric', month: 'short' })
                   : 'N/A'}
               </p>
-              <p className="text-[10px] text-muted-foreground mt-1">Día con más actividad</p>
+              <p className="text-[10px] text-muted-foreground mt-1">{t('dashboard.mostActiveDay')}</p>
             </div>
           </div>
         </Card>
@@ -364,53 +366,53 @@ export function HighLevelDashboard() {
         <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
           <Card className="bg-indigo-50/50 dark:bg-indigo-950/20 border-indigo-100 dark:border-indigo-900">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-xs md:text-sm font-medium">Horas Totales</CardTitle>
+              <CardTitle className="text-xs md:text-sm font-medium">{t('dashboard.totalHours')}</CardTitle>
               <Clock className="h-4 w-4 md:h-5 md:w-5 text-indigo-600 dark:text-indigo-400" />
             </CardHeader>
             <CardContent>
               <div className="text-xl md:text-2xl font-bold">
                 {roiMetrics.totalTrainingHours.toLocaleString()}
               </div>
-              <p className="text-[10px] md:text-xs text-muted-foreground mt-1">Capacitación completada</p>
+              <p className="text-[10px] md:text-xs text-muted-foreground mt-1">{t('dashboard.trainingCompleted')}</p>
             </CardContent>
           </Card>
 
           <Card className="bg-teal-50/50 dark:bg-teal-950/20 border-teal-100 dark:border-teal-900">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-xs md:text-sm font-medium">Tiempo Promedio</CardTitle>
+              <CardTitle className="text-xs md:text-sm font-medium">{t('dashboard.avgTime')}</CardTitle>
               <TrendingUp className="h-4 w-4 md:h-5 md:w-5 text-teal-600 dark:text-teal-400" />
             </CardHeader>
             <CardContent>
               <div className="text-xl md:text-2xl font-bold">
                 {roiMetrics.averageTimePerCourse}h
               </div>
-              <p className="text-[10px] md:text-xs text-muted-foreground mt-1">Por curso</p>
+              <p className="text-[10px] md:text-xs text-muted-foreground mt-1">{t('dashboard.perCourse')}</p>
             </CardContent>
           </Card>
 
           <Card className="bg-rose-50/50 dark:bg-rose-950/20 border-rose-100 dark:border-rose-900">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-xs md:text-sm font-medium">Cursos Completados</CardTitle>
+              <CardTitle className="text-xs md:text-sm font-medium">{t('dashboard.completedCourses')}</CardTitle>
               <CheckCircle className="h-4 w-4 md:h-5 md:w-5 text-rose-600 dark:text-rose-400" />
             </CardHeader>
             <CardContent>
               <div className="text-xl md:text-2xl font-bold">
                 {roiMetrics.totalCompletedCourses}
               </div>
-              <p className="text-[10px] md:text-xs text-muted-foreground mt-1">Total</p>
+              <p className="text-[10px] md:text-xs text-muted-foreground mt-1">{t('dashboard.total')}</p>
             </CardContent>
           </Card>
 
           <Card className="bg-amber-50/50 dark:bg-amber-950/20 border-amber-100 dark:border-amber-900">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-xs md:text-sm font-medium">Tiempo Promedio</CardTitle>
+              <CardTitle className="text-xs md:text-sm font-medium">{t('dashboard.avgTime')}</CardTitle>
               <Clock className="h-4 w-4 md:h-5 md:w-5 text-amber-600 dark:text-amber-400" />
             </CardHeader>
             <CardContent>
               <div className="text-xl md:text-2xl font-bold">
                 {roiMetrics.averageCompletionTime}d
               </div>
-              <p className="text-[10px] md:text-xs text-muted-foreground mt-1">Para completar</p>
+              <p className="text-[10px] md:text-xs text-muted-foreground mt-1">{t('dashboard.toComplete')}</p>
             </CardContent>
           </Card>
         </div>
@@ -422,7 +424,7 @@ export function HighLevelDashboard() {
           <Card className="p-4 md:p-6">
             <h3 className="font-semibold mb-3 md:mb-4 flex items-center gap-2 text-sm md:text-base">
               <Award size={18} className="md:w-5 md:h-5 text-success flex-shrink-0" />
-              Cursos con Mejor Rendimiento
+              {t('dashboard.topPerformingCourses')}
             </h3>
             {performanceMetrics.topPerformingCourses.length > 0 ? (
               <div className="space-y-2 md:space-y-3">
@@ -435,22 +437,22 @@ export function HighLevelDashboard() {
                       </span>
                     </div>
                     <div className="flex gap-2 text-[10px] md:text-xs text-muted-foreground">
-                      <span>Puntuación: {course.averageScore}%</span>
+                      <span>{t('dashboard.scoreLabel')}: {course.averageScore}%</span>
                       <span>•</span>
-                      <span>Finalización: {course.completionRate}%</span>
+                      <span>{t('dashboard.completionLabel')}: {course.completionRate}%</span>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-xs md:text-sm text-muted-foreground">No hay datos disponibles</p>
+              <p className="text-xs md:text-sm text-muted-foreground">{t('dashboard.noDataAvailable')}</p>
             )}
           </Card>
 
           <Card className="p-4 md:p-6">
             <h3 className="font-semibold mb-3 md:mb-4 flex items-center gap-2 text-sm md:text-base">
               <AlertTriangle size={18} className="md:w-5 md:h-5 text-destructive flex-shrink-0" />
-              Cursos que Necesitan Atención
+              {t('dashboard.coursesNeedingAttention')}
             </h3>
             {performanceMetrics.underperformingCourses.length > 0 ? (
               <div className="space-y-2 md:space-y-3">
@@ -463,15 +465,15 @@ export function HighLevelDashboard() {
                       </span>
                     </div>
                     <div className="flex gap-2 text-[10px] md:text-xs text-muted-foreground">
-                      <span>Puntuación: {course.averageScore}%</span>
+                      <span>{t('dashboard.scoreLabel')}: {course.averageScore}%</span>
                       <span>•</span>
-                      <span>Finalización: {course.completionRate}%</span>
+                      <span>{t('dashboard.completionLabel')}: {course.completionRate}%</span>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-xs md:text-sm text-muted-foreground">No hay cursos con problemas</p>
+              <p className="text-xs md:text-sm text-muted-foreground">{t('dashboard.noCoursesWithIssues')}</p>
             )}
           </Card>
         </div>
@@ -482,23 +484,23 @@ export function HighLevelDashboard() {
         <div className="grid grid-cols-2 md:grid-cols-2 gap-3 md:gap-4">
           <Card className="bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-100 dark:border-emerald-900">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-xs md:text-sm font-medium">Puntuación Promedio</CardTitle>
+              <CardTitle className="text-xs md:text-sm font-medium">{t('dashboard.avgScore')}</CardTitle>
               <Award className="h-4 w-4 md:h-5 md:w-5 text-emerald-600 dark:text-emerald-400" />
             </CardHeader>
             <CardContent>
               <div className="text-xl md:text-2xl font-bold">{performanceMetrics.averageCourseScore}%</div>
-              <p className="text-[10px] md:text-xs text-muted-foreground mt-1">En todos los cursos</p>
+              <p className="text-[10px] md:text-xs text-muted-foreground mt-1">{t('dashboard.acrossAllCourses')}</p>
             </CardContent>
           </Card>
 
           <Card className="bg-blue-50/50 dark:bg-blue-950/20 border-blue-100 dark:border-blue-900">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-xs md:text-sm font-medium">Tasa de Aprobación</CardTitle>
+              <CardTitle className="text-xs md:text-sm font-medium">{t('dashboard.passRate')}</CardTitle>
               <CheckCircle className="h-4 w-4 md:h-5 md:w-5 text-blue-600 dark:text-blue-400" />
             </CardHeader>
             <CardContent>
               <div className="text-xl md:text-2xl font-bold">{performanceMetrics.averageQuizPassRate}%</div>
-              <p className="text-[10px] md:text-xs text-muted-foreground mt-1">En quizzes</p>
+              <p className="text-[10px] md:text-xs text-muted-foreground mt-1">{t('dashboard.inQuizzes')}</p>
             </CardContent>
           </Card>
         </div>
@@ -509,7 +511,7 @@ export function HighLevelDashboard() {
         <Card className="p-4 md:p-6">
           <h3 className="font-semibold mb-3 md:mb-4 flex items-center gap-2 text-sm md:text-base">
             <Users2 size={18} className="md:w-5 md:h-5 text-primary flex-shrink-0" />
-            Comparativa por Equipo
+            {t('dashboard.teamComparison')}
           </h3>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={teamComparisons.slice(0, 10)}>
@@ -525,7 +527,7 @@ export function HighLevelDashboard() {
               <YAxis
                 className="text-xs"
                 tick={{ fill: 'hsl(var(--muted-foreground))' }}
-                label={{ value: 'Tasa de Finalización (%)', angle: -90, position: 'insideLeft', style: { fill: 'hsl(var(--muted-foreground))' } }}
+                label={{ value: t('dashboard.completionRatePercent'), angle: -90, position: 'insideLeft', style: { fill: 'hsl(var(--muted-foreground))' } }}
               />
               <Tooltip
                 contentStyle={{
@@ -534,9 +536,9 @@ export function HighLevelDashboard() {
                   borderRadius: '6px',
                 }}
                 labelStyle={{ color: 'hsl(var(--foreground))' }}
-                formatter={(value: number, name: string, props: any) => {
+                formatter={(value: number, name: string) => {
                   if (name === 'completionRate') {
-                    return [`${value}%`, 'Tasa de Finalización']
+                    return [`${value}%`, t('dashboard.completionRateLabel')]
                   }
                   return [value, name]
                 }}
@@ -544,7 +546,7 @@ export function HighLevelDashboard() {
               <Legend />
               <Bar
                 dataKey="completionRate"
-                name="Tasa de Finalización"
+                name={t('dashboard.completionRateLabel')}
                 radius={[8, 8, 0, 0]}
                 fill="hsl(var(--primary))"
               >
@@ -560,19 +562,19 @@ export function HighLevelDashboard() {
                 <p className="font-medium text-sm mb-2 truncate">{team.teamName}</p>
                 <div className="space-y-1 text-xs text-muted-foreground">
                   <div className="flex justify-between">
-                    <span>Finalización:</span>
+                    <span>{t('dashboard.completionLabel')}:</span>
                     <span className="font-semibold text-foreground">{team.completionRate}%</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>XP Total:</span>
+                    <span>{t('dashboard.totalXPLabel')}:</span>
                     <span className="font-semibold text-foreground">{team.totalXP.toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Puntuación:</span>
+                    <span>{t('dashboard.scoreLabel')}:</span>
                     <span className="font-semibold text-foreground">{team.averageScore}%</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Miembros:</span>
+                    <span>{t('dashboard.membersLabel')}:</span>
                     <span className="font-semibold text-foreground">{team.memberCount}</span>
                   </div>
                 </div>
@@ -607,56 +609,56 @@ export function HighLevelDashboard() {
         <Card className="p-4 md:p-6">
           <h3 className="font-semibold mb-3 md:mb-4 flex items-center gap-2 text-sm md:text-base">
             <CheckCircle size={18} className="md:w-5 md:h-5 text-success flex-shrink-0" />
-            Cumplimiento de un Vistazo
+            {t('dashboard.complianceOverview')}
           </h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-4">
             <div className="p-3 rounded-lg bg-muted/50">
-              <p className="text-xs text-muted-foreground mb-1">Cursos Obligatorios</p>
+              <p className="text-xs text-muted-foreground mb-1">{t('dashboard.mandatoryCourses')}</p>
               <p className="text-xl font-bold">{stats.complianceStatus.totalMandatory}</p>
-              <p className="text-[10px] text-muted-foreground mt-1">Total asignados</p>
+              <p className="text-[10px] text-muted-foreground mt-1">{t('dashboard.totalAssigned')}</p>
             </div>
             <div className="p-3 rounded-lg bg-green-50/50 dark:bg-green-950/20">
-              <p className="text-xs text-muted-foreground mb-1">Completados</p>
+              <p className="text-xs text-muted-foreground mb-1">{t('dashboard.completed')}</p>
               <p className="text-xl font-bold text-green-600 dark:text-green-400">{stats.complianceStatus.completed}</p>
               <p className="text-[10px] text-muted-foreground mt-1">
                 {stats.complianceStatus.totalMandatory > 0 
                   ? Math.round((stats.complianceStatus.completed / stats.complianceStatus.totalMandatory) * 100)
-                  : 0}% cumplimiento
+                  : 0}% {t('dashboard.compliance')}
               </p>
             </div>
             <div className="p-3 rounded-lg bg-yellow-50/50 dark:bg-yellow-950/20">
-              <p className="text-xs text-muted-foreground mb-1">En Progreso</p>
+              <p className="text-xs text-muted-foreground mb-1">{t('dashboard.inProgress')}</p>
               <p className="text-xl font-bold text-yellow-600 dark:text-yellow-400">{stats.complianceStatus.inProgress}</p>
-              <p className="text-[10px] text-muted-foreground mt-1">Usuarios activos</p>
+              <p className="text-[10px] text-muted-foreground mt-1">{t('dashboard.activeUsers')}</p>
             </div>
             <div className="p-3 rounded-lg bg-red-50/50 dark:bg-red-950/20">
-              <p className="text-xs text-muted-foreground mb-1">No Iniciados</p>
+              <p className="text-xs text-muted-foreground mb-1">{t('dashboard.notStarted')}</p>
               <p className="text-xl font-bold text-red-600 dark:text-red-400">{stats.complianceStatus.notStarted}</p>
-              <p className="text-[10px] text-muted-foreground mt-1">En riesgo</p>
+              <p className="text-[10px] text-muted-foreground mt-1">{t('dashboard.atRisk')}</p>
             </div>
           </div>
           {(stats.complianceStatus.certificatesIssued ?? 0) > 0 && (
             <div className="pt-3 border-t">
-              <p className="text-xs text-muted-foreground mb-1">Certificados Emitidos</p>
+              <p className="text-xs text-muted-foreground mb-1">{t('dashboard.certificatesIssued')}</p>
               <p className="text-lg font-bold">
                 {stats.complianceStatus.certificatesIssued ?? 0} / {stats.complianceStatus.certificatesRequired ?? 0}
               </p>
               <p className="text-[10px] text-muted-foreground mt-1">
                 {(stats.complianceStatus.certificatesRequired ?? 0) > 0
                   ? Math.round(((stats.complianceStatus.certificatesIssued ?? 0) / (stats.complianceStatus.certificatesRequired ?? 0)) * 100)
-                  : 0}% de cursos completados tienen certificado
+                  : 0}% {t('dashboard.coursesCompletedWithCert')}
               </p>
             </div>
           )}
           {complianceCourses.length > 0 && (
             <div className="mt-4 space-y-3 md:space-y-4">
-              <h4 className="text-xs md:text-sm font-semibold text-muted-foreground">Por Curso:</h4>
+              <h4 className="text-xs md:text-sm font-semibold text-muted-foreground">{t('dashboard.byCourse')}:</h4>
               {complianceCourses.map(course => (
                 <div key={course.courseId}>
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-2 mb-2">
                     <span className="font-medium text-sm md:text-base truncate">{course.courseTitle}</span>
                     <span className="text-xs md:text-sm font-semibold flex-shrink-0">
-                      {course.completionRate}% completado
+                      {course.completionRate}% {t('dashboard.completedLower')}
                     </span>
                   </div>
                   <div className="h-2 bg-muted rounded-full overflow-hidden">
@@ -669,7 +671,7 @@ export function HighLevelDashboard() {
                     />
                   </div>
                   <p className="text-[10px] md:text-xs text-muted-foreground mt-1">
-                    {course.totalCompleted} / {course.totalAssigned} usuarios completados
+                    {course.totalCompleted} / {course.totalAssigned} {t('dashboard.usersCompleted')}
                   </p>
                 </div>
               ))}

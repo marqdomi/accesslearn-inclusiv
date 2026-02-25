@@ -62,8 +62,6 @@ export function EmployeeManagement({ onBack }: EmployeeManagementProps) {
       createdAt: user.createdAt || Date.now()
     }))
     
-    console.log(`📊 EmployeeManagement: Single Source of Truth ('users'): ${result.length} employees`)
-    console.log(`  - employee-credentials (for temp passwords only): ${(employees || []).length}`)
     return result
   }, [users, employees])
 
@@ -212,12 +210,6 @@ export function EmployeeManagement({ onBack }: EmployeeManagementProps) {
     setUsers((current) => [...(current || []), ...newUsers])
     toast.success(`Restored ${newUsers.length} default user(s)`)
   }
-
-  console.log('📊 Employee Management Debug (Single Source of Truth):')
-  console.log(`  - Users from 'users': ${(users || []).length}`)
-  console.log(`  - Credentials (temp passwords): ${(employees || []).length}`)
-  console.log(`  - Total displayed: ${allEmployees.length}`)
-  console.log(`  - After filters: ${filteredEmployees.length}`)
 
   return (
     <div className="space-y-6 p-6">

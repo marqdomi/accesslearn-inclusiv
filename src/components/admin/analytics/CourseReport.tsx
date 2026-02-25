@@ -14,7 +14,7 @@ export function CourseReport() {
   const { t } = useTranslation()
   const { currentTenant } = useTenant()
   const [loading, setLoading] = useState(true)
-  const [courses, setCourses] = useState<any[]>([])
+  const [courses, setCourses] = useState<Array<{ id: string; title: string; status: string; modules?: unknown[] }>>([])
   const [courseReport, setCourseReport] = useState<{
     courseId: string
     courseTitle: string

@@ -31,8 +31,8 @@ export function UserProgressReport() {
       enrollmentDate?: string
     }>
   }>>([])
-  const [groups, setGroups] = useState<any[]>([])
-  const [mentors, setMentors] = useState<any[]>([])
+  const [groups, setGroups] = useState<Array<{ id: string; name: string; description?: string; memberIds: string[] }>>([])
+  const [mentors, setMentors] = useState<Array<{ id: string; firstName?: string; lastName?: string; email: string }>>([])
 
   const [searchTerm, setSearchTerm] = useState('')
   const [teamFilter, setTeamFilter] = useState('all')
@@ -51,7 +51,7 @@ export function UserProgressReport() {
 
     try {
       setLoading(true)
-      const filters: any = {}
+      const filters: Record<string, string> = {}
       if (searchTerm) filters.searchQuery = searchTerm
       if (teamFilter !== 'all') filters.teamId = teamFilter
       if (mentorFilter !== 'all') filters.mentorId = mentorFilter
@@ -63,7 +63,11 @@ export function UserProgressReport() {
 const groupsData = await ApiService.getGroups()
       setGroups(groupsData)
 
-      // TODO: Load mentors when endpoint is ready
+      // Load mentors for filter
+      if (currentTenant) {
+        const mentorsData = await ApiService.getUsersByTenant(currentTenant.id, 'mentor')
+        setMentors(mentorsData || [])
+      }
     } catch (error) {
       console.error('Error loading user progress report:', error)
     } finally {
@@ -122,7 +126,7 @@ const groupsData = await ApiService.getGroups()
   }
 
   const teams = Array.from(new Set(groups.map(g => g.name)))
-  // TODO: Load mentors when endpoint is ready
+  const mentorOptions = mentors.map(m => ({ id: m.id, name: `${m.firstName || ''} ${m.lastName || ''}`.trim() || m.email }))
 
   return (
     <Card className="p-6">
@@ -161,7 +165,7 @@ const groupsData = await ApiService.getGroups()
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t('analytics.filters.allMentors')}</SelectItem>
-              {mentors.map(mentor => (
+              {mentorOptions.map(mentor => (
                 <SelectItem key={mentor.id} value={mentor.id}>{mentor.name}</SelectItem>
               ))}
             </SelectContent>

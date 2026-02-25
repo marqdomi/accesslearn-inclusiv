@@ -27,7 +27,7 @@ export function TeamReport() {
       coursesCompleted: number
     }>
   }>>([])
-  const [groups, setGroups] = useState<any[]>([])
+  const [groups, setGroups] = useState<Array<{ id: string; name: string; description?: string; memberIds: string[] }>>([])
 
   const [selectedTeam, setSelectedTeam] = useState<string>('__ALL__')
   const [viewMode, setViewMode] = useState<'visual' | 'table'>('visual')

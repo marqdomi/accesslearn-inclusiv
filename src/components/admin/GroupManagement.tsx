@@ -33,7 +33,7 @@ export function GroupManagement() {
   const { user } = useAuth()
   const { currentTenant } = useTenant()
   const [groups, setGroups] = useState<BackendGroup[]>([])
-  const [users, setUsers] = useState<any[]>([])
+  const [users, setUsers] = useState<Array<{ id: string; firstName?: string; lastName?: string; email: string; departamento?: string }>>([])
   const [loading, setLoading] = useState(true)
   
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
