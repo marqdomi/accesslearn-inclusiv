@@ -500,6 +500,17 @@ class ApiServiceClass {
     })
   }
 
+  async updateCategory(categoryId: string, name: string) {
+    if (!name || !name.trim()) {
+      throw { status: 400, message: 'Category name is required' } as ApiError
+    }
+
+    return this.fetchWithAuth<{ id: string; name: string; tenantId: string }>(`/categories/${categoryId}`, {
+      method: 'PUT',
+      body: JSON.stringify({ name: name.trim() }),
+    })
+  }
+
   // ============================================
   // Accessibility Profiles API
   // ============================================

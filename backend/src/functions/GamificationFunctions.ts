@@ -12,6 +12,7 @@
 
 import { getContainer } from '../services/cosmosdb.service'
 import { User } from '../models/User'
+import { getUserAchievements } from './AchievementFunctions'
 
 /**
  * Generate XP threshold for a given level (logarithmic/infinite system)
@@ -125,11 +126,21 @@ export async function getUserGamificationStats(
     throw new Error('User not found')
   }
 
+  // Fetch real achievements from achievements container
+  let achievementIds: string[] = []
+  try {
+    const userAchievements = await getUserAchievements(tenantId, userId)
+    achievementIds = userAchievements.map(a => a.achievementId)
+  } catch (error) {
+    // If achievements container doesn't exist yet, return empty array
+    console.warn('[Gamification] Could not fetch achievements:', (error as Error).message)
+  }
+
   return {
     totalXP: user.totalXP || 0,
     level: user.level || 1,
     badges: user.badges || [],
-    achievements: [], // TODO: Implement achievements container
+    achievements: achievementIds,
   }
 }
 

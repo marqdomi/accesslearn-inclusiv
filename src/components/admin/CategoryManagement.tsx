@@ -133,16 +133,19 @@ export function CategoryManagement() {
     }
 
     try {
-      // Note: We need to add an updateCategory endpoint in the backend
-      // For now, we'll show a message that this feature needs backend support
-      toast.info('La edición de categorías requiere actualización del backend')
+      await ApiService.updateCategory(editingCategory.id, editCategoryName.trim())
+      toast.success('Categoría actualizada exitosamente')
       setEditingCategory(null)
-      // TODO: Implement when backend endpoint is available
-      // await ApiService.updateCategory(editingCategory.id, editCategoryName.trim())
-      // await loadCategories()
+      await loadCategories()
     } catch (error: any) {
       console.error('Error editing category:', error)
-      toast.error('Error al editar la categoría')
+      if (error.status === 409) {
+        toast.error('Ya existe una categoría con ese nombre')
+      } else if (error.status === 403) {
+        toast.error('No tienes permisos para editar categorías')
+      } else {
+        toast.error(error.message || 'Error al editar la categoría')
+      }
     }
   }
 
@@ -455,12 +458,6 @@ export function CategoryManagement() {
                 className="h-11 md:h-12 touch-target text-sm md:text-base"
               />
             </div>
-            <Alert className="text-xs md:text-sm">
-              <AlertTriangle className="h-4 w-4 flex-shrink-0" />
-              <AlertDescription className="text-xs md:text-sm">
-                Nota: La edición de categorías requiere actualización del backend. Esta funcionalidad estará disponible próximamente.
-              </AlertDescription>
-            </Alert>
           </div>
           <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
             <Button 

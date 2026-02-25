@@ -103,6 +103,80 @@ export async function unlockAchievement(
 }
 
 /**
+ * Calculate current and longest daily activity streaks from progress records.
+ * A streak is a sequence of consecutive calendar days (UTC) with at least one activity.
+ */
+function calculateStreaks(progressList: any[]): { currentStreak: number; longestStreak: number } {
+  if (progressList.length === 0) {
+    return { currentStreak: 0, longestStreak: 0 }
+  }
+
+  // Collect unique activity dates (YYYY-MM-DD in UTC)
+  const activityDates = new Set<string>()
+
+  for (const p of progressList) {
+    // Use lastAccessedAt, updatedAt, or createdAt as activity timestamp
+    const timestamp = p.lastAccessedAt || p.updatedAt || p.createdAt
+    if (timestamp) {
+      const date = new Date(timestamp)
+      if (!isNaN(date.getTime())) {
+        activityDates.add(date.toISOString().slice(0, 10))
+      }
+    }
+  }
+
+  if (activityDates.size === 0) {
+    return { currentStreak: 0, longestStreak: 0 }
+  }
+
+  // Sort dates chronologically
+  const sortedDates = Array.from(activityDates).sort()
+
+  // Walk through sorted dates to find streaks
+  let longestStreak = 1
+  let currentRun = 1
+
+  for (let i = 1; i < sortedDates.length; i++) {
+    const prev = new Date(sortedDates[i - 1])
+    const curr = new Date(sortedDates[i])
+    const diffDays = (curr.getTime() - prev.getTime()) / (1000 * 60 * 60 * 24)
+
+    if (diffDays === 1) {
+      currentRun++
+    } else {
+      currentRun = 1
+    }
+
+    if (currentRun > longestStreak) {
+      longestStreak = currentRun
+    }
+  }
+
+  // Determine current streak: the last run must include today or yesterday
+  const today = new Date().toISOString().slice(0, 10)
+  const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10)
+  const lastDate = sortedDates[sortedDates.length - 1]
+
+  let currentStreak = 0
+  if (lastDate === today || lastDate === yesterday) {
+    // Walk backwards from the end to count the current run
+    currentStreak = 1
+    for (let i = sortedDates.length - 2; i >= 0; i--) {
+      const curr = new Date(sortedDates[i + 1])
+      const prev = new Date(sortedDates[i])
+      const diffDays = (curr.getTime() - prev.getTime()) / (1000 * 60 * 60 * 24)
+      if (diffDays === 1) {
+        currentStreak++
+      } else {
+        break
+      }
+    }
+  }
+
+  return { currentStreak, longestStreak }
+}
+
+/**
  * Get user stats (for achievement checking)
  */
 export async function getUserStats(
@@ -141,9 +215,8 @@ export async function getUserStats(
     ? Math.round(allScores.reduce((sum: number, score: number) => sum + score, 0) / allScores.length)
     : 0
 
-  // Calculate streak (simplified - would need daily activity tracking)
-  const currentStreak = 0 // TODO: Implement proper streak calculation
-  const longestStreak = 0 // TODO: Implement proper streak calculation
+  // Calculate streak from activity timestamps
+  const { currentStreak, longestStreak } = calculateStreaks(progressList)
   const lastActivityDate = progressList.length > 0
     ? Math.max(...progressList.map((p: any) => new Date(p.lastAccessedAt || 0).getTime()))
     : 0

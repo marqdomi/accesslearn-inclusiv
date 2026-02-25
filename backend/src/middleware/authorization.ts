@@ -270,10 +270,33 @@ export function requireTenantAccess(req: Request, res: Response, next: NextFunct
 }
 
 /**
- * Helper: Extrae el usuario del token JWT (deberías implementar esto según tu estrategia de auth)
+ * Helper: Extrae el usuario del token JWT
+ * Verifica firma, expiración, issuer y audience del token
  */
 export function extractUserFromToken(token: string): User | null {
-  // TODO: Implementar verificación de JWT
-  // Por ahora, retorna null
-  return null;
+  try {
+    const jwt = require('jsonwebtoken');
+    const jwtSecret: string = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+
+    const decoded = jwt.verify(token, jwtSecret, {
+      issuer: 'accesslearn-api',
+      audience: 'accesslearn-frontend',
+    }) as { userId: string; tenantId: string; email: string; role: string };
+
+    if (!decoded.userId || !decoded.tenantId) {
+      return null;
+    }
+
+    // Return a minimal User object from the token payload
+    // For full user data, use authenticateToken middleware which fetches from DB
+    return {
+      id: decoded.userId,
+      tenantId: decoded.tenantId,
+      email: decoded.email,
+      role: decoded.role as any,
+    } as User;
+  } catch {
+    // Token invalid, expired, or signature mismatch
+    return null;
+  }
 }

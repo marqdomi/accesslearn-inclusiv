@@ -94,6 +94,42 @@ export async function createCategory(
 }
 
 /**
+ * Update a category name
+ */
+export async function updateCategory(
+  categoryId: string,
+  tenantId: string,
+  newName: string
+): Promise<Category> {
+  const container = getContainer('categories')
+
+  const { resource: existing } = await container.item(categoryId, tenantId).read<Category>()
+  if (!existing) {
+    throw new Error('Category not found')
+  }
+
+  const normalizedName = newName.trim()
+  if (!normalizedName) {
+    throw new Error('Category name cannot be empty')
+  }
+
+  // Check for duplicate names (excluding this category)
+  const allCategories = await getCategories(tenantId)
+  if (allCategories.some(c => c.id !== categoryId && c.name.toLowerCase() === normalizedName.toLowerCase())) {
+    throw new Error('Category already exists')
+  }
+
+  const updated: Category = {
+    ...existing,
+    name: normalizedName,
+    updatedAt: new Date().toISOString()
+  }
+
+  const { resource } = await container.item(categoryId, tenantId).replace<Category>(updated)
+  return resource!
+}
+
+/**
  * Delete a category
  */
 export async function deleteCategory(

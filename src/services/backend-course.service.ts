@@ -14,10 +14,24 @@ interface BackendCourse {
   title: string
   description: string
   instructor: string
-  status: 'draft' | 'active' | 'archived'
+  category?: string
+  status: 'draft' | 'active' | 'archived' | 'published' | 'pending-review'
   startDate?: string
   duration?: number
+  estimatedTime?: number
   level?: 'beginner' | 'intermediate' | 'advanced'
+  modules?: Array<{
+    id: string
+    title: string
+    type: string
+    url: string
+    order: number
+    accessibility?: {
+      altText?: string
+      transcript?: string
+      captionsUrl?: string
+    }
+  }>
 }
 
 class BackendCourseServiceClass {
@@ -42,12 +56,21 @@ class BackendCourseServiceClass {
       id: backendCourse.id,
       title: backendCourse.title,
       description: backendCourse.description,
-      category: 'General', // TODO: Add category to backend
+      category: backendCourse.category || 'General',
       difficulty: difficultyMap[backendCourse.level || 'beginner'],
-      modules: [], // TODO: Add modules support
-      estimatedHours: backendCourse.duration || 4,
+      modules: (backendCourse.modules || []).map((m, i) => ({
+        id: m.id,
+        title: m.title,
+        description: '',
+        type: 'lesson' as const,
+        lessons: [],
+        order: m.order ?? i,
+      })),
+      estimatedHours: backendCourse.estimatedTime
+        ? backendCourse.estimatedTime / 60
+        : (backendCourse.duration || 4),
       totalXP: (backendCourse.duration || 4) * 100, // 100 XP per hour
-      published: backendCourse.status === 'active',
+      published: backendCourse.status === 'active' || backendCourse.status === 'published',
       publishedAt: backendCourse.startDate ? new Date(backendCourse.startDate).getTime() : Date.now(),
       createdAt: Date.now(),
       updatedAt: Date.now(),
@@ -107,14 +130,17 @@ class BackendCourseServiceClass {
     title: string
     description: string
     instructor?: string
+    category?: string
     duration?: number
     level?: 'beginner' | 'intermediate' | 'advanced'
+    modules?: any[]
   }): Promise<CourseStructure> {
     const backendCourse = await ApiService.createCourse({
       title: data.title,
       description: data.description,
-      category: 'General',
+      category: data.category || 'General',
       estimatedTime: data.duration ? data.duration * 60 : 60,
+      modules: data.modules,
     })
     return this.adaptCourse(backendCourse)
   }
@@ -124,7 +150,15 @@ class BackendCourseServiceClass {
       const backendCourse = await ApiService.updateCourse(courseId, {
         title: updates.title,
         description: updates.description,
+        category: updates.category,
         estimatedTime: updates.estimatedHours ? updates.estimatedHours * 60 : undefined,
+        modules: updates.modules?.map((m, i) => ({
+          id: m.id,
+          title: m.title,
+          type: 'text' as const,
+          url: '',
+          order: i,
+        })),
         status: updates.published !== undefined
           ? (updates.published ? 'published' : 'draft')
           : undefined,

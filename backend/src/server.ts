@@ -1781,6 +1781,36 @@ app.delete('/api/categories/:categoryId',
   }
 );
 
+// PUT /api/categories/:categoryId - Update category name
+app.put('/api/categories/:categoryId',
+  requireAuth,
+  requirePermission('content:edit'),
+  async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const { categoryId } = req.params;
+      const { name } = req.body;
+
+      if (!name || !name.trim()) {
+        return res.status(400).json({ error: 'Category name is required' });
+      }
+
+      const { updateCategory } = await import('./functions/CategoryFunctions');
+      const category = await updateCategory(categoryId, user.tenantId, name.trim());
+      res.json(category);
+    } catch (error: any) {
+      console.error('[API] Error updating category:', error);
+      if (error.message === 'Category not found') {
+        return res.status(404).json({ error: error.message });
+      }
+      if (error.message === 'Category already exists') {
+        return res.status(409).json({ error: error.message });
+      }
+      res.status(500).json({ error: error.message });
+    }
+  }
+);
+
 // ============================================
 // Accessibility Profiles API
 // ============================================
