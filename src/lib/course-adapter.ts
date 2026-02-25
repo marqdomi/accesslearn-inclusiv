@@ -61,8 +61,8 @@ export function adaptBackendCourseToFrontend(backendCourse: BackendCourse): Cour
     }, 0),
     published: backendCourse.status === 'published',
     publishedAt: backendCourse.publishedAt ? new Date(backendCourse.publishedAt).getTime() : undefined,
-    enrollmentMode: (backendCourse.enrollmentMode as any) || 'open',
-    difficulty: (backendCourse.difficulty as any) || 'Novice',
+    enrollmentMode: (backendCourse.enrollmentMode as CourseStructure['enrollmentMode']) || 'open',
+    difficulty: (backendCourse.difficulty as CourseStructure['difficulty']) || 'Novice',
     createdAt: new Date(backendCourse.createdAt).getTime(),
     updatedAt: new Date(backendCourse.updatedAt).getTime(),
     createdBy: backendCourse.createdBy,
@@ -94,7 +94,7 @@ export function adaptFrontendCourseToBackend(
     estimatedTime: (frontendCourse.estimatedHours || 0) * 60, // Convert hours to minutes
     modules: frontendCourse.modules || [],
     coverImage: frontendCourse.coverImage,
-    status: (frontendCourse as any).status || (frontendCourse.published ? 'published' : 'draft'),
+    status: (frontendCourse.status === 'review' ? 'pending-review' : frontendCourse.status) || (frontendCourse.published ? 'published' : 'draft'),
     // Campos de configuración del curso
     difficulty: frontendCourse.difficulty,
     enrollmentMode: frontendCourse.enrollmentMode,

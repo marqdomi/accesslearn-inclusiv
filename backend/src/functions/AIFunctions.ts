@@ -332,7 +332,7 @@ export async function getInsights(req: Request, res: Response) {
 
     const { resources: progress } = await progressContainer.items
       .query({
-        query: 'SELECT c.courseId, c.status, c.overallProgress, c.averageScore FROM c WHERE c.tenantId = @t',
+        query: 'SELECT c.courseId, c.status, c.overallProgress, c.averageScore, c.lastAccessedAt, c.createdAt FROM c WHERE c.tenantId = @t',
         parameters: [{ name: '@t', value: tenantId }],
       })
       .fetchAll();
@@ -363,6 +363,29 @@ export async function getInsights(req: Request, res: Response) {
       .sort((a: any, b: any) => b.completions - a.completions)
       .slice(0, 5);
 
+    // Calculate recent trends (last 4 weeks)
+    const now = Date.now();
+    const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+    const recentTrends: { period: string; enrollments: number; completions: number }[] = [];
+    for (let i = 3; i >= 0; i--) {
+      const weekStart = now - (i + 1) * WEEK_MS;
+      const weekEnd = now - i * WEEK_MS;
+      const weekLabel = `Semana -${i + 1}`;
+
+      const weekEnrollments = progress.filter((p: any) => {
+        const ts = p.createdAt ? new Date(p.createdAt).getTime() : (p.lastAccessedAt || 0);
+        return ts >= weekStart && ts < weekEnd;
+      }).length;
+
+      const weekCompletions = progress.filter((p: any) => {
+        if (p.status !== 'completed') return false;
+        const ts = p.lastAccessedAt || (p.createdAt ? new Date(p.createdAt).getTime() : 0);
+        return ts >= weekStart && ts < weekEnd;
+      }).length;
+
+      recentTrends.push({ period: weekLabel, enrollments: weekEnrollments, completions: weekCompletions });
+    }
+
     const insights = await generateAnalyticsInsights({
       totalUsers,
       activeUsers,
@@ -370,7 +393,7 @@ export async function getInsights(req: Request, res: Response) {
       avgCompletion,
       avgScore,
       topCourses,
-      recentTrends: [], // TODO: calculate from timestamps
+      recentTrends,
     });
 
     return res.json({ insights, stats: { totalUsers, activeUsers, totalCourses, avgCompletion, avgScore } });

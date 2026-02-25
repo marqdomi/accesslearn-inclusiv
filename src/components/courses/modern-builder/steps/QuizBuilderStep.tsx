@@ -96,11 +96,11 @@ export function QuizBuilderStep({ course, updateCourse }: QuizBuilderStepProps) 
         showTimer: currentQuiz.showTimer ?? false,
         timeLimit: currentQuiz.timeLimit ? Math.floor(currentQuiz.timeLimit / 60) : 0,
         examMode: currentQuiz.examMode ?? false,
-        examModeType: (currentQuiz as any).examModeType ?? 'timed',
-        examDuration: (currentQuiz as any).examDuration ?? 60,
-        examMinPassingScore: (currentQuiz as any).examMinPassingScore ?? 70,
-        examQuestionCount: (currentQuiz as any).examQuestionCount ?? 0,
-        useRandomSelection: (currentQuiz as any).useRandomSelection ?? false,
+        examModeType: currentQuiz.examModeType ?? 'timed',
+        examDuration: currentQuiz.examDuration ?? 60,
+        examMinPassingScore: currentQuiz.examMinPassingScore ?? 70,
+        examQuestionCount: currentQuiz.examQuestionCount ?? 0,
+        useRandomSelection: currentQuiz.useRandomSelection ?? false,
       })
     } else {
       setQuizForm({
@@ -225,7 +225,7 @@ export function QuizBuilderStep({ course, updateCourse }: QuizBuilderStepProps) 
     }
 
     const isFillBlank = question.type === 'fill-blank'
-    const fillBlankData = isFillBlank && typeof question.question === 'object' ? (question.question as any) : null
+    const fillBlankData = isFillBlank && typeof question.question === 'object' ? (question.question as { text?: string; blanks?: string[]; options?: string[] }) : null
 
     setQuestionForm({
       type: question.type,

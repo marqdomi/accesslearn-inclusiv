@@ -423,7 +423,7 @@ export function QuizLesson({
         >
           {currentQuestion.type === 'multiple-choice' && (
             <MultipleChoiceQuiz
-              question={currentQuestion.question as any}
+              question={currentQuestion.question}
               onAnswer={handleAnswer}
               isAnswered={isAnswered}
               selectedAnswer={selectedAnswer}
@@ -432,7 +432,7 @@ export function QuizLesson({
 
           {currentQuestion.type === 'multiple-select' && (
             <MultipleSelectQuiz
-              question={currentQuestion.question as any}
+              question={currentQuestion.question}
               onAnswer={(isCorrect, selectedIndices) => {
                 handleAnswer(isCorrect, selectedIndices)
               }}
@@ -443,7 +443,7 @@ export function QuizLesson({
 
           {currentQuestion.type === 'true-false' && (
             <TrueFalseQuiz
-              question={currentQuestion.question as any}
+              question={currentQuestion.question}
               onAnswer={handleAnswer}
               isAnswered={isAnswered}
               selectedAnswer={selectedAnswer as boolean | null}
@@ -461,7 +461,7 @@ export function QuizLesson({
 
           {currentQuestion.type === 'ordering' && (
             <OrderingQuiz
-              question={currentQuestion.question as any}
+              question={currentQuestion.question}
               onAnswer={handleAnswer}
               isAnswered={isAnswered}
               selectedAnswer={selectedAnswer as number[] | null}

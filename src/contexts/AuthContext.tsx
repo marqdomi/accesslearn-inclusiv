@@ -54,7 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (response.success && response.user && response.token) {
         // Construir objeto User completo desde response
-        const backendUser = response.user as any // Backend puede tener campos adicionales
+        const backendUser = response.user as Record<string, any> // Backend puede tener campos adicionales
         const userData: User = {
           id: backendUser.id,
           name: `${backendUser.firstName} ${backendUser.lastName}`,

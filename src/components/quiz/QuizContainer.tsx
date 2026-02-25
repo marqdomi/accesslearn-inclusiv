@@ -29,6 +29,19 @@ interface QuizContainerProps {
   timeLimit?: number // segundos, opcional
   showTimer?: boolean
   allowHints?: boolean
+  children?: (hintState: HintState) => React.ReactNode
+}
+
+/** State exposed to child question components to render hints */
+export interface HintState {
+  /** Number of hints used so far for the current question */
+  hintsUsed: number
+  /** Indices of options to eliminate (for multiple-choice) */
+  eliminatedOptions: number[]
+  /** Whether a hint is currently active */
+  hintActive: boolean
+  /** Text clue for true-false / fill-blank questions */
+  hintClue: string | null
 }
 
 export interface QuizResults {
@@ -51,6 +64,7 @@ export function QuizContainer({
   timeLimit,
   showTimer = false,
   allowHints = true,
+  children,
 }: QuizContainerProps) {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
   const [lives, setLives] = useState(maxLives)
@@ -63,6 +77,9 @@ export function QuizContainer({
   const [isAnswered, setIsAnswered] = useState(false)
   const [showNextButton, setShowNextButton] = useState(false)
   const [earnedXP, setEarnedXP] = useState(0)
+  const [eliminatedOptions, setEliminatedOptions] = useState<number[]>([])
+  const [hintClue, setHintClue] = useState<string | null>(null)
+  const [hintActive, setHintActive] = useState(false)
 
   const currentQuestion = questions[currentQuestionIndex]
   const progress = ((currentQuestionIndex + 1) / questions.length) * 100
@@ -117,14 +134,40 @@ export function QuizContainer({
       setCurrentQuestionIndex((prev) => prev + 1)
       setIsAnswered(false)
       setShowNextButton(false)
+      setEliminatedOptions([])
+      setHintClue(null)
+      setHintActive(false)
     }
   }
 
   const handleHint = () => {
-    if (!allowHints || hintsUsed >= 3) return
+    if (!allowHints || hintsUsed >= 3 || isAnswered) return
     setHintsUsed((prev) => prev + 1)
-    // TODO: Implementar lógica de mostrar hint
-    // Por ahora solo incrementa el contador
+    setHintActive(true)
+
+    const q = currentQuestion.question
+    if (currentQuestion.type === 'multiple-choice' && q?.options && q?.correctAnswer !== undefined) {
+      // Eliminate one wrong option that hasn't been eliminated yet
+      const wrongIndices = q.options
+        .map((_: unknown, i: number) => i)
+        .filter((i: number) => i !== q.correctAnswer && !eliminatedOptions.includes(i))
+      if (wrongIndices.length > 0) {
+        const toEliminate = wrongIndices[Math.floor(Math.random() * wrongIndices.length)]
+        setEliminatedOptions((prev) => [...prev, toEliminate])
+      }
+    } else if (currentQuestion.type === 'true-false' && q?.explanation) {
+      // Reveal a partial clue from the explanation
+      const words = q.explanation.split(' ')
+      const clueLength = Math.min(Math.ceil(words.length * 0.4), 8)
+      setHintClue(words.slice(0, clueLength).join(' ') + '...')
+    } else if (currentQuestion.type === 'fill-blank' && q?.correctAnswers) {
+      // Reveal first letter(s) of the answer
+      const firstAnswer = Array.isArray(q.correctAnswers) ? q.correctAnswers[0] : ''
+      if (firstAnswer) {
+        const revealCount = Math.min(hintsUsed + 1, Math.ceil(firstAnswer.length / 2))
+        setHintClue(`Empieza con: "${firstAnswer.slice(0, revealCount)}..."`)
+      }
+    }
   }
 
   const finishQuiz = () => {
@@ -243,8 +286,21 @@ export function QuizContainer({
 
       {/* Question Content - Slot para el tipo de quiz específico */}
       <div className="min-h-[400px]">
-        {/* Aquí se renderizará el componente de quiz específico desde el padre */}
-        <slot />
+        {/* Hint display */}
+        {hintActive && hintClue && (
+          <Card className="p-3 mb-4 border-yellow-300 bg-yellow-50 dark:bg-yellow-950/30 dark:border-yellow-700">
+            <div className="flex items-center gap-2 text-sm text-yellow-800 dark:text-yellow-300">
+              <Lightbulb className="h-4 w-4" />
+              <span className="font-medium">Pista:</span>
+              <span>{hintClue}</span>
+            </div>
+          </Card>
+        )}
+        {/* Render children with hint state if provided */}
+        {children
+          ? children({ hintsUsed, eliminatedOptions, hintActive, hintClue })
+          : <slot />
+        }
       </div>
 
       {/* Next Button */}

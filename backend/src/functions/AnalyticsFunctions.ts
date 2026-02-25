@@ -282,6 +282,22 @@ export async function getUserProgressReport(
     groups = allGroups
   }
 
+  // Pre-fetch mentee IDs if filtering by mentor
+  let menteeIds: Set<string> | null = null
+  if (filters?.mentorId) {
+    const mentorshipContainer = getContainer('mentorship-requests')
+    const { resources: mentorshipRequests } = await mentorshipContainer.items
+      .query<{ menteeId: string }>({
+        query: 'SELECT c.menteeId FROM c WHERE c.mentorId = @mentorId AND c.tenantId = @tenantId AND c.status = "accepted"',
+        parameters: [
+          { name: '@mentorId', value: filters.mentorId },
+          { name: '@tenantId', value: tenantId }
+        ]
+      })
+      .fetchAll()
+    menteeIds = new Set(mentorshipRequests.map(r => r.menteeId))
+  }
+
   // Build report data
   const reportData = users
     .filter(user => {
@@ -292,8 +308,8 @@ export async function getUserProgressReport(
       }
 
       // Filter by mentor if specified
-      if (filters?.mentorId) {
-        // TODO: Implement mentor filtering based on your mentorship model
+      if (menteeIds && !menteeIds.has(user.id)) {
+        return false
       }
 
       return true

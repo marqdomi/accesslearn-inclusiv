@@ -300,7 +300,7 @@ export function CourseDetailsStep({ course, updateCourse, courseId }: CourseDeta
         <Label className="required">Nivel de Dificultad</Label>
         <RadioGroup 
           value={course.difficulty} 
-          onValueChange={(value) => updateCourse({ difficulty: value as any })}
+          onValueChange={(value) => updateCourse({ difficulty: value as CourseStructure['difficulty'] })}
           className="grid grid-cols-1 md:grid-cols-2 gap-3"
         >
           {DIFFICULTIES.map((diff) => (
@@ -325,7 +325,7 @@ export function CourseDetailsStep({ course, updateCourse, courseId }: CourseDeta
         <Label className="required">Modo de Inscripción</Label>
         <RadioGroup 
           value={course.enrollmentMode} 
-          onValueChange={(value) => updateCourse({ enrollmentMode: value as any })}
+          onValueChange={(value) => updateCourse({ enrollmentMode: value as CourseStructure['enrollmentMode'] })}
           className="space-y-3"
         >
           <div className="flex items-start space-x-3 space-y-0">

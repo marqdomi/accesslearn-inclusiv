@@ -543,7 +543,7 @@ export function ProfilePage() {
                           value={profileData.gender}
                           onChange={(e) => setProfileData({ 
                             ...profileData, 
-                            gender: e.target.value as any 
+                            gender: e.target.value as 'prefer-not-to-say' | 'male' | 'female' | 'other' 
                           })}
                           className="w-full px-3 py-2.5 sm:py-3 h-11 sm:h-12 border border-border rounded-md bg-background text-sm sm:text-base text-foreground touch-target"
                         >

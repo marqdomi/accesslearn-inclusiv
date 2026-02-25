@@ -9,8 +9,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
-import { BookOpen, Trophy, History, RotateCcw, TrendingUp, Award } from 'lucide-react'
+import { BookOpen, Trophy, History, RotateCcw, TrendingUp, Award, Calendar, Target } from 'lucide-react'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { useNavigate } from 'react-router-dom'
+import type { CourseAttempt } from '@/lib/types'
 
 interface LibraryItem {
   progress: UserProgress
@@ -339,11 +341,15 @@ function CourseLibraryCard({ course, progress, onRetake }: CourseLibraryCardProp
   const { t } = useTranslation('courses')
   const navigate = useNavigate()
   const bestScore = progress.bestScore || 0
+  const [historyOpen, setHistoryOpen] = useState(false)
+  const [attempts, setAttempts] = useState<CourseAttempt[]>([])
+  const [loadingAttempts, setLoadingAttempts] = useState(false)
   
   // Calculate progress based on completed lessons vs total lessons
   const completedLessons = progress.completedLessons?.length || 0
   // Handle both Course structure (ContentModule[]) and CourseStructure (Module[] with lessons)
-  const totalLessons = (course as any).modules?.reduce((sum: number, module: any) => {
+  const courseModules = course.modules as Array<{ lessons?: unknown[] }>
+  const totalLessons = courseModules?.reduce((sum: number, module) => {
     // If module has lessons array (CourseStructure format)
     if (module.lessons && Array.isArray(module.lessons)) {
       return sum + module.lessons.length
@@ -455,8 +461,13 @@ function CourseLibraryCard({ course, progress, onRetake }: CourseLibraryCardProp
         {attemptCount > 0 && (
           <Button
             onClick={() => {
-              // TODO: Open attempt history modal
-              console.log('View history for:', course.id)
+              setHistoryOpen(true)
+              // Use local progress.attempts if available, otherwise show empty
+              if (progress.attempts && progress.attempts.length > 0) {
+                setAttempts(progress.attempts)
+              } else {
+                setAttempts([])
+              }
             }}
             variant="ghost"
             className="w-full gap-2"
@@ -466,6 +477,76 @@ function CourseLibraryCard({ course, progress, onRetake }: CourseLibraryCardProp
             {t('library.viewAttemptHistory')}
           </Button>
         )}
+
+        {/* Attempt History Dialog */}
+        <Dialog open={historyOpen} onOpenChange={setHistoryOpen}>
+          <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <History className="h-5 w-5" />
+                {t('library.attemptHistory')}
+              </DialogTitle>
+              <DialogDescription>{course.title}</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-3 mt-4">
+              {attempts.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  {t('library.noAttemptData')}
+                </p>
+              ) : (
+                attempts
+                  .sort((a, b) => b.attemptNumber - a.attemptNumber)
+                  .map((attempt) => (
+                    <Card key={attempt.attemptNumber} className="p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-semibold text-sm">
+                          {t('library.attempt')} #{attempt.attemptNumber}
+                        </span>
+                        <Badge
+                          variant={attempt.finalScore >= 70 ? 'default' : 'destructive'}
+                          className="text-xs"
+                        >
+                          {attempt.finalScore}%
+                        </Badge>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+                        <div className="flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />
+                          {new Date(attempt.startedAt).toLocaleDateString()}
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Trophy className="h-3 w-3" />
+                          {attempt.xpEarned} XP
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Target className="h-3 w-3" />
+                          {attempt.completedLessons?.length || 0} {t('library.lessonsCompleted')}
+                        </div>
+                        {attempt.completedAt && (
+                          <div className="flex items-center gap-1">
+                            <Award className="h-3 w-3" />
+                            {t('library.completed')}
+                          </div>
+                        )}
+                      </div>
+                      {attempt.quizScores && attempt.quizScores.length > 0 && (
+                        <div className="mt-2 pt-2 border-t">
+                          <p className="text-xs font-medium mb-1">{t('library.quizScores')}</p>
+                          <div className="flex flex-wrap gap-1">
+                            {attempt.quizScores.map((qs, i) => (
+                              <Badge key={i} variant="outline" className="text-xs">
+                                Q{i + 1}: {qs.score}%
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </Card>
+                  ))
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
       </CardContent>
     </Card>
   )
