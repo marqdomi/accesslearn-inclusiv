@@ -2,7 +2,8 @@
  * Gemini AI Service
  * 
  * Centralized service for all AI features using Google Gemini API (free tier).
- * Model: gemini-2.0-flash (fast, free, 15 RPM / 1M TPM / 1500 req/day)
+ * Model: gemini-3.0-flash (fast, free, 15 RPM / 1M TPM / 1500 req/day)
+ * Configurable via GEMINI_MODEL environment variable.
  * 
  * Features:
  * - Course recommendations
@@ -15,6 +16,7 @@
 import { GoogleGenerativeAI, GenerativeModel, HarmCategory, HarmBlockThreshold } from '@google/generative-ai';
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3.0-flash';
 
 let genAI: GoogleGenerativeAI | null = null;
 let model: GenerativeModel | null = null;
@@ -28,7 +30,7 @@ function getModel(): GenerativeModel {
   }
   if (!model) {
     model = genAI.getGenerativeModel({
-      model: 'gemini-2.0-flash',
+      model: GEMINI_MODEL,
       safetySettings: [
         { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH },
         { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH },
@@ -413,8 +415,8 @@ export async function testGeminiConnection(): Promise<{ ok: boolean; model: stri
     const m = getModel();
     const result = await m.generateContent('Responde solo con "OK"');
     const text = result.response.text().trim();
-    return { ok: text.toLowerCase().includes('ok'), model: 'gemini-2.0-flash' };
+    return { ok: text.toLowerCase().includes('ok'), model: GEMINI_MODEL };
   } catch (error: any) {
-    return { ok: false, model: 'gemini-2.0-flash', error: error.message };
+    return { ok: false, model: GEMINI_MODEL, error: error.message };
   }
 }
