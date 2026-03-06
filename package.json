@@ -86,7 +86,7 @@
         "react-player": "^3.4.0",
         "react-resizable-panels": "^2.1.7",
         "react-router-dom": "^7.9.6",
-        "recharts": "^2.15.1",
+        "recharts": "^3.6.0",
         "rehype-raw": "^7.0.0",
         "rehype-sanitize": "^6.0.0",
         "remark-gfm": "^4.0.1",
